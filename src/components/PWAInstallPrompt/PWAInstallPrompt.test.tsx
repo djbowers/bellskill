@@ -97,7 +97,7 @@ describe('PWAInstallPrompt', () => {
       render(<Default />);
 
       await waitFor(() => {
-        expect(screen.getByText('Install Cannonbells App')).toBeTruthy();
+        expect(screen.getByText('Install BellSkill')).toBeTruthy();
         expect(screen.getByText(/Tap the.*share button below/)).toBeTruthy();
       });
     });
@@ -109,7 +109,7 @@ describe('PWAInstallPrompt', () => {
 
       render(<Default />);
 
-      expect(screen.queryByText('Install Cannonbells App')).toBeNull();
+      expect(screen.queryByText('Install BellSkill')).toBeNull();
     });
 
     it('should not render on desktop browsers', () => {
@@ -120,7 +120,7 @@ describe('PWAInstallPrompt', () => {
 
       render(<Default />);
 
-      expect(screen.queryByText('Install Cannonbells App')).toBeNull();
+      expect(screen.queryByText('Install BellSkill')).toBeNull();
     });
 
     it('should not render when recently dismissed', () => {
@@ -142,7 +142,7 @@ describe('PWAInstallPrompt', () => {
 
       render(<Default />);
 
-      expect(screen.queryByText('Install Cannonbells App')).toBeNull();
+      expect(screen.queryByText('Install BellSkill')).toBeNull();
     });
   });
 
@@ -151,7 +151,7 @@ describe('PWAInstallPrompt', () => {
       render(<Default />);
 
       await waitFor(() => {
-        expect(screen.getByText('Install Cannonbells App')).toBeTruthy();
+        expect(screen.getByText('Install BellSkill')).toBeTruthy();
       });
 
       // Override after render, before interaction
@@ -168,7 +168,7 @@ describe('PWAInstallPrompt', () => {
       fireEvent.click(dismissButton);
 
       await waitFor(() => {
-        expect(screen.queryByText('Install Cannonbells App')).toBeNull();
+        expect(screen.queryByText('Install BellSkill')).toBeNull();
       });
 
       expect(testLocalStorage.setItem).toHaveBeenCalledWith(
@@ -181,7 +181,7 @@ describe('PWAInstallPrompt', () => {
       render(<Default />);
 
       await waitFor(() => {
-        expect(screen.getByText('Install Cannonbells App')).toBeTruthy();
+        expect(screen.getByText('Install BellSkill')).toBeTruthy();
       });
 
       // Simulate the beforeinstallprompt event
@@ -189,7 +189,7 @@ describe('PWAInstallPrompt', () => {
       window.dispatchEvent(event);
 
       // The component should still be visible after the event
-      expect(screen.getByText('Install Cannonbells App')).toBeTruthy();
+      expect(screen.getByText('Install BellSkill')).toBeTruthy();
     });
   });
 
@@ -198,7 +198,7 @@ describe('PWAInstallPrompt', () => {
       render(<Default />);
 
       await waitFor(() => {
-        expect(screen.getByText('Install Cannonbells App')).toBeTruthy();
+        expect(screen.getByText('Install BellSkill')).toBeTruthy();
       });
 
       const dismissButton = screen.getByLabelText('Dismiss');
@@ -235,7 +235,7 @@ describe('PWAInstallPrompt', () => {
       const { container } = render(<Default />);
 
       await waitFor(() => {
-        expect(screen.getByText('Install Cannonbells App')).toBeTruthy();
+        expect(screen.getByText('Install BellSkill')).toBeTruthy();
       });
 
       const promptContainer = container.firstChild as HTMLElement;
@@ -248,7 +248,7 @@ describe('PWAInstallPrompt', () => {
       render(<Default />);
 
       await waitFor(() => {
-        expect(screen.getByText('Install Cannonbells App')).toBeTruthy();
+        expect(screen.getByText('Install BellSkill')).toBeTruthy();
       });
 
       // Check that the share icon is present (it should be rendered as an SVG)

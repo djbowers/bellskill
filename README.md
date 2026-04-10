@@ -6,7 +6,7 @@ A kettlebell training application designed around principles of cognitive offloa
 
 The production version of BellSkill is hosted at:
 
-**[app.cannonbells.com](https://app.cannonbells.com)**
+**[app.bellskill.com](https://app.bellskill.com)**
 
 Reviewers and other visitors can access the live application directly — no local setup required.
 
@@ -58,7 +58,7 @@ The full schema is available in `types/supabase.ts`.
 
 ## Running locally (optional)
 
-The production app at [app.cannonbells.com](https://app.cannonbells.com) is the recommended way to interact with BellSkill. Local setup is supported for development purposes but requires a separately provisioned Supabase backend.
+The production app at [app.bellskill.com](https://app.bellskill.com) is the recommended way to interact with BellSkill. Local setup is supported for development purposes but requires a separately provisioned Supabase backend.
 
 ### Prerequisites
 - Node.js (v18 or later recommended)
@@ -101,4 +101,4 @@ The production app at [app.cannonbells.com](https://app.cannonbells.com) is the 
 
 ## Notes for course reviewers
 
-This code is provided for methodological transparency in support of the CS 6795 final report rather than as a graded artifact. The easiest way to interact with the application is the live production version at [app.cannonbells.com](https://app.cannonbells.com). The repository is public and accessible without credentials for those who want to inspect the source.
+This code is provided for methodological transparency in support of the CS 6795 final report rather than as a graded artifact. The easiest way to interact with the application is the live production version at [app.bellskill.com](https://app.bellskill.com). The repository is public and accessible without credentials for those who want to inspect the source.

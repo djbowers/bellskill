@@ -42,10 +42,10 @@ export const Header = () => {
           <NavigationMenuTrigger className="flex items-center gap-1">
             <img
               src="/favicon.svg"
-              alt="Cannonbells Logo"
+              alt="BellSkill Logo"
               className="h-2.5 w-2.5"
             />
-            <h1 className="text-lg font-medium">Cannonbells</h1>
+            <h1 className="text-lg font-medium">BellSkill</h1>
           </NavigationMenuTrigger>
           <NavigationMenuContent>
             <NavigationMenuLink

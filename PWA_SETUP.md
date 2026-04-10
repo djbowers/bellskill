@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Cannonbells app has been configured as a Progressive Web App (PWA) with the following features:
+The BellSkill app has been configured as a Progressive Web App (PWA) with the following features:
 
 ### ✅ What's Been Implemented
 
