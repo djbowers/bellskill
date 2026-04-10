@@ -127,7 +127,7 @@ export function PWAInstallPrompt() {
 
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-gray-900">
-              Install Cannonbells App
+              Install BellSkill
             </p>
             <p className="inline text-xs text-gray-500">
               Tap the <ArrowUpTrayIcon className="inline h-2 w-2" /> share
