@@ -4,7 +4,7 @@ This section defines what the automated agents (Bellskill PM and Bellskill Build
 
 ## Current critical path
 
-**Movement selection UI.** Replaces free-text movement entry with structured selection from the movements database. Blocks all downstream analytics and gamification work. The PM agent should bias toward tickets that move this forward until it ships.
+**Advanced config options for complexes and chains.** Enables users to configure movements to be completed without setting down the weight (e.g., for ABC-style workouts) and other advanced patterns. Currently in progress: "Set weight down after" feature. Planned: "Repeat all movements" and "Switch to opposite side after" options. The PM agent should bias toward tickets that move this initiative forward until it ships.
 
 When the critical path changes, update this section — the agents will pick up the new focus on their next run.
 
