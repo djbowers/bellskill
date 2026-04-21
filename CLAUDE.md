@@ -1,5 +1,9 @@
 # Claude Development Guidelines
 
+## Agent Guidelines
+
+For guidelines on automated agent behavior (Bellskill PM and Bellskill Builder), see [AGENT_GUIDELINES.md](AGENT_GUIDELINES.md).
+
 ## Project Overview
 
 This is a kettlebell workout tracking application built with React, TypeScript, Vite, and Supabase. It features PWA support for mobile installation.
