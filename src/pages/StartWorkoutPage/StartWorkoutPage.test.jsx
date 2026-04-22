@@ -442,6 +442,91 @@ describe('start workout page - without previous volume', () => {
   });
 });
 
+describe('Complex Mode', () => {
+  let startWorkout;
+
+  beforeEach(() => {
+    startWorkout = vi.fn();
+    Default.parameters.updateWorkoutOptions = startWorkout;
+    render(<Default />);
+  });
+
+  test('Complex Mode card is visible with Standard and Complex buttons; Standard is active by default', () => {
+    expect(screen.getByRole('button', { name: 'Standard' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Complex' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Shared Weight' })).not.toBeInTheDocument();
+  });
+
+  test('selecting Complex reveals shared weight section with all four weight-type options', async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
+
+    expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'None' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: '2H' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: '1H' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Double' })).toBeInTheDocument();
+  });
+
+  test('when Complex is active, per-movement weight sections are hidden and rep scheme sections remain visible', async () => {
+    await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
+    expect(screen.getAllByRole('heading', { name: 'Weights' })).toHaveLength(2);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
+
+    expect(screen.queryAllByRole('heading', { name: 'Weights' })).toHaveLength(0);
+    expect(screen.getAllByRole('heading', { name: 'Rep Scheme' })).toHaveLength(2);
+  });
+
+  test('selecting Standard hides shared weight section and restores per-movement weight sections', async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
+    expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Standard' }));
+
+    expect(screen.queryByRole('heading', { name: 'Shared Weight' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Weights' })).toBeInTheDocument();
+  });
+
+  test('startWorkout is called with complexSet: true and shared weight fields when Complex is active', async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
+    await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
+    await userEvent.click(screen.getByRole('button', { name: /Start/i }));
+
+    expect(startWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        complexSet: true,
+        sharedWeightOneValue: DEFAULT_MOVEMENT_OPTIONS.weightOneValue,
+        sharedWeightOneUnit: DEFAULT_MOVEMENT_OPTIONS.weightOneUnit,
+        sharedWeightTwoValue: null,
+        sharedWeightTwoUnit: null,
+        startedAt,
+      }),
+    );
+  });
+
+  test('complex mode toggle is preserved when adding movements', async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
+    expect(screen.queryAllByRole('heading', { name: 'Weights' })).toHaveLength(0);
+
+    await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
+
+    expect(screen.queryAllByRole('heading', { name: 'Weights' })).toHaveLength(0);
+    expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
+  });
+
+  test('complex mode toggle is preserved when removing movements', async () => {
+    await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
+    expect(screen.queryAllByRole('heading', { name: 'Weights' })).toHaveLength(0);
+
+    const removeButtons = screen.getAllByRole('button', { name: '- Movement' });
+    await userEvent.click(removeButtons[0]);
+
+    expect(screen.queryAllByRole('heading', { name: 'Weights' })).toHaveLength(0);
+    expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
+  });
+});
+
 describe('integration tests for previous volume retrieval', () => {
   test('retrieves previous volume from workout options when available', async () => {
     const startWorkout = vi.fn();

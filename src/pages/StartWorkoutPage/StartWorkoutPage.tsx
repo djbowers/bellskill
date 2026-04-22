@@ -57,6 +57,21 @@ export const StartWorkoutPage = () => {
     workoutOptions.intervalTimer,
   );
   const [restTimer, setRestTimer] = useState<number>(workoutOptions.restTimer);
+  const [complexSet, setComplexSet] = useState<boolean>(
+    workoutOptions.complexSet,
+  );
+  const [sharedWeightOneValue, setSharedWeightOneValue] = useState<
+    number | null
+  >(workoutOptions.sharedWeightOneValue);
+  const [sharedWeightOneUnit, setSharedWeightOneUnit] = useState<
+    WeightUnit | null
+  >(workoutOptions.sharedWeightOneUnit);
+  const [sharedWeightTwoValue, setSharedWeightTwoValue] = useState<
+    number | null
+  >(workoutOptions.sharedWeightTwoValue);
+  const [sharedWeightTwoUnit, setSharedWeightTwoUnit] = useState<
+    WeightUnit | null
+  >(workoutOptions.sharedWeightTwoUnit);
 
   const detailsRef = useRef<HTMLInputElement>(null);
 
@@ -124,6 +139,33 @@ export const StartWorkoutPage = () => {
 
   const handleClickAddMovement = () =>
     setMovements((prev) => [...prev, DEFAULT_MOVEMENT_OPTIONS]);
+
+  const handleChangeSharedWeightTab = (value: string) => {
+    setSharedWeightOneValue(
+      value === 'none' ? null : sharedWeightOneValue || DEFAULT_WEIGHT_VALUE,
+    );
+    setSharedWeightOneUnit(value === 'none' ? null : DEFAULT_WEIGHT_UNIT);
+    setSharedWeightTwoValue(
+      value === 'double'
+        ? sharedWeightTwoValue || DEFAULT_WEIGHT_VALUE
+        : value === '1h'
+          ? 0
+          : null,
+    );
+    setSharedWeightTwoUnit(value === 'double' ? DEFAULT_WEIGHT_UNIT : null);
+  };
+
+  const handleChangeSharedWeightOneValue = (value: number) =>
+    setSharedWeightOneValue(Math.max(1, value));
+
+  const handleChangeSharedWeightOneUnit = (value: WeightUnit) =>
+    setSharedWeightOneUnit(value);
+
+  const handleChangeSharedWeightTwoValue = (value: number) =>
+    setSharedWeightTwoValue(Math.max(1, value));
+
+  const handleChangeSharedWeightTwoUnit = (value: WeightUnit) =>
+    setSharedWeightTwoUnit(value);
 
   const handleChangeWeightTab = (index: number, value: string) => {
     setMovements((prev) =>
@@ -236,9 +278,14 @@ export const StartWorkoutPage = () => {
 
   const handleClickStart = () => {
     const workoutOptions: WorkoutOptions = {
+      complexSet,
       intervalTimer,
       movements,
       restTimer,
+      sharedWeightOneUnit,
+      sharedWeightOneValue,
+      sharedWeightTwoUnit,
+      sharedWeightTwoValue,
       startedAt: new Date(),
       workoutDetails,
       workoutGoal,
@@ -247,6 +294,15 @@ export const StartWorkoutPage = () => {
     updateWorkoutOptions(workoutOptions);
     navigate('active');
   };
+
+  const sharedWeightTabValue =
+    sharedWeightOneValue === null
+      ? 'none'
+      : sharedWeightTwoValue === null
+        ? '2h'
+        : sharedWeightTwoValue === 0
+          ? '1h'
+          : 'double';
 
   const isDifferentRepSchemes =
     movements.length > 1 &&
@@ -303,6 +359,92 @@ export const StartWorkoutPage = () => {
             value={workoutGoal}
           />
         </Section>
+      </Card>
+
+      <Card>
+        <Section title="Complex Mode">
+          <div className="flex gap-2">
+            <Button
+              className="grow"
+              variant={complexSet ? 'secondary' : 'default'}
+              onClick={() => setComplexSet(false)}
+            >
+              Standard
+            </Button>
+            <Button
+              className="grow"
+              variant={complexSet ? 'default' : 'secondary'}
+              onClick={() => setComplexSet(true)}
+            >
+              Complex
+            </Button>
+          </div>
+        </Section>
+        {complexSet && (
+          <Section
+            title="Shared Weight"
+            actions={
+              <Tabs
+                value={sharedWeightTabValue}
+                onValueChange={handleChangeSharedWeightTab}
+              >
+                <TabsList>
+                  <TabsTrigger size="sm" value="none">
+                    None
+                  </TabsTrigger>
+                  <TabsTrigger size="sm" value="2h">
+                    2H
+                  </TabsTrigger>
+                  <TabsTrigger size="sm" value="1h">
+                    1H
+                  </TabsTrigger>
+                  <TabsTrigger size="sm" value="double">
+                    Double
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            }
+          >
+            {sharedWeightOneValue !== null && (
+              <ModifyCountButtons
+                onClickMinus={() =>
+                  handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
+                }
+                onClickPlus={() =>
+                  handleChangeSharedWeightOneValue(sharedWeightOneValue + 1)
+                }
+                unit={getWeightUnitLabel(sharedWeightOneUnit)}
+                unitTabs={
+                  <WeightUnitTabs
+                    value={sharedWeightOneUnit}
+                    onChange={handleChangeSharedWeightOneUnit}
+                  />
+                }
+                value={sharedWeightOneValue}
+                onChange={(value) => handleChangeSharedWeightOneValue(value!)}
+              />
+            )}
+            {sharedWeightTwoValue !== null && sharedWeightTwoValue > 0 && (
+              <ModifyCountButtons
+                onClickMinus={() =>
+                  handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
+                }
+                onClickPlus={() =>
+                  handleChangeSharedWeightTwoValue(sharedWeightTwoValue + 1)
+                }
+                unit={getWeightUnitLabel(sharedWeightTwoUnit)}
+                unitTabs={
+                  <WeightUnitTabs
+                    value={sharedWeightTwoUnit}
+                    onChange={handleChangeSharedWeightTwoUnit}
+                  />
+                }
+                value={sharedWeightTwoValue}
+                onChange={(value) => handleChangeSharedWeightTwoValue(value)}
+              />
+            )}
+          </Section>
+        )}
       </Card>
 
       {(workoutDetails === null || intervalTimer === 0 || restTimer === 0) && (
@@ -456,90 +598,94 @@ export const StartWorkoutPage = () => {
                 id="movement"
               />
             </Section>
-            <Section
-              title="Weights"
-              actions={
-                <Tabs
-                  value={weightTabValue}
-                  onValueChange={(value) => handleChangeWeightTab(index, value)}
-                >
-                  <TabsList>
-                    <TabsTrigger size="sm" value="none">
-                      None
-                    </TabsTrigger>
-                    <TabsTrigger size="sm" value="2h">
-                      2H
-                    </TabsTrigger>
-                    <TabsTrigger size="sm" value="1h">
-                      1H
-                    </TabsTrigger>
-                    <TabsTrigger size="sm" value="double">
-                      Double
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              }
-            >
-              {movement.weightOneValue !== null && (
-                <ModifyCountButtons
-                  onClickMinus={() =>
-                    handleChangeWeightOneValue(
-                      index,
-                      movement.weightOneValue! - 1,
-                    )
-                  }
-                  onClickPlus={() =>
-                    handleChangeWeightOneValue(
-                      index,
-                      movement.weightOneValue! + 1,
-                    )
-                  }
-                  unit={getWeightUnitLabel(movement.weightOneUnit)}
-                  unitTabs={
-                    <WeightUnitTabs
-                      value={movement.weightOneUnit}
-                      onChange={(value) =>
-                        handleChangeWeightOneUnit(index, value)
-                      }
-                    />
-                  }
-                  value={movement.weightOneValue}
-                  onChange={(value) =>
-                    handleChangeWeightOneValue(index, value!)
-                  }
-                />
-              )}
-              {movement.weightTwoValue !== null &&
-                movement.weightTwoValue > 0 && (
+            {!complexSet && (
+              <Section
+                title="Weights"
+                actions={
+                  <Tabs
+                    value={weightTabValue}
+                    onValueChange={(value) =>
+                      handleChangeWeightTab(index, value)
+                    }
+                  >
+                    <TabsList>
+                      <TabsTrigger size="sm" value="none">
+                        None
+                      </TabsTrigger>
+                      <TabsTrigger size="sm" value="2h">
+                        2H
+                      </TabsTrigger>
+                      <TabsTrigger size="sm" value="1h">
+                        1H
+                      </TabsTrigger>
+                      <TabsTrigger size="sm" value="double">
+                        Double
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                }
+              >
+                {movement.weightOneValue !== null && (
                   <ModifyCountButtons
                     onClickMinus={() =>
-                      handleChangeWeightTwoValue(
+                      handleChangeWeightOneValue(
                         index,
-                        movement.weightTwoValue! - 1,
+                        movement.weightOneValue! - 1,
                       )
                     }
                     onClickPlus={() =>
-                      handleChangeWeightTwoValue(
+                      handleChangeWeightOneValue(
                         index,
-                        movement.weightTwoValue! + 1,
+                        movement.weightOneValue! + 1,
                       )
                     }
-                    unit={getWeightUnitLabel(movement.weightTwoUnit)}
+                    unit={getWeightUnitLabel(movement.weightOneUnit)}
                     unitTabs={
                       <WeightUnitTabs
-                        value={movement.weightTwoUnit}
+                        value={movement.weightOneUnit}
                         onChange={(value) =>
-                          handleChangeWeightTwoUnit(index, value)
+                          handleChangeWeightOneUnit(index, value)
                         }
                       />
                     }
-                    value={movement.weightTwoValue}
+                    value={movement.weightOneValue}
                     onChange={(value) =>
-                      handleChangeWeightTwoValue(index, value)
+                      handleChangeWeightOneValue(index, value!)
                     }
                   />
                 )}
-            </Section>
+                {movement.weightTwoValue !== null &&
+                  movement.weightTwoValue > 0 && (
+                    <ModifyCountButtons
+                      onClickMinus={() =>
+                        handleChangeWeightTwoValue(
+                          index,
+                          movement.weightTwoValue! - 1,
+                        )
+                      }
+                      onClickPlus={() =>
+                        handleChangeWeightTwoValue(
+                          index,
+                          movement.weightTwoValue! + 1,
+                        )
+                      }
+                      unit={getWeightUnitLabel(movement.weightTwoUnit)}
+                      unitTabs={
+                        <WeightUnitTabs
+                          value={movement.weightTwoUnit}
+                          onChange={(value) =>
+                            handleChangeWeightTwoUnit(index, value)
+                          }
+                        />
+                      }
+                      value={movement.weightTwoValue}
+                      onChange={(value) =>
+                        handleChangeWeightTwoValue(index, value)
+                      }
+                    />
+                  )}
+              </Section>
+            )}
             <Section
               title="Rep Scheme"
               actions={
