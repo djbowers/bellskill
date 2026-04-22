@@ -1,10 +1,16 @@
 import { MovementOptions } from './movement-options.interface';
+import { WeightUnit } from './weight-unit.type';
 import { WorkoutGoalUnits } from './workout-goal-units.type';
 
 export interface WorkoutOptions {
+  complexSet: boolean;
   intervalTimer: number; // seconds
   movements: MovementOptions[];
   restTimer: number; // seconds
+  sharedWeightOneUnit: WeightUnit | null;
+  sharedWeightOneValue: number | null;
+  sharedWeightTwoUnit: WeightUnit | null;
+  sharedWeightTwoValue: number | null;
   startedAt?: Date;
   workoutDetails: string | null;
   workoutGoal: number; // minutes, rounds, or target volume (kg)
