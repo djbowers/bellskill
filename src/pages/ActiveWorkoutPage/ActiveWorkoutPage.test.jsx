@@ -9,6 +9,8 @@ import * as stories from './ActiveWorkoutPage.stories';
 
 const {
   BodyweightMovements,
+  ComplexMode,
+  ComplexModeDifferentRepSchemes,
   DoubleWeights,
   MixedWeights,
   MultipleMovements,
@@ -973,7 +975,150 @@ describe('edge case and boundary tests', () => {
   });
 });
 
+describe('active workout page (complex mode)', () => {
+  const { workoutOptions } = ComplexMode.parameters;
+
+  beforeEach(() => {
+    render(<ComplexMode />);
+  });
+
+  test('displays all movements simultaneously', () => {
+    workoutOptions.movements.forEach((movement) => {
+      screen.getByText(movement.movementName);
+    });
+  });
+
+  test('shows "Complete Set" button label', () => {
+    screen.getByRole('button', { name: 'Complete Set' });
+  });
+
+  test('shows round number in card header', () => {
+    const round = screen.getByTestId('current-round');
+    expect(round).toHaveTextContent('1');
+  });
+
+  test('shows shared weight in card header', () => {
+    const weight = screen.getByTestId('complex-shared-weight');
+    expect(weight).toHaveTextContent('24');
+  });
+
+  test('shows each movement name with truncation class', () => {
+    workoutOptions.movements.forEach((_movement, index) => {
+      const nameEl = screen.getByTestId(`complex-movement-name-${index}`);
+      expect(nameEl).toHaveClass('truncate');
+    });
+  });
+
+  test('shows rep count for each movement at current rung', () => {
+    workoutOptions.movements.forEach((movement, index) => {
+      const repEl = screen.getByTestId(`complex-movement-reps-${index}`);
+      expect(repEl).toHaveTextContent(String(movement.repScheme[0]));
+    });
+  });
+
+  test('advances all movements rung indices simultaneously', async () => {
+    // repScheme [5, 4, 3, 2, 1] — rung 0 shows 5 for all movements
+    workoutOptions.movements.forEach((movement, index) => {
+      expect(screen.getByTestId(`complex-movement-reps-${index}`)).toHaveTextContent(
+        String(movement.repScheme[0]),
+      );
+    });
+
+    await clickCompleteSet();
+
+    // After first press, all advance to rung 1 → shows 4 for all movements
+    workoutOptions.movements.forEach((movement, index) => {
+      expect(screen.getByTestId(`complex-movement-reps-${index}`)).toHaveTextContent(
+        String(movement.repScheme[1]),
+      );
+    });
+    expect(screen.getByTestId('current-round')).toHaveTextContent('1');
+  });
+
+  test('increments round and resets all rung indices after final rung', async () => {
+    const round = screen.getByTestId('current-round');
+
+    // Click through all 5 rungs (repScheme [5, 4, 3, 2, 1])
+    await clickCompleteSet(); // rung 1
+    await clickCompleteSet(); // rung 2
+    await clickCompleteSet(); // rung 3
+    await clickCompleteSet(); // rung 4 (final)
+
+    // Still on round 1 at the last rung
+    expect(round).toHaveTextContent('1');
+    workoutOptions.movements.forEach((movement, index) => {
+      expect(screen.getByTestId(`complex-movement-reps-${index}`)).toHaveTextContent(
+        String(movement.repScheme[4]),
+      );
+    });
+
+    await clickCompleteSet(); // completes round — round increments, rung resets
+
+    expect(round).toHaveTextContent('2');
+    workoutOptions.movements.forEach((movement, index) => {
+      expect(screen.getByTestId(`complex-movement-reps-${index}`)).toHaveTextContent(
+        String(movement.repScheme[0]),
+      );
+    });
+  });
+});
+
+describe('active workout page (complex mode, different rep schemes)', () => {
+  const { workoutOptions } = ComplexModeDifferentRepSchemes.parameters;
+
+  beforeEach(() => {
+    render(<ComplexModeDifferentRepSchemes />);
+  });
+
+  test('each movement displays its own rep count independently', () => {
+    workoutOptions.movements.forEach((movement, index) => {
+      const repEl = screen.getByTestId(`complex-movement-reps-${index}`);
+      expect(repEl).toHaveTextContent(String(movement.repScheme[0]));
+    });
+  });
+
+  test('shorter rep scheme clamps at its last rung while longer advances', async () => {
+    // Swing: [5, 4, 3], Clean: [3]
+    const swing = screen.getByTestId('complex-movement-reps-0');
+    const clean = screen.getByTestId('complex-movement-reps-1');
+
+    expect(swing).toHaveTextContent('5');
+    expect(clean).toHaveTextContent('3');
+
+    await clickCompleteSet();
+
+    expect(swing).toHaveTextContent('4'); // rung 1
+    expect(clean).toHaveTextContent('3'); // clamped at last rung (index 0)
+
+    await clickCompleteSet();
+
+    expect(swing).toHaveTextContent('3'); // rung 2 (final for Swing)
+    expect(clean).toHaveTextContent('3'); // still clamped
+  });
+
+  test('round increments when max-length movement completes its final rung', async () => {
+    const round = screen.getByTestId('current-round');
+
+    // Swing has 3 rungs, Clean has 1 — max is 3
+    await clickCompleteSet(); // rung 1
+    await clickCompleteSet(); // rung 2 (final for Swing)
+
+    expect(round).toHaveTextContent('1');
+
+    await clickCompleteSet(); // completes round
+
+    expect(round).toHaveTextContent('2');
+    expect(screen.getByTestId('complex-movement-reps-0')).toHaveTextContent('5'); // Swing resets
+    expect(screen.getByTestId('complex-movement-reps-1')).toHaveTextContent('3'); // Clean resets
+  });
+});
+
 const clickContinue = async () => {
   const continueButton = screen.getByRole('button', { name: 'Continue' });
   await userEvent.click(continueButton);
+};
+
+const clickCompleteSet = async () => {
+  const button = screen.getByRole('button', { name: 'Complete Set' });
+  await userEvent.click(button);
 };
