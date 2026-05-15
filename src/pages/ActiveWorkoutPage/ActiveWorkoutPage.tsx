@@ -32,6 +32,8 @@ export const ActiveWorkoutPage = ({
       restTimer,
       sharedWeightOneUnit,
       sharedWeightOneValue,
+      sharedWeightTwoUnit,
+      sharedWeightTwoValue,
       startedAt,
       workoutDetails,
       workoutGoal,
@@ -445,6 +447,8 @@ export const ActiveWorkoutPage = ({
           currentRound={currentRound}
           movements={movements}
           rungIndex={currentMovementRungIndex}
+          sharedWeightTwoUnit={sharedWeightTwoUnit}
+          sharedWeightTwoValue={sharedWeightTwoValue}
           sharedWeightUnit={sharedWeightOneUnit}
           sharedWeightValue={sharedWeightOneValue}
         />

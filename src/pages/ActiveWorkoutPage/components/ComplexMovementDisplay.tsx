@@ -11,6 +11,8 @@ interface ComplexMovementDisplayProps {
   currentRound: number;
   movements: MovementOptions[];
   rungIndex: number;
+  sharedWeightTwoUnit: WeightUnit | null;
+  sharedWeightTwoValue: number | null;
   sharedWeightUnit: WeightUnit | null;
   sharedWeightValue: number | null;
 }
@@ -19,9 +21,15 @@ export const ComplexMovementDisplay = ({
   currentRound,
   movements,
   rungIndex,
+  sharedWeightTwoUnit,
+  sharedWeightTwoValue,
   sharedWeightUnit,
   sharedWeightValue,
 }: ComplexMovementDisplayProps) => {
+  const hasWeightOne = sharedWeightValue !== null && sharedWeightValue > 0;
+  const hasWeightTwo =
+    sharedWeightTwoValue !== null && sharedWeightTwoValue > 0;
+
   return (
     <Card>
       <CardHeader>
@@ -40,17 +48,31 @@ export const ComplexMovementDisplay = ({
             </div>
           </CardTitle>
 
-          {sharedWeightValue !== null && sharedWeightValue > 0 && (
+          {hasWeightOne && (
             <div className="flex items-end gap-1">
               <div
                 className="text-3xl font-medium"
                 data-testid="complex-shared-weight"
               >
-                {Math.round(sharedWeightValue)}
+                {Math.round(sharedWeightValue!)}
               </div>
               <div className="text-lg text-muted-foreground">
                 {getWeightUnitLabel(sharedWeightUnit)}
               </div>
+              {hasWeightTwo && (
+                <>
+                  <div className="text-lg text-muted-foreground">+</div>
+                  <div
+                    className="text-3xl font-medium"
+                    data-testid="complex-shared-weight-two"
+                  >
+                    {Math.round(sharedWeightTwoValue!)}
+                  </div>
+                  <div className="text-lg text-muted-foreground">
+                    {getWeightUnitLabel(sharedWeightTwoUnit)}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

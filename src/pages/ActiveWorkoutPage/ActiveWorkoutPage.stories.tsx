@@ -637,6 +637,38 @@ export const ComplexMode: Story = {
   },
 };
 
+export const ComplexModeDoubleBells: Story = {
+  parameters: {
+    workoutOptions: {
+      complexSet: true,
+      sharedWeightOneValue: 20,
+      sharedWeightOneUnit: 'kilograms',
+      sharedWeightTwoValue: 16,
+      sharedWeightTwoUnit: 'kilograms',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Clean',
+          repScheme: [5],
+          weightOneValue: 20,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 16,
+          weightTwoUnit: 'kilograms',
+        },
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Press',
+          repScheme: [5],
+          weightOneValue: 20,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 16,
+          weightTwoUnit: 'kilograms',
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
 export const ComplexModeDifferentRepSchemes: Story = {
   parameters: {
     workoutOptions: {

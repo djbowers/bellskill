@@ -10,6 +10,7 @@ import * as stories from './ActiveWorkoutPage.stories';
 const {
   BodyweightMovements,
   ComplexMode,
+  ComplexModeDoubleBells,
   ComplexModeDifferentRepSchemes,
   DoubleWeights,
   MixedWeights,
@@ -1060,6 +1061,26 @@ describe('active workout page (complex mode)', () => {
         String(movement.repScheme[0]),
       );
     });
+  });
+});
+
+describe('active workout page (complex mode, double bells)', () => {
+  const { workoutOptions } = ComplexModeDoubleBells.parameters;
+
+  beforeEach(() => {
+    render(<ComplexModeDoubleBells />);
+  });
+
+  test('shows both bell weights in the card header', () => {
+    const weightOne = screen.getByTestId('complex-shared-weight');
+    const weightTwo = screen.getByTestId('complex-shared-weight-two');
+
+    expect(weightOne).toHaveTextContent(
+      String(workoutOptions.sharedWeightOneValue),
+    );
+    expect(weightTwo).toHaveTextContent(
+      String(workoutOptions.sharedWeightTwoValue),
+    );
   });
 });
 
