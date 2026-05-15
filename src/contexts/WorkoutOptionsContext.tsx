@@ -12,9 +12,14 @@ export const DEFAULT_MOVEMENT_OPTIONS: MovementOptions = {
 };
 
 export const DEFAULT_WORKOUT_OPTIONS: WorkoutOptions = {
+  complexSet: false,
   intervalTimer: 0,
   movements: [{ ...DEFAULT_MOVEMENT_OPTIONS }],
   restTimer: 0,
+  sharedWeightOneUnit: DEFAULT_MOVEMENT_OPTIONS.weightOneUnit,
+  sharedWeightOneValue: DEFAULT_MOVEMENT_OPTIONS.weightOneValue,
+  sharedWeightTwoUnit: null,
+  sharedWeightTwoValue: null,
   workoutDetails: null,
   workoutGoal: 10,
   workoutGoalUnits: 'minutes',

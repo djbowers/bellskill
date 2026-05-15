@@ -84,6 +84,7 @@ export const CompletedWorkoutPage = () => {
     let workoutGoalUnits: WorkoutGoalUnits = workoutLog.workoutGoalUnits;
 
     updateWorkoutOptions({
+      complexSet: false,
       intervalTimer: workoutLog.intervalTimer,
       movements: movementLogs.map((movementLog) => ({
         movementName: movementLog.movementName,
@@ -94,6 +95,10 @@ export const CompletedWorkoutPage = () => {
         weightTwoValue: movementLog.weightTwoValue,
       })),
       restTimer: workoutLog.restTimer,
+      sharedWeightOneUnit: null,
+      sharedWeightOneValue: null,
+      sharedWeightTwoUnit: null,
+      sharedWeightTwoValue: null,
       workoutDetails: workoutLog.workoutDetails,
       workoutGoal,
       workoutGoalUnits,
