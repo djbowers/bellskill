@@ -976,6 +976,84 @@ describe('edge case and boundary tests', () => {
   });
 });
 
+describe('volume calculation for complex mode', () => {
+  vi.mock('~/api', () => ({
+    useLogWorkout: vi.fn(),
+  }));
+
+  const logWorkout = vi.fn();
+
+  beforeEach(() =>
+    useLogWorkout.mockReturnValue({
+      mutate: logWorkout,
+      data: null,
+      isLoading: false,
+    }),
+  );
+
+  afterEach(() => vi.clearAllMocks());
+
+  test('sums volume across all movements per press (single bell, 3 movements, 24kg × 5 reps each = 360kg)', async () => {
+    render(<ComplexMode />);
+
+    // repScheme [5, 4, 3, 2, 1] — first press is rung 0 (5 reps each)
+    await clickCompleteSet();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /finish workout/i }),
+    );
+
+    // 3 movements × 24kg × 5 reps = 360kg
+    expect(logWorkout).toHaveBeenCalledWith({
+      completedReps: 15,   // 5 + 5 + 5
+      completedRounds: 0,  // still in round 1 (only 1 of 5 rungs done)
+      completedRungs: 1,
+      completedVolume: 360,
+    });
+  });
+
+  test('accumulates volume across all rungs for a full round (single bell, 3 movements, 24kg)', async () => {
+    render(<ComplexMode />);
+
+    // repScheme [5, 4, 3, 2, 1] — complete all 5 rungs
+    await clickCompleteSet(); // rung 0: 5 reps each → 360kg
+    await clickCompleteSet(); // rung 1: 4 reps each → 288kg
+    await clickCompleteSet(); // rung 2: 3 reps each → 216kg
+    await clickCompleteSet(); // rung 3: 2 reps each → 144kg
+    await clickCompleteSet(); // rung 4: 1 rep each  →  72kg
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /finish workout/i }),
+    );
+
+    // 3 movements × 24kg × (5+4+3+2+1) reps = 3 × 24 × 15 = 1080kg
+    expect(logWorkout).toHaveBeenCalledWith({
+      completedReps: 45,   // (5+4+3+2+1) × 3 movements
+      completedRounds: 1,
+      completedRungs: 5,
+      completedVolume: 1080,
+    });
+  });
+
+  test('calculates volume correctly for double bells in complex mode (20kg + 16kg × 5 reps, 2 movements = 360kg)', async () => {
+    render(<ComplexModeDoubleBells />);
+
+    await clickCompleteSet();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /finish workout/i }),
+    );
+
+    // 2 movements × (20 + 16)kg × 5 reps = 2 × 36 × 5 = 360kg
+    expect(logWorkout).toHaveBeenCalledWith({
+      completedReps: 10,   // 5 + 5
+      completedRounds: 1,  // repScheme [5] has 1 rung — round completes on first press
+      completedRungs: 1,
+      completedVolume: 360,
+    });
+  });
+});
+
 describe('active workout page (complex mode)', () => {
   const { workoutOptions } = ComplexMode.parameters;
 
