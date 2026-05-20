@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { useWorkoutLogs } from '~/api';
 import { Loading, Page } from '~/components';
+import { Badge } from '~/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { WorkoutLog } from '~/types';
 
@@ -55,6 +56,9 @@ const WorkoutLogItem = ({ workoutLog }: { workoutLog: WorkoutLog }) => {
         )}
       </div>
       <div className="flex grow items-center justify-end gap-1">
+        {workoutLog.complexSet === true && (
+          <Badge variant="secondary">Complex</Badge>
+        )}
         {workoutLog.rpe !== null && <RpeBadge rpeValue={workoutLog.rpe} />}
         <div className="text-right">{displayText}</div>
       </div>

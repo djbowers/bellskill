@@ -34,6 +34,12 @@ describe('completed workout page', () => {
     await screen.findByTestId('workout-history-item');
   });
 
+  test('renders Complex badge in header when workout is complex', async () => {
+    render(<Default />);
+
+    await screen.findByText('Complex');
+  });
+
   test('clicking on an RPE value updates the selected value', async () => {
     render(<Default />);
 

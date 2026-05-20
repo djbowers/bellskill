@@ -7,6 +7,7 @@ export interface WorkoutLog {
   completedRounds: number;
   completedRungs: number;
   completedVolume: number | null;
+  complexSet: boolean | null;
   id: number;
   intervalTimer: number;
   movements: string[];
