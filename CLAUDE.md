@@ -47,33 +47,102 @@ spacing: {
 - Default shadcn button: `h-10` → Use: `h-4` or `h-5`
 - Default shadcn padding: `px-3` → Use: `px-2` or `px-3` (but verify against existing components)
 
+## Project Structure
+
+```
+src/
+  api/          # React Query hooks (useMovements, useLogWorkout, etc.) + Supabase calls
+  app/          # App.tsx, Root.tsx, routes.tsx — router and top-level providers
+  components/   # Shared components (Header, Page, SafeAreaWrapper) and ui/ (shadcn)
+  constants/    # Enums and static values (query keys, etc.)
+  contexts/     # React contexts (SessionContext, WorkoutOptionsContext)
+  examples/     # Test fixture factories
+  hooks/        # Shared hooks (useCountdownTimer, useDebouncedCallback)
+  lib/          # Utility library wrappers (cn() from tailwind-merge + clsx)
+  mocks/        # MSW handlers, Node server, browser SW setup
+  pages/        # One folder per route (see Page Structure below)
+  types/        # TypeScript interfaces and types (supabase.ts is auto-generated)
+  utils/        # Pure utility functions
+```
+
+## Import Path Alias
+
+`~` resolves to `src/`. Always use `~/api`, `~/components`, `~/contexts`, `~/types`, etc. rather than relative `../` paths when crossing module boundaries.
+
+## Domain Concepts
+
+- **Movement**: a single exercise (e.g. "Kettlebell Swing") with a name, rep scheme, and optional weight(s).
+- **Rep scheme / ladder**: ordered list of rep counts per rung — e.g. `[1, 2, 3, 4, 5]`.
+- **Rung**: one step in a ladder (one element of the `repScheme` array).
+- **Complex set** (`complexSet: true`): movements performed back-to-back without setting the weight down.
+- **Weight configuration**: each movement supports up to two weights. Tabs: `None`, `2H` (two-handed), `1H` (one-handed/offset), `Double` (two separate bells).
+- **Workout goal**: time-based (minutes), rounds-based, or volume-based (kg lifted).
+- **Workout options**: the full session configuration — movements, goal, timers, and weight setup — held in `WorkoutOptionsContext` and written to Supabase on completion.
+
+## Page Structure
+
+Each page is a self-contained folder under `src/pages/`:
+
+```
+pages/
+  StartWorkoutPage/
+    StartWorkoutPage.tsx        # Page component
+    StartWorkoutPage.test.tsx   # Tests
+    StartWorkoutPage.stories.tsx
+    components/                 # Components used only by this page
+    hooks/                      # Hooks used only by this page
+    utils/                      # Pure utilities for this page
+    index.ts                    # Re-exports the page component
+```
+
+## API Layer
+
+- All data-fetching hooks live in `src/api/`.
+- Queries use `useQuery`, mutations use `useMutation` (react-query v3).
+- Supabase client is the `supabase` named export from `~/supabaseClient`.
+- Query keys are defined in `src/constants/queries.enum.ts`.
+- `src/types/supabase.ts` is auto-generated — regenerate with `npm run fetch-types` after any schema change.
+
+## Testing Setup
+
+- Vitest + React Testing Library.
+- MSW (Mock Service Worker) handles API mocking:
+  - `src/mocks/server.ts` — Node server for unit tests
+  - `src/mocks/browser.ts` — browser SW for dev mode
+  - `src/mocks/handlers.ts` — shared request handlers
+- Test data lives in `src/examples/` and `src/mocks/mocked-*.ts`.
+- Test files collocate with source: `ComponentName.test.tsx`.
+
 ## Authentication
 
 - Uses Supabase Auth with both magic links and OTP (one-time passwords)
 - Magic links are primary method, OTP is fallback for mobile users
 - Session management handled via React Context
 
-## Testing
-
-- Uses Vitest for unit testing
-- Run tests with: `npm test`
-- All tests must pass before committing
-
 ## Development Commands
 
-- `npm run dev` - Start development server
+- `npm run dev` - Start development server (port 5173)
+- `npm run dev:host` - Dev server exposed on local network IP
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
-- `npm test` - Run tests
+- `npm test` - Run tests (Vitest, single run)
+- `npm run test-watch` - Run tests in watch mode
+- `npm run coverage` - Run tests with coverage report
+- `npm run compile:ts` - TypeScript type-check without emitting
 - `npm run lint` - Run ESLint
+- `npm run prettier` - Format all files with Prettier
+- `npm run storybook` - Storybook on port 6006
 - `npm run fetch-types` - Fetch Supabase types from backend
 
 ## Key Technologies
 
 - React 18 with TypeScript
 - Vite for build tooling
+- React Router v6 for routing
 - Supabase for backend and auth
 - Tailwind CSS with custom spacing
-- Radix UI primitives
-- React Query for data fetching
-- Vitest for testing
+- Radix UI primitives (via shadcn/ui)
+- React Query v3 for data fetching
+- MSW for API mocking in tests
+- Vitest + React Testing Library for testing
+- Storybook for component development
