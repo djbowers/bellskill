@@ -4,7 +4,17 @@ This section defines what the automated agents (Bellskill PM and Bellskill Build
 
 ## Current critical path
 
-**Advanced config options for complexes and chains.** Enables users to configure movements to be completed without setting down the weight (e.g., for ABC-style workouts) and other advanced patterns. Currently in progress: "Set weight down after" feature. Planned: "Repeat all movements" and "Switch to opposite side after" options. The PM agent should bias toward tickets that move this initiative forward until it ships.
+**Movement Foundation (CB-70, CB-71, CB-72, CB-73, CB-74).** Bellskill is becoming an AI-powered kettlebell coaching platform. The single blocking dependency for the entire intelligent-features roadmap is replacing free-text movement entry with a structured movement selection UI backed by the ingested functional movement database (3,000+ exercises tagged with pattern, equipment, plane, and difficulty).
+
+Downstream features that are blocked until this ships:
+- **Pattern Debt Engine** — needs movements tagged by pattern
+- **AI Next Session Recommender** — needs a structured catalog to draw from
+- **Skill Tree** — needs reliable movement identity for progression logic
+- **Analytics and gamification** — blocked on movement identity
+
+Features that may proceed in parallel (no movement-identity dependency): UI polish, bug fixes, infrastructure, and advanced config options for complexes/chains.
+
+The PM agent must triage any ticket in the Movement Foundation initiative (CB-70 through CB-74) as highest priority. Do not deprioritize these for any other feature work unless a human explicitly directs otherwise.
 
 When the critical path changes, update this section — the agents will pick up the new focus on their next run.
 
@@ -107,4 +117,4 @@ Both agents should prefer stopping and asking to improvising when they hit:
 
 ---
 
-*Last updated: 2026-04-21. Both agents read this file at the start of every run — edit here to change their behavior.*
+*Last updated: 2026-05-20. Both agents read this file at the start of every run — edit here to change their behavior.*
