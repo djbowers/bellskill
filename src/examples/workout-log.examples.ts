@@ -12,6 +12,7 @@ export class ExampleWorkoutLog implements WorkoutLog {
   completed_rounds: number;
   completed_rungs: number;
   completed_volume: number | null;
+  complex_set: boolean | null;
   id: number;
   interval_timer: number;
   movements: string[];
@@ -40,6 +41,7 @@ export class ExampleWorkoutLog implements WorkoutLog {
     completed_rounds = 0,
     completed_rungs = 0,
     completed_volume = 0,
+    complex_set = null,
     interval_timer = 0,
     movements = [],
     rest_timer = 0,
@@ -61,6 +63,7 @@ export class ExampleWorkoutLog implements WorkoutLog {
     this.completed_rounds = completed_rounds;
     this.completed_rungs = completed_rungs;
     this.completed_volume = completed_volume;
+    this.complex_set = complex_set;
     this.id = id;
     this.interval_timer = interval_timer;
     this.movements = movements;

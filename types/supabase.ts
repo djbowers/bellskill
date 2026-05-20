@@ -337,6 +337,7 @@ export type Database = {
           completed_rounds: number
           completed_rungs: number
           completed_volume: number | null
+          complex_set: boolean | null
           id: number
           interval_timer: number
           is_one_handed: boolean | null
@@ -359,6 +360,7 @@ export type Database = {
           completed_rounds: number
           completed_rungs: number
           completed_volume?: number | null
+          complex_set?: boolean | null
           id?: number
           interval_timer?: number
           is_one_handed?: boolean | null
@@ -381,6 +383,7 @@ export type Database = {
           completed_rounds?: number
           completed_rungs?: number
           completed_volume?: number | null
+          complex_set?: boolean | null
           id?: number
           interval_timer?: number
           is_one_handed?: boolean | null

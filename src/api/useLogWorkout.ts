@@ -50,6 +50,7 @@ const logWorkout = async ({
   workoutOptions: WorkoutOptions;
 }) => {
   const {
+    complexSet,
     intervalTimer,
     movements,
     restTimer,
@@ -67,6 +68,7 @@ const logWorkout = async ({
       completed_rounds: completedRounds,
       completed_rungs: completedRungs,
       completed_volume: completedVolume,
+      complex_set: complexSet,
       interval_timer: intervalTimer,
       movements: movements.map((movement) => movement.movementName),
       rest_timer: restTimer,
