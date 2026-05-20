@@ -1,5 +1,6 @@
 import { RouteObject } from 'react-router-dom';
 
+import { features } from '../config/features';
 import {
   AccountPage,
   ActiveWorkoutPage,
@@ -35,10 +36,7 @@ export const routes: RouteObject[] = [
         path: 'history/:id',
         element: <CompletedWorkoutPage />,
       },
-      {
-        path: 'movements',
-        element: <MovementsPage />,
-      },
+      ...(features.explore ? [{ path: 'movements', element: <MovementsPage /> }] : []),
     ],
   },
 ];

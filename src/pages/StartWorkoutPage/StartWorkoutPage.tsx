@@ -15,6 +15,8 @@ import {
 } from '~/types';
 import { getWeightUnitLabel } from '~/utils';
 
+import { features } from '~/config/features';
+
 import {
   ModifyCountButtons,
   ModifyWorkoutButtons,
@@ -361,91 +363,93 @@ export const StartWorkoutPage = () => {
         </Section>
       </Card>
 
-      <Card>
-        <Section title="Complex Mode">
-          <div className="flex gap-2">
-            <Button
-              className="grow"
-              variant={complexSet ? 'secondary' : 'default'}
-              onClick={() => setComplexSet(false)}
-            >
-              Standard
-            </Button>
-            <Button
-              className="grow"
-              variant={complexSet ? 'default' : 'secondary'}
-              onClick={() => setComplexSet(true)}
-            >
-              Complex
-            </Button>
-          </div>
-        </Section>
-        {complexSet && (
-          <Section
-            title="Shared Weight"
-            actions={
-              <Tabs
-                value={sharedWeightTabValue}
-                onValueChange={handleChangeSharedWeightTab}
+      {features.complexMode && (
+        <Card>
+          <Section title="Complex Mode">
+            <div className="flex gap-2">
+              <Button
+                className="grow"
+                variant={complexSet ? 'secondary' : 'default'}
+                onClick={() => setComplexSet(false)}
               >
-                <TabsList>
-                  <TabsTrigger size="sm" value="none">
-                    None
-                  </TabsTrigger>
-                  <TabsTrigger size="sm" value="2h">
-                    2H
-                  </TabsTrigger>
-                  <TabsTrigger size="sm" value="1h">
-                    1H
-                  </TabsTrigger>
-                  <TabsTrigger size="sm" value="double">
-                    Double
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            }
-          >
-            {sharedWeightOneValue !== null && (
-              <ModifyCountButtons
-                onClickMinus={() =>
-                  handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
-                }
-                onClickPlus={() =>
-                  handleChangeSharedWeightOneValue(sharedWeightOneValue + 1)
-                }
-                unit={getWeightUnitLabel(sharedWeightOneUnit)}
-                unitTabs={
-                  <WeightUnitTabs
-                    value={sharedWeightOneUnit}
-                    onChange={handleChangeSharedWeightOneUnit}
-                  />
-                }
-                value={sharedWeightOneValue}
-                onChange={(value) => handleChangeSharedWeightOneValue(value!)}
-              />
-            )}
-            {sharedWeightTwoValue !== null && sharedWeightTwoValue > 0 && (
-              <ModifyCountButtons
-                onClickMinus={() =>
-                  handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
-                }
-                onClickPlus={() =>
-                  handleChangeSharedWeightTwoValue(sharedWeightTwoValue + 1)
-                }
-                unit={getWeightUnitLabel(sharedWeightTwoUnit)}
-                unitTabs={
-                  <WeightUnitTabs
-                    value={sharedWeightTwoUnit}
-                    onChange={handleChangeSharedWeightTwoUnit}
-                  />
-                }
-                value={sharedWeightTwoValue}
-                onChange={(value) => handleChangeSharedWeightTwoValue(value)}
-              />
-            )}
+                Standard
+              </Button>
+              <Button
+                className="grow"
+                variant={complexSet ? 'default' : 'secondary'}
+                onClick={() => setComplexSet(true)}
+              >
+                Complex
+              </Button>
+            </div>
           </Section>
-        )}
-      </Card>
+          {complexSet && (
+            <Section
+              title="Shared Weight"
+              actions={
+                <Tabs
+                  value={sharedWeightTabValue}
+                  onValueChange={handleChangeSharedWeightTab}
+                >
+                  <TabsList>
+                    <TabsTrigger size="sm" value="none">
+                      None
+                    </TabsTrigger>
+                    <TabsTrigger size="sm" value="2h">
+                      2H
+                    </TabsTrigger>
+                    <TabsTrigger size="sm" value="1h">
+                      1H
+                    </TabsTrigger>
+                    <TabsTrigger size="sm" value="double">
+                      Double
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              }
+            >
+              {sharedWeightOneValue !== null && (
+                <ModifyCountButtons
+                  onClickMinus={() =>
+                    handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
+                  }
+                  onClickPlus={() =>
+                    handleChangeSharedWeightOneValue(sharedWeightOneValue + 1)
+                  }
+                  unit={getWeightUnitLabel(sharedWeightOneUnit)}
+                  unitTabs={
+                    <WeightUnitTabs
+                      value={sharedWeightOneUnit}
+                      onChange={handleChangeSharedWeightOneUnit}
+                    />
+                  }
+                  value={sharedWeightOneValue}
+                  onChange={(value) => handleChangeSharedWeightOneValue(value!)}
+                />
+              )}
+              {sharedWeightTwoValue !== null && sharedWeightTwoValue > 0 && (
+                <ModifyCountButtons
+                  onClickMinus={() =>
+                    handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
+                  }
+                  onClickPlus={() =>
+                    handleChangeSharedWeightTwoValue(sharedWeightTwoValue + 1)
+                  }
+                  unit={getWeightUnitLabel(sharedWeightTwoUnit)}
+                  unitTabs={
+                    <WeightUnitTabs
+                      value={sharedWeightTwoUnit}
+                      onChange={handleChangeSharedWeightTwoUnit}
+                    />
+                  }
+                  value={sharedWeightTwoValue}
+                  onChange={(value) => handleChangeSharedWeightTwoValue(value)}
+                />
+              )}
+            </Section>
+          )}
+        </Card>
+      )}
 
       {(workoutDetails === null || intervalTimer === 0 || restTimer === 0) && (
         <div className="flex gap-2">
