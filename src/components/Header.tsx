@@ -1,6 +1,7 @@
 import { ButtonIcon, SunIcon } from '@radix-ui/react-icons';
 import { NavLink } from 'react-router-dom';
 
+import { features } from '../config/features';
 import { supabase } from '../supabaseClient';
 import './Header.styles.css';
 import { Badge } from './ui/badge';
@@ -80,11 +81,13 @@ export const Header = () => {
             <NavLink to="/">Start</NavLink>
           </NavigationMenuLink>
         </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <NavLink to="/movements">Explore</NavLink>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
+        {features.explore && (
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+              <NavLink to="/movements">Explore</NavLink>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        )}
         <NavigationMenuItem>
           <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
             <NavLink to="/history">History</NavLink>
