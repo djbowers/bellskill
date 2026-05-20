@@ -149,6 +149,7 @@ export const CompletedWorkoutPage = () => {
           completedRounds={workoutLog.completedRounds}
           completedRungs={workoutLog.completedRungs}
           completedVolume={workoutLog.completedVolume ?? 0}
+          complexSet={workoutLog.complexSet}
           intervalTimer={workoutLog.intervalTimer}
           movementLogs={movementLogs}
           movementLogsLoading={movementLogsLoading}

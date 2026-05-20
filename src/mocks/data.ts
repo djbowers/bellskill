@@ -23,6 +23,7 @@ export const workoutLogs: WorkoutLog[] = [
     completed_rounds: 9,
     completed_rungs: 9,
     completed_volume: 1000,
+    complex_set: true,
     movements: ['Clean and Press', 'Front Squat'],
     started_at: '2023-10-11T13:47:39.636+00:00',
     workout_details: 'The Giant 3.0 W1D2',

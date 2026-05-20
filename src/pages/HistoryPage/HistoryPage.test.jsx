@@ -29,4 +29,14 @@ describe('workout history page', () => {
   test('renders rep count for bodyweight workouts', async () => {
     await screen.findByText('50 reps');
   });
+
+  test('renders Complex badge for workouts with complex_set true', async () => {
+    await screen.findByText('Complex');
+  });
+
+  test('does not render Complex badge for workouts without complex_set', async () => {
+    await screen.findByText('50 reps');
+    const badges = screen.getAllByText('Complex');
+    expect(badges).toHaveLength(1);
+  });
 });

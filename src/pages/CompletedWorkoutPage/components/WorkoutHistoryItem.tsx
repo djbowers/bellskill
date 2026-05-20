@@ -1,6 +1,7 @@
 import { DateTime, Duration } from 'luxon';
 
 import { Loading } from '~/components';
+import { Badge } from '~/components/ui/badge';
 import {
   Card,
   CardContent,
@@ -26,6 +27,7 @@ export interface WorkoutHistoryItemProps {
   completedRounds: number;
   completedRungs: number;
   completedVolume: number;
+  complexSet?: boolean | null;
   intervalTimer: number;
   movementLogs: MovementLog[];
   movementLogsLoading: boolean;
@@ -42,6 +44,7 @@ export const WorkoutHistoryItem = ({
   completedRounds,
   completedRungs,
   completedVolume,
+  complexSet,
   intervalTimer,
   movementLogs,
   movementLogsLoading,
@@ -59,7 +62,12 @@ export const WorkoutHistoryItem = ({
     <Card data-testid="workout-history-item">
       <CardHeader>
         <CardTitle className="flex items-baseline justify-between gap-1">
-          {displayDate}
+          <div className="flex items-baseline gap-1">
+            {displayDate}
+            {complexSet === true && (
+              <Badge variant="secondary">Complex</Badge>
+            )}
+          </div>
           <CardDescription className="text-xs">{timeRange}</CardDescription>
         </CardTitle>
         {workoutDetails && (
