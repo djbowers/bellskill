@@ -597,3 +597,104 @@ export const DecimalVolumeCalculation: Story = {
     },
   },
 };
+
+export const ComplexMode: Story = {
+  parameters: {
+    workoutOptions: {
+      complexSet: true,
+      sharedWeightOneValue: 24,
+      sharedWeightOneUnit: 'kilograms',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Clean',
+          repScheme: [5, 4, 3, 2, 1],
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: null,
+          weightTwoUnit: null,
+        },
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Press',
+          repScheme: [5, 4, 3, 2, 1],
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: null,
+          weightTwoUnit: null,
+        },
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Front Squat',
+          repScheme: [5, 4, 3, 2, 1],
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: null,
+          weightTwoUnit: null,
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
+export const ComplexModeDoubleBells: Story = {
+  parameters: {
+    workoutOptions: {
+      complexSet: true,
+      sharedWeightOneValue: 20,
+      sharedWeightOneUnit: 'kilograms',
+      sharedWeightTwoValue: 16,
+      sharedWeightTwoUnit: 'kilograms',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Clean',
+          repScheme: [5],
+          weightOneValue: 20,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 16,
+          weightTwoUnit: 'kilograms',
+        },
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Press',
+          repScheme: [5],
+          weightOneValue: 20,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 16,
+          weightTwoUnit: 'kilograms',
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
+export const ComplexModeDifferentRepSchemes: Story = {
+  parameters: {
+    workoutOptions: {
+      complexSet: true,
+      sharedWeightOneValue: 16,
+      sharedWeightOneUnit: 'kilograms',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Swing',
+          repScheme: [5, 4, 3],
+          weightOneValue: 16,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: null,
+          weightTwoUnit: null,
+        },
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Clean',
+          repScheme: [3],
+          weightOneValue: 16,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: null,
+          weightTwoUnit: null,
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};

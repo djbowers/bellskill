@@ -8,6 +8,7 @@ import { useCountdownTimer } from '~/hooks';
 
 import {
   ActiveWorkoutControls,
+  ComplexMovementDisplay,
   CurrentMovement,
   WorkoutProgress,
   WorkoutSummary,
@@ -25,9 +26,14 @@ export const ActiveWorkoutPage = ({
 }: ActiveWorkoutPageProps) => {
   const [
     {
+      complexSet,
       intervalTimer,
       movements,
       restTimer,
+      sharedWeightOneUnit,
+      sharedWeightOneValue,
+      sharedWeightTwoUnit,
+      sharedWeightTwoValue,
       startedAt,
       workoutDetails,
       workoutGoal,
@@ -189,10 +195,28 @@ export const ActiveWorkoutPage = ({
       totalRestMilliseconds) *
     100;
 
+  // Complex mode: round completes when the longest movement's final rung is done
+  const maxMovementRungs = complexSet
+    ? Math.max(...movements.map((m) => m.repScheme.length))
+    : currentMovementRungs;
+
   // Helper Functions
   const incrementReps = () =>
     setCompletedReps(
       (prev) => prev + currentMovement.repScheme[currentMovementRungIndex],
+    );
+
+  const incrementRepsComplex = () =>
+    setCompletedReps(
+      (prev) =>
+        prev +
+        movements.reduce((sum, m) => {
+          const repIdx = Math.min(
+            currentMovementRungIndex,
+            m.repScheme.length - 1,
+          );
+          return sum + m.repScheme[repIdx];
+        }, 0),
     );
 
   const incrementRungs = () => setCompletedRungs((prev) => prev + 1);
@@ -202,9 +226,40 @@ export const ActiveWorkoutPage = ({
   const incrementVolume = () =>
     setCompletedVolume((prev) => prev + currentRungVolume);
 
+  const incrementVolumeComplex = () => {
+    const complexVolume = movements.reduce((sum, m) => {
+      const repIdx = Math.min(
+        currentMovementRungIndex,
+        m.repScheme.length - 1,
+      );
+      const reps = m.repScheme[repIdx];
+      const weight =
+        (m.weightOneUnit === 'pounds'
+          ? (m.weightOneValue ?? 0) * LB_TO_KG
+          : (m.weightOneValue ?? 0)) +
+        (m.weightTwoUnit === 'pounds'
+          ? (m.weightTwoValue ?? 0) * LB_TO_KG
+          : (m.weightTwoValue ?? 0));
+      return sum + weight * reps;
+    }, 0);
+    setCompletedVolume((prev) => prev + complexVolume);
+  };
+
   const goToNextRung = () => {
     incrementRungs();
     if (isLastRung) {
+      incrementRounds();
+      setCurrentMovementRungIndex(0);
+    } else {
+      setCurrentMovementRungIndex((prev) => prev + 1);
+    }
+  };
+
+  const goToNextSetComplex = () => {
+    const isLastRungInComplex =
+      currentMovementRungIndex === maxMovementRungs - 1;
+    incrementRungs();
+    if (isLastRungInComplex) {
       incrementRounds();
       setCurrentMovementRungIndex(0);
     } else {
@@ -258,9 +313,15 @@ export const ActiveWorkoutPage = ({
 
   const continueWorkout = () => {
     requestWakeLock();
-    incrementReps();
-    incrementVolume();
-    goToNextSet();
+    if (complexSet) {
+      incrementRepsComplex();
+      incrementVolumeComplex();
+      goToNextSetComplex();
+    } else {
+      incrementReps();
+      incrementVolume();
+      goToNextSet();
+    }
     if (restTimer > 0) startRest();
   };
 
@@ -381,19 +442,31 @@ export const ActiveWorkoutPage = ({
         workoutTimerPaused={workoutTimerPaused}
       />
 
-      <CurrentMovement
-        currentMovement={currentMovement}
-        currentRound={currentRound}
-        isOneHanded={isOneHanded}
-        leftWeightUnit={leftWeightUnit}
-        leftWeightValue={leftWeightValue}
-        repScheme={currentMovement.repScheme}
-        restRemaining={isRestActive}
-        rightWeightUnit={rightWeightUnit}
-        rightWeightValue={rightWeightValue}
-        rungIndex={currentMovementRungIndex}
-        workoutDetails={workoutDetails}
-      />
+      {complexSet ? (
+        <ComplexMovementDisplay
+          currentRound={currentRound}
+          movements={movements}
+          rungIndex={currentMovementRungIndex}
+          sharedWeightTwoUnit={sharedWeightTwoUnit}
+          sharedWeightTwoValue={sharedWeightTwoValue}
+          sharedWeightUnit={sharedWeightOneUnit}
+          sharedWeightValue={sharedWeightOneValue}
+        />
+      ) : (
+        <CurrentMovement
+          currentMovement={currentMovement}
+          currentRound={currentRound}
+          isOneHanded={isOneHanded}
+          leftWeightUnit={leftWeightUnit}
+          leftWeightValue={leftWeightValue}
+          repScheme={currentMovement.repScheme}
+          restRemaining={isRestActive}
+          rightWeightUnit={rightWeightUnit}
+          rightWeightValue={rightWeightValue}
+          rungIndex={currentMovementRungIndex}
+          workoutDetails={workoutDetails}
+        />
+      )}
 
       <div className="flex h-5 items-center justify-center">
         <ActiveWorkoutControls
@@ -404,6 +477,7 @@ export const ActiveWorkoutPage = ({
           handleClickStart={handleClickStart}
           intervalCompletedPercentage={intervalCompletedPercentage}
           intervalTimer={intervalTimer}
+          isComplexMode={complexSet}
           isCountdownActive={isCountdownActive}
           isEffectActive={isEffectActive}
           isRestActive={isRestActive}

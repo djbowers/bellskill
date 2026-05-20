@@ -13,6 +13,7 @@ interface ActiveWorkoutControlsProps {
   handleClickStart: () => void;
   intervalCompletedPercentage: number;
   intervalTimer: number;
+  isComplexMode: boolean;
   isCountdownActive: boolean;
   isEffectActive: boolean;
   isRestActive: boolean;
@@ -29,6 +30,7 @@ export const ActiveWorkoutControls = ({
   handleClickStart,
   intervalCompletedPercentage,
   intervalTimer,
+  isComplexMode,
   isCountdownActive,
   isEffectActive,
   isRestActive,
@@ -86,7 +88,8 @@ export const ActiveWorkoutControls = ({
       onClick={handleClickContinue}
       size="lg"
     >
-      <PlusIcon className="mr-1 h-2.5 w-2.5 stroke-2" /> Continue
+      <PlusIcon className="mr-1 h-2.5 w-2.5 stroke-2" />{' '}
+      {isComplexMode ? 'Complete Set' : 'Continue'}
     </Button>
   );
 };
