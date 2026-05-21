@@ -101,7 +101,7 @@ pages/
 - Queries use `useQuery`, mutations use `useMutation` (react-query v3).
 - Supabase client is the `supabase` named export from `~/supabaseClient`.
 - Query keys are defined in `src/constants/queries.enum.ts`.
-- `src/types/supabase.ts` is auto-generated — regenerate with `npm run fetch-types` after any schema change.
+- `src/types/supabase.ts` is auto-generated — regenerate with `npm run gen:types` after any schema change (requires `supabase start` to be running).
 
 ## Testing Setup
 
@@ -132,7 +132,9 @@ pages/
 - `npm run lint` - Run ESLint
 - `npm run prettier` - Format all files with Prettier
 - `npm run storybook` - Storybook on port 6006
-- `npm run fetch-types` - Fetch Supabase types from backend
+- `npm run start:server` - Start local Supabase (required before gen:types)
+- `npm run gen:types` - Generate Supabase TypeScript types from local schema
+- `npm run diff-db` - Show schema diff (useful before creating a migration)
 
 ## Key Technologies
 
