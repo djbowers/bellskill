@@ -30,3 +30,7 @@ dist-ssr
 
 # Test coverage
 coverage
+
+# Local Supabase
+supabase/.branches
+supabase/.temp
