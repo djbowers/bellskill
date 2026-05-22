@@ -341,6 +341,14 @@ export type Database = {
           rep_scheme: number[]
           rest_timer: number
           rpe: Database["public"]["Enums"]["RPE"] | null
+          shared_weight_one_unit:
+            | Database["public"]["Enums"]["weight_unit"]
+            | null
+          shared_weight_one_value: number | null
+          shared_weight_two_unit:
+            | Database["public"]["Enums"]["weight_unit"]
+            | null
+          shared_weight_two_value: number | null
           started_at: string
           unit: string | null
           user_id: string
@@ -364,6 +372,14 @@ export type Database = {
           rep_scheme?: number[]
           rest_timer?: number
           rpe?: Database["public"]["Enums"]["RPE"] | null
+          shared_weight_one_unit?:
+            | Database["public"]["Enums"]["weight_unit"]
+            | null
+          shared_weight_one_value?: number | null
+          shared_weight_two_unit?:
+            | Database["public"]["Enums"]["weight_unit"]
+            | null
+          shared_weight_two_value?: number | null
           started_at: string
           unit?: string | null
           user_id: string
@@ -387,6 +403,14 @@ export type Database = {
           rep_scheme?: number[]
           rest_timer?: number
           rpe?: Database["public"]["Enums"]["RPE"] | null
+          shared_weight_one_unit?:
+            | Database["public"]["Enums"]["weight_unit"]
+            | null
+          shared_weight_one_value?: number | null
+          shared_weight_two_unit?:
+            | Database["public"]["Enums"]["weight_unit"]
+            | null
+          shared_weight_two_value?: number | null
           started_at?: string
           unit?: string | null
           user_id?: string

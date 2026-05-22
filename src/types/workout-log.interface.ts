@@ -1,4 +1,5 @@
 import { RpeOptions } from './rpe-options.type';
+import { WeightUnit } from './weight-unit.type';
 import { WorkoutGoalUnits } from './workout-goal-units.type';
 
 export interface WorkoutLog {
@@ -13,6 +14,10 @@ export interface WorkoutLog {
   movements: string[];
   restTimer: number;
   rpe: RpeOptions | null;
+  sharedWeightOneUnit: WeightUnit | null;
+  sharedWeightOneValue: number | null;
+  sharedWeightTwoUnit: WeightUnit | null;
+  sharedWeightTwoValue: number | null;
   startedAt: Date;
   workoutDetails: string | null;
   workoutGoal: number;
