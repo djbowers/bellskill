@@ -29,7 +29,7 @@ const searchMovements = async (
 
   movementsQuery = applyWeightModeToMovementsQuery(movementsQuery, weightMode);
 
-  const { data, error } = await movementsQuery.order('Movement').limit(8);
+  const { data, error } = await movementsQuery.order('Movement').limit(20);
 
   if (error) throw error;
   return (data ?? []).map((m) => ({ id: m.id, name: m['Movement'] }));

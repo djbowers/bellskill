@@ -6,11 +6,16 @@ on:
       - develop
     paths:
       - supabase/**
+  workflow_run:
+    workflows: ["Sync develop from main"]
+    types:
+      - completed
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
 
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -19,6 +24,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: develop
 
       - uses: supabase/setup-cli@v1
         with:
