@@ -280,51 +280,6 @@ export type Database = {
         }
         Relationships: []
       }
-      progress_items: {
-        Row: {
-          category: string
-          created_at: string | null
-          icon_name: string | null
-          id: string
-          level: number
-          max_xp: number
-          name: string
-          progress: number
-          type: string
-          updated_at: string | null
-          user_id: string
-          xp: number
-        }
-        Insert: {
-          category: string
-          created_at?: string | null
-          icon_name?: string | null
-          id?: string
-          level?: number
-          max_xp?: number
-          name: string
-          progress?: number
-          type: string
-          updated_at?: string | null
-          user_id: string
-          xp?: number
-        }
-        Update: {
-          category?: string
-          created_at?: string | null
-          icon_name?: string | null
-          id?: string
-          level?: number
-          max_xp?: number
-          name?: string
-          progress?: number
-          type?: string
-          updated_at?: string | null
-          user_id?: string
-          xp?: number
-        }
-        Relationships: []
-      }
       workout_logs: {
         Row: {
           bells: number[]
