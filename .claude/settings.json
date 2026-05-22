@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__e7560fe6-e0dc-4e41-8b81-77e2cf92370e__get_issue",
+      "Bash(npm test *)",
+      "Bash(npm run compile:ts *)",
+      "Bash(npx supabase status *)"
+    ]
+  }
+}
