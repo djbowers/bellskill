@@ -29,6 +29,18 @@ jobs:
       - run: npm run build
       - run: npm run test
 
+  integration-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 24.x
+          cache: 'npm'
+      - run: npm ci
+
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v1
         with:
