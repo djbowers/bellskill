@@ -103,7 +103,7 @@ export const MovementAutocomplete = ({
       {showDropdown && (
         <ul
           role="listbox"
-          className="absolute left-0 right-0 top-full z-50 mt-0.5 max-h-6 overflow-y-auto rounded-md border border-input bg-background shadow-md"
+          className="absolute left-0 right-0 top-full z-50 mt-0.5 max-h-[220px] overflow-y-auto rounded-md border border-input bg-background shadow-md"
         >
           {filteredRecent.length > 0 && (
             <>
