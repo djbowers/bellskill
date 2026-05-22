@@ -595,6 +595,7 @@ export const StartWorkoutPage = () => {
                 autoFocus
                 value={movement.movementName}
                 onChange={(name) => handleChangeMovementName(index, name)}
+                weightTab={weightTabValue}
               />
             </Section>
             {!complexSet && (

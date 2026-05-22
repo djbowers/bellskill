@@ -2,14 +2,25 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useCreateUserMovement } from '~/api/useCreateUserMovement';
 import { useMovementSearch } from '~/api/useMovementSearch';
-import { useUserMovements } from '~/api/useUserMovements';
+import { useUserMovementFrequency } from '~/api/useUserMovementFrequency';
 import { cn } from '~/lib/utils';
+import { rankMovements } from '~/utils';
+
+type WeightTab = 'none' | '2h' | '1h' | 'double';
+
+const ARM_TYPE: Record<WeightTab, string> = {
+  none: 'No Arms',
+  '2h': 'Double Arm',
+  '1h': 'Single Arm',
+  double: 'Double Arm',
+};
 
 interface MovementAutocompleteProps {
   value: string;
   onChange: (name: string) => void;
   autoFocus?: boolean;
   className?: string;
+  weightTab?: WeightTab | null;
 }
 
 export const MovementAutocomplete = ({
@@ -17,6 +28,7 @@ export const MovementAutocomplete = ({
   onChange,
   autoFocus,
   className,
+  weightTab,
 }: MovementAutocompleteProps) => {
   const [inputValue, setInputValue] = useState(value);
   const [isOpen, setIsOpen] = useState(false);
@@ -27,23 +39,31 @@ export const MovementAutocomplete = ({
     setInputValue(value);
   }, [value]);
 
-  const { data: recentMovements = [] } = useUserMovements();
-  const { data: catalogResults = [] } = useMovementSearch(inputValue);
+  const singleOrDoubleArm = weightTab ? ARM_TYPE[weightTab] : null;
+
+  const { data: frequentMovements = [] } = useUserMovementFrequency();
+  const { data: catalogResults = [] } = useMovementSearch(inputValue, singleOrDoubleArm);
   const createUserMovement = useCreateUserMovement();
+
+  const frequentNames = new Set(
+    frequentMovements.map((m) => m.canonicalName.toLowerCase()),
+  );
 
   const filteredRecent =
     inputValue.length >= 1
-      ? recentMovements.filter((m) =>
+      ? frequentMovements.filter((m) =>
           m.canonicalName.toLowerCase().includes(inputValue.toLowerCase()),
         )
-      : recentMovements.slice(0, 8);
+      : frequentMovements.slice(0, 8);
 
   const catalogNames = new Set(filteredRecent.map((m) => m.canonicalName.toLowerCase()));
   const uniqueCatalog = catalogResults.filter(
     (m) => !catalogNames.has(m.name.toLowerCase()),
   );
+  const rankedCatalog =
+    inputValue.length >= 2 ? rankMovements(uniqueCatalog, inputValue, frequentNames) : uniqueCatalog;
 
-  const hasOptions = filteredRecent.length > 0 || uniqueCatalog.length > 0;
+  const hasOptions = filteredRecent.length > 0 || rankedCatalog.length > 0;
   const showCustomEntry =
     inputValue.length > 0 &&
     !filteredRecent.some(
@@ -127,14 +147,14 @@ export const MovementAutocomplete = ({
             </>
           )}
 
-          {uniqueCatalog.length > 0 && (
+          {rankedCatalog.length > 0 && (
             <>
               {filteredRecent.length > 0 && (
                 <li className="px-2 py-0.5 text-xs font-medium text-muted-foreground">
                   From catalog
                 </li>
               )}
-              {uniqueCatalog.map((movement) => (
+              {rankedCatalog.map((movement) => (
                 <li
                   key={movement.id}
                   role="option"
