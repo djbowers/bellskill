@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
-import { Input } from '~/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { DEFAULT_MOVEMENT_OPTIONS, useWorkoutOptions } from '~/contexts';
 import {
@@ -19,6 +18,7 @@ import { features } from '~/config/features';
 
 import {
   ModifyCountButtons,
+  MovementAutocomplete,
   ModifyWorkoutButtons,
   Section,
   WeightUnitTabs,
@@ -591,15 +591,10 @@ export const StartWorkoutPage = () => {
                 </Button>
               }
             >
-              <Input
+              <MovementAutocomplete
                 autoFocus
-                aria-label="Movement Input"
                 value={movement.movementName}
-                onChange={(e) =>
-                  handleChangeMovementName(index, e.target.value)
-                }
-                className="w-full"
-                id="movement"
+                onChange={(name) => handleChangeMovementName(index, name)}
               />
             </Section>
             {!complexSet && (

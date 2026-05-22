@@ -1,9 +1,16 @@
 import { composeStories } from '@storybook/react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter } from 'react-router-dom';
 
 import { DEFAULT_MOVEMENT_OPTIONS, DEFAULT_WORKOUT_OPTIONS, WorkoutOptionsContext } from '~/contexts';
+
+function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+}
 
 import * as stories from './StartWorkoutPage.stories';
 import { StartWorkoutPage } from './StartWorkoutPage';
@@ -536,11 +543,13 @@ describe('integration tests for previous volume retrieval', () => {
     };
 
     render(
-      <MemoryRouter>
-        <WorkoutOptionsContext.Provider value={[customWorkoutOptions, startWorkout]}>
-          <StartWorkoutPage />
-        </WorkoutOptionsContext.Provider>
-      </MemoryRouter>
+      <QueryClientProvider client={makeQueryClient()}>
+        <MemoryRouter>
+          <WorkoutOptionsContext.Provider value={[customWorkoutOptions, startWorkout]}>
+            <StartWorkoutPage />
+          </WorkoutOptionsContext.Provider>
+        </MemoryRouter>
+      </QueryClientProvider>
     );
 
     await userEvent.type(
@@ -571,11 +580,13 @@ describe('integration tests for previous volume retrieval', () => {
     };
 
     render(
-      <MemoryRouter>
-        <WorkoutOptionsContext.Provider value={[workoutOptionsAfterCompletion, startWorkout]}>
-          <StartWorkoutPage />
-        </WorkoutOptionsContext.Provider>
-      </MemoryRouter>
+      <QueryClientProvider client={makeQueryClient()}>
+        <MemoryRouter>
+          <WorkoutOptionsContext.Provider value={[workoutOptionsAfterCompletion, startWorkout]}>
+            <StartWorkoutPage />
+          </WorkoutOptionsContext.Provider>
+        </MemoryRouter>
+      </QueryClientProvider>
     );
 
     await userEvent.type(
@@ -609,11 +620,13 @@ describe('integration tests for previous volume retrieval', () => {
     };
 
     render(
-      <MemoryRouter>
-        <WorkoutOptionsContext.Provider value={[workoutOptionsWithAllPrevious, startWorkout]}>
-          <StartWorkoutPage />
-        </WorkoutOptionsContext.Provider>
-      </MemoryRouter>
+      <QueryClientProvider client={makeQueryClient()}>
+        <MemoryRouter>
+          <WorkoutOptionsContext.Provider value={[workoutOptionsWithAllPrevious, startWorkout]}>
+            <StartWorkoutPage />
+          </WorkoutOptionsContext.Provider>
+        </MemoryRouter>
+      </QueryClientProvider>
     );
 
     await userEvent.type(
