@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { SessionProvider } from '~/contexts';
 import { server } from '~/mocks/server';
 import { VITE_SUPABASE_URL } from '~/env';
+import { WeightTabValue } from '~/types';
 
 import { MovementAutocomplete } from './MovementAutocomplete';
 
@@ -41,10 +42,38 @@ function makeWrapper(withSession = true) {
     );
 }
 
-function renderAutocomplete(value = '', onChange = vi.fn(), withSession = true) {
+interface RenderOptions {
+  value?: string;
+  onChange?: ReturnType<typeof vi.fn>;
+  weightMode?: WeightTabValue;
+  onWeightModeChange?: ReturnType<typeof vi.fn>;
+  withSession?: boolean;
+  showWeightModeTabs?: boolean;
+  weightSummary?: string | null;
+  weightModeHint?: string | null;
+}
+
+function renderAutocomplete({
+  value = '',
+  onChange = vi.fn(),
+  weightMode = '2h',
+  onWeightModeChange = vi.fn(),
+  withSession = true,
+  showWeightModeTabs = true,
+  weightSummary = null,
+  weightModeHint = null,
+}: RenderOptions = {}) {
   const wrapper = makeWrapper(withSession);
   return render(
-    <MovementAutocomplete value={value} onChange={onChange} />,
+    <MovementAutocomplete
+      value={value}
+      onChange={onChange}
+      weightMode={weightMode}
+      onWeightModeChange={onWeightModeChange}
+      showWeightModeTabs={showWeightModeTabs}
+      weightSummary={weightSummary}
+      weightModeHint={weightModeHint}
+    />,
     { wrapper },
   );
 }
@@ -62,15 +91,30 @@ describe('MovementAutocomplete', () => {
     expect(screen.getByRole('textbox', { name: 'Movement Input' })).toBeInTheDocument();
   });
 
+  test('renders weight mode tabs by default', () => {
+    renderAutocomplete();
+    expect(screen.getByRole('tab', { name: 'None' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: '2H' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: '1H' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Double' })).toBeInTheDocument();
+  });
+
+  test('calls onWeightModeChange when a weight tab is selected', async () => {
+    const onWeightModeChange = vi.fn();
+    renderAutocomplete({ onWeightModeChange });
+
+    await userEvent.click(screen.getByRole('tab', { name: '1H' }));
+    expect(onWeightModeChange).toHaveBeenCalledWith('1h');
+  });
+
   test('calls onChange on every keystroke with accumulated value', async () => {
     const onChange = vi.fn();
-    renderAutocomplete('', onChange);
+    renderAutocomplete({ onChange });
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
     await userEvent.type(input, 'Swing');
 
     expect(onChange).toHaveBeenCalledTimes(5);
-    // Component maintains internal state, so accumulated value is passed on each keypress
     expect(onChange).toHaveBeenNthCalledWith(1, 'S');
     expect(onChange).toHaveBeenNthCalledWith(2, 'Sw');
     expect(onChange).toHaveBeenNthCalledWith(3, 'Swi');
@@ -171,7 +215,7 @@ describe('MovementAutocomplete', () => {
     );
 
     const onChange = vi.fn();
-    renderAutocomplete('', onChange);
+    renderAutocomplete({ onChange });
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
     await userEvent.click(input);
@@ -207,13 +251,14 @@ describe('MovementAutocomplete', () => {
     );
 
     const onChange = vi.fn();
-    renderAutocomplete('Kettlebell', onChange);
+    renderAutocomplete({ value: 'Kettlebell', onChange });
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
     await userEvent.click(input);
 
     await waitFor(() => {
       expect(screen.getByText('Kettlebell Snatch')).toBeInTheDocument();
+      expect(screen.getByText('Catalog (2H)')).toBeInTheDocument();
     });
 
     await userEvent.click(screen.getByText('Kettlebell Snatch'));
@@ -224,8 +269,21 @@ describe('MovementAutocomplete', () => {
     });
   });
 
+  test('shows catalog empty state when search has no catalog matches', async () => {
+    renderAutocomplete({ value: 'Swing' });
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/No 2h movements for.*Swing.*try another mode/i),
+      ).toBeInTheDocument();
+    });
+  });
+
   test('shows custom entry option when no exact match exists', async () => {
-    renderAutocomplete('My Custom Move');
+    renderAutocomplete({ value: 'My Custom Move' });
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
     await userEvent.click(input);
@@ -235,16 +293,43 @@ describe('MovementAutocomplete', () => {
     });
   });
 
+  test('shows weight summary chip when value is set and dropdown is closed', () => {
+    renderAutocomplete({
+      value: 'Kettlebell Swing',
+      weightSummary: '16 kg (2h)',
+    });
+
+    expect(screen.getByText('16 kg (2h)')).toBeInTheDocument();
+  });
+
+  test('shows shared weight hint when tabs are hidden', () => {
+    renderAutocomplete({
+      showWeightModeTabs: false,
+      weightModeHint: 'Using shared weight: 2H',
+    });
+
+    expect(screen.getByText('Using shared weight: 2H')).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: '2H' })).not.toBeInTheDocument();
+  });
+
   test('does not show recent movements when there is no session', async () => {
     server.use(
       http.get(USER_MOVEMENTS_URL, () =>
         HttpResponse.json([
-          { id: 'um-1', canonical_name: 'Clean and Press', functional_movement_id: null, created_at: '2026-05-20T10:00:00Z', user_id: 'user-123', is_big_6: false, skill_tree_enabled: false },
+          {
+            id: 'um-1',
+            canonical_name: 'Clean and Press',
+            functional_movement_id: null,
+            created_at: '2026-05-20T10:00:00Z',
+            user_id: 'user-123',
+            is_big_6: false,
+            skill_tree_enabled: false,
+          },
         ]),
       ),
     );
 
-    renderAutocomplete('', vi.fn(), false);
+    renderAutocomplete({ withSession: false });
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
     await userEvent.click(input);

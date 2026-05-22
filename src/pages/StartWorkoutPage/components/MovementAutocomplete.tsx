@@ -4,10 +4,19 @@ import { useCreateUserMovement } from '~/api/useCreateUserMovement';
 import { useMovementSearch } from '~/api/useMovementSearch';
 import { useUserMovements } from '~/api/useUserMovements';
 import { cn } from '~/lib/utils';
+import { WeightTabValue } from '~/types';
+import { WEIGHT_MODE_LABELS } from '~/utils';
+
+import { WeightModeTabs } from './WeightModeTabs';
 
 interface MovementAutocompleteProps {
   value: string;
   onChange: (name: string) => void;
+  weightMode: WeightTabValue;
+  onWeightModeChange: (mode: WeightTabValue) => void;
+  weightSummary?: string | null;
+  showWeightModeTabs?: boolean;
+  weightModeHint?: string | null;
   autoFocus?: boolean;
   className?: string;
 }
@@ -15,6 +24,11 @@ interface MovementAutocompleteProps {
 export const MovementAutocomplete = ({
   value,
   onChange,
+  weightMode,
+  onWeightModeChange,
+  weightSummary = null,
+  showWeightModeTabs = true,
+  weightModeHint = null,
   autoFocus,
   className,
 }: MovementAutocompleteProps) => {
@@ -22,13 +36,12 @@ export const MovementAutocomplete = ({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sync external value changes (e.g., when parent resets the field)
   useEffect(() => {
     setInputValue(value);
   }, [value]);
 
   const { data: recentMovements = [] } = useUserMovements();
-  const { data: catalogResults = [] } = useMovementSearch(inputValue);
+  const { data: catalogResults = [] } = useMovementSearch(inputValue, weightMode);
   const createUserMovement = useCreateUserMovement();
 
   const filteredRecent =
@@ -43,12 +56,19 @@ export const MovementAutocomplete = ({
     (m) => !catalogNames.has(m.name.toLowerCase()),
   );
 
-  const hasOptions = filteredRecent.length > 0 || uniqueCatalog.length > 0;
+  const catalogSearched = inputValue.length >= 2;
+  const showCatalogEmpty = catalogSearched && uniqueCatalog.length === 0;
+
   const showCustomEntry =
     inputValue.length > 0 &&
     !filteredRecent.some(
       (m) => m.canonicalName.toLowerCase() === inputValue.toLowerCase(),
     );
+
+  const hasOptions =
+    filteredRecent.length > 0 || uniqueCatalog.length > 0 || showCatalogEmpty;
+
+  const catalogSectionLabel = `Catalog (${WEIGHT_MODE_LABELS[weightMode]})`;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -67,6 +87,11 @@ export const MovementAutocomplete = ({
     setIsOpen(true);
   };
 
+  const handleWeightModeChange = (mode: WeightTabValue) => {
+    onWeightModeChange(mode);
+    setIsOpen(true);
+  };
+
   const handleSelect = (name: string, functionalMovementId?: string | null) => {
     setInputValue(name);
     onChange(name);
@@ -80,9 +105,22 @@ export const MovementAutocomplete = ({
   };
 
   const showDropdown = isOpen && (hasOptions || showCustomEntry);
+  const showSummaryChip = value.length > 0 && weightSummary && !isOpen;
 
   return (
     <div ref={containerRef} className="relative w-full">
+      {showWeightModeTabs && (
+        <WeightModeTabs
+          value={weightMode}
+          onValueChange={handleWeightModeChange}
+          className="mb-1"
+        />
+      )}
+
+      {weightModeHint && (
+        <p className="mb-1 text-xs text-muted-foreground">{weightModeHint}</p>
+      )}
+
       <input
         aria-label="Movement Input"
         autoFocus={autoFocus}
@@ -99,6 +137,10 @@ export const MovementAutocomplete = ({
         onChange={handleInputChange}
         onFocus={() => setIsOpen(true)}
       />
+
+      {showSummaryChip && (
+        <p className="mt-1 text-xs text-muted-foreground">{weightSummary}</p>
+      )}
 
       {showDropdown && (
         <ul
@@ -129,11 +171,9 @@ export const MovementAutocomplete = ({
 
           {uniqueCatalog.length > 0 && (
             <>
-              {filteredRecent.length > 0 && (
-                <li className="px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  From catalog
-                </li>
-              )}
+              <li className="px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {catalogSectionLabel}
+              </li>
               {uniqueCatalog.map((movement) => (
                 <li
                   key={movement.id}
@@ -149,6 +189,13 @@ export const MovementAutocomplete = ({
                 </li>
               ))}
             </>
+          )}
+
+          {showCatalogEmpty && (
+            <li className="px-2 py-1 text-sm text-muted-foreground">
+              No {WEIGHT_MODE_LABELS[weightMode].toLowerCase()} movements for &ldquo;
+              {inputValue}&rdquo; — try another mode
+            </li>
           )}
 
           {showCustomEntry && (
