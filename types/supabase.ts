@@ -280,6 +280,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_movements: {
+        Row: {
+          canonical_name: string
+          created_at: string | null
+          functional_movement_id: string | null
+          id: string
+          is_big_6: boolean | null
+          skill_tree_enabled: boolean | null
+          user_id: string
+        }
+        Insert: {
+          canonical_name: string
+          created_at?: string | null
+          functional_movement_id?: string | null
+          id?: string
+          is_big_6?: boolean | null
+          skill_tree_enabled?: boolean | null
+          user_id: string
+        }
+        Update: {
+          canonical_name?: string
+          created_at?: string | null
+          functional_movement_id?: string | null
+          id?: string
+          is_big_6?: boolean | null
+          skill_tree_enabled?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_movements_functional_movement_id_fkey"
+            columns: ["functional_movement_id"]
+            isOneToOne: false
+            referencedRelation: "movements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_logs: {
         Row: {
           bells: number[]
