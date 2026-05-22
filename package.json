@@ -20,7 +20,10 @@
     "coverage": "vitest run --coverage",
     "compile:ts": "npx tsc --noEmit",
     "start:server": "supabase start",
-    "prettier": "prettier --write ."
+    "prettier": "prettier --write .",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "PWDEBUG=1 playwright test"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.16",
@@ -49,6 +52,7 @@
     "use-query-params": "^2.2.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@storybook/addon-essentials": "^7.2.3",
     "@storybook/addon-interactions": "^7.2.3",
     "@storybook/addon-links": "^7.2.3",
@@ -69,6 +73,7 @@
     "@vitejs/plugin-react": "^4.0.3",
     "@vitest/coverage-v8": "^1.2.1",
     "autoprefixer": "^10.4.14",
+    "dotenv": "^17.4.2",
     "eslint": "^8.45.0",
     "eslint-plugin-react": "^7.32.2",
     "eslint-plugin-react-hooks": "^4.6.0",
