@@ -16,6 +16,7 @@ export type Database = {
           movement_name: string
           rep_scheme: number[]
           user_id: string
+          user_movement_id: string | null
           weight_one_unit: Database["public"]["Enums"]["weight_unit"] | null
           weight_one_value: number | null
           weight_two_unit: Database["public"]["Enums"]["weight_unit"] | null
@@ -28,6 +29,7 @@ export type Database = {
           movement_name: string
           rep_scheme?: number[]
           user_id: string
+          user_movement_id?: string | null
           weight_one_unit?: Database["public"]["Enums"]["weight_unit"] | null
           weight_one_value?: number | null
           weight_two_unit?: Database["public"]["Enums"]["weight_unit"] | null
@@ -40,6 +42,7 @@ export type Database = {
           movement_name?: string
           rep_scheme?: number[]
           user_id?: string
+          user_movement_id?: string | null
           weight_one_unit?: Database["public"]["Enums"]["weight_unit"] | null
           weight_one_value?: number | null
           weight_two_unit?: Database["public"]["Enums"]["weight_unit"] | null
@@ -52,6 +55,13 @@ export type Database = {
             columns: ["workout_log_id"]
             isOneToOne: false
             referencedRelation: "workout_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movement_logs_user_movement_id_fkey"
+            columns: ["user_movement_id"]
+            isOneToOne: false
+            referencedRelation: "user_movements"
             referencedColumns: ["id"]
           },
         ]

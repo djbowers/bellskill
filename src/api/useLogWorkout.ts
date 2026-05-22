@@ -64,6 +64,19 @@ const logWorkout = async ({
     workoutGoalUnits,
   } = workoutOptions;
 
+  const { data: userMovements } = await supabase
+    .from('user_movements')
+    .select('id, canonical_name')
+    .eq('user_id', userId)
+    .in(
+      'canonical_name',
+      movements.map((m) => m.movementName),
+    );
+
+  const userMovementIdByName = Object.fromEntries(
+    (userMovements ?? []).map((um) => [um.canonical_name, um.id]),
+  );
+
   const { error, data: workoutLogs } = await supabase
     .from('workout_logs')
     .insert({
@@ -100,6 +113,7 @@ const logWorkout = async ({
     .insert(
       movements.map((movement) => ({
         movement_name: movement.movementName,
+        user_movement_id: userMovementIdByName[movement.movementName] ?? null,
         rep_scheme: movement.repScheme,
         weight_one_unit: movement.weightOneUnit,
         weight_one_value: movement.weightOneValue,

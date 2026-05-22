@@ -16,6 +16,7 @@ import { useLogWorkout } from './useLogWorkout';
 
 const WORKOUT_LOGS_URL = `${VITE_SUPABASE_URL}/rest/v1/workout_logs`;
 const MOVEMENT_LOGS_URL = `${VITE_SUPABASE_URL}/rest/v1/movement_logs`;
+const USER_MOVEMENTS_URL = `${VITE_SUPABASE_URL}/rest/v1/user_movements`;
 
 const mockSession = {
   user: {
@@ -73,6 +74,7 @@ const logWorkoutInput = {
 describe('useLogWorkout — complex_set persistence', () => {
   beforeEach(() => {
     server.use(
+      http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
       http.post(MOVEMENT_LOGS_URL, () => HttpResponse.json([])),
     );
   });

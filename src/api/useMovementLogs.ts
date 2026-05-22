@@ -14,7 +14,7 @@ const fetchMovementLogs = async (
 ): Promise<MovementLog[]> => {
   const { data: movementLogs, error } = await supabase
     .from('movement_logs')
-    .select(`*`)
+    .select(`*, user_movements(id, canonical_name, functional_movement_id)`)
     .eq('workout_log_id', parseInt(workoutLogId));
 
   if (error) {
@@ -26,6 +26,7 @@ const fetchMovementLogs = async (
     id: movementLog.id,
     movementName: movementLog.movement_name,
     repScheme: movementLog.rep_scheme,
+    userMovementId: movementLog.user_movement_id,
     weightOneUnit: movementLog.weight_one_unit,
     weightOneValue: movementLog.weight_one_value,
     weightTwoUnit: movementLog.weight_two_unit,

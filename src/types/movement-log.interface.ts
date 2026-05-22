@@ -4,6 +4,7 @@ export interface MovementLog {
   id: number;
   movementName: string;
   repScheme: number[];
+  userMovementId: string | null;
   weightOneUnit: WeightUnit | null;
   weightOneValue: number | null;
   weightTwoUnit: WeightUnit | null;
