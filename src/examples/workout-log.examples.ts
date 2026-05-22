@@ -12,12 +12,16 @@ export class ExampleWorkoutLog implements WorkoutLog {
   completed_rounds: number;
   completed_rungs: number;
   completed_volume: number | null;
-  complex_set: boolean | null;
+  complex_set: boolean;
   id: number;
   interval_timer: number;
   movements: string[];
   rest_timer: number;
   rpe: RpeOptions | null;
+  shared_weight_one_unit: 'kilograms' | 'pounds' | null;
+  shared_weight_one_value: number | null;
+  shared_weight_two_unit: 'kilograms' | 'pounds' | null;
+  shared_weight_two_value: number | null;
   started_at: string;
   user_id: string;
   workout_details: string | null;
@@ -41,11 +45,15 @@ export class ExampleWorkoutLog implements WorkoutLog {
     completed_rounds = 0,
     completed_rungs = 0,
     completed_volume = 0,
-    complex_set = null,
+    complex_set = false,
     interval_timer = 0,
     movements = [],
     rest_timer = 0,
     rpe = 'ideal',
+    shared_weight_one_unit = null,
+    shared_weight_one_value = null,
+    shared_weight_two_unit = null,
+    shared_weight_two_value = null,
     started_at = new Date().toISOString(),
     user_id = '1',
     workout_details = '',
@@ -69,6 +77,10 @@ export class ExampleWorkoutLog implements WorkoutLog {
     this.movements = movements;
     this.rest_timer = rest_timer;
     this.rpe = rpe;
+    this.shared_weight_one_unit = shared_weight_one_unit;
+    this.shared_weight_one_value = shared_weight_one_value;
+    this.shared_weight_two_unit = shared_weight_two_unit;
+    this.shared_weight_two_value = shared_weight_two_value;
     this.started_at = started_at;
     this.user_id = user_id;
     this.workout_details = workout_details;
