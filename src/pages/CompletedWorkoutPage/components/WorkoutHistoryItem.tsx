@@ -1,5 +1,3 @@
-import { DateTime, Duration } from 'luxon';
-
 import { Loading } from '~/components';
 import { Badge } from '~/components/ui/badge';
 import {
@@ -11,7 +9,7 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import { Separator } from '~/components/ui/separator';
-import { MovementLog } from '~/types';
+import { MovementLog, WeightUnit } from '~/types';
 
 import {
   getDisplayDate,
@@ -19,6 +17,7 @@ import {
   getRepSchemeDisplayValue,
   getTimeRange,
   getWeightsDisplayValue,
+  resolveSharedWeights,
 } from '../utils';
 
 export interface WorkoutHistoryItemProps {
@@ -32,6 +31,10 @@ export interface WorkoutHistoryItemProps {
   movementLogs: MovementLog[];
   movementLogsLoading: boolean;
   restTimer: number;
+  sharedWeightOneUnit?: WeightUnit | null;
+  sharedWeightOneValue?: number | null;
+  sharedWeightTwoUnit?: WeightUnit | null;
+  sharedWeightTwoValue?: number | null;
   startedAt: Date;
   workoutDetails: string | null;
   workoutGoal: number;
@@ -49,6 +52,10 @@ export const WorkoutHistoryItem = ({
   movementLogs,
   movementLogsLoading,
   restTimer,
+  sharedWeightOneUnit,
+  sharedWeightOneValue,
+  sharedWeightTwoUnit,
+  sharedWeightTwoValue,
   startedAt,
   workoutDetails,
   workoutGoal,
@@ -57,6 +64,14 @@ export const WorkoutHistoryItem = ({
   const displayDate = getDisplayDate(completedAt);
   const duration = getDuration(startedAt, completedAt);
   const timeRange = getTimeRange(startedAt, completedAt);
+  const isComplexSet = complexSet === true;
+  const sharedWeights = resolveSharedWeights(
+    sharedWeightOneValue,
+    sharedWeightOneUnit,
+    sharedWeightTwoValue,
+    sharedWeightTwoUnit,
+    movementLogs,
+  );
 
   return (
     <Card data-testid="workout-history-item">
@@ -64,9 +79,7 @@ export const WorkoutHistoryItem = ({
         <CardTitle className="flex items-baseline justify-between gap-1">
           <div className="flex items-baseline gap-1">
             {displayDate}
-            {complexSet === true && (
-              <Badge variant="secondary">Complex</Badge>
-            )}
+            {isComplexSet && <Badge variant="secondary">Complex</Badge>}
           </div>
           <CardDescription className="text-xs">{timeRange}</CardDescription>
         </CardTitle>
@@ -105,36 +118,61 @@ export const WorkoutHistoryItem = ({
           <Loading />
         </div>
       ) : (
-        movementLogs.map((movement, index) => (
-          <CardContent key={movement.id}>
-            <div className="flex gap-2">
-              <div className="grow">
-                <CardDescription>Movement #{index + 1}</CardDescription>
-                <div>{movement.movementName}</div>
+        <>
+          {isComplexSet && (
+            <CardContent>
+              <CardDescription id="shared-weight">Shared Weight</CardDescription>
+              <div aria-labelledby="shared-weight">
+                {getWeightsDisplayValue(
+                  sharedWeights.weightOneValue,
+                  sharedWeights.weightOneUnit,
+                  sharedWeights.weightTwoValue,
+                  sharedWeights.weightTwoUnit,
+                )}
               </div>
-              <div className="grow text-right">
-                <CardDescription id="weights">Weights</CardDescription>
-                <div aria-labelledby="weights">
-                  {getWeightsDisplayValue(
-                    movement.weightOneValue,
-                    movement.weightOneUnit,
-                    movement.weightTwoValue,
-                    movement.weightTwoUnit,
-                  )}
+            </CardContent>
+          )}
+          {movementLogs.map((movement, index) => (
+            <CardContent key={movement.id}>
+              <div className="flex gap-2">
+                <div className="grow">
+                  <CardDescription>Movement #{index + 1}</CardDescription>
+                  <div>{movement.movementName}</div>
+                </div>
+                {!isComplexSet && (
+                  <div className="grow text-right">
+                    <CardDescription id="weights">Weights</CardDescription>
+                    <div aria-labelledby="weights">
+                      {getWeightsDisplayValue(
+                        movement.weightOneValue,
+                        movement.weightOneUnit,
+                        movement.weightTwoValue,
+                        movement.weightTwoUnit,
+                      )}
+                    </div>
+                  </div>
+                )}
+                <div className="grow text-right">
+                  <CardDescription id="rep-scheme">Rep Scheme</CardDescription>
+                  <div aria-labelledby="rep-scheme">
+                    {getRepSchemeDisplayValue(
+                      movement.repScheme,
+                      isComplexSet
+                        ? [
+                            sharedWeights.weightOneValue,
+                            sharedWeights.weightTwoValue,
+                          ]
+                        : [
+                            movement.weightOneValue,
+                            movement.weightTwoValue,
+                          ],
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="grow text-right">
-                <CardDescription id="rep-scheme">Rep Scheme</CardDescription>
-                <div aria-labelledby="rep-scheme">
-                  {getRepSchemeDisplayValue(movement.repScheme, [
-                    movement.weightOneValue,
-                    movement.weightTwoValue,
-                  ])}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        ))
+            </CardContent>
+          ))}
+        </>
       )}
 
       <CardContent>

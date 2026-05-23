@@ -8,6 +8,16 @@ import * as stories from './CompletedWorkoutPage.stories';
 
 const { Default } = composeStories(stories);
 
+const navigate = vi.fn();
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useNavigate: () => navigate,
+  };
+});
+
 describe('completed workout page', () => {
   vi.mock('~/api', async (importOriginal) => {
     const actual = await importOriginal();
@@ -18,12 +28,14 @@ describe('completed workout page', () => {
   });
 
   const deleteWorkoutLog = vi.fn();
+  const updateWorkoutOptions = vi.fn();
 
   beforeEach(() => {
     useDeleteWorkoutLog.mockReturnValue({
       mutate: deleteWorkoutLog,
       isLoading: false,
     });
+    Default.parameters.updateWorkoutOptions = updateWorkoutOptions;
   });
 
   afterEach(() => vi.clearAllMocks());
@@ -38,6 +50,41 @@ describe('completed workout page', () => {
     render(<Default />);
 
     await screen.findByText('Complex');
+  });
+
+  test('clicking Repeat on a complex workout restores complex set and shared weights', async () => {
+    render(<Default />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Repeat' }));
+
+    expect(updateWorkoutOptions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        complexSet: true,
+        sharedWeightOneUnit: 'kilograms',
+        sharedWeightOneValue: 20,
+        sharedWeightTwoUnit: 'kilograms',
+        sharedWeightTwoValue: 16,
+        movements: [
+          expect.objectContaining({
+            movementName: 'Clean and Press',
+            repScheme: [3],
+            weightOneUnit: 'kilograms',
+            weightOneValue: 20,
+            weightTwoUnit: 'kilograms',
+            weightTwoValue: 16,
+          }),
+          expect.objectContaining({
+            movementName: 'Front Squat',
+            repScheme: [1, 2, 3],
+            weightOneUnit: 'kilograms',
+            weightOneValue: 20,
+            weightTwoUnit: 'kilograms',
+            weightTwoValue: 16,
+          }),
+        ],
+      }),
+    );
+    expect(navigate).toHaveBeenCalledWith('/');
   });
 
   test('clicking on an RPE value updates the selected value', async () => {

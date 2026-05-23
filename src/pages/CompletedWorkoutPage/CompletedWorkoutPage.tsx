@@ -27,6 +27,7 @@ import { WorkoutGoalUnits, WorkoutLog } from '~/types';
 
 import { Section } from '../StartWorkoutPage/components';
 import { RPESelector, WorkoutHistoryItem } from './components';
+import { resolveSharedWeights } from './utils';
 
 export const CompletedWorkoutPage = () => {
   const { id = '' } = useParams<{ id: string }>();
@@ -83,22 +84,39 @@ export const CompletedWorkoutPage = () => {
     let workoutGoal: number = workoutLog.workoutGoal;
     let workoutGoalUnits: WorkoutGoalUnits = workoutLog.workoutGoalUnits;
 
+    const isComplexSet = workoutLog.complexSet === true;
+    const sharedWeights = resolveSharedWeights(
+      workoutLog.sharedWeightOneValue,
+      workoutLog.sharedWeightOneUnit,
+      workoutLog.sharedWeightTwoValue,
+      workoutLog.sharedWeightTwoUnit,
+      movementLogs,
+    );
+
     updateWorkoutOptions({
-      complexSet: false,
+      complexSet: isComplexSet,
       intervalTimer: workoutLog.intervalTimer,
       movements: movementLogs.map((movementLog) => ({
         movementName: movementLog.movementName,
         repScheme: movementLog.repScheme,
-        weightOneUnit: movementLog.weightOneUnit,
-        weightOneValue: movementLog.weightOneValue,
-        weightTwoUnit: movementLog.weightTwoUnit,
-        weightTwoValue: movementLog.weightTwoValue,
+        weightOneUnit: isComplexSet
+          ? sharedWeights.weightOneUnit
+          : movementLog.weightOneUnit,
+        weightOneValue: isComplexSet
+          ? sharedWeights.weightOneValue
+          : movementLog.weightOneValue,
+        weightTwoUnit: isComplexSet
+          ? sharedWeights.weightTwoUnit
+          : movementLog.weightTwoUnit,
+        weightTwoValue: isComplexSet
+          ? sharedWeights.weightTwoValue
+          : movementLog.weightTwoValue,
       })),
       restTimer: workoutLog.restTimer,
-      sharedWeightOneUnit: null,
-      sharedWeightOneValue: null,
-      sharedWeightTwoUnit: null,
-      sharedWeightTwoValue: null,
+      sharedWeightOneUnit: isComplexSet ? sharedWeights.weightOneUnit : null,
+      sharedWeightOneValue: isComplexSet ? sharedWeights.weightOneValue : null,
+      sharedWeightTwoUnit: isComplexSet ? sharedWeights.weightTwoUnit : null,
+      sharedWeightTwoValue: isComplexSet ? sharedWeights.weightTwoValue : null,
       workoutDetails: workoutLog.workoutDetails,
       workoutGoal,
       workoutGoalUnits,
@@ -154,6 +172,10 @@ export const CompletedWorkoutPage = () => {
           movementLogs={movementLogs}
           movementLogsLoading={movementLogsLoading}
           restTimer={workoutLog.restTimer}
+          sharedWeightOneUnit={workoutLog.sharedWeightOneUnit}
+          sharedWeightOneValue={workoutLog.sharedWeightOneValue}
+          sharedWeightTwoUnit={workoutLog.sharedWeightTwoUnit}
+          sharedWeightTwoValue={workoutLog.sharedWeightTwoValue}
           startedAt={workoutLog.startedAt}
           workoutDetails={workoutLog.workoutDetails}
           workoutGoal={workoutLog.workoutGoal}
