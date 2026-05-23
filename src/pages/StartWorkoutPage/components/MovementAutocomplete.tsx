@@ -4,71 +4,108 @@ import { useCreateUserMovement } from '~/api/useCreateUserMovement';
 import { useMovementSearch } from '~/api/useMovementSearch';
 import { useUserMovementFrequency } from '~/api/useUserMovementFrequency';
 import { cn } from '~/lib/utils';
-import { rankMovements } from '~/utils';
+import { WeightTabValue } from '~/types';
+import { rankMovements, recentMovementMatchesWeightMode, movementNameMatchesSearchTokens, tokenizeMovementSearchQuery, WEIGHT_MODE_LABELS } from '~/utils';
 
-type WeightTab = 'none' | '2h' | '1h' | 'double';
-
-const ARM_TYPE: Record<WeightTab, string> = {
-  none: 'No Arms',
-  '2h': 'Double Arm',
-  '1h': 'Single Arm',
-  double: 'Double Arm',
-};
+import { WeightModeTabs } from './WeightModeTabs';
 
 interface MovementAutocompleteProps {
   value: string;
   onChange: (name: string) => void;
-  autoFocus?: boolean;
+  weightMode: WeightTabValue;
+  onWeightModeChange: (mode: WeightTabValue) => void;
+  weightSummary?: string | null;
+  showWeightModeTabs?: boolean;
+  weightModeHint?: string | null;
   className?: string;
-  weightTab?: WeightTab | null;
 }
 
 export const MovementAutocomplete = ({
   value,
   onChange,
-  autoFocus,
+  weightMode,
+  onWeightModeChange,
+  weightSummary = null,
+  showWeightModeTabs = true,
+  weightModeHint = null,
   className,
-  weightTab,
 }: MovementAutocompleteProps) => {
   const [inputValue, setInputValue] = useState(value);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(value);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sync external value changes (e.g., when parent resets the field)
   useEffect(() => {
     setInputValue(value);
+    setDebouncedSearchQuery(value);
   }, [value]);
 
-  const singleOrDoubleArm = weightTab ? ARM_TYPE[weightTab] : null;
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchQuery(inputValue), 150);
+    return () => clearTimeout(timer);
+  }, [inputValue]);
 
   const { data: frequentMovements = [] } = useUserMovementFrequency();
-  const { data: catalogResults = [] } = useMovementSearch(inputValue, singleOrDoubleArm);
+  const {
+    data: catalogResults = [],
+    isFetching: isCatalogFetching,
+    isLoading: isCatalogLoading,
+  } = useMovementSearch(debouncedSearchQuery, weightMode);
   const createUserMovement = useCreateUserMovement();
 
   const frequentNames = new Set(
     frequentMovements.map((m) => m.canonicalName.toLowerCase()),
   );
 
+  const weightModeFilteredRecent = frequentMovements.filter((m) =>
+    recentMovementMatchesWeightMode(m.catalogWeightFields, weightMode),
+  );
+
+  const searchTokens = tokenizeMovementSearchQuery(inputValue);
+
+  const filteredRecentMatches =
+    inputValue.length >= 1
+      ? weightModeFilteredRecent.filter((m) =>
+          movementNameMatchesSearchTokens(m.canonicalName, searchTokens),
+        )
+      : weightModeFilteredRecent.slice(0, 8);
+
   const filteredRecent =
     inputValue.length >= 1
-      ? frequentMovements.filter((m) =>
-          m.canonicalName.toLowerCase().includes(inputValue.toLowerCase()),
+      ? rankMovements(
+          filteredRecentMatches.map((movement) => ({
+            ...movement,
+            name: movement.canonicalName,
+          })),
+          inputValue,
+          frequentNames,
         )
-      : frequentMovements.slice(0, 8);
+      : filteredRecentMatches;
 
   const catalogNames = new Set(filteredRecent.map((m) => m.canonicalName.toLowerCase()));
   const uniqueCatalog = catalogResults.filter(
     (m) => !catalogNames.has(m.name.toLowerCase()),
   );
   const rankedCatalog =
-    inputValue.length >= 2 ? rankMovements(uniqueCatalog, inputValue, frequentNames) : uniqueCatalog;
+    inputValue.length >= 2
+      ? rankMovements(uniqueCatalog, inputValue, frequentNames).slice(0, 20)
+      : uniqueCatalog;
 
-  const hasOptions = filteredRecent.length > 0 || rankedCatalog.length > 0;
+  const catalogSearched = debouncedSearchQuery.length >= 2;
+  const catalogSearchPending = isCatalogLoading || isCatalogFetching;
+  const showCatalogEmpty =
+    catalogSearched && rankedCatalog.length === 0 && !catalogSearchPending;
+
   const showCustomEntry =
     inputValue.length > 0 &&
     !filteredRecent.some(
       (m) => m.canonicalName.toLowerCase() === inputValue.toLowerCase(),
     );
+
+  const hasOptions =
+    filteredRecent.length > 0 || rankedCatalog.length > 0 || showCatalogEmpty;
+
+  const catalogSectionLabel = `Catalog (${WEIGHT_MODE_LABELS[weightMode]})`;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -87,6 +124,11 @@ export const MovementAutocomplete = ({
     setIsOpen(true);
   };
 
+  const handleWeightModeChange = (mode: WeightTabValue) => {
+    onWeightModeChange(mode);
+    setIsOpen(true);
+  };
+
   const handleSelect = (name: string, functionalMovementId?: string | null) => {
     setInputValue(name);
     onChange(name);
@@ -99,13 +141,33 @@ export const MovementAutocomplete = ({
     setIsOpen(false);
   };
 
+  const handleInputBlur = () => {
+    window.setTimeout(() => {
+      if (!containerRef.current?.contains(document.activeElement)) {
+        setIsOpen(false);
+      }
+    }, 0);
+  };
+
   const showDropdown = isOpen && (hasOptions || showCustomEntry);
+  const showSummaryChip = value.length > 0 && weightSummary && !isOpen;
 
   return (
     <div ref={containerRef} className="relative w-full">
+      {showWeightModeTabs && (
+        <WeightModeTabs
+          value={weightMode}
+          onValueChange={handleWeightModeChange}
+          className="mb-1"
+        />
+      )}
+
+      {weightModeHint && (
+        <p className="mb-1 text-xs text-muted-foreground">{weightModeHint}</p>
+      )}
+
       <input
         aria-label="Movement Input"
-        autoFocus={autoFocus}
         autoComplete="off"
         className={cn(
           'flex h-4 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm ring-offset-background',
@@ -118,7 +180,12 @@ export const MovementAutocomplete = ({
         value={inputValue}
         onChange={handleInputChange}
         onFocus={() => setIsOpen(true)}
+        onBlur={handleInputBlur}
       />
+
+      {showSummaryChip && (
+        <p className="mt-1 text-xs text-muted-foreground">{weightSummary}</p>
+      )}
 
       {showDropdown && (
         <ul
@@ -149,11 +216,9 @@ export const MovementAutocomplete = ({
 
           {rankedCatalog.length > 0 && (
             <>
-              {filteredRecent.length > 0 && (
-                <li className="px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  From catalog
-                </li>
-              )}
+              <li className="px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {catalogSectionLabel}
+              </li>
               {rankedCatalog.map((movement) => (
                 <li
                   key={movement.id}
@@ -169,6 +234,13 @@ export const MovementAutocomplete = ({
                 </li>
               ))}
             </>
+          )}
+
+          {showCatalogEmpty && (
+            <li className="px-2 py-1 text-sm text-muted-foreground">
+              No {WEIGHT_MODE_LABELS[weightMode].toLowerCase()} movements for &ldquo;
+              {inputValue}&rdquo; — try another mode
+            </li>
           )}
 
           {showCustomEntry && (

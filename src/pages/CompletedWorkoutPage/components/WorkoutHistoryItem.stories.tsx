@@ -147,3 +147,35 @@ export const Loading: Story = {
     movementLogsLoading: true,
   },
 };
+
+export const ComplexSet: Story = {
+  args: {
+    complexSet: true,
+    sharedWeightOneUnit: 'kilograms',
+    sharedWeightOneValue: 24,
+    sharedWeightTwoUnit: null,
+    sharedWeightTwoValue: null,
+    movementLogs: [
+      {
+        movementName: 'Clean and Press',
+        id: 1,
+        repScheme: [3, 2, 1],
+        userMovementId: null,
+        weightOneUnit: 'kilograms',
+        weightOneValue: 24,
+        weightTwoUnit: null,
+        weightTwoValue: null,
+      },
+      {
+        movementName: 'Front Squat',
+        id: 2,
+        repScheme: [1, 2, 3],
+        userMovementId: null,
+        weightOneUnit: 'kilograms',
+        weightOneValue: 24,
+        weightTwoUnit: null,
+        weightTwoValue: null,
+      },
+    ],
+  },
+};

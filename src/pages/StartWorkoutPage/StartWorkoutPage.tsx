@@ -4,15 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
+import { Input } from '~/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { DEFAULT_MOVEMENT_OPTIONS, useWorkoutOptions } from '~/contexts';
+import { getWeightsDisplayValue } from '~/pages/CompletedWorkoutPage/utils/displayValues';
 import {
   MovementOptions,
+  WeightTabValue,
   WeightUnit,
   WorkoutGoalUnits,
   WorkoutOptions,
 } from '~/types';
-import { getWeightUnitLabel } from '~/utils';
+import { getWeightTabValue, getWeightUnitLabel, WEIGHT_MODE_LABELS } from '~/utils';
 
 import { features } from '~/config/features';
 
@@ -21,6 +24,7 @@ import {
   MovementAutocomplete,
   ModifyWorkoutButtons,
   Section,
+  WeightModeTabs,
   WeightUnitTabs,
 } from './components';
 
@@ -297,14 +301,10 @@ export const StartWorkoutPage = () => {
     navigate('active');
   };
 
-  const sharedWeightTabValue =
-    sharedWeightOneValue === null
-      ? 'none'
-      : sharedWeightTwoValue === null
-        ? '2h'
-        : sharedWeightTwoValue === 0
-          ? '1h'
-          : 'double';
+  const sharedWeightTabValue = getWeightTabValue({
+    weightOneValue: sharedWeightOneValue,
+    weightTwoValue: sharedWeightTwoValue,
+  });
 
   const isDifferentRepSchemes =
     movements.length > 1 &&
@@ -382,30 +382,20 @@ export const StartWorkoutPage = () => {
                 Complex
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              {complexSet
+                ? 'Complete all movements before setting the weight down.'
+                : 'Set the weight down between each movement.'}
+            </p>
           </Section>
           {complexSet && (
             <Section
               title="Shared Weight"
               actions={
-                <Tabs
+                <WeightModeTabs
                   value={sharedWeightTabValue}
                   onValueChange={handleChangeSharedWeightTab}
-                >
-                  <TabsList>
-                    <TabsTrigger size="sm" value="none">
-                      None
-                    </TabsTrigger>
-                    <TabsTrigger size="sm" value="2h">
-                      2H
-                    </TabsTrigger>
-                    <TabsTrigger size="sm" value="1h">
-                      1H
-                    </TabsTrigger>
-                    <TabsTrigger size="sm" value="double">
-                      Double
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                />
               }
             >
               {sharedWeightOneValue !== null && (
@@ -568,14 +558,19 @@ export const StartWorkoutPage = () => {
       )}
 
       {movements.map((movement, index) => {
-        const weightTabValue =
-          movement.weightOneValue === null
-            ? 'none'
-            : movement.weightTwoValue === null
-              ? '2h'
-              : movement.weightTwoValue === 0
-                ? '1h'
-                : 'double';
+        const weightTabValue = getWeightTabValue(movement);
+        const activeWeightMode: WeightTabValue = complexSet
+          ? sharedWeightTabValue
+          : weightTabValue;
+        const weightSummary =
+          movement.movementName.length > 0
+            ? getWeightsDisplayValue(
+                movement.weightOneValue,
+                movement.weightOneUnit,
+                movement.weightTwoValue,
+                movement.weightTwoUnit,
+              )
+            : null;
 
         return (
           <Card key={index}>
@@ -592,68 +587,52 @@ export const StartWorkoutPage = () => {
               }
             >
               <MovementAutocomplete
-                autoFocus
                 value={movement.movementName}
                 onChange={(name) => handleChangeMovementName(index, name)}
-                weightTab={weightTabValue}
+                weightMode={activeWeightMode}
+                onWeightModeChange={(mode) =>
+                  complexSet
+                    ? handleChangeSharedWeightTab(mode)
+                    : handleChangeWeightTab(index, mode)
+                }
+                showWeightModeTabs={!complexSet}
+                weightModeHint={
+                  complexSet
+                    ? `Using shared weight: ${WEIGHT_MODE_LABELS[sharedWeightTabValue]}`
+                    : null
+                }
+                weightSummary={weightSummary}
               />
             </Section>
-            {!complexSet && (
-              <Section
-                title="Weights"
-                actions={
-                  <Tabs
-                    value={weightTabValue}
-                    onValueChange={(value) =>
-                      handleChangeWeightTab(index, value)
-                    }
-                  >
-                    <TabsList>
-                      <TabsTrigger size="sm" value="none">
-                        None
-                      </TabsTrigger>
-                      <TabsTrigger size="sm" value="2h">
-                        2H
-                      </TabsTrigger>
-                      <TabsTrigger size="sm" value="1h">
-                        1H
-                      </TabsTrigger>
-                      <TabsTrigger size="sm" value="double">
-                        Double
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                }
-              >
-                {movement.weightOneValue !== null && (
-                  <ModifyCountButtons
-                    onClickMinus={() =>
-                      handleChangeWeightOneValue(
-                        index,
-                        movement.weightOneValue! - 1,
-                      )
-                    }
-                    onClickPlus={() =>
-                      handleChangeWeightOneValue(
-                        index,
-                        movement.weightOneValue! + 1,
-                      )
-                    }
-                    unit={getWeightUnitLabel(movement.weightOneUnit)}
-                    unitTabs={
-                      <WeightUnitTabs
-                        value={movement.weightOneUnit}
-                        onChange={(value) =>
-                          handleChangeWeightOneUnit(index, value)
-                        }
-                      />
-                    }
-                    value={movement.weightOneValue}
-                    onChange={(value) =>
-                      handleChangeWeightOneValue(index, value!)
-                    }
-                  />
-                )}
+            {!complexSet && weightTabValue !== 'none' && (
+              <Section title="Load">
+                <ModifyCountButtons
+                  onClickMinus={() =>
+                    handleChangeWeightOneValue(
+                      index,
+                      movement.weightOneValue! - 1,
+                    )
+                  }
+                  onClickPlus={() =>
+                    handleChangeWeightOneValue(
+                      index,
+                      movement.weightOneValue! + 1,
+                    )
+                  }
+                  unit={getWeightUnitLabel(movement.weightOneUnit)}
+                  unitTabs={
+                    <WeightUnitTabs
+                      value={movement.weightOneUnit}
+                      onChange={(value) =>
+                        handleChangeWeightOneUnit(index, value)
+                      }
+                    />
+                  }
+                  value={movement.weightOneValue}
+                  onChange={(value) =>
+                    handleChangeWeightOneValue(index, value!)
+                  }
+                />
                 {movement.weightTwoValue !== null &&
                   movement.weightTwoValue > 0 && (
                     <ModifyCountButtons

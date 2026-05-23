@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 
 import * as stories from './WorkoutHistoryItem.stories';
 
-const { Default, WithTimers, RoundsGoal } = composeStories(stories);
+const { Default, WithTimers, RoundsGoal, ComplexSet } = composeStories(stories);
 
 vi.setSystemTime(new Date('2024-01-02T12:00:00'));
 
@@ -58,6 +58,52 @@ describe('workout options', () => {
   test('displays rest timer', async () => {
     render(<WithTimers />);
     expect(screen.getByLabelText('Rest')).toHaveTextContent('30s');
+  });
+});
+
+describe('complex set workouts', () => {
+  test('displays shared weight once instead of per-movement weights', async () => {
+    render(<ComplexSet />);
+
+    expect(screen.getByLabelText('Shared Weight')).toHaveTextContent(
+      '24 kg (2h)',
+    );
+    expect(screen.queryAllByLabelText('Weights')).toHaveLength(0);
+  });
+
+  test('displays rep scheme using shared weight for unilateral formatting', async () => {
+    render(
+      <ComplexSet
+        sharedWeightTwoValue={0}
+        sharedWeightTwoUnit="kilograms"
+        movementLogs={[
+          {
+            movementName: 'Clean and Press',
+            id: 1,
+            repScheme: [5],
+            userMovementId: null,
+            weightOneUnit: 'kilograms',
+            weightOneValue: 16,
+            weightTwoUnit: null,
+            weightTwoValue: 0,
+          },
+          {
+            movementName: 'Front Squat',
+            id: 2,
+            repScheme: [5],
+            userMovementId: null,
+            weightOneUnit: 'kilograms',
+            weightOneValue: 16,
+            weightTwoUnit: null,
+            weightTwoValue: 0,
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getAllByLabelText('Rep Scheme')[0]).toHaveTextContent(
+      '5 / 5',
+    );
   });
 });
 

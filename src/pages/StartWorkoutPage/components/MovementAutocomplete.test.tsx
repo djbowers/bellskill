@@ -7,11 +7,45 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { SessionProvider } from '~/contexts';
 import { server } from '~/mocks/server';
 import { VITE_SUPABASE_URL } from '~/env';
+import { WeightTabValue } from '~/types';
 
 import { MovementAutocomplete } from './MovementAutocomplete';
 
 const MOVEMENTS_URL = `${VITE_SUPABASE_URL}/rest/v1/movements`;
+const MOVEMENTS_CATALOG_URL = `${VITE_SUPABASE_URL}/rest/v1/movements_catalog`;
 const USER_MOVEMENTS_URL = `${VITE_SUPABASE_URL}/rest/v1/user_movements`;
+
+const twoHandedCatalogMovement = {
+  id: 'mov-2h',
+  name: 'Kettlebell Swing',
+  primary_equipment: 'Kettlebell',
+  primary_item_count: 1,
+  single_or_double_arm: 'Double Arm',
+};
+
+const singleArmCatalogMovement = {
+  id: 'mov-1h',
+  name: 'Kettlebell Clean',
+  primary_equipment: 'Kettlebell',
+  primary_item_count: 1,
+  single_or_double_arm: 'Single Arm',
+};
+
+const twoHandedSnatchCatalogMovement = {
+  id: 'mov-1',
+  name: 'Kettlebell Snatch',
+  primary_equipment: 'Kettlebell',
+  primary_item_count: 1,
+  single_or_double_arm: 'Double Arm',
+};
+
+const toMovementsTableRow = (movement: typeof twoHandedCatalogMovement) => ({
+  id: movement.id,
+  Movement: movement.name,
+  'Primary Equipment': movement.primary_equipment,
+  '# Primary Items': movement.primary_item_count,
+  'Single or Double Arm': movement.single_or_double_arm,
+});
 
 const mockSession = {
   user: {
@@ -41,10 +75,38 @@ function makeWrapper(withSession = true) {
     );
 }
 
-function renderAutocomplete(value = '', onChange = vi.fn(), withSession = true) {
+interface RenderOptions {
+  value?: string;
+  onChange?: ReturnType<typeof vi.fn>;
+  weightMode?: WeightTabValue;
+  onWeightModeChange?: ReturnType<typeof vi.fn>;
+  withSession?: boolean;
+  showWeightModeTabs?: boolean;
+  weightSummary?: string | null;
+  weightModeHint?: string | null;
+}
+
+function renderAutocomplete({
+  value = '',
+  onChange = vi.fn(),
+  weightMode = '2h',
+  onWeightModeChange = vi.fn(),
+  withSession = true,
+  showWeightModeTabs = true,
+  weightSummary = null,
+  weightModeHint = null,
+}: RenderOptions = {}) {
   const wrapper = makeWrapper(withSession);
   return render(
-    <MovementAutocomplete value={value} onChange={onChange} />,
+    <MovementAutocomplete
+      value={value}
+      onChange={onChange}
+      weightMode={weightMode}
+      onWeightModeChange={onWeightModeChange}
+      showWeightModeTabs={showWeightModeTabs}
+      weightSummary={weightSummary}
+      weightModeHint={weightModeHint}
+    />,
     { wrapper },
   );
 }
@@ -52,6 +114,7 @@ function renderAutocomplete(value = '', onChange = vi.fn(), withSession = true) 
 describe('MovementAutocomplete', () => {
   beforeEach(() => {
     server.use(
+      http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json([])),
       http.get(MOVEMENTS_URL, () => HttpResponse.json([])),
       http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
     );
@@ -62,15 +125,44 @@ describe('MovementAutocomplete', () => {
     expect(screen.getByRole('textbox', { name: 'Movement Input' })).toBeInTheDocument();
   });
 
+  test('renders weight mode tabs by default', () => {
+    renderAutocomplete();
+    expect(screen.getByRole('tab', { name: 'None' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: '2H' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: '1H' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Double' })).toBeInTheDocument();
+  });
+
+  test('calls onWeightModeChange when a weight tab is selected', async () => {
+    const onWeightModeChange = vi.fn();
+    renderAutocomplete({ onWeightModeChange });
+
+    await userEvent.click(screen.getByRole('tab', { name: '1H' }));
+    expect(onWeightModeChange).toHaveBeenCalledWith('1h');
+  });
+
+  test('closes dropdown when input loses focus', async () => {
+    renderAutocomplete();
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+    await userEvent.type(input, 'Swing');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+    await userEvent.tab();
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+  });
+
   test('calls onChange on every keystroke with accumulated value', async () => {
     const onChange = vi.fn();
-    renderAutocomplete('', onChange);
+    renderAutocomplete({ onChange });
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
     await userEvent.type(input, 'Swing');
 
     expect(onChange).toHaveBeenCalledTimes(5);
-    // Component maintains internal state, so accumulated value is passed on each keypress
     expect(onChange).toHaveBeenNthCalledWith(1, 'S');
     expect(onChange).toHaveBeenNthCalledWith(2, 'Sw');
     expect(onChange).toHaveBeenNthCalledWith(3, 'Swi');
@@ -153,6 +245,80 @@ describe('MovementAutocomplete', () => {
     expect(screen.queryByText('Clean and Press')).not.toBeInTheDocument();
   });
 
+  test('filters recent movements by weight mode when catalog metadata exists', async () => {
+    server.use(
+      http.get(MOVEMENTS_URL, ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get('id')?.startsWith('in.')) {
+          return HttpResponse.json([
+            toMovementsTableRow(twoHandedCatalogMovement),
+            toMovementsTableRow(singleArmCatalogMovement),
+          ]);
+        }
+        return HttpResponse.json([]);
+      }),
+      http.get(USER_MOVEMENTS_URL, () =>
+        HttpResponse.json([
+          {
+            id: 'um-1',
+            canonical_name: 'Kettlebell Swing',
+            functional_movement_id: 'mov-2h',
+            created_at: '2026-05-20T10:00:00Z',
+            user_id: 'user-123',
+            is_big_6: false,
+            skill_tree_enabled: false,
+          },
+          {
+            id: 'um-2',
+            canonical_name: 'Kettlebell Clean',
+            functional_movement_id: 'mov-1h',
+            created_at: '2026-05-19T10:00:00Z',
+            user_id: 'user-123',
+            is_big_6: false,
+            skill_tree_enabled: false,
+          },
+        ]),
+      ),
+    );
+
+    renderAutocomplete({ weightMode: '2h' });
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      expect(screen.getByText('Kettlebell Swing')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Kettlebell Clean')).not.toBeInTheDocument();
+  });
+
+  test('shows custom recent movements regardless of weight mode', async () => {
+    server.use(
+      http.get(USER_MOVEMENTS_URL, () =>
+        HttpResponse.json([
+          {
+            id: 'um-1',
+            canonical_name: 'My Custom Move',
+            functional_movement_id: null,
+            created_at: '2026-05-20T10:00:00Z',
+            user_id: 'user-123',
+            is_big_6: false,
+            skill_tree_enabled: false,
+          },
+        ]),
+      ),
+    );
+
+    renderAutocomplete({ weightMode: '1h' });
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      expect(screen.getByText('My Custom Move')).toBeInTheDocument();
+    });
+  });
+
   test('selecting a recent movement calls onChange with the name', async () => {
     server.use(
       http.get(USER_MOVEMENTS_URL, () =>
@@ -171,7 +337,7 @@ describe('MovementAutocomplete', () => {
     );
 
     const onChange = vi.fn();
-    renderAutocomplete('', onChange);
+    renderAutocomplete({ onChange });
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
     await userEvent.click(input);
@@ -184,10 +350,33 @@ describe('MovementAutocomplete', () => {
     expect(onChange).toHaveBeenCalledWith('Clean and Press');
   });
 
+  test('matches catalog movements when all query words appear non-contiguously', async () => {
+    server.use(
+      http.get(MOVEMENTS_CATALOG_URL, () =>
+        HttpResponse.json([
+          {
+            ...twoHandedCatalogMovement,
+            id: 'mov-squat',
+            name: 'Double Kettlebell Front Rack Squat',
+          },
+        ]),
+      ),
+    );
+
+    renderAutocomplete({ value: 'double kettlebell squat' });
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      expect(screen.getByText('Double Kettlebell Front Rack Squat')).toBeInTheDocument();
+    });
+  });
+
   test('selecting a catalog movement creates a user_movement record', async () => {
     server.use(
-      http.get(MOVEMENTS_URL, () =>
-        HttpResponse.json([{ id: 'mov-1', Movement: 'Kettlebell Snatch' }]),
+      http.get(MOVEMENTS_CATALOG_URL, () =>
+        HttpResponse.json([twoHandedSnatchCatalogMovement]),
       ),
     );
 
@@ -207,13 +396,14 @@ describe('MovementAutocomplete', () => {
     );
 
     const onChange = vi.fn();
-    renderAutocomplete('Kettlebell', onChange);
+    renderAutocomplete({ value: 'Kettlebell', onChange });
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
     await userEvent.click(input);
 
     await waitFor(() => {
       expect(screen.getByText('Kettlebell Snatch')).toBeInTheDocument();
+      expect(screen.getByText('Catalog (2H)')).toBeInTheDocument();
     });
 
     await userEvent.click(screen.getByText('Kettlebell Snatch'));
@@ -224,8 +414,21 @@ describe('MovementAutocomplete', () => {
     });
   });
 
+  test('shows catalog empty state when search has no catalog matches', async () => {
+    renderAutocomplete({ value: 'Swing' });
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/No 2h movements for.*Swing.*try another mode/i),
+      ).toBeInTheDocument();
+    });
+  });
+
   test('shows custom entry option when no exact match exists', async () => {
-    renderAutocomplete('My Custom Move');
+    renderAutocomplete({ value: 'My Custom Move' });
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
     await userEvent.click(input);
@@ -235,16 +438,43 @@ describe('MovementAutocomplete', () => {
     });
   });
 
+  test('shows weight summary chip when value is set and dropdown is closed', () => {
+    renderAutocomplete({
+      value: 'Kettlebell Swing',
+      weightSummary: '16 kg (2h)',
+    });
+
+    expect(screen.getByText('16 kg (2h)')).toBeInTheDocument();
+  });
+
+  test('shows shared weight hint when tabs are hidden', () => {
+    renderAutocomplete({
+      showWeightModeTabs: false,
+      weightModeHint: 'Using shared weight: 2H',
+    });
+
+    expect(screen.getByText('Using shared weight: 2H')).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: '2H' })).not.toBeInTheDocument();
+  });
+
   test('does not show recent movements when there is no session', async () => {
     server.use(
       http.get(USER_MOVEMENTS_URL, () =>
         HttpResponse.json([
-          { id: 'um-1', canonical_name: 'Clean and Press', functional_movement_id: null, created_at: '2026-05-20T10:00:00Z', user_id: 'user-123', is_big_6: false, skill_tree_enabled: false },
+          {
+            id: 'um-1',
+            canonical_name: 'Clean and Press',
+            functional_movement_id: null,
+            created_at: '2026-05-20T10:00:00Z',
+            user_id: 'user-123',
+            is_big_6: false,
+            skill_tree_enabled: false,
+          },
         ]),
       ),
     );
 
-    renderAutocomplete('', vi.fn(), false);
+    renderAutocomplete({ withSession: false });
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
     await userEvent.click(input);

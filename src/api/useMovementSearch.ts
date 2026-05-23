@@ -1,6 +1,12 @@
 import { useQuery } from 'react-query';
 
 import { QUERIES } from '~/constants';
+import { WeightTabValue } from '~/types';
+import {
+  applyWeightModeToCatalogQuery,
+  escapeIlikePattern,
+  tokenizeMovementSearchQuery,
+} from '~/utils';
 
 import { supabase } from '../supabaseClient';
 
@@ -9,31 +15,35 @@ export interface MovementSearchResult {
   name: string;
 }
 
-export const useMovementSearch = (query: string, singleOrDoubleArm?: string | null) =>
+const CATALOG_SEARCH_LIMIT = 100;
+
+export const useMovementSearch = (query: string, weightMode: WeightTabValue) =>
   useQuery(
-    [QUERIES.MOVEMENTS, 'search', query, singleOrDoubleArm],
-    () => searchMovements(query, singleOrDoubleArm),
+    [QUERIES.MOVEMENTS, 'search', query, weightMode],
+    () => searchMovements(query, weightMode),
     { enabled: query.length >= 2, keepPreviousData: true },
   );
 
 const searchMovements = async (
   query: string,
-  singleOrDoubleArm?: string | null,
+  weightMode: WeightTabValue,
 ): Promise<MovementSearchResult[]> => {
-  let q = supabase
-    .from('movements')
-    .select('id, Movement')
-    .ilike('Movement', `%${query}%`)
-    .in('"Primary Equipment"', ['Kettlebell', 'Bodyweight'])
-    .order('Movement')
-    .limit(20);
+  const tokens = tokenizeMovementSearchQuery(query);
+  if (tokens.length === 0) return [];
 
-  if (singleOrDoubleArm) {
-    q = q.eq('"Single or Double Arm"', singleOrDoubleArm);
+  let movementsQuery = supabase.from('movements_catalog').select('id, name');
+
+  for (const token of tokens) {
+    movementsQuery = movementsQuery.ilike('name', `%${escapeIlikePattern(token)}%`);
   }
 
-  const { data, error } = await q;
+  movementsQuery = applyWeightModeToCatalogQuery(movementsQuery, weightMode);
+
+  const { data, error } = await movementsQuery.limit(CATALOG_SEARCH_LIMIT);
 
   if (error) throw error;
-  return (data ?? []).map((m) => ({ id: m.id, name: m['Movement'] }));
+  return (data ?? []).map((movement) => ({
+    id: movement.id,
+    name: movement.name,
+  }));
 };

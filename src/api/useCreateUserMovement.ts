@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from 'react-query';
 
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
+import { signOutIfStaleAuthUser } from '~/utils';
 
 import { supabase } from '../supabaseClient';
 
@@ -37,13 +38,33 @@ const createOrReuseUserMovement = async ({
 }) => {
   const { data: existing } = await supabase
     .from('user_movements')
-    .select('id, canonical_name')
+    .select('id, canonical_name, functional_movement_id')
     .eq('user_id', userId)
     .eq('canonical_name', canonicalName)
     .limit(1)
     .maybeSingle();
 
-  if (existing) return existing;
+  if (existing) {
+    if (functionalMovementId && !existing.functional_movement_id) {
+      const { data: updated, error: updateError } = await supabase
+        .from('user_movements')
+        .update({ functional_movement_id: functionalMovementId })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        if (await signOutIfStaleAuthUser(updateError)) {
+          return null;
+        }
+        throw updateError;
+      }
+
+      return updated ?? existing;
+    }
+
+    return existing;
+  }
 
   const { data, error } = await supabase
     .from('user_movements')
@@ -55,6 +76,11 @@ const createOrReuseUserMovement = async ({
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    if (await signOutIfStaleAuthUser(error)) {
+      return null;
+    }
+    throw error;
+  }
   return data;
 };
