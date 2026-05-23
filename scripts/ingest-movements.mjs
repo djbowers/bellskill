@@ -587,9 +587,10 @@ function chunk(array, size) {
   return chunks;
 }
 
-/** @returns {Map<string, string>} movement name → id */
+/** @returns {{ byName: Map<string, string>, duplicateIds: string[] }} */
 async function fetchExistingMovementIds(supabase) {
   const byName = new Map();
+  const duplicateIds = [];
   const pageSize = 1000;
   let from = 0;
 
@@ -615,9 +616,8 @@ async function fetchExistingMovementIds(supabase) {
       }
 
       if (byName.has(name)) {
-        throw new Error(
-          `Database has duplicate movement names ("${name}"). Resolve duplicates before using --sync.`,
-        );
+        duplicateIds.push(row.id);
+        continue;
       }
 
       byName.set(name, row.id);
@@ -630,7 +630,19 @@ async function fetchExistingMovementIds(supabase) {
     from += pageSize;
   }
 
-  return byName;
+  return { byName, duplicateIds };
+}
+
+async function removeDuplicateMovementIds(supabase, duplicateIds, batchSize) {
+  if (duplicateIds.length === 0) {
+    return 0;
+  }
+
+  console.log(
+    `Removing ${duplicateIds.length} duplicate catalog row(s) with the same Movement name...`,
+  );
+  await unlinkUserMovementsFromMovementIds(supabase, duplicateIds);
+  return deleteMovementsById(supabase, duplicateIds, batchSize);
 }
 
 function partitionRecordsForSync(records, existingByName) {
@@ -897,7 +909,13 @@ async function main() {
   }
 
   if (options.sync) {
-    const existingByName = await fetchExistingMovementIds(supabase);
+    const { byName: existingByName, duplicateIds } =
+      await fetchExistingMovementIds(supabase);
+
+    if (duplicateIds.length > 0) {
+      await removeDuplicateMovementIds(supabase, duplicateIds, options.batchSize);
+    }
+
     const { toInsert, toUpdate } = partitionRecordsForSync(records, existingByName);
     const csvNames = csvMovementNames(records);
     const toPrune = options.prune
