@@ -3,9 +3,8 @@ import { useQuery } from 'react-query';
 import { QUERIES } from '~/constants';
 import { WeightTabValue } from '~/types';
 import {
-  applyWeightModeToMovementsQuery,
+  applyWeightModeToCatalogQuery,
   escapeIlikePattern,
-  movementMatchesWeightMode,
   tokenizeMovementSearchQuery,
 } from '~/utils';
 
@@ -15,6 +14,8 @@ export interface MovementSearchResult {
   id: string;
   name: string;
 }
+
+const CATALOG_SEARCH_LIMIT = 100;
 
 export const useMovementSearch = (query: string, weightMode: WeightTabValue) =>
   useQuery(
@@ -30,28 +31,19 @@ const searchMovements = async (
   const tokens = tokenizeMovementSearchQuery(query);
   if (tokens.length === 0) return [];
 
-  let movementsQuery = supabase.from('movements').select('*');
+  let movementsQuery = supabase.from('movements_catalog').select('id, name');
 
   for (const token of tokens) {
-    movementsQuery = movementsQuery.ilike('Movement', `%${escapeIlikePattern(token)}%`);
+    movementsQuery = movementsQuery.ilike('name', `%${escapeIlikePattern(token)}%`);
   }
 
-  movementsQuery = applyWeightModeToMovementsQuery(movementsQuery, weightMode);
+  movementsQuery = applyWeightModeToCatalogQuery(movementsQuery, weightMode);
 
-  const { data, error } = await movementsQuery.order('Movement').limit(100);
+  const { data, error } = await movementsQuery.limit(CATALOG_SEARCH_LIMIT);
 
   if (error) throw error;
-  return (data ?? [])
-    .filter((movement) =>
-      movementMatchesWeightMode(
-        {
-          primaryEquipment: movement['Primary Equipment'],
-          primaryItemCount: movement['# Primary Items'],
-          singleOrDoubleArm: movement['Single or Double Arm'],
-        },
-        weightMode,
-      ),
-    )
-    .slice(0, 20)
-    .map((m) => ({ id: m.id, name: m['Movement'] }));
+  return (data ?? []).map((movement) => ({
+    id: movement.id,
+    name: movement.name,
+  }));
 };

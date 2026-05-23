@@ -8,8 +8,21 @@ import { WeightTabValue } from '~/types';
 
 import { MovementAutocomplete } from './MovementAutocomplete';
 
+const MOVEMENTS_CATALOG_URL = `${VITE_SUPABASE_URL}/rest/v1/movements_catalog`;
 const MOVEMENTS_URL = `${VITE_SUPABASE_URL}/rest/v1/movements`;
 const USER_MOVEMENTS_URL = `${VITE_SUPABASE_URL}/rest/v1/user_movements`;
+
+const catalogMovementDefaults = {
+  primary_equipment: 'Kettlebell',
+  primary_item_count: 1,
+  single_or_double_arm: 'Double Arm',
+};
+
+const mockCatalogMovements = [
+  { id: 'mov-1', name: 'Kettlebell Clean', ...catalogMovementDefaults },
+  { id: 'mov-2', name: 'Kettlebell Snatch', ...catalogMovementDefaults },
+  { id: 'mov-3', name: 'Kettlebell Press', ...catalogMovementDefaults },
+];
 
 const mockRecentMovements = [
   {
@@ -30,12 +43,6 @@ const mockRecentMovements = [
     is_big_6: false,
     skill_tree_enabled: false,
   },
-];
-
-const mockCatalogMovements = [
-  { id: 'mov-1', Movement: 'Kettlebell Clean' },
-  { id: 'mov-2', Movement: 'Kettlebell Snatch' },
-  { id: 'mov-3', Movement: 'Kettlebell Press' },
 ];
 
 const makeQueryClient = () =>
@@ -86,6 +93,7 @@ export const Default: Story = {
   parameters: {
     msw: {
       handlers: [
+        http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json([])),
         http.get(MOVEMENTS_URL, () => HttpResponse.json([])),
         http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
       ],
@@ -98,6 +106,7 @@ export const WithRecentMovements: Story = {
   parameters: {
     msw: {
       handlers: [
+        http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json([])),
         http.get(MOVEMENTS_URL, () => HttpResponse.json([])),
         http.get(USER_MOVEMENTS_URL, () => HttpResponse.json(mockRecentMovements)),
       ],
@@ -110,7 +119,8 @@ export const WithCatalogResults: Story = {
   parameters: {
     msw: {
       handlers: [
-        http.get(MOVEMENTS_URL, () => HttpResponse.json(mockCatalogMovements)),
+        http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json(mockCatalogMovements)),
+        http.get(MOVEMENTS_URL, () => HttpResponse.json([])),
         http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
       ],
     },
@@ -124,6 +134,7 @@ export const BodyweightMode: Story = {
   parameters: {
     msw: {
       handlers: [
+        http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json([])),
         http.get(MOVEMENTS_URL, () => HttpResponse.json([])),
         http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
       ],
@@ -141,6 +152,7 @@ export const WithWeightSummary: Story = {
   parameters: {
     msw: {
       handlers: [
+        http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json([])),
         http.get(MOVEMENTS_URL, () => HttpResponse.json([])),
         http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
       ],
@@ -158,6 +170,7 @@ export const ComplexSharedWeightHint: Story = {
   parameters: {
     msw: {
       handlers: [
+        http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json([])),
         http.get(MOVEMENTS_URL, () => HttpResponse.json([])),
         http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
       ],
@@ -170,6 +183,7 @@ export const CustomEntry: Story = {
   parameters: {
     msw: {
       handlers: [
+        http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json([])),
         http.get(MOVEMENTS_URL, () => HttpResponse.json([])),
         http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
       ],

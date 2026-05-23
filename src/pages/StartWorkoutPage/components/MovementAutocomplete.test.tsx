@@ -12,31 +12,40 @@ import { WeightTabValue } from '~/types';
 import { MovementAutocomplete } from './MovementAutocomplete';
 
 const MOVEMENTS_URL = `${VITE_SUPABASE_URL}/rest/v1/movements`;
+const MOVEMENTS_CATALOG_URL = `${VITE_SUPABASE_URL}/rest/v1/movements_catalog`;
 const USER_MOVEMENTS_URL = `${VITE_SUPABASE_URL}/rest/v1/user_movements`;
 
 const twoHandedCatalogMovement = {
   id: 'mov-2h',
-  Movement: 'Kettlebell Swing',
-  'Primary Equipment': 'Kettlebell',
-  '# Primary Items': 1,
-  'Single or Double Arm': 'Double Arm',
+  name: 'Kettlebell Swing',
+  primary_equipment: 'Kettlebell',
+  primary_item_count: 1,
+  single_or_double_arm: 'Double Arm',
 };
 
 const singleArmCatalogMovement = {
   id: 'mov-1h',
-  Movement: 'Kettlebell Clean',
-  'Primary Equipment': 'Kettlebell',
-  '# Primary Items': 1,
-  'Single or Double Arm': 'Single Arm',
+  name: 'Kettlebell Clean',
+  primary_equipment: 'Kettlebell',
+  primary_item_count: 1,
+  single_or_double_arm: 'Single Arm',
 };
 
 const twoHandedSnatchCatalogMovement = {
   id: 'mov-1',
-  Movement: 'Kettlebell Snatch',
-  'Primary Equipment': 'Kettlebell',
-  '# Primary Items': 1,
-  'Single or Double Arm': 'Double Arm',
+  name: 'Kettlebell Snatch',
+  primary_equipment: 'Kettlebell',
+  primary_item_count: 1,
+  single_or_double_arm: 'Double Arm',
 };
+
+const toMovementsTableRow = (movement: typeof twoHandedCatalogMovement) => ({
+  id: movement.id,
+  Movement: movement.name,
+  'Primary Equipment': movement.primary_equipment,
+  '# Primary Items': movement.primary_item_count,
+  'Single or Double Arm': movement.single_or_double_arm,
+});
 
 const mockSession = {
   user: {
@@ -105,6 +114,7 @@ function renderAutocomplete({
 describe('MovementAutocomplete', () => {
   beforeEach(() => {
     server.use(
+      http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json([])),
       http.get(MOVEMENTS_URL, () => HttpResponse.json([])),
       http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
     );
@@ -226,7 +236,10 @@ describe('MovementAutocomplete', () => {
       http.get(MOVEMENTS_URL, ({ request }) => {
         const url = new URL(request.url);
         if (url.searchParams.get('id')?.startsWith('in.')) {
-          return HttpResponse.json([twoHandedCatalogMovement, singleArmCatalogMovement]);
+          return HttpResponse.json([
+            toMovementsTableRow(twoHandedCatalogMovement),
+            toMovementsTableRow(singleArmCatalogMovement),
+          ]);
         }
         return HttpResponse.json([]);
       }),
@@ -325,12 +338,12 @@ describe('MovementAutocomplete', () => {
 
   test('matches catalog movements when all query words appear non-contiguously', async () => {
     server.use(
-      http.get(MOVEMENTS_URL, () =>
+      http.get(MOVEMENTS_CATALOG_URL, () =>
         HttpResponse.json([
           {
             ...twoHandedCatalogMovement,
             id: 'mov-squat',
-            Movement: 'Double Kettlebell Front Rack Squat',
+            name: 'Double Kettlebell Front Rack Squat',
           },
         ]),
       ),
@@ -348,7 +361,7 @@ describe('MovementAutocomplete', () => {
 
   test('selecting a catalog movement creates a user_movement record', async () => {
     server.use(
-      http.get(MOVEMENTS_URL, () =>
+      http.get(MOVEMENTS_CATALOG_URL, () =>
         HttpResponse.json([twoHandedSnatchCatalogMovement]),
       ),
     );

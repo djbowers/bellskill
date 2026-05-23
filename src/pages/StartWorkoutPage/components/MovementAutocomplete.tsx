@@ -79,7 +79,7 @@ export const MovementAutocomplete = ({
   );
   const rankedCatalog =
     inputValue.length >= 2
-      ? rankMovements(uniqueCatalog, inputValue, frequentNames)
+      ? rankMovements(uniqueCatalog, inputValue, frequentNames).slice(0, 20)
       : uniqueCatalog;
 
   const catalogSearched = inputValue.length >= 2;

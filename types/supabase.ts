@@ -426,7 +426,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      movements_catalog: {
+        Row: {
+          id: string
+          name: string
+          primary_equipment: Database["public"]["Enums"]["Equipment"] | null
+          primary_item_count: number | null
+          single_or_double_arm:
+            | Database["public"]["Enums"]["Single or Double Arm"]
+            | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

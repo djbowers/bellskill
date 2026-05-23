@@ -61,8 +61,32 @@ export const recentMovementMatchesWeightMode = (
   return movementMatchesWeightMode(catalogWeightFields, mode);
 };
 
-// PostgREST cannot parse the "# Primary Items" column in filters; item count
-// is enforced client-side via movementMatchesWeightMode.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const applyWeightModeToCatalogQuery = (query: any, mode: WeightTabValue) => {
+  switch (mode) {
+    case 'none':
+      return query.eq('primary_equipment', 'Bodyweight');
+    case '2h':
+      return query
+        .eq('primary_equipment', 'Kettlebell')
+        .eq('primary_item_count', 1)
+        .eq('single_or_double_arm', 'Double Arm');
+    case '1h':
+      return query
+        .eq('primary_equipment', 'Kettlebell')
+        .eq('primary_item_count', 1)
+        .eq('single_or_double_arm', 'Single Arm');
+    case 'double':
+      return query
+        .eq('primary_equipment', 'Kettlebell')
+        .eq('primary_item_count', 2)
+        .eq('single_or_double_arm', 'Double Arm');
+    default:
+      return query;
+  }
+};
+
+// Legacy column names for the movements table (used outside catalog search).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const applyWeightModeToMovementsQuery = (query: any, mode: WeightTabValue) => {
   switch (mode) {
