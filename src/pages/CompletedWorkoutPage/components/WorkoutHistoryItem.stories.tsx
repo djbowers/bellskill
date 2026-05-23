@@ -214,3 +214,21 @@ export const ComplexSet: Story = {
     ],
   },
 };
+
+export const CatalogLinkedLongName: Story = {
+  args: {
+    movementLogs: [
+      {
+        movementName: 'Double Kettlebell Push Press',
+        id: 1,
+        repScheme: [5],
+        userMovementId: 'um-1',
+        functionalMovementId: 'mov-1',
+        weightOneUnit: 'kilograms',
+        weightOneValue: 16,
+        weightTwoUnit: 'kilograms',
+        weightTwoValue: 16,
+      },
+    ],
+  },
+};

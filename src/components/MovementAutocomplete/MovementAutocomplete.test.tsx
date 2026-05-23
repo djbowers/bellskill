@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import { SessionProvider } from '~/contexts';
-import { server } from '~/mocks/server';
 import { VITE_SUPABASE_URL } from '~/env';
+import { server } from '~/mocks/server';
 import { WeightTabValue } from '~/types';
 
 import { MovementAutocomplete } from './MovementAutocomplete';
@@ -128,7 +128,9 @@ describe('MovementAutocomplete', () => {
 
   test('renders an input with aria-label "Movement Input"', () => {
     renderAutocomplete();
-    expect(screen.getByRole('textbox', { name: 'Movement Input' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('textbox', { name: 'Movement Input' }),
+    ).toBeInTheDocument();
   });
 
   test('renders weight mode tabs by default', () => {
@@ -375,7 +377,9 @@ describe('MovementAutocomplete', () => {
     await userEvent.click(input);
 
     await waitFor(() => {
-      expect(screen.getByText('Double Kettlebell Front Rack Squat')).toBeInTheDocument();
+      expect(
+        screen.getByText('Double Kettlebell Front Rack Squat'),
+      ).toBeInTheDocument();
     });
   });
 
@@ -390,13 +394,16 @@ describe('MovementAutocomplete', () => {
     server.use(
       http.post(USER_MOVEMENTS_URL, async ({ request }) => {
         capturedInsert = await request.json();
-        return HttpResponse.json([{ id: 'um-new', canonical_name: 'Kettlebell Snatch' }]);
+        return HttpResponse.json([
+          { id: 'um-new', canonical_name: 'Kettlebell Snatch' },
+        ]);
       }),
     );
     server.use(
       http.get(USER_MOVEMENTS_URL, ({ request }) => {
         const url = new URL(request.url);
-        if (url.searchParams.get('canonical_name')) return HttpResponse.json(null);
+        if (url.searchParams.get('canonical_name'))
+          return HttpResponse.json(null);
         return HttpResponse.json([]);
       }),
     );
@@ -475,7 +482,9 @@ describe('MovementAutocomplete', () => {
     await userEvent.click(input);
 
     await waitFor(() => {
-      expect(screen.getByText(/Use.*My Custom Move.*as custom movement/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Use.*My Custom Move.*as custom movement/),
+      ).toBeInTheDocument();
     });
   });
 

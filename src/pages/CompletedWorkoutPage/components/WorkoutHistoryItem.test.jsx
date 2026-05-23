@@ -3,7 +3,8 @@ import { render, screen } from '@testing-library/react';
 
 import * as stories from './WorkoutHistoryItem.stories';
 
-const { Default, WithTimers, RoundsGoal, ComplexSet } = composeStories(stories);
+const { Default, WithTimers, RoundsGoal, ComplexSet, CatalogLinkedLongName } =
+  composeStories(stories);
 
 vi.setSystemTime(new Date('2024-01-02T12:00:00'));
 
@@ -128,5 +129,16 @@ describe('workout summary', () => {
   test('displays volume completed in the workout', async () => {
     render(<Default />);
     expect(screen.getByLabelText('Volume')).toHaveTextContent('1000 kg');
+  });
+});
+
+describe('movement linking', () => {
+  test('shows catalog badge and link button for linked movements', async () => {
+    render(<CatalogLinkedLongName />);
+    expect(screen.getByText('Catalog')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Link' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Double Kettlebell Push Press'),
+    ).toBeInTheDocument();
   });
 });

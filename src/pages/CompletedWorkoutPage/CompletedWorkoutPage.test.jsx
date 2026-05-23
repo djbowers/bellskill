@@ -55,7 +55,9 @@ describe('completed workout page', () => {
   test('clicking Repeat on a complex workout restores complex set and shared weights', async () => {
     render(<Default />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Repeat' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Repeat' }),
+    );
 
     expect(updateWorkoutOptions).toHaveBeenCalledWith(
       expect.objectContaining({

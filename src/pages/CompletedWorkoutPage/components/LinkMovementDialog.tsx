@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from '~/components/ui/dialog';
 import { MovementLog, WeightTabValue } from '~/types';
-import { getWeightTabValue, WEIGHT_MODE_LABELS } from '~/utils';
+import { WEIGHT_MODE_LABELS, getWeightTabValue } from '~/utils';
 
 import type { SharedWeights } from '../utils/resolveSharedWeights';
 
@@ -61,10 +61,13 @@ export const LinkMovementDialog = ({
     null,
   );
 
-  const { mutate: linkMovementLog, isLoading } = useLinkMovementLog(workoutLogId);
+  const { mutate: linkMovementLog, isLoading } =
+    useLinkMovementLog(workoutLogId);
 
   const isLinkedToCatalog = movementLog.functionalMovementId !== null;
-  const dialogTitle = isLinkedToCatalog ? 'Change movement link' : 'Link movement';
+  const dialogTitle = isLinkedToCatalog
+    ? 'Change movement link'
+    : 'Link movement';
 
   const resetState = () => {
     setInputValue(movementLog.movementName);
@@ -86,7 +89,10 @@ export const LinkMovementDialog = ({
   };
 
   const handleConfirm = () => {
-    const pick = pendingPick ?? { canonicalName: inputValue, functionalMovementId: null };
+    const pick = pendingPick ?? {
+      canonicalName: inputValue,
+      functionalMovementId: null,
+    };
 
     linkMovementLog(
       {
@@ -110,7 +116,7 @@ export const LinkMovementDialog = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="ghost" size="sm" className="h-auto shrink-0 px-1 py-0">
           Link
         </Button>
       </DialogTrigger>
@@ -138,7 +144,11 @@ export const LinkMovementDialog = ({
           <Button variant="ghost" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button onClick={handleConfirm} disabled={!canConfirm} loading={isLoading}>
+          <Button
+            onClick={handleConfirm}
+            disabled={!canConfirm}
+            loading={isLoading}
+          >
             Confirm
           </Button>
         </DialogFooter>

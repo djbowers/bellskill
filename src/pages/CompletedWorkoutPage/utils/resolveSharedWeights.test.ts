@@ -27,9 +27,7 @@ describe('resolveSharedWeights', () => {
   });
 
   test('falls back to first movement log when shared weight fields are null', () => {
-    expect(
-      resolveSharedWeights(null, null, null, null, movementLogs),
-    ).toEqual({
+    expect(resolveSharedWeights(null, null, null, null, movementLogs)).toEqual({
       weightOneValue: 20,
       weightOneUnit: 'kilograms',
       weightTwoValue: 16,

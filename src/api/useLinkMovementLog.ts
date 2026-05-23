@@ -89,7 +89,10 @@ export const useLinkMovementLog = (workoutLogId: number) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries([QUERIES.MOVEMENT_LOGS]);
-      queryClient.invalidateQueries([QUERIES.WORKOUT_LOG, String(workoutLogId)]);
+      queryClient.invalidateQueries([
+        QUERIES.WORKOUT_LOG,
+        String(workoutLogId),
+      ]);
       queryClient.invalidateQueries([QUERIES.WORKOUT_LOGS]);
       queryClient.invalidateQueries([QUERIES.USER_MOVEMENTS]);
     },

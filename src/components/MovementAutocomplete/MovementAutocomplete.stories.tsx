@@ -1,7 +1,7 @@
 import { Meta, StoryObj } from '@storybook/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { useState } from 'react';
+import { QueryClient, QueryClientProvider } from 'react-query';
 
 import { VITE_SUPABASE_URL } from '~/env';
 import { WeightTabValue } from '~/types';
@@ -58,7 +58,8 @@ const MovementAutocompleteDemo = ({
   weightSummary = null as string | null,
 }) => {
   const [value, setValue] = useState(initialValue);
-  const [weightMode, setWeightMode] = useState<WeightTabValue>(initialWeightMode);
+  const [weightMode, setWeightMode] =
+    useState<WeightTabValue>(initialWeightMode);
 
   return (
     <MovementAutocomplete
@@ -108,7 +109,9 @@ export const WithRecentMovements: Story = {
       handlers: [
         http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json([])),
         http.get(MOVEMENTS_URL, () => HttpResponse.json([])),
-        http.get(USER_MOVEMENTS_URL, () => HttpResponse.json(mockRecentMovements)),
+        http.get(USER_MOVEMENTS_URL, () =>
+          HttpResponse.json(mockRecentMovements),
+        ),
       ],
     },
   },
@@ -119,7 +122,9 @@ export const WithCatalogResults: Story = {
   parameters: {
     msw: {
       handlers: [
-        http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json(mockCatalogMovements)),
+        http.get(MOVEMENTS_CATALOG_URL, () =>
+          HttpResponse.json(mockCatalogMovements),
+        ),
         http.get(MOVEMENTS_URL, () => HttpResponse.json([])),
         http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
       ],

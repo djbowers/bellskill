@@ -6,11 +6,11 @@ import { useUserMovementFrequency } from '~/api/useUserMovementFrequency';
 import { cn } from '~/lib/utils';
 import { WeightTabValue } from '~/types';
 import {
+  WEIGHT_MODE_LABELS,
+  movementNameMatchesSearchTokens,
   rankMovements,
   recentMovementMatchesWeightMode,
-  movementNameMatchesSearchTokens,
   tokenizeMovementSearchQuery,
-  WEIGHT_MODE_LABELS,
 } from '~/utils';
 
 import { WeightModeTabs } from './WeightModeTabs';
@@ -92,7 +92,9 @@ export const MovementAutocomplete = ({
         )
       : filteredRecentMatches;
 
-  const catalogNames = new Set(filteredRecent.map((m) => m.canonicalName.toLowerCase()));
+  const catalogNames = new Set(
+    filteredRecent.map((m) => m.canonicalName.toLowerCase()),
+  );
   const uniqueCatalog = catalogResults.filter(
     (m) => !catalogNames.has(m.name.toLowerCase()),
   );
@@ -119,7 +121,10 @@ export const MovementAutocomplete = ({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -227,7 +232,10 @@ export const MovementAutocomplete = ({
                   className="cursor-pointer px-2 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    handleSelect(movement.canonicalName, movement.functionalMovementId);
+                    handleSelect(
+                      movement.canonicalName,
+                      movement.functionalMovementId,
+                    );
                   }}
                 >
                   {movement.canonicalName}
@@ -260,7 +268,8 @@ export const MovementAutocomplete = ({
 
           {showCatalogEmpty && (
             <li className="px-2 py-1 text-sm text-muted-foreground">
-              No {WEIGHT_MODE_LABELS[weightMode].toLowerCase()} movements for &ldquo;
+              No {WEIGHT_MODE_LABELS[weightMode].toLowerCase()} movements for
+              &ldquo;
               {inputValue}&rdquo; — try another mode
             </li>
           )}

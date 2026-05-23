@@ -1,15 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import { SessionProvider } from '~/contexts';
+import { VITE_SUPABASE_URL } from '~/env';
 import { server } from '~/mocks/server';
 import { MovementLog } from '~/types';
-import { VITE_SUPABASE_URL } from '~/env';
 
-import { getMovementWeightMode, LinkMovementDialog } from './LinkMovementDialog';
+import {
+  LinkMovementDialog,
+  getMovementWeightMode,
+} from './LinkMovementDialog';
 
 const MOVEMENT_LOGS_URL = `${VITE_SUPABASE_URL}/rest/v1/movement_logs`;
 const WORKOUT_LOGS_URL = `${VITE_SUPABASE_URL}/rest/v1/workout_logs`;
@@ -130,7 +133,9 @@ describe('LinkMovementDialog', () => {
     server.use(
       http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
       http.post(USER_MOVEMENTS_URL, () =>
-        HttpResponse.json([{ id: 'um-linked', canonical_name: 'Kettlebell Swing' }]),
+        HttpResponse.json([
+          { id: 'um-linked', canonical_name: 'Kettlebell Swing' },
+        ]),
       ),
       http.patch(MOVEMENT_LOGS_URL, async ({ request }) => {
         movementLogPatch = (await request.json()) as Record<string, unknown>;

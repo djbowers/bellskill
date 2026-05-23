@@ -12,7 +12,7 @@ const normalizeUserMovementRow = (
   row: UserMovementRow | UserMovementRow[] | null | undefined,
 ): UserMovementRow | null => {
   if (!row) return null;
-  return Array.isArray(row) ? row[0] ?? null : row;
+  return Array.isArray(row) ? (row[0] ?? null) : row;
 };
 
 export const createOrReuseUserMovement = async ({

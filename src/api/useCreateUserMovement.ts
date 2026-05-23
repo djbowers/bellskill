@@ -16,9 +16,16 @@ export const useCreateUserMovement = () => {
   const userId = session?.user?.id;
 
   return useMutation({
-    mutationFn: ({ canonicalName, functionalMovementId }: CreateUserMovementInput) => {
+    mutationFn: ({
+      canonicalName,
+      functionalMovementId,
+    }: CreateUserMovementInput) => {
       if (!userId) return Promise.resolve(null);
-      return createOrReuseUserMovement({ userId, canonicalName, functionalMovementId });
+      return createOrReuseUserMovement({
+        userId,
+        canonicalName,
+        functionalMovementId,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries([QUERIES.USER_MOVEMENTS]);

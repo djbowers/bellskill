@@ -29,15 +29,15 @@ const fetchMovementLogs = async (
       : movementLog.user_movements;
 
     return {
-    id: movementLog.id,
-    movementName: movementLog.movement_name,
-    repScheme: movementLog.rep_scheme,
-    userMovementId: movementLog.user_movement_id,
-    functionalMovementId: userMovement?.functional_movement_id ?? null,
-    weightOneUnit: movementLog.weight_one_unit,
-    weightOneValue: movementLog.weight_one_value,
-    weightTwoUnit: movementLog.weight_two_unit,
-    weightTwoValue: movementLog.weight_two_value,
-  };
+      id: movementLog.id,
+      movementName: movementLog.movement_name,
+      repScheme: movementLog.rep_scheme,
+      userMovementId: movementLog.user_movement_id,
+      functionalMovementId: userMovement?.functional_movement_id ?? null,
+      weightOneUnit: movementLog.weight_one_unit,
+      weightOneValue: movementLog.weight_one_value,
+      weightTwoUnit: movementLog.weight_two_unit,
+      weightTwoValue: movementLog.weight_two_value,
+    };
   });
 };
