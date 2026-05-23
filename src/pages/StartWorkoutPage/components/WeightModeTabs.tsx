@@ -16,19 +16,19 @@ export const WeightModeTabs = ({
   <Tabs
     value={value}
     onValueChange={(next) => onValueChange(next as WeightTabValue)}
-    className={cn(className)}
+    className={cn('w-full', className)}
   >
-    <TabsList>
-      <TabsTrigger size="sm" value="none">
+    <TabsList className="flex w-full">
+      <TabsTrigger className="flex-1" size="sm" value="none">
         None
       </TabsTrigger>
-      <TabsTrigger size="sm" value="2h">
+      <TabsTrigger className="flex-1" size="sm" value="2h">
         2H
       </TabsTrigger>
-      <TabsTrigger size="sm" value="1h">
+      <TabsTrigger className="flex-1" size="sm" value="1h">
         1H
       </TabsTrigger>
-      <TabsTrigger size="sm" value="double">
+      <TabsTrigger className="flex-1" size="sm" value="double">
         Double
       </TabsTrigger>
     </TabsList>
