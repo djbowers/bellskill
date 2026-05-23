@@ -26,6 +26,10 @@ export function movementSearchTokensInOrder(name: string, tokens: string[]): boo
   return true;
 }
 
+export function countMovementNameWords(name: string): number {
+  return name.trim().split(/\s+/).filter(Boolean).length;
+}
+
 export function scoreMovementSearchMatch(name: string, query: string): number {
   const lower = name.toLowerCase();
   const normalizedQuery = query.trim().toLowerCase();
@@ -49,6 +53,10 @@ export function scoreMovementSearchMatch(name: string, query: string): number {
     else if (lower.includes(` ${token}`)) score += 3;
     else if (lower.includes(token)) score += 1;
   }
+
+  const extraWords = Math.max(0, countMovementNameWords(name) - tokens.length);
+  score -= extraWords * 10;
+  score -= Math.floor(name.length / 10);
 
   return score;
 }

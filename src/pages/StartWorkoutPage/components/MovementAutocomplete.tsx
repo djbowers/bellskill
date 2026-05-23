@@ -54,12 +54,24 @@ export const MovementAutocomplete = ({
 
   const searchTokens = tokenizeMovementSearchQuery(inputValue);
 
-  const filteredRecent =
+  const filteredRecentMatches =
     inputValue.length >= 1
       ? weightModeFilteredRecent.filter((m) =>
           movementNameMatchesSearchTokens(m.canonicalName, searchTokens),
         )
       : weightModeFilteredRecent.slice(0, 8);
+
+  const filteredRecent =
+    inputValue.length >= 1
+      ? rankMovements(
+          filteredRecentMatches.map((movement) => ({
+            ...movement,
+            name: movement.canonicalName,
+          })),
+          inputValue,
+          frequentNames,
+        )
+      : filteredRecentMatches;
 
   const catalogNames = new Set(filteredRecent.map((m) => m.canonicalName.toLowerCase()));
   const uniqueCatalog = catalogResults.filter(

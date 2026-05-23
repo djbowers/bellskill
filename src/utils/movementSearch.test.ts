@@ -57,6 +57,14 @@ describe('scoreMovementSearchMatch', () => {
     expect(exactPhrase).toBeGreaterThan(scattered);
     expect(scattered).toBeGreaterThan(0);
   });
+
+  test('prefers shorter names with fewer extra words', () => {
+    const query = 'squat';
+
+    expect(scoreMovementSearchMatch('Goblet Squat', query)).toBeGreaterThan(
+      scoreMovementSearchMatch('Double Kettlebell Front Rack Squat', query),
+    );
+  });
 });
 
 describe('rankMovements', () => {
