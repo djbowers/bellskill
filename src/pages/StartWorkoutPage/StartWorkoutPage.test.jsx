@@ -461,12 +461,24 @@ describe('Complex Mode', () => {
   test('Complex Mode card is visible with Standard and Complex buttons; Standard is active by default', () => {
     expect(screen.getByRole('button', { name: 'Standard' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Complex' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Set the weight down between each movement.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Complete all movements before setting the weight down.'),
+    ).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Shared Weight' })).not.toBeInTheDocument();
   });
 
   test('selecting Complex reveals shared weight section with all four weight-type options', async () => {
     await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
 
+    expect(
+      screen.getByText('Complete all movements before setting the weight down.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Set the weight down between each movement.'),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'None' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: '2H' })).toBeInTheDocument();

@@ -382,6 +382,11 @@ export const StartWorkoutPage = () => {
                 Complex
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              {complexSet
+                ? 'Complete all movements before setting the weight down.'
+                : 'Set the weight down between each movement.'}
+            </p>
           </Section>
           {complexSet && (
             <Section
