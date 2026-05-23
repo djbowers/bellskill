@@ -2,7 +2,12 @@ import { useQuery } from 'react-query';
 
 import { QUERIES } from '~/constants';
 import { WeightTabValue } from '~/types';
-import { applyWeightModeToMovementsQuery, movementMatchesWeightMode } from '~/utils';
+import {
+  applyWeightModeToMovementsQuery,
+  escapeIlikePattern,
+  movementMatchesWeightMode,
+  tokenizeMovementSearchQuery,
+} from '~/utils';
 
 import { supabase } from '../supabaseClient';
 
@@ -22,10 +27,14 @@ const searchMovements = async (
   query: string,
   weightMode: WeightTabValue,
 ): Promise<MovementSearchResult[]> => {
-  let movementsQuery = supabase
-    .from('movements')
-    .select('*')
-    .ilike('Movement', `%${query}%`);
+  const tokens = tokenizeMovementSearchQuery(query);
+  if (tokens.length === 0) return [];
+
+  let movementsQuery = supabase.from('movements').select('*');
+
+  for (const token of tokens) {
+    movementsQuery = movementsQuery.ilike('Movement', `%${escapeIlikePattern(token)}%`);
+  }
 
   movementsQuery = applyWeightModeToMovementsQuery(movementsQuery, weightMode);
 

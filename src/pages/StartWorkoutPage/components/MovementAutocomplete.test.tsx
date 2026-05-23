@@ -323,6 +323,29 @@ describe('MovementAutocomplete', () => {
     expect(onChange).toHaveBeenCalledWith('Clean and Press');
   });
 
+  test('matches catalog movements when all query words appear non-contiguously', async () => {
+    server.use(
+      http.get(MOVEMENTS_URL, () =>
+        HttpResponse.json([
+          {
+            ...twoHandedCatalogMovement,
+            id: 'mov-squat',
+            Movement: 'Double Kettlebell Front Rack Squat',
+          },
+        ]),
+      ),
+    );
+
+    renderAutocomplete({ value: 'double kettlebell squat' });
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      expect(screen.getByText('Double Kettlebell Front Rack Squat')).toBeInTheDocument();
+    });
+  });
+
   test('selecting a catalog movement creates a user_movement record', async () => {
     server.use(
       http.get(MOVEMENTS_URL, () =>

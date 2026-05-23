@@ -5,7 +5,7 @@ import { useMovementSearch } from '~/api/useMovementSearch';
 import { useUserMovementFrequency } from '~/api/useUserMovementFrequency';
 import { cn } from '~/lib/utils';
 import { WeightTabValue } from '~/types';
-import { rankMovements, recentMovementMatchesWeightMode, WEIGHT_MODE_LABELS } from '~/utils';
+import { rankMovements, recentMovementMatchesWeightMode, movementNameMatchesSearchTokens, tokenizeMovementSearchQuery, WEIGHT_MODE_LABELS } from '~/utils';
 
 import { WeightModeTabs } from './WeightModeTabs';
 
@@ -52,10 +52,12 @@ export const MovementAutocomplete = ({
     recentMovementMatchesWeightMode(m.catalogWeightFields, weightMode),
   );
 
+  const searchTokens = tokenizeMovementSearchQuery(inputValue);
+
   const filteredRecent =
     inputValue.length >= 1
       ? weightModeFilteredRecent.filter((m) =>
-          m.canonicalName.toLowerCase().includes(inputValue.toLowerCase()),
+          movementNameMatchesSearchTokens(m.canonicalName, searchTokens),
         )
       : weightModeFilteredRecent.slice(0, 8);
 
