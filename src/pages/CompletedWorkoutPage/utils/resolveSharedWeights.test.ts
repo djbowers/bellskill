@@ -7,6 +7,7 @@ describe('resolveSharedWeights', () => {
       movementName: 'Clean and Press',
       repScheme: [3],
       userMovementId: null,
+      functionalMovementId: null,
       weightOneUnit: 'kilograms' as const,
       weightOneValue: 20,
       weightTwoUnit: 'kilograms' as const,

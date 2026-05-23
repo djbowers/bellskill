@@ -5,6 +5,7 @@ export interface MovementLog {
   movementName: string;
   repScheme: number[];
   userMovementId: string | null;
+  functionalMovementId: string | null;
   weightOneUnit: WeightUnit | null;
   weightOneValue: number | null;
   weightTwoUnit: WeightUnit | null;

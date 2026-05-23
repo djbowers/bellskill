@@ -183,6 +183,7 @@ export const CompletedWorkoutPage = () => {
           workoutDetails={workoutLog.workoutDetails}
           workoutGoal={workoutLog.workoutGoal}
           workoutGoalUnits={workoutLog.workoutGoalUnits}
+          workoutLogId={workoutLog.id}
         />
 
         <RPESelector onSelectRPE={handleSelectRPE} rpeValue={workoutLog.rpe} />

@@ -1,5 +1,6 @@
 import { Loading } from '~/components';
 import { Badge } from '~/components/ui/badge';
+import { LinkMovementDialog } from './LinkMovementDialog';
 import {
   Card,
   CardContent,
@@ -39,6 +40,7 @@ export interface WorkoutHistoryItemProps {
   workoutDetails: string | null;
   workoutGoal: number;
   workoutGoalUnits: string;
+  workoutLogId: number;
 }
 
 export const WorkoutHistoryItem = ({
@@ -60,6 +62,7 @@ export const WorkoutHistoryItem = ({
   workoutDetails,
   workoutGoal,
   workoutGoalUnits,
+  workoutLogId,
 }: WorkoutHistoryItemProps) => {
   const displayDate = getDisplayDate(completedAt);
   const duration = getDuration(startedAt, completedAt);
@@ -137,7 +140,23 @@ export const WorkoutHistoryItem = ({
               <div className="flex gap-2">
                 <div className="grow">
                   <CardDescription>Movement #{index + 1}</CardDescription>
-                  <div>{movement.movementName}</div>
+                  <div className="flex items-center gap-1">
+                    <span>{movement.movementName}</span>
+                    {movement.functionalMovementId !== null && (
+                      <Badge variant="outline" className="text-xs">
+                        Catalog
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <div className="shrink-0 self-start">
+                  <LinkMovementDialog
+                    workoutLogId={workoutLogId}
+                    movementLog={movement}
+                    movementIndex={index}
+                    complexSet={isComplexSet}
+                    sharedWeights={sharedWeights}
+                  />
                 </div>
                 {!isComplexSet && (
                   <div className="grow text-right">

@@ -1,13 +1,35 @@
 import { Meta, StoryObj } from '@storybook/react';
+import { QueryClient, QueryClientProvider } from 'react-query';
+
+import { SessionProvider } from '~/contexts';
 
 import {
   WorkoutHistoryItem,
   WorkoutHistoryItemProps,
 } from './WorkoutHistoryItem';
 
+const mockSession = {
+  user: {
+    id: 'user-123',
+    app_metadata: {},
+    user_metadata: {},
+    created_at: '',
+    aud: '',
+  },
+  access_token: '',
+  refresh_token: '',
+  expires_in: 10000,
+  token_type: '',
+};
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+});
+
 const meta = {
   component: WorkoutHistoryItem,
   args: {
+    workoutLogId: 1,
     completedAt: new Date('2024-01-01T13:15:00'),
     completedReps: 50,
     completedRungs: 10,
@@ -22,6 +44,7 @@ const meta = {
         weightOneUnit: 'kilograms',
         weightOneValue: 16,
         userMovementId: null,
+        functionalMovementId: null,
         weightTwoUnit: null,
         weightTwoValue: 0,
       },
@@ -32,6 +55,7 @@ const meta = {
         weightOneUnit: 'kilograms',
         weightOneValue: 16,
         userMovementId: null,
+        functionalMovementId: null,
         weightTwoUnit: null,
         weightTwoValue: 0,
       },
@@ -45,9 +69,13 @@ const meta = {
   },
   decorators: [
     (Story) => (
-      <div className="max-w-sm">
-        <Story />
-      </div>
+      <QueryClientProvider client={queryClient}>
+        <SessionProvider value={mockSession}>
+          <div className="max-w-sm">
+            <Story />
+          </div>
+        </SessionProvider>
+      </QueryClientProvider>
     ),
   ],
 } satisfies Meta<WorkoutHistoryItemProps>;
@@ -65,6 +93,7 @@ export const DoubleBells: Story = {
         id: 1,
         repScheme: [5],
         userMovementId: null,
+        functionalMovementId: null,
         weightOneUnit: 'kilograms',
         weightOneValue: 24,
         weightTwoUnit: 'kilograms',
@@ -75,6 +104,7 @@ export const DoubleBells: Story = {
         id: 2,
         repScheme: [5],
         userMovementId: null,
+        functionalMovementId: null,
         weightOneUnit: 'kilograms',
         weightOneValue: 24,
         weightTwoUnit: 'kilograms',
@@ -92,6 +122,7 @@ export const MixedBells: Story = {
         id: 1,
         repScheme: [5],
         userMovementId: null,
+        functionalMovementId: null,
         weightOneUnit: 'kilograms',
         weightOneValue: 16,
         weightTwoUnit: 'kilograms',
@@ -102,6 +133,7 @@ export const MixedBells: Story = {
         id: 2,
         repScheme: [5],
         userMovementId: null,
+        functionalMovementId: null,
         weightOneUnit: 'kilograms',
         weightOneValue: 16,
         weightTwoUnit: 'kilograms',
@@ -126,6 +158,7 @@ export const Bodyweight: Story = {
         id: 1,
         repScheme: [5],
         userMovementId: null,
+        functionalMovementId: null,
         weightOneUnit: null,
         weightOneValue: null,
         weightTwoUnit: null,
@@ -161,6 +194,7 @@ export const ComplexSet: Story = {
         id: 1,
         repScheme: [3, 2, 1],
         userMovementId: null,
+        functionalMovementId: null,
         weightOneUnit: 'kilograms',
         weightOneValue: 24,
         weightTwoUnit: null,
@@ -171,6 +205,7 @@ export const ComplexSet: Story = {
         id: 2,
         repScheme: [1, 2, 3],
         userMovementId: null,
+        functionalMovementId: null,
         weightOneUnit: 'kilograms',
         weightOneValue: 24,
         weightTwoUnit: null,

@@ -84,6 +84,8 @@ interface RenderOptions {
   showWeightModeTabs?: boolean;
   weightSummary?: string | null;
   weightModeHint?: string | null;
+  deferUserMovementWrite?: boolean;
+  onMovementPick?: ReturnType<typeof vi.fn>;
 }
 
 function renderAutocomplete({
@@ -95,6 +97,8 @@ function renderAutocomplete({
   showWeightModeTabs = true,
   weightSummary = null,
   weightModeHint = null,
+  deferUserMovementWrite = false,
+  onMovementPick,
 }: RenderOptions = {}) {
   const wrapper = makeWrapper(withSession);
   return render(
@@ -106,6 +110,8 @@ function renderAutocomplete({
       showWeightModeTabs={showWeightModeTabs}
       weightSummary={weightSummary}
       weightModeHint={weightModeHint}
+      deferUserMovementWrite={deferUserMovementWrite}
+      onMovementPick={onMovementPick}
     />,
     { wrapper },
   );
@@ -412,6 +418,41 @@ describe('MovementAutocomplete', () => {
     await waitFor(() => {
       expect(capturedInsert).not.toBeNull();
     });
+  });
+
+  test('defers user_movement write and calls onMovementPick instead', async () => {
+    server.use(
+      http.get(MOVEMENTS_CATALOG_URL, () =>
+        HttpResponse.json([twoHandedSnatchCatalogMovement]),
+      ),
+    );
+
+    let capturedInsert: unknown = null;
+    server.use(
+      http.post(USER_MOVEMENTS_URL, async ({ request }) => {
+        capturedInsert = await request.json();
+        return HttpResponse.json([{ id: 'um-new' }]);
+      }),
+    );
+
+    const onMovementPick = vi.fn();
+    renderAutocomplete({
+      value: 'Kettlebell',
+      deferUserMovementWrite: true,
+      onMovementPick,
+    });
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      expect(screen.getByText('Kettlebell Snatch')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText('Kettlebell Snatch'));
+
+    expect(onMovementPick).toHaveBeenCalledWith('Kettlebell Snatch', 'mov-1');
+    expect(capturedInsert).toBeNull();
   });
 
   test('shows catalog empty state when search has no catalog matches', async () => {
