@@ -383,6 +383,8 @@ function parseArgs(argv) {
     file: null,
     dryRun: false,
     truncate: false,
+    sync: false,
+    prune: false,
     batchSize: 500,
     strict: false,
   };
@@ -393,6 +395,10 @@ function parseArgs(argv) {
       options.dryRun = true;
     } else if (arg === '--truncate') {
       options.truncate = true;
+    } else if (arg === '--sync') {
+      options.sync = true;
+    } else if (arg === '--prune') {
+      options.prune = true;
     } else if (arg === '--strict') {
       options.strict = true;
     } else if (arg === '--batch-size') {
@@ -581,6 +587,190 @@ function chunk(array, size) {
   return chunks;
 }
 
+/** @returns {Map<string, string>} movement name → id */
+async function fetchExistingMovementIds(supabase) {
+  const byName = new Map();
+  const pageSize = 1000;
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('movements')
+      .select('id, Movement')
+      .order('Movement')
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data?.length) {
+      break;
+    }
+
+    for (const row of data) {
+      const name = row.Movement?.trim();
+      if (!name) {
+        continue;
+      }
+
+      if (byName.has(name)) {
+        throw new Error(
+          `Database has duplicate movement names ("${name}"). Resolve duplicates before using --sync.`,
+        );
+      }
+
+      byName.set(name, row.id);
+    }
+
+    if (data.length < pageSize) {
+      break;
+    }
+
+    from += pageSize;
+  }
+
+  return byName;
+}
+
+function partitionRecordsForSync(records, existingByName) {
+  const toInsert = [];
+  const toUpdate = [];
+
+  for (const record of records) {
+    const existingId = existingByName.get(record.Movement);
+    if (existingId) {
+      toUpdate.push({ id: existingId, ...record });
+    } else {
+      toInsert.push(record);
+    }
+  }
+
+  return { toInsert, toUpdate };
+}
+
+function csvMovementNames(records) {
+  return new Set(records.map((record) => record.Movement));
+}
+
+/** @returns {{ id: string, name: string }[]} */
+function findMovementsToPrune(existingByName, csvNames) {
+  const toPrune = [];
+
+  for (const [name, id] of existingByName) {
+    if (!csvNames.has(name)) {
+      toPrune.push({ id, name });
+    }
+  }
+
+  toPrune.sort((left, right) => left.name.localeCompare(right.name));
+  return toPrune;
+}
+
+async function unlinkUserMovementsFromMovementIds(supabase, movementIds) {
+  for (const [batchIndex, batch] of chunk(movementIds, 500).entries()) {
+    const { error } = await supabase
+      .from('user_movements')
+      .update({ functional_movement_id: null })
+      .in('functional_movement_id', batch);
+
+    if (error) {
+      throw new Error(
+        `Failed to clear user_movements links (batch ${batchIndex + 1}): ${error.message}`,
+      );
+    }
+  }
+}
+
+async function deleteMovementsById(supabase, movementIds, batchSize) {
+  const batches = chunk(movementIds, batchSize);
+  let deleted = 0;
+
+  for (const [batchIndex, batch] of batches.entries()) {
+    const { error } = await supabase.from('movements').delete().in('id', batch);
+    if (error) {
+      throw new Error(
+        `Prune delete failed on batch ${batchIndex + 1}/${batches.length}: ${error.message}`,
+      );
+    }
+
+    deleted += batch.length;
+    console.log(
+      `Pruned batch ${batchIndex + 1}/${batches.length} (${deleted}/${movementIds.length})`,
+    );
+  }
+
+  return deleted;
+}
+
+async function insertBatches(supabase, records, batchSize, label) {
+  const batches = chunk(records, batchSize);
+  let completed = 0;
+
+  for (const [batchIndex, batch] of batches.entries()) {
+    const { error } = await supabase.from('movements').insert(batch);
+    if (error) {
+      throw new Error(
+        `${label} failed on batch ${batchIndex + 1}/${batches.length}: ${error.message}`,
+      );
+    }
+
+    completed += batch.length;
+    console.log(
+      `${label} batch ${batchIndex + 1}/${batches.length} (${completed}/${records.length})`,
+    );
+  }
+
+  return completed;
+}
+
+async function upsertBatches(supabase, records, batchSize, label) {
+  const batches = chunk(records, batchSize);
+  let completed = 0;
+
+  for (const [batchIndex, batch] of batches.entries()) {
+    const { error } = await supabase
+      .from('movements')
+      .upsert(batch, { onConflict: 'id' });
+    if (error) {
+      throw new Error(
+        `${label} failed on batch ${batchIndex + 1}/${batches.length}: ${error.message}`,
+      );
+    }
+
+    completed += batch.length;
+    console.log(
+      `${label} batch ${batchIndex + 1}/${batches.length} (${completed}/${records.length})`,
+    );
+  }
+
+  return completed;
+}
+
+/** Keep the last CSV row when the spreadsheet repeats a movement name. */
+function dedupeRecordsByMovement(records) {
+  const byName = new Map();
+  const duplicateNames = new Set();
+
+  for (const record of records) {
+    if (byName.has(record.Movement)) {
+      duplicateNames.add(record.Movement);
+    }
+    byName.set(record.Movement, record);
+  }
+
+  if (duplicateNames.size > 0) {
+    console.log(
+      `Warning: ${duplicateNames.size} duplicate movement name(s) in CSV; kept the last row for each.`,
+    );
+    [...duplicateNames].sort().forEach((name) => {
+      console.log(`  ${name}`);
+    });
+  }
+
+  return [...byName.values()];
+}
+
 function printUsage() {
   console.log(`Usage: node scripts/ingest-movements.mjs [--file] <csv-path> [options]
 
@@ -588,9 +778,16 @@ Options:
   --file <path>       Path to the Functional Fitness Exercises CSV
   --dry-run           Parse and validate only; do not write to Supabase
   --truncate          Clear functional_movement_id on user_movements, then delete
-                      all movements rows before insert (required when catalog IDs change)
-  --batch-size <n>    Insert batch size (default: 500)
+                      all movements rows before insert (full catalog rebuild)
+  --sync              Match rows by Movement name: update existing rows in place
+                      (preserves UUIDs and user_movements links) and insert new ones
+  --prune             With --sync: delete catalog rows whose Movement name is not
+                      in the CSV (clears user_movements.functional_movement_id first)
+  --batch-size <n>    Insert/upsert batch size (default: 500)
   --strict            Fail if any enum value cannot be mapped
+
+  Use --sync for routine catalog updates. Add --prune when the spreadsheet removed
+  exercises. Use --truncate only for a full rebuild.
 
 Environment:
   SUPABASE_URL                Supabase project URL (falls back to VITE_SUPABASE_URL)
@@ -598,6 +795,7 @@ Environment:
 
 Examples:
   node scripts/ingest-movements.mjs ~/Downloads/Functional\\ Fitness\\ Exercise\\ Database\\ version\\ 2.9\\ \\(Google\\ Sheets\\)\\ -\\ Exercises.csv --dry-run
+  node scripts/ingest-movements.mjs --file ./exercises.csv --sync --prune
   node scripts/ingest-movements.mjs --file ./exercises.csv --truncate
 `);
 }
@@ -610,10 +808,24 @@ async function main() {
     process.exit(1);
   }
 
+  if (options.truncate && options.sync) {
+    throw new Error('Use either --sync or --truncate, not both.');
+  }
+
+  if (options.prune && !options.sync) {
+    throw new Error('--prune requires --sync.');
+  }
+
+  if (options.prune && options.truncate) {
+    throw new Error('--prune cannot be used with --truncate.');
+  }
+
   const csvPath = resolve(options.file);
   const warnings = { skippedValues: new Map() };
   const parsedRows = parseCsvRows(csvPath);
-  const records = parsedRows.map((row) => rowToMovementRecord(row, warnings));
+  const records = dedupeRecordsByMovement(
+    parsedRows.map((row) => rowToMovementRecord(row, warnings)),
+  );
 
   console.log(`Parsed ${records.length} movements from ${csvPath}`);
 
@@ -631,7 +843,17 @@ async function main() {
   }
 
   if (options.dryRun) {
-    console.log('\nDry run complete. Sample row:');
+    if (options.sync) {
+      console.log('\nDry run (--sync): would update existing rows and insert new ones.');
+      if (options.prune) {
+        console.log('Would also delete catalog rows not present in the CSV.');
+      }
+    } else if (options.truncate) {
+      console.log('\nDry run (--truncate): would replace the entire catalog.');
+    } else {
+      console.log('\nDry run: would insert all rows (fails if catalog already exists).');
+    }
+    console.log('Sample row:');
     console.log(JSON.stringify(records[0], null, 2));
     return;
   }
@@ -674,20 +896,64 @@ async function main() {
     console.log('Truncated existing movements.');
   }
 
-  const batches = chunk(records, options.batchSize);
-  let inserted = 0;
+  if (options.sync) {
+    const existingByName = await fetchExistingMovementIds(supabase);
+    const { toInsert, toUpdate } = partitionRecordsForSync(records, existingByName);
+    const csvNames = csvMovementNames(records);
+    const toPrune = options.prune
+      ? findMovementsToPrune(existingByName, csvNames)
+      : [];
 
-  for (const [batchIndex, batch] of batches.entries()) {
-    const { error } = await supabase.from('movements').insert(batch);
-    if (error) {
-      throw new Error(
-        `Insert failed on batch ${batchIndex + 1}/${batches.length}: ${error.message}`,
-      );
+    console.log(
+      `Sync plan: ${toUpdate.length} update(s), ${toInsert.length} insert(s) (${existingByName.size} existing in database).`,
+    );
+
+    if (options.prune) {
+      console.log(`Prune plan: ${toPrune.length} delete(s) not present in CSV.`);
+      if (toPrune.length > 0 && toPrune.length <= 20) {
+        toPrune.forEach(({ name }) => {
+          console.log(`  ${name}`);
+        });
+      } else if (toPrune.length > 20) {
+        toPrune.slice(0, 10).forEach(({ name }) => {
+          console.log(`  ${name}`);
+        });
+        console.log(`  ... and ${toPrune.length - 10} more`);
+      }
     }
 
-    inserted += batch.length;
-    console.log(`Inserted batch ${batchIndex + 1}/${batches.length} (${inserted}/${records.length})`);
+    let updated = 0;
+    let inserted = 0;
+    let pruned = 0;
+
+    if (toUpdate.length > 0) {
+      updated = await upsertBatches(supabase, toUpdate, options.batchSize, 'Updated');
+    }
+
+    if (toInsert.length > 0) {
+      inserted = await insertBatches(supabase, toInsert, options.batchSize, 'Inserted');
+    }
+
+    if (toPrune.length > 0) {
+      const movementIds = toPrune.map(({ id }) => id);
+      await unlinkUserMovementsFromMovementIds(supabase, movementIds);
+      pruned = await deleteMovementsById(supabase, movementIds, options.batchSize);
+    }
+
+    const summary = [`Updated ${updated}`, `inserted ${inserted}`];
+    if (options.prune) {
+      summary.push(`pruned ${pruned}`);
+    }
+    console.log(`Done. ${summary.join(', ')} movements.`);
+    return;
   }
+
+  const inserted = await insertBatches(
+    supabase,
+    records,
+    options.batchSize,
+    'Inserted',
+  );
 
   console.log(`Done. Inserted ${inserted} movements.`);
 }
