@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
   getWeightTabValue,
   movementMatchesWeightMode,
+  recentMovementMatchesWeightMode,
   type MovementWeightModeFields,
 } from './movementWeightModeFilter';
 
@@ -53,7 +54,17 @@ describe('movementMatchesWeightMode', () => {
     ).toBe(false);
   });
 
-  test('2h matches two-handed kettlebell', () => {
+  test('2h matches one kettlebell double-arm', () => {
+    expect(
+      movementMatchesWeightMode(
+        row({
+          primaryEquipment: 'Kettlebell',
+          primaryItemCount: 1,
+          singleOrDoubleArm: 'Double Arm',
+        }),
+        '2h',
+      ),
+    ).toBe(true);
     expect(
       movementMatchesWeightMode(
         row({
@@ -63,7 +74,7 @@ describe('movementMatchesWeightMode', () => {
         }),
         '2h',
       ),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       movementMatchesWeightMode(
         row({
@@ -76,34 +87,35 @@ describe('movementMatchesWeightMode', () => {
     ).toBe(false);
   });
 
-  test('1h matches single-arm kettlebell', () => {
-    expect(
-      movementMatchesWeightMode(
-        row({
-          primaryEquipment: 'Kettlebell',
-          singleOrDoubleArm: 'Single Arm',
-        }),
-        '1h',
-      ),
-    ).toBe(true);
-  });
-
-  test('double matches two items or double arm', () => {
-    expect(
-      movementMatchesWeightMode(
-        row({
-          primaryEquipment: 'Kettlebell',
-          primaryItemCount: 2,
-          singleOrDoubleArm: 'No Arms',
-        }),
-        'double',
-      ),
-    ).toBe(true);
+  test('1h matches one kettlebell single-arm', () => {
     expect(
       movementMatchesWeightMode(
         row({
           primaryEquipment: 'Kettlebell',
           primaryItemCount: 1,
+          singleOrDoubleArm: 'Single Arm',
+        }),
+        '1h',
+      ),
+    ).toBe(true);
+    expect(
+      movementMatchesWeightMode(
+        row({
+          primaryEquipment: 'Kettlebell',
+          primaryItemCount: 2,
+          singleOrDoubleArm: 'Single Arm',
+        }),
+        '1h',
+      ),
+    ).toBe(false);
+  });
+
+  test('double matches two kettlebells double-arm', () => {
+    expect(
+      movementMatchesWeightMode(
+        row({
+          primaryEquipment: 'Kettlebell',
+          primaryItemCount: 2,
           singleOrDoubleArm: 'Double Arm',
         }),
         'double',
@@ -113,11 +125,45 @@ describe('movementMatchesWeightMode', () => {
       movementMatchesWeightMode(
         row({
           primaryEquipment: 'Kettlebell',
-          primaryItemCount: 1,
-          singleOrDoubleArm: 'Single Arm',
+          primaryItemCount: 2,
+          singleOrDoubleArm: 'No Arms',
         }),
         'double',
       ),
     ).toBe(false);
+    expect(
+      movementMatchesWeightMode(
+        row({
+          primaryEquipment: 'Kettlebell',
+          primaryItemCount: 1,
+          singleOrDoubleArm: 'Double Arm',
+        }),
+        'double',
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('recentMovementMatchesWeightMode', () => {
+  test('includes movements without catalog metadata', () => {
+    expect(recentMovementMatchesWeightMode(null, '2h')).toBe(true);
+  });
+
+  test('filters linked catalog movements by weight mode', () => {
+    const twoHanded = row({
+      primaryEquipment: 'Kettlebell',
+      primaryItemCount: 1,
+      singleOrDoubleArm: 'Double Arm',
+    });
+    const singleArm = row({
+      primaryEquipment: 'Kettlebell',
+      primaryItemCount: 1,
+      singleOrDoubleArm: 'Single Arm',
+    });
+
+    expect(recentMovementMatchesWeightMode(twoHanded, '2h')).toBe(true);
+    expect(recentMovementMatchesWeightMode(twoHanded, '1h')).toBe(false);
+    expect(recentMovementMatchesWeightMode(singleArm, '1h')).toBe(true);
+    expect(recentMovementMatchesWeightMode(singleArm, '2h')).toBe(false);
   });
 });

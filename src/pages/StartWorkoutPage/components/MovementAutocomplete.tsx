@@ -5,7 +5,7 @@ import { useMovementSearch } from '~/api/useMovementSearch';
 import { useUserMovementFrequency } from '~/api/useUserMovementFrequency';
 import { cn } from '~/lib/utils';
 import { WeightTabValue } from '~/types';
-import { rankMovements, WEIGHT_MODE_LABELS } from '~/utils';
+import { rankMovements, recentMovementMatchesWeightMode, WEIGHT_MODE_LABELS } from '~/utils';
 
 import { WeightModeTabs } from './WeightModeTabs';
 
@@ -48,12 +48,16 @@ export const MovementAutocomplete = ({
     frequentMovements.map((m) => m.canonicalName.toLowerCase()),
   );
 
+  const weightModeFilteredRecent = frequentMovements.filter((m) =>
+    recentMovementMatchesWeightMode(m.catalogWeightFields, weightMode),
+  );
+
   const filteredRecent =
     inputValue.length >= 1
-      ? frequentMovements.filter((m) =>
+      ? weightModeFilteredRecent.filter((m) =>
           m.canonicalName.toLowerCase().includes(inputValue.toLowerCase()),
         )
-      : frequentMovements.slice(0, 8);
+      : weightModeFilteredRecent.slice(0, 8);
 
   const catalogNames = new Set(filteredRecent.map((m) => m.canonicalName.toLowerCase()));
   const uniqueCatalog = catalogResults.filter(

@@ -2,7 +2,7 @@ import { useQuery } from 'react-query';
 
 import { QUERIES } from '~/constants';
 import { WeightTabValue } from '~/types';
-import { applyWeightModeToMovementsQuery } from '~/utils';
+import { applyWeightModeToMovementsQuery, movementMatchesWeightMode } from '~/utils';
 
 import { supabase } from '../supabaseClient';
 
@@ -24,13 +24,25 @@ const searchMovements = async (
 ): Promise<MovementSearchResult[]> => {
   let movementsQuery = supabase
     .from('movements')
-    .select('id, Movement')
+    .select('*')
     .ilike('Movement', `%${query}%`);
 
   movementsQuery = applyWeightModeToMovementsQuery(movementsQuery, weightMode);
 
-  const { data, error } = await movementsQuery.order('Movement').limit(20);
+  const { data, error } = await movementsQuery.order('Movement').limit(100);
 
   if (error) throw error;
-  return (data ?? []).map((m) => ({ id: m.id, name: m['Movement'] }));
+  return (data ?? [])
+    .filter((movement) =>
+      movementMatchesWeightMode(
+        {
+          primaryEquipment: movement['Primary Equipment'],
+          primaryItemCount: movement['# Primary Items'],
+          singleOrDoubleArm: movement['Single or Double Arm'],
+        },
+        weightMode,
+      ),
+    )
+    .slice(0, 20)
+    .map((m) => ({ id: m.id, name: m['Movement'] }));
 };

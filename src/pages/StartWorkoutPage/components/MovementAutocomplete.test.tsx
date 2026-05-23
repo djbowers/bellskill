@@ -14,6 +14,30 @@ import { MovementAutocomplete } from './MovementAutocomplete';
 const MOVEMENTS_URL = `${VITE_SUPABASE_URL}/rest/v1/movements`;
 const USER_MOVEMENTS_URL = `${VITE_SUPABASE_URL}/rest/v1/user_movements`;
 
+const twoHandedCatalogMovement = {
+  id: 'mov-2h',
+  Movement: 'Kettlebell Swing',
+  'Primary Equipment': 'Kettlebell',
+  '# Primary Items': 1,
+  'Single or Double Arm': 'Double Arm',
+};
+
+const singleArmCatalogMovement = {
+  id: 'mov-1h',
+  Movement: 'Kettlebell Clean',
+  'Primary Equipment': 'Kettlebell',
+  '# Primary Items': 1,
+  'Single or Double Arm': 'Single Arm',
+};
+
+const twoHandedSnatchCatalogMovement = {
+  id: 'mov-1',
+  Movement: 'Kettlebell Snatch',
+  'Primary Equipment': 'Kettlebell',
+  '# Primary Items': 1,
+  'Single or Double Arm': 'Double Arm',
+};
+
 const mockSession = {
   user: {
     id: 'user-123',
@@ -197,6 +221,77 @@ describe('MovementAutocomplete', () => {
     expect(screen.queryByText('Clean and Press')).not.toBeInTheDocument();
   });
 
+  test('filters recent movements by weight mode when catalog metadata exists', async () => {
+    server.use(
+      http.get(MOVEMENTS_URL, ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get('id')?.startsWith('in.')) {
+          return HttpResponse.json([twoHandedCatalogMovement, singleArmCatalogMovement]);
+        }
+        return HttpResponse.json([]);
+      }),
+      http.get(USER_MOVEMENTS_URL, () =>
+        HttpResponse.json([
+          {
+            id: 'um-1',
+            canonical_name: 'Kettlebell Swing',
+            functional_movement_id: 'mov-2h',
+            created_at: '2026-05-20T10:00:00Z',
+            user_id: 'user-123',
+            is_big_6: false,
+            skill_tree_enabled: false,
+          },
+          {
+            id: 'um-2',
+            canonical_name: 'Kettlebell Clean',
+            functional_movement_id: 'mov-1h',
+            created_at: '2026-05-19T10:00:00Z',
+            user_id: 'user-123',
+            is_big_6: false,
+            skill_tree_enabled: false,
+          },
+        ]),
+      ),
+    );
+
+    renderAutocomplete({ weightMode: '2h' });
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      expect(screen.getByText('Kettlebell Swing')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Kettlebell Clean')).not.toBeInTheDocument();
+  });
+
+  test('shows custom recent movements regardless of weight mode', async () => {
+    server.use(
+      http.get(USER_MOVEMENTS_URL, () =>
+        HttpResponse.json([
+          {
+            id: 'um-1',
+            canonical_name: 'My Custom Move',
+            functional_movement_id: null,
+            created_at: '2026-05-20T10:00:00Z',
+            user_id: 'user-123',
+            is_big_6: false,
+            skill_tree_enabled: false,
+          },
+        ]),
+      ),
+    );
+
+    renderAutocomplete({ weightMode: '1h' });
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      expect(screen.getByText('My Custom Move')).toBeInTheDocument();
+    });
+  });
+
   test('selecting a recent movement calls onChange with the name', async () => {
     server.use(
       http.get(USER_MOVEMENTS_URL, () =>
@@ -231,7 +326,7 @@ describe('MovementAutocomplete', () => {
   test('selecting a catalog movement creates a user_movement record', async () => {
     server.use(
       http.get(MOVEMENTS_URL, () =>
-        HttpResponse.json([{ id: 'mov-1', Movement: 'Kettlebell Snatch' }]),
+        HttpResponse.json([twoHandedSnatchCatalogMovement]),
       ),
     );
 

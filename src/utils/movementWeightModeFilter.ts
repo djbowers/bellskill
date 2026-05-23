@@ -34,23 +34,35 @@ export const movementMatchesWeightMode = (
       return (
         row.primaryEquipment === 'Kettlebell' &&
         row.primaryItemCount === 1 &&
-        row.singleOrDoubleArm !== 'Single Arm'
+        row.singleOrDoubleArm === 'Double Arm'
       );
     case '1h':
       return (
         row.primaryEquipment === 'Kettlebell' &&
+        row.primaryItemCount === 1 &&
         row.singleOrDoubleArm === 'Single Arm'
       );
     case 'double':
       return (
         row.primaryEquipment === 'Kettlebell' &&
-        (row.primaryItemCount === 2 || row.singleOrDoubleArm === 'Double Arm')
+        row.primaryItemCount === 2 &&
+        row.singleOrDoubleArm === 'Double Arm'
       );
     default:
       return false;
   }
 };
 
+export const recentMovementMatchesWeightMode = (
+  catalogWeightFields: MovementWeightModeFields | null,
+  mode: WeightTabValue,
+): boolean => {
+  if (!catalogWeightFields) return true;
+  return movementMatchesWeightMode(catalogWeightFields, mode);
+};
+
+// PostgREST cannot parse the "# Primary Items" column in filters; item count
+// is enforced client-side via movementMatchesWeightMode.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const applyWeightModeToMovementsQuery = (query: any, mode: WeightTabValue) => {
   switch (mode) {
@@ -59,8 +71,7 @@ export const applyWeightModeToMovementsQuery = (query: any, mode: WeightTabValue
     case '2h':
       return query
         .eq('Primary Equipment', 'Kettlebell')
-        .eq('# Primary Items', 1)
-        .neq('Single or Double Arm', 'Single Arm');
+        .eq('Single or Double Arm', 'Double Arm');
     case '1h':
       return query
         .eq('Primary Equipment', 'Kettlebell')
@@ -68,7 +79,7 @@ export const applyWeightModeToMovementsQuery = (query: any, mode: WeightTabValue
     case 'double':
       return query
         .eq('Primary Equipment', 'Kettlebell')
-        .or('# Primary Items.eq.2,"Single or Double Arm".eq.Double Arm');
+        .eq('Single or Double Arm', 'Double Arm');
     default:
       return query;
   }
