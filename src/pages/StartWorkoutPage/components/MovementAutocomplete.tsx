@@ -33,15 +33,26 @@ export const MovementAutocomplete = ({
   className,
 }: MovementAutocompleteProps) => {
   const [inputValue, setInputValue] = useState(value);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(value);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setInputValue(value);
+    setDebouncedSearchQuery(value);
   }, [value]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchQuery(inputValue), 150);
+    return () => clearTimeout(timer);
+  }, [inputValue]);
+
   const { data: frequentMovements = [] } = useUserMovementFrequency();
-  const { data: catalogResults = [] } = useMovementSearch(inputValue, weightMode);
+  const {
+    data: catalogResults = [],
+    isFetching: isCatalogFetching,
+    isLoading: isCatalogLoading,
+  } = useMovementSearch(debouncedSearchQuery, weightMode);
   const createUserMovement = useCreateUserMovement();
 
   const frequentNames = new Set(
@@ -82,8 +93,10 @@ export const MovementAutocomplete = ({
       ? rankMovements(uniqueCatalog, inputValue, frequentNames).slice(0, 20)
       : uniqueCatalog;
 
-  const catalogSearched = inputValue.length >= 2;
-  const showCatalogEmpty = catalogSearched && rankedCatalog.length === 0;
+  const catalogSearched = debouncedSearchQuery.length >= 2;
+  const catalogSearchPending = isCatalogLoading || isCatalogFetching;
+  const showCatalogEmpty =
+    catalogSearched && rankedCatalog.length === 0 && !catalogSearchPending;
 
   const showCustomEntry =
     inputValue.length > 0 &&

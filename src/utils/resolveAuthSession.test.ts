@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { supabase } from '~/supabaseClient';
 
-import { resolveAuthSession, signOutIfStaleAuthUser } from './resolveAuthSession';
+import {
+  isStaleAuthUserForeignKey,
+  resolveAuthSession,
+  signOutIfStaleAuthUser,
+} from './resolveAuthSession';
 
 vi.mock('~/supabaseClient', () => ({
   supabase: {
@@ -113,16 +117,58 @@ describe('resolveAuthSession', () => {
   });
 });
 
+describe('isStaleAuthUserForeignKey', () => {
+  test('matches auth user foreign key violations', () => {
+    expect(
+      isStaleAuthUserForeignKey({
+        code: '23503',
+        message:
+          'insert or update on table "user_movements" violates foreign key constraint "user_movements_user_id_fkey"',
+      }),
+    ).toBe(true);
+  });
+
+  test('ignores catalog foreign key violations', () => {
+    expect(
+      isStaleAuthUserForeignKey({
+        code: '23503',
+        message:
+          'insert or update on table "user_movements" violates foreign key constraint "user_movements_functional_movement_id_fkey"',
+      }),
+    ).toBe(false);
+  });
+
+  test('ignores non-foreign-key errors', () => {
+    expect(isStaleAuthUserForeignKey({ code: '42501' })).toBe(false);
+  });
+});
+
 describe('signOutIfStaleAuthUser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test('signs out on foreign key violation', async () => {
+  test('signs out on stale auth user foreign key violation', async () => {
     vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null });
 
-    await expect(signOutIfStaleAuthUser({ code: '23503' })).resolves.toBe(true);
+    await expect(
+      signOutIfStaleAuthUser({
+        code: '23503',
+        message: 'violates foreign key constraint "user_movements_user_id_fkey"',
+      }),
+    ).resolves.toBe(true);
     expect(supabase.auth.signOut).toHaveBeenCalled();
+  });
+
+  test('does not sign out on catalog foreign key violation', async () => {
+    await expect(
+      signOutIfStaleAuthUser({
+        code: '23503',
+        message:
+          'violates foreign key constraint "user_movements_functional_movement_id_fkey"',
+      }),
+    ).resolves.toBe(false);
+    expect(supabase.auth.signOut).not.toHaveBeenCalled();
   });
 
   test('ignores other errors', async () => {

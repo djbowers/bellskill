@@ -50,10 +50,30 @@ export async function resolveAuthSession(
   return ensureProfile(session);
 }
 
+/** True when a 23503 FK violation references the auth user, not catalog rows. */
+export function isStaleAuthUserForeignKey(error: {
+  code?: string;
+  message?: string;
+  details?: string;
+}): boolean {
+  if (error.code !== '23503') {
+    return false;
+  }
+
+  const haystack = `${error.message ?? ''} ${error.details ?? ''}`.toLowerCase();
+  return (
+    haystack.includes('user_id') ||
+    haystack.includes('auth.users') ||
+    haystack.includes('user_movements_user_id_fkey')
+  );
+}
+
 export async function signOutIfStaleAuthUser(error: {
   code?: string;
+  message?: string;
+  details?: string;
 }): Promise<boolean> {
-  if (error.code !== '23503') {
+  if (!isStaleAuthUserForeignKey(error)) {
     return false;
   }
 

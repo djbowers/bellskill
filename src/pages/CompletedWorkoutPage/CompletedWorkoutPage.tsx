@@ -78,7 +78,10 @@ export const CompletedWorkoutPage = () => {
     // Use actual completed values for all unit types
     const previousMinutes = completedDurationMinutes;
     const previousRounds = workoutLog.completedRounds ?? 0;
-    const previousVolume = workoutLog.completedVolume ?? 0;
+    const previousVolume =
+      workoutLog.workoutGoalUnits === 'kilograms' && workoutLog.completedVolume
+        ? workoutLog.completedVolume
+        : undefined;
 
     // Determine workoutGoal and workoutGoalUnits based on original workout
     let workoutGoal: number = workoutLog.workoutGoal;

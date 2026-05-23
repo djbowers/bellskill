@@ -85,26 +85,3 @@ export const applyWeightModeToCatalogQuery = (query: any, mode: WeightTabValue) 
       return query;
   }
 };
-
-// Legacy column names for the movements table (used outside catalog search).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const applyWeightModeToMovementsQuery = (query: any, mode: WeightTabValue) => {
-  switch (mode) {
-    case 'none':
-      return query.eq('Primary Equipment', 'Bodyweight');
-    case '2h':
-      return query
-        .eq('Primary Equipment', 'Kettlebell')
-        .eq('Single or Double Arm', 'Double Arm');
-    case '1h':
-      return query
-        .eq('Primary Equipment', 'Kettlebell')
-        .eq('Single or Double Arm', 'Single Arm');
-    case 'double':
-      return query
-        .eq('Primary Equipment', 'Kettlebell')
-        .eq('Single or Double Arm', 'Double Arm');
-    default:
-      return query;
-  }
-};

@@ -608,32 +608,32 @@ export const StartWorkoutPage = () => {
             {!complexSet && weightTabValue !== 'none' && (
               <Section title="Load">
                 <ModifyCountButtons
-                    onClickMinus={() =>
-                      handleChangeWeightOneValue(
-                        index,
-                        movement.weightOneValue! - 1,
-                      )
-                    }
-                    onClickPlus={() =>
-                      handleChangeWeightOneValue(
-                        index,
-                        movement.weightOneValue! + 1,
-                      )
-                    }
-                    unit={getWeightUnitLabel(movement.weightOneUnit)}
-                    unitTabs={
-                      <WeightUnitTabs
-                        value={movement.weightOneUnit}
-                        onChange={(value) =>
-                          handleChangeWeightOneUnit(index, value)
-                        }
-                      />
-                    }
-                    value={movement.weightOneValue}
-                    onChange={(value) =>
-                      handleChangeWeightOneValue(index, value!)
-                    }
-                  />
+                  onClickMinus={() =>
+                    handleChangeWeightOneValue(
+                      index,
+                      movement.weightOneValue! - 1,
+                    )
+                  }
+                  onClickPlus={() =>
+                    handleChangeWeightOneValue(
+                      index,
+                      movement.weightOneValue! + 1,
+                    )
+                  }
+                  unit={getWeightUnitLabel(movement.weightOneUnit)}
+                  unitTabs={
+                    <WeightUnitTabs
+                      value={movement.weightOneUnit}
+                      onChange={(value) =>
+                        handleChangeWeightOneUnit(index, value)
+                      }
+                    />
+                  }
+                  value={movement.weightOneValue}
+                  onChange={(value) =>
+                    handleChangeWeightOneValue(index, value!)
+                  }
+                />
                 {movement.weightTwoValue !== null &&
                   movement.weightTwoValue > 0 && (
                     <ModifyCountButtons

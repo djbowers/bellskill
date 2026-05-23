@@ -409,27 +409,81 @@ function parseArgs(argv) {
   return options;
 }
 
-function findHeaderRowIndex(lines) {
-  const index = lines.findIndex((line) => line.includes(',Exercise,'));
+/** Parse RFC 4180-style CSV (quoted fields, escaped quotes, commas in values). */
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    const nextCharacter = text[index + 1];
+
+    if (inQuotes) {
+      if (character === '"' && nextCharacter === '"') {
+        field += '"';
+        index += 1;
+      } else if (character === '"') {
+        inQuotes = false;
+      } else {
+        field += character;
+      }
+      continue;
+    }
+
+    if (character === '"') {
+      inQuotes = true;
+    } else if (character === ',') {
+      row.push(field);
+      field = '';
+    } else if (character === '\n' || (character === '\r' && nextCharacter === '\n')) {
+      row.push(field);
+      field = '';
+      rows.push(row);
+      row = [];
+      if (character === '\r') {
+        index += 1;
+      }
+    } else if (character !== '\r') {
+      field += character;
+    }
+  }
+
+  if (field.length > 0 || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+
+  if (inQuotes) {
+    throw new Error('CSV file has an unclosed quoted field.');
+  }
+
+  return rows;
+}
+
+function findHeaderRowIndex(rows) {
+  const index = rows.findIndex((columns) =>
+    columns.some((value) => value.includes('Exercise')),
+  );
   if (index === -1) {
-    throw new Error('Could not find CSV header row containing ",Exercise,".');
+    throw new Error('Could not find CSV header row containing "Exercise".');
   }
   return index;
 }
 
 function parseCsvRows(filePath) {
   const text = readFileSync(filePath, 'utf8');
-  const lines = text.split(/\r?\n/);
-  const headerRowIndex = findHeaderRowIndex(lines);
+  const allRows = parseCsv(text);
+  const headerRowIndex = findHeaderRowIndex(allRows);
   const rows = [];
 
-  for (let lineIndex = headerRowIndex + 1; lineIndex < lines.length; lineIndex += 1) {
-    const line = lines[lineIndex];
-    if (!line.trim()) {
+  for (let rowIndex = headerRowIndex + 1; rowIndex < allRows.length; rowIndex += 1) {
+    const columns = allRows[rowIndex];
+    if (!columns.some((value) => value.trim())) {
       continue;
     }
 
-    const columns = line.split(',');
     const movementName = columns[1]?.trim();
     if (!movementName) {
       continue;
@@ -437,11 +491,11 @@ function parseCsvRows(filePath) {
 
     if (columns.length !== CSV_TO_DB_COLUMN.length) {
       throw new Error(
-        `Row ${lineIndex + 1} ("${movementName}") has ${columns.length} columns; expected ${CSV_TO_DB_COLUMN.length}.`,
+        `Row ${rowIndex + 1} ("${movementName}") has ${columns.length} columns; expected ${CSV_TO_DB_COLUMN.length}.`,
       );
     }
 
-    rows.push({ lineNumber: lineIndex + 1, columns });
+    rows.push({ lineNumber: rowIndex + 1, columns });
   }
 
   return rows;
@@ -533,7 +587,8 @@ function printUsage() {
 Options:
   --file <path>       Path to the Functional Fitness Exercises CSV
   --dry-run           Parse and validate only; do not write to Supabase
-  --truncate          Delete all existing rows from movements before insert
+  --truncate          Clear functional_movement_id on user_movements, then delete
+                      all movements rows before insert (required when catalog IDs change)
   --batch-size <n>    Insert batch size (default: 500)
   --strict            Fail if any enum value cannot be mapped
 
@@ -596,13 +651,24 @@ async function main() {
   });
 
   if (options.truncate) {
-    const { error } = await supabase
+    const { error: unlinkError } = await supabase
+      .from('user_movements')
+      .update({ functional_movement_id: null })
+      .not('functional_movement_id', 'is', null);
+
+    if (unlinkError) {
+      throw new Error(
+        `Failed to clear user_movements.functional_movement_id before truncate: ${unlinkError.message}`,
+      );
+    }
+
+    const { error: deleteError } = await supabase
       .from('movements')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000');
 
-    if (error) {
-      throw error;
+    if (deleteError) {
+      throw deleteError;
     }
 
     console.log('Truncated existing movements.');
