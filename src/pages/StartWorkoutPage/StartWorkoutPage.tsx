@@ -587,7 +587,6 @@ export const StartWorkoutPage = () => {
               }
             >
               <MovementAutocomplete
-                autoFocus
                 value={movement.movementName}
                 onChange={(name) => handleChangeMovementName(index, name)}
                 weightMode={activeWeightMode}

@@ -141,6 +141,20 @@ describe('MovementAutocomplete', () => {
     expect(onWeightModeChange).toHaveBeenCalledWith('1h');
   });
 
+  test('closes dropdown when input loses focus', async () => {
+    renderAutocomplete();
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+    await userEvent.type(input, 'Swing');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+    await userEvent.tab();
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+  });
+
   test('calls onChange on every keystroke with accumulated value', async () => {
     const onChange = vi.fn();
     renderAutocomplete({ onChange });

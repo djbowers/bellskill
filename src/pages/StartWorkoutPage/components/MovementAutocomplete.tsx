@@ -17,7 +17,6 @@ interface MovementAutocompleteProps {
   weightSummary?: string | null;
   showWeightModeTabs?: boolean;
   weightModeHint?: string | null;
-  autoFocus?: boolean;
   className?: string;
 }
 
@@ -29,7 +28,6 @@ export const MovementAutocomplete = ({
   weightSummary = null,
   showWeightModeTabs = true,
   weightModeHint = null,
-  autoFocus,
   className,
 }: MovementAutocompleteProps) => {
   const [inputValue, setInputValue] = useState(value);
@@ -143,6 +141,14 @@ export const MovementAutocomplete = ({
     setIsOpen(false);
   };
 
+  const handleInputBlur = () => {
+    window.setTimeout(() => {
+      if (!containerRef.current?.contains(document.activeElement)) {
+        setIsOpen(false);
+      }
+    }, 0);
+  };
+
   const showDropdown = isOpen && (hasOptions || showCustomEntry);
   const showSummaryChip = value.length > 0 && weightSummary && !isOpen;
 
@@ -162,7 +168,6 @@ export const MovementAutocomplete = ({
 
       <input
         aria-label="Movement Input"
-        autoFocus={autoFocus}
         autoComplete="off"
         className={cn(
           'flex h-4 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm ring-offset-background',
@@ -175,6 +180,7 @@ export const MovementAutocomplete = ({
         value={inputValue}
         onChange={handleInputChange}
         onFocus={() => setIsOpen(true)}
+        onBlur={handleInputBlur}
       />
 
       {showSummaryChip && (
