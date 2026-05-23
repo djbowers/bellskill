@@ -4,6 +4,7 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 
 import { Loading, PWAInstallPrompt, SafeAreaWrapper } from '~/components';
 import { WorkoutOptionsProvider } from '~/contexts/WorkoutOptionsContext';
+import { resolveAuthSession } from '~/utils';
 
 import { SessionProvider } from '../contexts';
 import { Signup } from '../pages';
@@ -16,12 +17,16 @@ export function App() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+      resolveAuthSession(session).then(setSession);
     });
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      resolveAuthSession(session).then(setSession);
     });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const router = createBrowserRouter(routes);

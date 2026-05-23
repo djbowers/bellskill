@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from 'react-query';
 
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
+import { signOutIfStaleAuthUser } from '~/utils';
 
 import { supabase } from '../supabaseClient';
 
@@ -55,6 +56,11 @@ const createOrReuseUserMovement = async ({
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    if (await signOutIfStaleAuthUser(error)) {
+      return null;
+    }
+    throw error;
+  }
   return data;
 };
