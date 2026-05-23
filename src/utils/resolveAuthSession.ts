@@ -2,7 +2,44 @@ import { Session } from '@supabase/supabase-js';
 
 import { supabase } from '~/supabaseClient';
 
-/** Drop sessions whose user no longer exists (e.g. after a local db reset). */
+async function findProfile(userId: string) {
+  return supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
+}
+
+async function ensureProfile(session: Session) {
+  const { data: profile, error: profileError } = await findProfile(session.user.id);
+
+  if (profileError) {
+    return session;
+  }
+
+  if (profile) {
+    return session;
+  }
+
+  const { error: insertError } = await supabase.from('profiles').insert({
+    id: session.user.id,
+    full_name: session.user.user_metadata?.full_name ?? null,
+    avatar_url: session.user.user_metadata?.avatar_url ?? null,
+  });
+
+  if (!insertError) {
+    return session;
+  }
+
+  if (insertError.code === '23505') {
+    return session;
+  }
+
+  if (insertError.code === '23503') {
+    await supabase.auth.signOut();
+    return null;
+  }
+
+  return session;
+}
+
+/** Ensure the signed-in user has a profile; sign out only stale JWTs. */
 export async function resolveAuthSession(
   session: Session | null,
 ): Promise<Session | null> {
@@ -10,18 +47,7 @@ export async function resolveAuthSession(
     return session;
   }
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('id', session.user.id)
-    .maybeSingle();
-
-  if (error || !profile) {
-    await supabase.auth.signOut();
-    return null;
-  }
-
-  return session;
+  return ensureProfile(session);
 }
 
 export async function signOutIfStaleAuthUser(error: {

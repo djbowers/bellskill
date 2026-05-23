@@ -15,8 +15,33 @@ vi.mock('~/supabaseClient', () => ({
 }));
 
 const session = {
-  user: { id: 'user-123' },
+  user: {
+    id: 'user-123',
+    user_metadata: { full_name: 'Test User' },
+  },
 } as Session;
+
+function mockProfilesTable({
+  profile,
+  profileError = null,
+  insertError = null,
+}: {
+  profile?: { id: string } | null;
+  profileError?: unknown;
+  insertError?: { code: string } | null;
+}) {
+  const maybeSingle = vi
+    .fn()
+    .mockResolvedValue({ data: profile ?? null, error: profileError });
+  const selectEq = vi.fn().mockReturnValue({ maybeSingle });
+  const select = vi.fn().mockReturnValue({ eq: selectEq });
+  const insert = vi.fn().mockResolvedValue({ error: insertError });
+
+  vi.mocked(supabase.from).mockReturnValue({
+    select,
+    insert,
+  } as never);
+}
 
 describe('resolveAuthSession', () => {
   beforeEach(() => {
@@ -28,30 +53,63 @@ describe('resolveAuthSession', () => {
   });
 
   test('returns session when profile exists', async () => {
+    const insert = vi.fn();
+    mockProfilesTable({ profile: { id: 'user-123' } });
     vi.mocked(supabase.from).mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'user-123' }, error: null }),
         }),
       }),
+      insert,
     } as never);
 
     await expect(resolveAuthSession(session)).resolves.toBe(session);
+    expect(insert).not.toHaveBeenCalled();
     expect(supabase.auth.signOut).not.toHaveBeenCalled();
   });
 
-  test('signs out and returns null when profile is missing', async () => {
+  test('creates profile when missing and keeps session', async () => {
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    mockProfilesTable({ profile: null });
     vi.mocked(supabase.from).mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
       }),
+      insert,
     } as never);
+
+    await expect(resolveAuthSession(session)).resolves.toBe(session);
+    expect(insert).toHaveBeenCalledWith({
+      id: 'user-123',
+      full_name: 'Test User',
+      avatar_url: null,
+    });
+    expect(supabase.auth.signOut).not.toHaveBeenCalled();
+  });
+
+  test('keeps session when profile insert races with trigger', async () => {
+    mockProfilesTable({ profile: null, insertError: { code: '23505' } });
+
+    await expect(resolveAuthSession(session)).resolves.toBe(session);
+    expect(supabase.auth.signOut).not.toHaveBeenCalled();
+  });
+
+  test('signs out when profile insert hits stale auth user foreign key', async () => {
+    mockProfilesTable({ profile: null, insertError: { code: '23503' } });
     vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null });
 
     await expect(resolveAuthSession(session)).resolves.toBeNull();
     expect(supabase.auth.signOut).toHaveBeenCalled();
+  });
+
+  test('keeps session when profile lookup fails', async () => {
+    mockProfilesTable({ profileError: { message: 'network error' } });
+
+    await expect(resolveAuthSession(session)).resolves.toBe(session);
+    expect(supabase.auth.signOut).not.toHaveBeenCalled();
   });
 });
 
