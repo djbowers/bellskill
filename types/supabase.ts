@@ -51,17 +51,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "movement_logs_workout_log_id_fkey"
-            columns: ["workout_log_id"]
-            isOneToOne: false
-            referencedRelation: "workout_logs"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "movement_logs_user_movement_id_fkey"
             columns: ["user_movement_id"]
             isOneToOne: false
             referencedRelation: "user_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movement_logs_workout_log_id_fkey"
+            columns: ["workout_log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_logs"
             referencedColumns: ["id"]
           },
         ]
@@ -326,6 +326,13 @@ export type Database = {
             referencedRelation: "movements"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_movements_functional_movement_id_fkey"
+            columns: ["functional_movement_id"]
+            isOneToOne: false
+            referencedRelation: "movements_catalog"
+            referencedColumns: ["id"]
+          },
         ]
       }
       workout_logs: {
@@ -428,11 +435,29 @@ export type Database = {
     Views: {
       movements_catalog: {
         Row: {
-          id: string
-          name: string
+          id: string | null
+          name: string | null
           primary_equipment: Database["public"]["Enums"]["Equipment"] | null
           primary_item_count: number | null
           single_or_double_arm:
+            | Database["public"]["Enums"]["Single or Double Arm"]
+            | null
+        }
+        Insert: {
+          id?: string | null
+          name?: string | null
+          primary_equipment?: Database["public"]["Enums"]["Equipment"] | null
+          primary_item_count?: number | null
+          single_or_double_arm?:
+            | Database["public"]["Enums"]["Single or Double Arm"]
+            | null
+        }
+        Update: {
+          id?: string | null
+          name?: string | null
+          primary_equipment?: Database["public"]["Enums"]["Equipment"] | null
+          primary_item_count?: number | null
+          single_or_double_arm?:
             | Database["public"]["Enums"]["Single or Double Arm"]
             | null
         }
@@ -500,6 +525,7 @@ export type Database = {
         | "Slant Board"
         | "Sledge Hammer"
         | "Gravity Boots"
+        | "Climbing Rope"
       "Exercise Classification":
         | "Animal Flow"
         | "Balance"
@@ -600,6 +626,9 @@ export type Database = {
         | "Spinal Rotational"
         | "Hip Internal Rotation"
         | "Other"
+        | "Locomotion"
+        | "Horizontal Adduction"
+        | "Lateral Locomotion"
       "Muscle Group":
         | "Abdominals"
         | "Glutes"
@@ -659,6 +688,7 @@ export type Database = {
         | "Trapezius"
         | "Teres Major"
         | "Tibialis Posterior"
+        | "Transverse Abdominis"
       "Plane of Motion": "Frontal Plane" | "Sagittal Plane" | "Transverse Plane"
       Posture:
         | "90/90 Seated"
@@ -696,6 +726,8 @@ export type Database = {
         | "V Sit Seated"
         | "Walking"
         | "Wall Sit"
+        | "Isometric Split Squat"
+        | "Running"
       RPE: "noEffort" | "easy" | "ideal" | "hard" | "maxEffort"
       "Single or Double Arm": "Single Arm" | "No Arms" | "Double Arm"
       weight_unit: "kilograms" | "pounds"
@@ -886,6 +918,7 @@ export const Constants = {
         "Slant Board",
         "Sledge Hammer",
         "Gravity Boots",
+        "Climbing Rope",
       ],
       "Exercise Classification": [
         "Animal Flow",
@@ -991,6 +1024,9 @@ export const Constants = {
         "Spinal Rotational",
         "Hip Internal Rotation",
         "Other",
+        "Locomotion",
+        "Horizontal Adduction",
+        "Lateral Locomotion",
       ],
       "Muscle Group": [
         "Abdominals",
@@ -1052,6 +1088,7 @@ export const Constants = {
         "Trapezius",
         "Teres Major",
         "Tibialis Posterior",
+        "Transverse Abdominis",
       ],
       "Plane of Motion": [
         "Frontal Plane",
@@ -1094,6 +1131,8 @@ export const Constants = {
         "V Sit Seated",
         "Walking",
         "Wall Sit",
+        "Isometric Split Squat",
+        "Running",
       ],
       RPE: ["noEffort", "easy", "ideal", "hard", "maxEffort"],
       "Single or Double Arm": ["Single Arm", "No Arms", "Double Arm"],

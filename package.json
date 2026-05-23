@@ -20,6 +20,7 @@
     "coverage": "vitest run --coverage",
     "compile:ts": "npx tsc --noEmit",
     "start:server": "supabase start",
+    "ingest:movements": "node scripts/ingest-movements.mjs",
     "prettier": "prettier --write .",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
