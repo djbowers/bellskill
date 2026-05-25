@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import { SessionProvider } from '~/contexts';
-import { server } from '~/mocks/server';
 import { VITE_SUPABASE_URL } from '~/env';
+import { server } from '~/mocks/server';
 import { WeightTabValue } from '~/types';
 
 import { MovementAutocomplete } from './MovementAutocomplete';
@@ -84,6 +84,8 @@ interface RenderOptions {
   showWeightModeTabs?: boolean;
   weightSummary?: string | null;
   weightModeHint?: string | null;
+  deferUserMovementWrite?: boolean;
+  onMovementPick?: ReturnType<typeof vi.fn>;
 }
 
 function renderAutocomplete({
@@ -95,6 +97,8 @@ function renderAutocomplete({
   showWeightModeTabs = true,
   weightSummary = null,
   weightModeHint = null,
+  deferUserMovementWrite = false,
+  onMovementPick,
 }: RenderOptions = {}) {
   const wrapper = makeWrapper(withSession);
   return render(
@@ -106,6 +110,8 @@ function renderAutocomplete({
       showWeightModeTabs={showWeightModeTabs}
       weightSummary={weightSummary}
       weightModeHint={weightModeHint}
+      deferUserMovementWrite={deferUserMovementWrite}
+      onMovementPick={onMovementPick}
     />,
     { wrapper },
   );
@@ -122,7 +128,9 @@ describe('MovementAutocomplete', () => {
 
   test('renders an input with aria-label "Movement Input"', () => {
     renderAutocomplete();
-    expect(screen.getByRole('textbox', { name: 'Movement Input' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('textbox', { name: 'Movement Input' }),
+    ).toBeInTheDocument();
   });
 
   test('renders weight mode tabs by default', () => {
@@ -369,7 +377,9 @@ describe('MovementAutocomplete', () => {
     await userEvent.click(input);
 
     await waitFor(() => {
-      expect(screen.getByText('Double Kettlebell Front Rack Squat')).toBeInTheDocument();
+      expect(
+        screen.getByText('Double Kettlebell Front Rack Squat'),
+      ).toBeInTheDocument();
     });
   });
 
@@ -384,13 +394,16 @@ describe('MovementAutocomplete', () => {
     server.use(
       http.post(USER_MOVEMENTS_URL, async ({ request }) => {
         capturedInsert = await request.json();
-        return HttpResponse.json([{ id: 'um-new', canonical_name: 'Kettlebell Snatch' }]);
+        return HttpResponse.json([
+          { id: 'um-new', canonical_name: 'Kettlebell Snatch' },
+        ]);
       }),
     );
     server.use(
       http.get(USER_MOVEMENTS_URL, ({ request }) => {
         const url = new URL(request.url);
-        if (url.searchParams.get('canonical_name')) return HttpResponse.json(null);
+        if (url.searchParams.get('canonical_name'))
+          return HttpResponse.json(null);
         return HttpResponse.json([]);
       }),
     );
@@ -414,6 +427,41 @@ describe('MovementAutocomplete', () => {
     });
   });
 
+  test('defers user_movement write and calls onMovementPick instead', async () => {
+    server.use(
+      http.get(MOVEMENTS_CATALOG_URL, () =>
+        HttpResponse.json([twoHandedSnatchCatalogMovement]),
+      ),
+    );
+
+    let capturedInsert: unknown = null;
+    server.use(
+      http.post(USER_MOVEMENTS_URL, async ({ request }) => {
+        capturedInsert = await request.json();
+        return HttpResponse.json([{ id: 'um-new' }]);
+      }),
+    );
+
+    const onMovementPick = vi.fn();
+    renderAutocomplete({
+      value: 'Kettlebell',
+      deferUserMovementWrite: true,
+      onMovementPick,
+    });
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      expect(screen.getByText('Kettlebell Snatch')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText('Kettlebell Snatch'));
+
+    expect(onMovementPick).toHaveBeenCalledWith('Kettlebell Snatch', 'mov-1');
+    expect(capturedInsert).toBeNull();
+  });
+
   test('shows catalog empty state when search has no catalog matches', async () => {
     renderAutocomplete({ value: 'Swing' });
 
@@ -434,7 +482,9 @@ describe('MovementAutocomplete', () => {
     await userEvent.click(input);
 
     await waitFor(() => {
-      expect(screen.getByText(/Use.*My Custom Move.*as custom movement/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Use.*My Custom Move.*as custom movement/),
+      ).toBeInTheDocument();
     });
   });
 

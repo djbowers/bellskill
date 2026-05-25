@@ -19,6 +19,7 @@ import {
   getWeightsDisplayValue,
   resolveSharedWeights,
 } from '../utils';
+import { LinkMovementDialog } from './LinkMovementDialog';
 
 export interface WorkoutHistoryItemProps {
   completedAt: Date;
@@ -39,6 +40,7 @@ export interface WorkoutHistoryItemProps {
   workoutDetails: string | null;
   workoutGoal: number;
   workoutGoalUnits: string;
+  workoutLogId: number;
 }
 
 export const WorkoutHistoryItem = ({
@@ -60,6 +62,7 @@ export const WorkoutHistoryItem = ({
   workoutDetails,
   workoutGoal,
   workoutGoalUnits,
+  workoutLogId,
 }: WorkoutHistoryItemProps) => {
   const displayDate = getDisplayDate(completedAt);
   const duration = getDuration(startedAt, completedAt);
@@ -121,7 +124,9 @@ export const WorkoutHistoryItem = ({
         <>
           {isComplexSet && (
             <CardContent>
-              <CardDescription id="shared-weight">Shared Weight</CardDescription>
+              <CardDescription id="shared-weight">
+                Shared Weight
+              </CardDescription>
               <div aria-labelledby="shared-weight">
                 {getWeightsDisplayValue(
                   sharedWeights.weightOneValue,
@@ -134,13 +139,32 @@ export const WorkoutHistoryItem = ({
           )}
           {movementLogs.map((movement, index) => (
             <CardContent key={movement.id}>
-              <div className="flex gap-2">
-                <div className="grow">
+              <div
+                className={`grid gap-2 ${isComplexSet ? 'grid-cols-2' : 'grid-cols-3'}`}
+              >
+                <div className="flex min-w-0 flex-col gap-0.5">
                   <CardDescription>Movement #{index + 1}</CardDescription>
-                  <div>{movement.movementName}</div>
+                  <div className="flex flex-col gap-0.5">
+                    <div>{movement.movementName}</div>
+                    <div className="flex gap-1">
+                      {movement.functionalMovementId !== null && (
+                        <Badge variant="secondary" className="shrink-0 text-xs">
+                          Catalog
+                        </Badge>
+                      )}
+                      <LinkMovementDialog
+                        workoutLogId={workoutLogId}
+                        movementLog={movement}
+                        movementIndex={index}
+                        complexSet={isComplexSet}
+                        sharedWeights={sharedWeights}
+                      />
+                    </div>
+                  </div>
                 </div>
+
                 {!isComplexSet && (
-                  <div className="grow text-right">
+                  <div className="flex flex-col gap-0.5 text-right">
                     <CardDescription id="weights">Weights</CardDescription>
                     <div aria-labelledby="weights">
                       {getWeightsDisplayValue(
@@ -152,8 +176,13 @@ export const WorkoutHistoryItem = ({
                     </div>
                   </div>
                 )}
-                <div className="grow text-right">
-                  <CardDescription id="rep-scheme">Rep Scheme</CardDescription>
+                <div className="flex flex-col gap-0.5 text-right">
+                  <CardDescription
+                    id="rep-scheme"
+                    className="whitespace-nowrap"
+                  >
+                    Rep Scheme
+                  </CardDescription>
                   <div aria-labelledby="rep-scheme">
                     {getRepSchemeDisplayValue(
                       movement.repScheme,
@@ -162,10 +191,7 @@ export const WorkoutHistoryItem = ({
                             sharedWeights.weightOneValue,
                             sharedWeights.weightTwoValue,
                           ]
-                        : [
-                            movement.weightOneValue,
-                            movement.weightTwoValue,
-                          ],
+                        : [movement.weightOneValue, movement.weightTwoValue],
                     )}
                   </div>
                 </div>
