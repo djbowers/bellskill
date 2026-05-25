@@ -1,5 +1,6 @@
 export * from './useDeleteWorkoutLog';
 export * from './useLinkMovementLog';
+export * from './useUnlinkMovementLog';
 export * from './useLogWorkout';
 export * from './useMovementLogs';
 export * from './useMovements';

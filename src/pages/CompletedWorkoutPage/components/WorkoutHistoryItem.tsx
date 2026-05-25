@@ -1,24 +1,20 @@
+import { ScaleIcon } from '@heroicons/react/24/outline';
+
 import { Loading } from '~/components';
 import { Badge } from '~/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card';
-import { Separator } from '~/components/ui/separator';
 import { MovementLog, WeightUnit } from '~/types';
 
 import {
-  getDisplayDate,
-  getDuration,
-  getRepSchemeDisplayValue,
-  getTimeRange,
-  getWeightsDisplayValue,
+  formatCarriedWeights,
+  formatMovementWeightLine,
+  formatTimerSeconds,
+  getCompactRepScheme,
+  getGoalPillLabel,
+  getMovementTotalReps,
+  getMovementVolume,
   resolveSharedWeights,
 } from '../utils';
+import { CatalogedBadge } from './CatalogedBadge';
 import { LinkMovementDialog } from './LinkMovementDialog';
 
 export interface WorkoutHistoryItemProps {
@@ -43,11 +39,19 @@ export interface WorkoutHistoryItemProps {
   workoutLogId: number;
 }
 
+const TheWorkDivider = () => (
+  <div className="flex items-center gap-2 py-2">
+    <div className="h-px flex-1 bg-border" />
+    <span className="text-xs uppercase tracking-wide text-muted-foreground">
+      The work
+    </span>
+    <div className="h-px flex-1 bg-border" />
+  </div>
+);
+
 export const WorkoutHistoryItem = ({
-  completedAt,
   completedReps,
   completedRounds,
-  completedRungs,
   completedVolume,
   complexSet,
   intervalTimer,
@@ -58,15 +62,11 @@ export const WorkoutHistoryItem = ({
   sharedWeightOneValue,
   sharedWeightTwoUnit,
   sharedWeightTwoValue,
-  startedAt,
   workoutDetails,
   workoutGoal,
   workoutGoalUnits,
   workoutLogId,
 }: WorkoutHistoryItemProps) => {
-  const displayDate = getDisplayDate(completedAt);
-  const duration = getDuration(startedAt, completedAt);
-  const timeRange = getTimeRange(startedAt, completedAt);
   const isComplexSet = complexSet === true;
   const sharedWeights = resolveSharedWeights(
     sharedWeightOneValue,
@@ -75,164 +75,171 @@ export const WorkoutHistoryItem = ({
     sharedWeightTwoUnit,
     movementLogs,
   );
+  const goalPillLabel = getGoalPillLabel(workoutGoal, workoutGoalUnits);
+  const hasTimers = intervalTimer > 0 || restTimer > 0;
 
   return (
-    <Card data-testid="workout-history-item">
-      <CardHeader>
-        <CardTitle className="flex items-baseline justify-between gap-1">
-          <div className="flex items-baseline gap-1">
-            {displayDate}
-            {isComplexSet && <Badge variant="secondary">Complex</Badge>}
-          </div>
-          <CardDescription className="text-xs">{timeRange}</CardDescription>
-        </CardTitle>
-        {workoutDetails && (
-          <CardDescription className="italic">{workoutDetails}</CardDescription>
-        )}
-      </CardHeader>
+    <div className="flex flex-col gap-2" data-testid="workout-history-item">
+      <div className="relative">
+        <Badge
+          variant="outline"
+          className="absolute right-0 top-0 text-xs uppercase tracking-wide"
+        >
+          {goalPillLabel}
+        </Badge>
 
-      <CardContent className="flex gap-2">
-        <div className="grow">
-          <CardDescription id="goal">Goal</CardDescription>
-          <div aria-labelledby="goal">
-            {workoutGoalUnits === 'kilograms'
-              ? `${workoutGoal} kg`
-              : workoutGoalUnits === 'minutes'
-                ? `${workoutGoal}m`
-                : `${workoutGoal} ${workoutGoalUnits}`}
-          </div>
+        <p className="text-xs text-muted-foreground">You moved</p>
+        <div className="flex items-baseline gap-1">
+          <span className="text-5xl font-medium leading-none">
+            {completedVolume.toLocaleString()}
+          </span>
+          <span className="text-sm text-muted-foreground">kg</span>
         </div>
-        <div className="grow text-right">
-          <CardDescription id="intervals">Intervals</CardDescription>
-          <div aria-labelledby="intervals">
-            {intervalTimer > 0 ? `${intervalTimer}s` : 'None'}
-          </div>
+        <p className="text-sm text-muted-foreground">
+          across {completedRounds} rounds · {completedReps} reps
+        </p>
+      </div>
+
+      {hasTimers && (
+        <div className="flex gap-3">
+          {intervalTimer > 0 && (
+            <div className="flex flex-col">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                Intervals
+              </span>
+              <span className="text-sm text-foreground">
+                {formatTimerSeconds(intervalTimer)}
+              </span>
+            </div>
+          )}
+          {restTimer > 0 && (
+            <div className="flex flex-col">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                Rest
+              </span>
+              <span className="text-sm text-foreground">
+                {formatTimerSeconds(restTimer)}
+              </span>
+            </div>
+          )}
         </div>
-        <div className="grow text-right">
-          <CardDescription id="rest">Rest</CardDescription>
-          <div aria-labelledby="rest">
-            {restTimer > 0 ? `${restTimer}s` : 'None'}
-          </div>
-        </div>
-      </CardContent>
+      )}
+
+      {workoutDetails && (
+        <p className="text-sm italic text-muted-foreground">{workoutDetails}</p>
+      )}
+
+      <TheWorkDivider />
 
       {movementLogsLoading ? (
-        <div className="flex justify-center p-3">
+        <div className="flex justify-center py-3">
           <Loading />
         </div>
       ) : (
-        <>
-          {isComplexSet && (
-            <CardContent>
-              <CardDescription id="shared-weight">
-                Shared Weight
-              </CardDescription>
-              <div aria-labelledby="shared-weight">
-                {getWeightsDisplayValue(
-                  sharedWeights.weightOneValue,
-                  sharedWeights.weightOneUnit,
-                  sharedWeights.weightTwoValue,
-                  sharedWeights.weightTwoUnit,
-                )}
-              </div>
-            </CardContent>
-          )}
-          {movementLogs.map((movement, index) => (
-            <CardContent key={movement.id}>
-              <div
-                className={`grid gap-2 ${isComplexSet ? 'grid-cols-2' : 'grid-cols-3'}`}
-              >
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <CardDescription>Movement #{index + 1}</CardDescription>
-                  <div className="flex flex-col gap-0.5">
-                    <div>{movement.movementName}</div>
-                    <div className="flex gap-1">
-                      {movement.functionalMovementId !== null && (
-                        <Badge variant="secondary" className="shrink-0 text-xs">
-                          Catalog
-                        </Badge>
-                      )}
-                      <LinkMovementDialog
-                        workoutLogId={workoutLogId}
-                        movementLog={movement}
-                        movementIndex={index}
-                        complexSet={isComplexSet}
-                        sharedWeights={sharedWeights}
-                      />
-                    </div>
-                  </div>
-                </div>
+        <div className="flex flex-col">
+          {movementLogs.map((movement, index) => {
+            const totalReps = getMovementTotalReps(
+              movement.repScheme,
+              completedRounds,
+            );
+            const movementVolume = getMovementVolume(
+              movement,
+              completedRounds,
+            );
+            const weightLine = formatMovementWeightLine(movement);
+            const repSchemeLine = getCompactRepScheme(
+              movement.repScheme,
+              completedRounds,
+            );
+            const isLinked = movement.functionalMovementId !== null;
 
-                {!isComplexSet && (
-                  <div className="flex flex-col gap-0.5 text-right">
-                    <CardDescription id="weights">Weights</CardDescription>
-                    <div aria-labelledby="weights">
-                      {getWeightsDisplayValue(
-                        movement.weightOneValue,
-                        movement.weightOneUnit,
-                        movement.weightTwoValue,
-                        movement.weightTwoUnit,
-                      )}
+            return (
+              <div key={movement.id}>
+                {index > 0 && <div className="h-px bg-border" />}
+                <div className="flex gap-2 py-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex gap-2">
+                      <span className="shrink-0 italic text-muted-foreground">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold">{movement.movementName}</p>
+                        {!isComplexSet && weightLine && (
+                          <p className="flex items-center gap-0.5 text-sm text-muted-foreground">
+                            <ScaleIcon className="h-2 w-2 shrink-0" />
+                            <span>
+                              {weightLine}
+                              <span className="mx-0.5">·</span>
+                              {repSchemeLine}
+                            </span>
+                          </p>
+                        )}
+                        {!isComplexSet && !weightLine && (
+                          <p className="text-sm text-muted-foreground">
+                            {repSchemeLine}
+                          </p>
+                        )}
+                        {isComplexSet && (
+                          <p className="text-sm text-muted-foreground">
+                            {repSchemeLine}
+                          </p>
+                        )}
+                        <div className="mt-0.5">
+                          {isLinked ? (
+                            <CatalogedBadge
+                              movementLogId={movement.id}
+                              workoutLogId={workoutLogId}
+                            />
+                          ) : (
+                            <LinkMovementDialog
+                              workoutLogId={workoutLogId}
+                              movementLog={movement}
+                              movementIndex={index}
+                              complexSet={isComplexSet}
+                              sharedWeights={sharedWeights}
+                            />
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
-                <div className="flex flex-col gap-0.5 text-right">
-                  <CardDescription
-                    id="rep-scheme"
-                    className="whitespace-nowrap"
-                  >
-                    Rep Scheme
-                  </CardDescription>
-                  <div aria-labelledby="rep-scheme">
-                    {getRepSchemeDisplayValue(
-                      movement.repScheme,
-                      isComplexSet
-                        ? [
-                            sharedWeights.weightOneValue,
-                            sharedWeights.weightTwoValue,
-                          ]
-                        : [movement.weightOneValue, movement.weightTwoValue],
+                  <div className="shrink-0 text-right">
+                    <p className="text-2xl italic">{`×${totalReps}`}</p>
+                    {!isComplexSet && movementVolume !== null && (
+                      <p className="text-sm text-muted-foreground">
+                        {movementVolume.toLocaleString()} kg
+                      </p>
                     )}
                   </div>
                 </div>
               </div>
-            </CardContent>
-          ))}
-        </>
+            );
+          })}
+
+          {isComplexSet && (
+            <div className="mt-1 border-t border-border pt-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-xs uppercase tracking-wide underline">
+                    Carried
+                  </p>
+                  <p className="text-sm">
+                    {formatCarriedWeights(
+                      sharedWeights.weightOneValue,
+                      sharedWeights.weightOneUnit,
+                      sharedWeights.weightTwoValue,
+                      sharedWeights.weightTwoUnit,
+                    )}
+                  </p>
+                </div>
+                <p className="text-right text-xs italic text-muted-foreground">
+                  shared across the complex
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       )}
-
-      <CardContent>
-        <Separator />
-      </CardContent>
-
-      <CardContent>
-        <CardTitle>Workout Summary</CardTitle>
-      </CardContent>
-
-      <CardFooter className="flex gap-2">
-        <div className="grow">
-          <CardDescription id="elapsed">Elapsed</CardDescription>
-          <div aria-labelledby="elapsed">{duration}</div>
-        </div>
-        <div className="grow text-right">
-          <CardDescription id="rounds">Rounds</CardDescription>
-          <div aria-labelledby="rounds">{completedRounds}</div>
-        </div>
-        <div className="grow text-right">
-          <CardDescription id="rungs">Rungs</CardDescription>
-          <div aria-labelledby="rungs">{completedRungs}</div>
-        </div>
-        <div className="grow text-right">
-          <CardDescription id="reps">Reps</CardDescription>
-          <div aria-labelledby="reps">{completedReps}</div>
-        </div>
-        <div className="grow text-right">
-          <CardDescription id="volume">Volume</CardDescription>
-          <div aria-labelledby="volume">
-            {completedVolume > 0 ? `${completedVolume} kg` : 'N/A'}
-          </div>
-        </div>
-      </CardFooter>
-    </Card>
+    </div>
   );
 };

@@ -210,8 +210,11 @@ test.describe('full workout flow', () => {
     const workoutLogId = parseInt(match![1], 10);
     createdWorkoutLogId = workoutLogId;
 
-    // Confirm the page rendered the completed workout title
-    await expect(page.getByText('Workout Log')).toBeVisible();
+    // Confirm the redesigned completed workout page rendered
+    await expect(page.getByTestId('workout-history-item')).toBeVisible();
+    await expect(page.getByText('You moved')).toBeVisible();
+    await expect(page.getByText('Clean and Press')).toBeVisible();
+    await expect(page.getByText('1 ROUND GOAL')).toBeVisible();
 
     // ── 9. Verify the database record ─────────────────────────────────────
     const workoutLog = await queryWorkoutLog(workoutLogId, authSession.access_token);

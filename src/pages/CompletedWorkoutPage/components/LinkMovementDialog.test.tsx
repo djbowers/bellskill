@@ -120,7 +120,9 @@ describe('LinkMovementDialog', () => {
   test('opens dialog and shows current movement name', async () => {
     renderDialog();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Link' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Link to catalog' }),
+    );
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText(/Currently: My Custom Swing/)).toBeInTheDocument();
@@ -160,7 +162,9 @@ describe('LinkMovementDialog', () => {
 
     renderDialog();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Link' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Link to catalog' }),
+    );
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
     await userEvent.clear(input);
