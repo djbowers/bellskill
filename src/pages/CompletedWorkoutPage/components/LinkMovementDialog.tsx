@@ -116,8 +116,8 @@ export const LinkMovementDialog = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-auto shrink-0 px-1 py-0">
-          Link
+        <Button variant="link" className="h-auto p-0 text-xs">
+          Link to catalog
         </Button>
       </DialogTrigger>
       <DialogContent>

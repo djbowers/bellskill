@@ -29,3 +29,13 @@ export const getTimeRange = (startedAt: Date, completedAt: Date) => {
     'h:mm a',
   )}`;
 };
+
+export const getShortDateAndStartTime = (startedAt: Date) => {
+  const dateTime = DateTime.fromJSDate(startedAt);
+  const isCurrentYear = dateTime.year === DateTime.now().year;
+  const datePart = dateTime.toFormat(
+    isCurrentYear ? 'ccc, LLL d' : 'ccc, LLL d y',
+  );
+  const timePart = dateTime.toFormat('h:mm a');
+  return `${datePart} · ${timePart}`;
+};

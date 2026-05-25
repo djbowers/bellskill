@@ -46,10 +46,12 @@ describe('completed workout page', () => {
     await screen.findByTestId('workout-history-item');
   });
 
-  test('renders Complex badge in header when workout is complex', async () => {
+  test('renders workout header with complex badge and date', async () => {
     render(<Default />);
 
-    await screen.findByText('Complex');
+    await screen.findByTestId('workout-history-item');
+    expect(screen.getByText('Workout')).toBeInTheDocument();
+    expect(screen.getByText('Complex')).toBeInTheDocument();
   });
 
   test('clicking Repeat on a complex workout restores complex set and shared weights', async () => {
@@ -104,12 +106,10 @@ describe('completed workout page', () => {
     expect(hardOption).toBeChecked();
   });
 
-  test('users can enter post-workout notes', async () => {
+  test('users can toggle and enter post-workout notes', async () => {
     render(<Default />);
 
-    await userEvent.click(
-      await screen.findByRole('button', { name: 'Add Notes' }),
-    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Notes' }));
 
     const notesInput = await screen.findByRole('textbox', {
       name: 'Workout Notes',

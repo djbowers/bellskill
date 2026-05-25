@@ -14,23 +14,19 @@ export const RPESelector = ({ onSelectRPE, rpeValue }: RPESelectorProps) => {
     <RadioGroup
       value={rpeValue}
       onChange={onSelectRPE}
-      className="flex flex-col gap-2 rounded-md bg-accent p-2 text-accent-foreground"
+      className="flex flex-col gap-2"
+      aria-label="Exertion"
     >
-      <RadioGroup.Label className="text-sm font-medium text-muted-foreground">
-        Exertion Rating
-      </RadioGroup.Label>
-
-      <RadioGroup.Description as="div" className="flex flex-col gap-1">
-        <div className="text-center text-sm font-medium text-foreground">
-          How difficult was your workout?
-        </div>
-
+      <div className="flex items-baseline justify-between">
+        <RadioGroup.Label className="text-xs uppercase tracking-wide text-muted-foreground">
+          Exertion
+        </RadioGroup.Label>
         {rpeValue && (
-          <div className="text-center text-sm text-foreground">
-            {RPE_CONFIG[rpeValue].description} <RpeBadge rpeValue={rpeValue} />
-          </div>
+          <span className="text-sm italic text-foreground">
+            &ldquo;{RPE_CONFIG[rpeValue].text}&rdquo;
+          </span>
         )}
-      </RadioGroup.Description>
+      </div>
 
       <div className="grid grid-cols-5 gap-2 px-3">
         <Option rpeValue="noEffort" />
@@ -56,7 +52,7 @@ const Option = ({ rpeValue }: { rpeValue: string }) => {
               'h-2.5 w-2.5 rounded-full hover:cursor-pointer hover:ring',
               RPE_CONFIG[rpeValue].bgColor,
               RPE_CONFIG[rpeValue].ringColor,
-              'ring-offset-4 ring-offset-accent',
+              'ring-offset-4 ring-offset-background',
               { ring: checked },
             )}
           />
