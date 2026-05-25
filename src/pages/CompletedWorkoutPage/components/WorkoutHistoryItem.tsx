@@ -13,6 +13,7 @@ import {
   getMovementVolume,
   resolveSharedWeights,
 } from '../utils';
+import { CatalogedBadge } from './CatalogedBadge';
 import { LinkMovementDialog } from './LinkMovementDialog';
 
 export interface WorkoutHistoryItemProps {
@@ -156,12 +157,10 @@ export const WorkoutHistoryItem = ({
                         )}
                         <div className="mt-0.5">
                           {isLinked ? (
-                            <Badge
-                              variant="secondary"
-                              className="text-xs"
-                            >
-                              Cataloged
-                            </Badge>
+                            <CatalogedBadge
+                              movementLogId={movement.id}
+                              workoutLogId={workoutLogId}
+                            />
                           ) : (
                             <LinkMovementDialog
                               workoutLogId={workoutLogId}

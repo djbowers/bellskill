@@ -58,9 +58,12 @@ describe('complex set workouts', () => {
 });
 
 describe('movement linking', () => {
-  test('shows cataloged badge for linked movements', async () => {
+  test('shows cataloged badge with unlink control for linked movements', async () => {
     render(<CatalogLinkedLongName />);
     expect(screen.getByText('Cataloged')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Unlink from catalog' }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Link to catalog' }),
     ).not.toBeInTheDocument();

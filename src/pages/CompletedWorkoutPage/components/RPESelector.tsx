@@ -23,7 +23,7 @@ export const RPESelector = ({ onSelectRPE, rpeValue }: RPESelectorProps) => {
         </RadioGroup.Label>
         {rpeValue && (
           <span className="text-sm italic text-foreground">
-            &ldquo;{RPE_CONFIG[rpeValue].text}&rdquo;
+            &ldquo;{RPE_CONFIG[rpeValue].description}&rdquo;
           </span>
         )}
       </div>

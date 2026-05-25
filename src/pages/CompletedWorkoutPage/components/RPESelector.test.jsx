@@ -10,6 +10,12 @@ beforeEach(() => {
   render(<Default />);
 });
 
+test('shows description text for the selected RPE', () => {
+  expect(
+    screen.getByText(RPE_CONFIG.ideal.description, { exact: false }),
+  ).toBeInTheDocument();
+});
+
 test('renders all RPE options', () => {
   Object.values(RPE_CONFIG).forEach(({ text }) => {
     screen.getByRole('radio', { name: text });
