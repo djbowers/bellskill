@@ -95,6 +95,8 @@ export const formatCarriedWeights = (
   return parts.join(' + ');
 };
 
+export const formatTimerSeconds = (seconds: number) => `${seconds}s`;
+
 export const getGoalPillLabel = (workoutGoal: number, workoutGoalUnits: string) => {
   switch (workoutGoalUnits) {
     case 'minutes':

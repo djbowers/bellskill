@@ -7,6 +7,7 @@ import { MovementLog, WeightUnit } from '~/types';
 import {
   formatCarriedWeights,
   formatMovementWeightLine,
+  formatTimerSeconds,
   getCompactRepScheme,
   getGoalPillLabel,
   getMovementTotalReps,
@@ -53,8 +54,10 @@ export const WorkoutHistoryItem = ({
   completedRounds,
   completedVolume,
   complexSet,
+  intervalTimer,
   movementLogs,
   movementLogsLoading,
+  restTimer,
   sharedWeightOneUnit,
   sharedWeightOneValue,
   sharedWeightTwoUnit,
@@ -73,6 +76,7 @@ export const WorkoutHistoryItem = ({
     movementLogs,
   );
   const goalPillLabel = getGoalPillLabel(workoutGoal, workoutGoalUnits);
+  const hasTimers = intervalTimer > 0 || restTimer > 0;
 
   return (
     <div className="flex flex-col gap-2" data-testid="workout-history-item">
@@ -95,6 +99,31 @@ export const WorkoutHistoryItem = ({
           across {completedRounds} rounds · {completedReps} reps
         </p>
       </div>
+
+      {hasTimers && (
+        <div className="flex gap-3">
+          {intervalTimer > 0 && (
+            <div className="flex flex-col">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                Intervals
+              </span>
+              <span className="text-sm text-foreground">
+                {formatTimerSeconds(intervalTimer)}
+              </span>
+            </div>
+          )}
+          {restTimer > 0 && (
+            <div className="flex flex-col">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                Rest
+              </span>
+              <span className="text-sm text-foreground">
+                {formatTimerSeconds(restTimer)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {workoutDetails && (
         <p className="text-sm italic text-muted-foreground">{workoutDetails}</p>

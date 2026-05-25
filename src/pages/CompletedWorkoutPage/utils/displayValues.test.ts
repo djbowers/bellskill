@@ -1,4 +1,5 @@
 import {
+  formatTimerSeconds,
   getCompactRepScheme,
   getMovementTotalReps,
   getMovementVolume,
@@ -49,6 +50,12 @@ describe('getRepSchemeDisplayValue', () => {
 
   test('returns single rep count as is when no bells specified', () => {
     expect(getRepSchemeDisplayValue([5], [0, 0])).toBe('5');
+  });
+});
+
+describe('formatTimerSeconds', () => {
+  test('formats seconds with s suffix', () => {
+    expect(formatTimerSeconds(60)).toBe('60s');
   });
 });
 

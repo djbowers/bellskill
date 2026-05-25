@@ -3,8 +3,14 @@ import { render, screen } from '@testing-library/react';
 
 import * as stories from './WorkoutHistoryItem.stories';
 
-const { Default, RoundsGoal, ComplexSet, CatalogLinkedLongName, Bodyweight } =
-  composeStories(stories);
+const {
+  Default,
+  RoundsGoal,
+  ComplexSet,
+  CatalogLinkedLongName,
+  Bodyweight,
+  WithTimers,
+} = composeStories(stories);
 
 vi.setSystemTime(new Date('2024-01-02T12:00:00'));
 
@@ -26,6 +32,22 @@ describe('hero metric', () => {
   test('displays workout details when provided', async () => {
     render(<Default />);
     await screen.findByText('The Giant 3.0 W1D2');
+  });
+});
+
+describe('workout timers', () => {
+  test('displays interval and rest when timers were used', async () => {
+    render(<WithTimers />);
+    expect(screen.getByText('Intervals')).toBeInTheDocument();
+    expect(screen.getByText('60s')).toBeInTheDocument();
+    expect(screen.getByText('Rest')).toBeInTheDocument();
+    expect(screen.getByText('30s')).toBeInTheDocument();
+  });
+
+  test('omits timer row when interval and rest are zero', async () => {
+    render(<Default />);
+    expect(screen.queryByText('Intervals')).not.toBeInTheDocument();
+    expect(screen.queryByText('Rest')).not.toBeInTheDocument();
   });
 });
 
