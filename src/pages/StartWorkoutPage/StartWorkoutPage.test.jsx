@@ -35,6 +35,10 @@ describe('start workout page', () => {
     expect(startButton).toBeDisabled();
   });
 
+  test('renders the "Build new workout" divider label', () => {
+    expect(screen.getByText(/build new workout/i)).toBeInTheDocument();
+  });
+
   test('can change the workout goal to "rounds"', async () => {
     const workoutGoalUnits = screen.getByRole('tab', { name: 'Rounds' });
     await userEvent.click(workoutGoalUnits);

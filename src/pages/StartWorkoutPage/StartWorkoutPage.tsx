@@ -21,6 +21,7 @@ import { features } from '~/config/features';
 
 import {
   AddToWorkoutSection,
+  BuildNewWorkoutDivider,
   ModifyCountButtons,
   MovementAutocomplete,
   ModifyWorkoutButtons,
@@ -358,6 +359,8 @@ export const StartWorkoutPage = () => {
         </Button>
       }
     >
+      <BuildNewWorkoutDivider />
+
       <Card>
         <Section
           title="Goal"

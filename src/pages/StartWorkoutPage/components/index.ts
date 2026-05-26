@@ -1,4 +1,5 @@
 export * from './AddToWorkoutSection';
+export * from './BuildNewWorkoutDivider';
 export * from './ModifyCountButtons';
 export * from './WorkoutAddonToggle';
 export * from './MovementAutocomplete';
