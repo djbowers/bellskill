@@ -20,6 +20,7 @@ import { getWeightTabValue, getWeightUnitLabel, WEIGHT_MODE_LABELS } from '~/uti
 import { features } from '~/config/features';
 
 import {
+  AddToWorkoutSection,
   ModifyCountButtons,
   MovementAutocomplete,
   ModifyWorkoutButtons,
@@ -132,6 +133,32 @@ export const StartWorkoutPage = () => {
 
   const handleBlurDetails = () =>
     setWorkoutDetails(() => detailsRef.current?.value || null);
+
+  const handleToggleNotes = () => {
+    if (workoutDetails !== null) {
+      setWorkoutDetails(null);
+    } else {
+      handleAddDetails();
+    }
+  };
+
+  const handleToggleInterval = () => {
+    if (intervalTimer > 0) {
+      setIntervalTimer(0);
+    } else {
+      handleIncrementInterval();
+    }
+  };
+
+  const handleToggleRest = () => {
+    if (restTimer > 0) {
+      setRestTimer(0);
+    } else {
+      handleIncrementRest();
+    }
+  };
+
+  const handleToggleComplex = () => setComplexSet((prev) => !prev);
 
   const handleChangeMovementName = (index: number, value: string) =>
     setMovements((prev) =>
@@ -363,135 +390,77 @@ export const StartWorkoutPage = () => {
         </Section>
       </Card>
 
-      {features.complexMode && (
-        <Card>
-          <Section title="Complex Mode">
-            <div className="flex gap-2">
-              <Button
-                className="grow"
-                variant={complexSet ? 'secondary' : 'default'}
-                onClick={() => setComplexSet(false)}
-              >
-                Standard
-              </Button>
-              <Button
-                className="grow"
-                variant={complexSet ? 'default' : 'secondary'}
-                onClick={() => setComplexSet(true)}
-              >
-                Complex
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {complexSet
-                ? 'Complete all movements before setting the weight down.'
-                : 'Set the weight down between each movement.'}
-            </p>
-          </Section>
-          {complexSet && (
-            <Section
-              title="Shared Weight"
-              actions={
-                <WeightModeTabs
-                  value={sharedWeightTabValue}
-                  onValueChange={handleChangeSharedWeightTab}
-                />
-              }
-            >
-              {sharedWeightOneValue !== null && (
-                <ModifyCountButtons
-                  onClickMinus={() =>
-                    handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
-                  }
-                  onClickPlus={() =>
-                    handleChangeSharedWeightOneValue(sharedWeightOneValue + 1)
-                  }
-                  unit={getWeightUnitLabel(sharedWeightOneUnit)}
-                  unitTabs={
-                    <WeightUnitTabs
-                      value={sharedWeightOneUnit}
-                      onChange={handleChangeSharedWeightOneUnit}
-                    />
-                  }
-                  value={sharedWeightOneValue}
-                  onChange={(value) => handleChangeSharedWeightOneValue(value!)}
-                />
-              )}
-              {sharedWeightTwoValue !== null && sharedWeightTwoValue > 0 && (
-                <ModifyCountButtons
-                  onClickMinus={() =>
-                    handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
-                  }
-                  onClickPlus={() =>
-                    handleChangeSharedWeightTwoValue(sharedWeightTwoValue + 1)
-                  }
-                  unit={getWeightUnitLabel(sharedWeightTwoUnit)}
-                  unitTabs={
-                    <WeightUnitTabs
-                      value={sharedWeightTwoUnit}
-                      onChange={handleChangeSharedWeightTwoUnit}
-                    />
-                  }
-                  value={sharedWeightTwoValue}
-                  onChange={(value) => handleChangeSharedWeightTwoValue(value)}
-                />
-              )}
-            </Section>
-          )}
-        </Card>
-      )}
+      <AddToWorkoutSection
+        complexSet={complexSet}
+        hasNotes={workoutDetails !== null}
+        hasInterval={intervalTimer > 0}
+        hasRest={restTimer > 0}
+        showComplex={features.complexMode}
+        onToggleComplex={handleToggleComplex}
+        onToggleInterval={handleToggleInterval}
+        onToggleNotes={handleToggleNotes}
+        onToggleRest={handleToggleRest}
+      />
 
-      {(workoutDetails === null || intervalTimer === 0 || restTimer === 0) && (
-        <div className="flex gap-2">
-          {workoutDetails === null && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleAddDetails}
-              className="grow"
-            >
-              + Details
-            </Button>
-          )}
-          {intervalTimer === 0 && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleIncrementInterval}
-              className="grow"
-            >
-              + Interval
-            </Button>
-          )}
-          {restTimer === 0 && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleIncrementRest}
-              className="grow"
-            >
-              + Rest
-            </Button>
-          )}
-        </div>
+      {features.complexMode && complexSet && (
+        <Card>
+          <p className="px-2 pt-2 text-xs text-muted-foreground">
+            Complete all movements before setting the weight down.
+          </p>
+          <Section
+            title="Shared Weight"
+            actions={
+              <WeightModeTabs
+                value={sharedWeightTabValue}
+                onValueChange={handleChangeSharedWeightTab}
+              />
+            }
+          >
+            {sharedWeightOneValue !== null && (
+              <ModifyCountButtons
+                onClickMinus={() =>
+                  handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
+                }
+                onClickPlus={() =>
+                  handleChangeSharedWeightOneValue(sharedWeightOneValue + 1)
+                }
+                unit={getWeightUnitLabel(sharedWeightOneUnit)}
+                unitTabs={
+                  <WeightUnitTabs
+                    value={sharedWeightOneUnit}
+                    onChange={handleChangeSharedWeightOneUnit}
+                  />
+                }
+                value={sharedWeightOneValue}
+                onChange={(value) => handleChangeSharedWeightOneValue(value!)}
+              />
+            )}
+            {sharedWeightTwoValue !== null && sharedWeightTwoValue > 0 && (
+              <ModifyCountButtons
+                onClickMinus={() =>
+                  handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
+                }
+                onClickPlus={() =>
+                  handleChangeSharedWeightTwoValue(sharedWeightTwoValue + 1)
+                }
+                unit={getWeightUnitLabel(sharedWeightTwoUnit)}
+                unitTabs={
+                  <WeightUnitTabs
+                    value={sharedWeightTwoUnit}
+                    onChange={handleChangeSharedWeightTwoUnit}
+                  />
+                }
+                value={sharedWeightTwoValue}
+                onChange={(value) => handleChangeSharedWeightTwoValue(value)}
+              />
+            )}
+          </Section>
+        </Card>
       )}
 
       {workoutDetails !== null && (
         <Card>
-          <Section
-            title="Workout Details"
-            actions={
-              workoutDetails?.length > 0 && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setWorkoutDetails(null)}
-                >
-                  - Details
-                </Button>
-              )
-            }
-          >
+          <Section title="Notes">
             <Input
               autoFocus
               className="w-full"
@@ -505,20 +474,7 @@ export const StartWorkoutPage = () => {
 
       {intervalTimer > 0 && (
         <Card>
-          <Section
-            title="Interval Timer"
-            actions={
-              intervalTimer !== 0 && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIntervalTimer(0)}
-                >
-                  - Interval
-                </Button>
-              )
-            }
-          >
+          <Section title="Interval Timer">
             <ModifyCountButtons
               onClickMinus={handleDecrementInterval}
               onClickPlus={handleIncrementInterval}
@@ -532,20 +488,7 @@ export const StartWorkoutPage = () => {
 
       {restTimer > 0 && (
         <Card>
-          <Section
-            title="Rest Timer"
-            actions={
-              restTimer !== 0 && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setRestTimer(0)}
-                >
-                  - Rest
-                </Button>
-              )
-            }
-          >
+          <Section title="Rest Timer">
             <ModifyCountButtons
               onClickMinus={handleDecrementRest}
               onClickPlus={handleIncrementRest}
