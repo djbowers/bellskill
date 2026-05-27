@@ -15,7 +15,7 @@ export const Section = ({
     <>
       <CardHeader>
         <div className="flex w-full items-center justify-between gap-x-1">
-          <CardTitle>{title}</CardTitle>
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
           {actions}
         </div>
       </CardHeader>
