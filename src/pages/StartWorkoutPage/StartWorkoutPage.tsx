@@ -1,3 +1,4 @@
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,6 +26,7 @@ import {
   ModifyCountButtons,
   MovementAutocomplete,
   ModifyWorkoutButtons,
+  MovementsHeader,
   Section,
   WeightModeTabs,
   WeightUnitTabs,
@@ -503,6 +505,8 @@ export const StartWorkoutPage = () => {
         </Card>
       )}
 
+      <MovementsHeader count={movements.length} />
+
       {movements.map((movement, index) => {
         const weightTabValue = getWeightTabValue(movement);
         const activeWeightMode: WeightTabValue = complexSet
@@ -524,11 +528,12 @@ export const StartWorkoutPage = () => {
               title={`Movement #${index + 1}`}
               actions={
                 <Button
-                  variant="secondary"
-                  size="sm"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Remove movement"
                   onClick={() => handleClickRemoveMovement(index)}
                 >
-                  - Movement
+                  <XMarkIcon className="h-2.5 w-2.5" />
                 </Button>
               }
             >

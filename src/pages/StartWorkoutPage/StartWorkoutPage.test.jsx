@@ -39,6 +39,11 @@ describe('start workout page', () => {
     expect(screen.getByText(/build new workout/i)).toBeInTheDocument();
   });
 
+  test('renders the Movements header with count', () => {
+    expect(screen.getByRole('heading', { name: 'Movements' })).toBeInTheDocument();
+    expect(screen.getByLabelText('1 movements')).toBeInTheDocument();
+  });
+
   test('can change the workout goal to "rounds"', async () => {
     const workoutGoalUnits = screen.getByRole('tab', { name: 'Rounds' });
     await userEvent.click(workoutGoalUnits);
@@ -97,7 +102,7 @@ describe('start workout page', () => {
   test('can remove movements', async () => {
     await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
 
-    const removeButtons = screen.getAllByRole('button', { name: '- Movement' });
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove movement' });
     await userEvent.click(removeButtons[0]);
 
     const movementInputs = screen.getAllByLabelText('Movement Input');
@@ -535,7 +540,7 @@ describe('Complex Mode', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
 
-    const removeButtons = screen.getAllByRole('button', { name: '- Movement' });
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove movement' });
     await userEvent.click(removeButtons[0]);
 
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
