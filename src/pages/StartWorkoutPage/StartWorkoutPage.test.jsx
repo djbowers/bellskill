@@ -35,6 +35,15 @@ describe('start workout page', () => {
     expect(startButton).toBeDisabled();
   });
 
+  test('renders the "Build new workout" divider label', () => {
+    expect(screen.getByText(/build new workout/i)).toBeInTheDocument();
+  });
+
+  test('renders the Movements header with count', () => {
+    expect(screen.getByRole('heading', { name: 'Movements' })).toBeInTheDocument();
+    expect(screen.getByLabelText('1 movements')).toBeInTheDocument();
+  });
+
   test('can change the workout goal to "rounds"', async () => {
     const workoutGoalUnits = screen.getByRole('tab', { name: 'Rounds' });
     await userEvent.click(workoutGoalUnits);
@@ -93,7 +102,7 @@ describe('start workout page', () => {
   test('can remove movements', async () => {
     await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
 
-    const removeButtons = screen.getAllByRole('button', { name: '- Movement' });
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove movement' });
     await userEvent.click(removeButtons[0]);
 
     const movementInputs = screen.getAllByLabelText('Movement Input');
@@ -458,12 +467,8 @@ describe('Complex Mode', () => {
     render(<Default />);
   });
 
-  test('Complex Mode card is visible with Standard and Complex buttons; Standard is active by default', () => {
-    expect(screen.getByRole('button', { name: 'Standard' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Complex' })).toBeInTheDocument();
-    expect(
-      screen.getByText('Set the weight down between each movement.'),
-    ).toBeInTheDocument();
+  test('Add to workout row includes Complex toggle off by default', () => {
+    expect(screen.getByRole('button', { name: 'Complex, off' })).toBeInTheDocument();
     expect(
       screen.queryByText('Complete all movements before setting the weight down.'),
     ).not.toBeInTheDocument();
@@ -471,14 +476,11 @@ describe('Complex Mode', () => {
   });
 
   test('selecting Complex reveals shared weight section with all four weight-type options', async () => {
-    await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
 
     expect(
       screen.getByText('Complete all movements before setting the weight down.'),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByText('Set the weight down between each movement.'),
-    ).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'None' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: '2H' })).toBeInTheDocument();
@@ -490,24 +492,24 @@ describe('Complex Mode', () => {
     await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
     expect(screen.getAllByRole('heading', { name: 'Load' })).toHaveLength(2);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
 
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
     expect(screen.getAllByRole('heading', { name: 'Rep Scheme' })).toHaveLength(2);
   });
 
-  test('selecting Standard hides shared weight section and restores per-movement weight sections', async () => {
-    await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
+  test('toggling Complex off hides shared weight section and restores per-movement weight sections', async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
     expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Standard' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Complex, on' }));
 
     expect(screen.queryByRole('heading', { name: 'Shared Weight' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Load' })).toBeInTheDocument();
   });
 
   test('startWorkout is called with complexSet: true and shared weight fields when Complex is active', async () => {
-    await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
     await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
     await userEvent.click(screen.getByRole('button', { name: /Start/i }));
 
@@ -524,7 +526,7 @@ describe('Complex Mode', () => {
   });
 
   test('complex mode toggle is preserved when adding movements', async () => {
-    await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
 
     await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
@@ -535,10 +537,10 @@ describe('Complex Mode', () => {
 
   test('complex mode toggle is preserved when removing movements', async () => {
     await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Complex' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
 
-    const removeButtons = screen.getAllByRole('button', { name: '- Movement' });
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove movement' });
     await userEvent.click(removeButtons[0]);
 
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
