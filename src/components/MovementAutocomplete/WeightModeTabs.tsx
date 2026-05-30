@@ -1,6 +1,7 @@
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { cn } from '~/lib/utils';
 import { WeightTabValue } from '~/types';
+import { WEIGHT_MODE_LABELS } from '~/utils';
 
 interface WeightModeTabsProps {
   value: WeightTabValue;
@@ -20,16 +21,16 @@ export const WeightModeTabs = ({
   >
     <TabsList className="flex w-full">
       <TabsTrigger className="flex-1" size="sm" value="none">
-        None
+        {WEIGHT_MODE_LABELS.none}
       </TabsTrigger>
       <TabsTrigger className="flex-1" size="sm" value="2h">
-        2H
+        {WEIGHT_MODE_LABELS['2h']}
       </TabsTrigger>
       <TabsTrigger className="flex-1" size="sm" value="1h">
-        1H
+        {WEIGHT_MODE_LABELS['1h']}
       </TabsTrigger>
       <TabsTrigger className="flex-1" size="sm" value="double">
-        Double
+        {WEIGHT_MODE_LABELS.double}
       </TabsTrigger>
     </TabsList>
   </Tabs>
