@@ -118,7 +118,7 @@ describe('start workout page', () => {
 
   describe('Load', () => {
     test('can select "none" for bodyweight movements', async () => {
-      await userEvent.click(screen.getByRole('tab', { name: 'None' }));
+      await userEvent.click(screen.getByRole('tab', { name: 'Bodyweight' }));
       await userEvent.type(screen.getByLabelText('Movement Input'), 'Pushups');
       await userEvent.click(screen.getByRole('button', { name: /Start/i }));
 
@@ -140,7 +140,7 @@ describe('start workout page', () => {
     });
 
     test('can select "2h" for two-handed movements', async () => {
-      await userEvent.click(screen.getByRole('tab', { name: '2H' }));
+      await userEvent.click(screen.getByRole('tab', { name: 'Two-Handed' }));
       await userEvent.type(
         screen.getByLabelText('Movement Input'),
         'Kettlebell Swing',
@@ -161,7 +161,7 @@ describe('start workout page', () => {
     });
 
     test('can select "1h" for one-handed movements', async () => {
-      await userEvent.click(screen.getByRole('tab', { name: '1H' }));
+      await userEvent.click(screen.getByRole('tab', { name: 'Single Arm' }));
       await userEvent.type(
         screen.getByLabelText('Movement Input'),
         'Single Arm Press',
@@ -183,7 +183,7 @@ describe('start workout page', () => {
     });
 
     test('can select "double" for two-weight movements', async () => {
-      await userEvent.click(screen.getByRole('tab', { name: 'Double' }));
+      await userEvent.click(screen.getByRole('tab', { name: 'Double Bell' }));
       await userEvent.type(
         screen.getByLabelText('Movement Input'),
         'Double Clean',
@@ -482,10 +482,10 @@ describe('Complex Mode', () => {
       screen.getByText('Complete all movements before setting the weight down.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'None' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: '2H' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: '1H' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Double' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Bodyweight' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Two-Handed' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Single Arm' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Double Bell' })).toBeInTheDocument();
   });
 
   test('when Complex is active, per-movement weight sections are hidden and rep scheme sections remain visible', async () => {
