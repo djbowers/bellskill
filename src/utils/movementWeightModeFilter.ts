@@ -8,9 +8,9 @@ export interface MovementWeightModeFields {
 
 export const WEIGHT_MODE_LABELS: Record<WeightTabValue, string> = {
   none: 'Bodyweight',
-  '2h': '2H',
-  '1h': '1H',
-  double: 'Double',
+  '2h': 'Two-Handed',
+  '1h': 'Single Arm',
+  double: 'Double Bell',
 };
 
 export const getWeightTabValue = (movement: {

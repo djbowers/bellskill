@@ -126,7 +126,7 @@ describe('LinkMovementDialog', () => {
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText(/Currently: My Custom Swing/)).toBeInTheDocument();
-    expect(screen.getByText(/Catalog filtered to 2H/)).toBeInTheDocument();
+    expect(screen.getByText(/Catalog filtered to Two-Handed/)).toBeInTheDocument();
   });
 
   test('confirm is enabled with typed input and persists link on confirm', async () => {
