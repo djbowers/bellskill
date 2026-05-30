@@ -134,8 +134,9 @@ export const StartWorkoutPage = () => {
 
   const handleAddDetails = () => setWorkoutDetails('');
 
-  const handleBlurDetails = () =>
-    setWorkoutDetails(() => detailsRef.current?.value || null);
+  const handleBlurDetails = () => {
+    setWorkoutDetails(detailsRef.current?.value ?? '');
+  };
 
   const handleToggleNotes = () => {
     if (workoutDetails !== null) {
@@ -323,7 +324,7 @@ export const StartWorkoutPage = () => {
       sharedWeightTwoUnit,
       sharedWeightTwoValue,
       startedAt: new Date(),
-      workoutDetails,
+      workoutDetails: workoutDetails?.trim() || null,
       workoutGoal,
       workoutGoalUnits,
     };
@@ -409,18 +410,14 @@ export const StartWorkoutPage = () => {
 
       {features.complexMode && complexSet && (
         <Card>
-          <p className="px-2 pt-2 text-xs text-muted-foreground">
-            Complete all movements before setting the weight down.
-          </p>
-          <Section
-            title="Shared Weight"
-            actions={
-              <WeightModeTabs
-                value={sharedWeightTabValue}
-                onValueChange={handleChangeSharedWeightTab}
-              />
-            }
-          >
+          <Section title="Shared Weight">
+            <p className="text-xs text-muted-foreground">
+              Complete all movements before setting the weight down.
+            </p>
+            <WeightModeTabs
+              value={sharedWeightTabValue}
+              onValueChange={handleChangeSharedWeightTab}
+            />
             {sharedWeightOneValue !== null && (
               <ModifyCountButtons
                 onClickMinus={() =>

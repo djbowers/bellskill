@@ -458,6 +458,61 @@ describe('start workout page - without previous volume', () => {
   });
 });
 
+describe('Notes', () => {
+  let startWorkout;
+
+  beforeEach(() => {
+    startWorkout = vi.fn();
+    Default.parameters.updateWorkoutOptions = startWorkout;
+    render(<Default />);
+  });
+
+  test('clicking Notes toggle on shows the notes section', async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Notes, off' }));
+
+    expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notes, on' })).toBeInTheDocument();
+  });
+
+  test('clicking Notes toggle off hides the notes section when input is focused and empty', async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Notes, off' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Notes, on' }));
+
+    expect(screen.queryByRole('heading', { name: 'Notes' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notes, off' })).toBeInTheDocument();
+  });
+
+  test('clicking Notes toggle off hides the notes section when input has text', async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Notes, off' }));
+    await userEvent.keyboard('Heavy day');
+    await userEvent.click(screen.getByRole('button', { name: 'Notes, on' }));
+
+    expect(screen.queryByRole('heading', { name: 'Notes' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notes, off' })).toBeInTheDocument();
+  });
+
+  test('clicking away from empty notes input keeps the section visible', async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Notes, off' }));
+    await userEvent.click(screen.getByLabelText('Movement Input'));
+
+    expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notes, on' })).toBeInTheDocument();
+  });
+
+  test('starting a workout with Notes on but empty saves workoutDetails as null', async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Notes, off' }));
+    await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
+    await userEvent.click(screen.getByRole('button', { name: /Start/i }));
+
+    expect(startWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workoutDetails: null,
+        startedAt,
+      }),
+    );
+  });
+});
+
 describe('Complex Mode', () => {
   let startWorkout;
 
