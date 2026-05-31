@@ -140,7 +140,7 @@ describe('start workout page', () => {
     });
 
     test('can select "2h" for two-handed movements', async () => {
-      await userEvent.click(screen.getByRole('tab', { name: 'Two-Handed' }));
+      await userEvent.click(screen.getByRole('tab', { name: 'Two-Hand' }));
       await userEvent.type(
         screen.getByLabelText('Movement Input'),
         'Kettlebell Swing',
@@ -161,7 +161,7 @@ describe('start workout page', () => {
     });
 
     test('can select "1h" for one-handed movements', async () => {
-      await userEvent.click(screen.getByRole('tab', { name: 'Single Arm' }));
+      await userEvent.click(screen.getByRole('tab', { name: 'Single' }));
       await userEvent.type(
         screen.getByLabelText('Movement Input'),
         'Single Arm Press',
@@ -183,7 +183,7 @@ describe('start workout page', () => {
     });
 
     test('can select "double" for two-weight movements', async () => {
-      await userEvent.click(screen.getByRole('tab', { name: 'Double Bell' }));
+      await userEvent.click(screen.getByRole('tab', { name: 'Double' }));
       await userEvent.type(
         screen.getByLabelText('Movement Input'),
         'Double Clean',
@@ -538,9 +538,9 @@ describe('Complex Mode', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Bodyweight' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Two-Handed' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Single Arm' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Double Bell' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Two-Hand' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Single' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Double' })).toBeInTheDocument();
   });
 
   test('when Complex is active, per-movement weight sections are hidden and rep scheme sections remain visible', async () => {

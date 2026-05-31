@@ -20,16 +20,16 @@ export const WeightModeTabs = ({
     className={cn('w-full', className)}
   >
     <TabsList className="flex w-full">
-      <TabsTrigger className="flex-1" size="sm" value="none">
+      <TabsTrigger className="min-w-0 flex-1 px-0.5" size="sm" value="none">
         {WEIGHT_MODE_LABELS.none}
       </TabsTrigger>
-      <TabsTrigger className="flex-1" size="sm" value="2h">
+      <TabsTrigger className="min-w-0 flex-1 px-0.5" size="sm" value="2h">
         {WEIGHT_MODE_LABELS['2h']}
       </TabsTrigger>
-      <TabsTrigger className="flex-1" size="sm" value="1h">
+      <TabsTrigger className="min-w-0 flex-1 px-0.5" size="sm" value="1h">
         {WEIGHT_MODE_LABELS['1h']}
       </TabsTrigger>
-      <TabsTrigger className="flex-1" size="sm" value="double">
+      <TabsTrigger className="min-w-0 flex-1 px-0.5" size="sm" value="double">
         {WEIGHT_MODE_LABELS.double}
       </TabsTrigger>
     </TabsList>
