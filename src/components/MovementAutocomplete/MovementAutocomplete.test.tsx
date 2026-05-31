@@ -136,16 +136,16 @@ describe('MovementAutocomplete', () => {
   test('renders weight mode tabs by default', () => {
     renderAutocomplete();
     expect(screen.getByRole('tab', { name: 'Bodyweight' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Two-Handed' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Single Arm' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Double Bell' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Two-Hand' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Single' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Double' })).toBeInTheDocument();
   });
 
   test('calls onWeightModeChange when a weight tab is selected', async () => {
     const onWeightModeChange = vi.fn();
     renderAutocomplete({ onWeightModeChange });
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Single Arm' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Single' }));
     expect(onWeightModeChange).toHaveBeenCalledWith('1h');
   });
 
@@ -416,7 +416,7 @@ describe('MovementAutocomplete', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Kettlebell Snatch')).toBeInTheDocument();
-      expect(screen.getByText('Catalog (Two-Handed)')).toBeInTheDocument();
+      expect(screen.getByText('Catalog (Two-Hand)')).toBeInTheDocument();
     });
 
     await userEvent.click(screen.getByText('Kettlebell Snatch'));
@@ -470,7 +470,7 @@ describe('MovementAutocomplete', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/No two-handed movements for.*Swing.*try another mode/i),
+        screen.getByText(/No two-hand movements for.*Swing.*try another mode/i),
       ).toBeInTheDocument();
     });
   });
@@ -500,11 +500,11 @@ describe('MovementAutocomplete', () => {
   test('shows shared weight hint when tabs are hidden', () => {
     renderAutocomplete({
       showWeightModeTabs: false,
-      weightModeHint: 'Using shared weight: Two-Handed',
+      weightModeHint: 'Using shared weight: Two-Hand',
     });
 
-    expect(screen.getByText('Using shared weight: Two-Handed')).toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'Two-Handed' })).not.toBeInTheDocument();
+    expect(screen.getByText('Using shared weight: Two-Hand')).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Two-Hand' })).not.toBeInTheDocument();
   });
 
   test('does not show recent movements when there is no session', async () => {

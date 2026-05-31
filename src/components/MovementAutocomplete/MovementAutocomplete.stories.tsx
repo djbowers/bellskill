@@ -169,7 +169,7 @@ export const ComplexSharedWeightHint: Story = {
   render: () => (
     <MovementAutocompleteDemo
       showWeightModeTabs={false}
-      weightModeHint="Using shared weight: Two-Handed"
+      weightModeHint="Using shared weight: Two-Hand"
     />
   ),
   parameters: {
