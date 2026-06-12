@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 
 import { Loading, PWAInstallPrompt, SafeAreaWrapper } from '~/components';
+import { EntitlementProvider } from '~/contexts/EntitlementContext';
 import { WorkoutOptionsProvider } from '~/contexts/WorkoutOptionsContext';
 import { resolveAuthSession } from '~/utils';
 
@@ -39,9 +40,11 @@ export function App() {
 
       {session && (
         <SessionProvider value={session}>
-          <WorkoutOptionsProvider>
-            <RouterProvider router={router} />
-          </WorkoutOptionsProvider>
+          <EntitlementProvider>
+            <WorkoutOptionsProvider>
+              <RouterProvider router={router} />
+            </WorkoutOptionsProvider>
+          </EntitlementProvider>
         </SessionProvider>
       )}
 

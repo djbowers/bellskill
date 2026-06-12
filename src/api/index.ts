@@ -1,4 +1,5 @@
 export * from './useDeleteWorkoutLog';
+export * from './useEntitlement';
 export * from './useLinkMovementLog';
 export * from './useUnlinkMovementLog';
 export * from './useLogWorkout';

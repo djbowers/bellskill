@@ -1,4 +1,5 @@
 export enum QUERIES {
+  ENTITLEMENT = 'entitlement',
   MOVEMENT_LOGS = 'movementLogs',
   MOVEMENTS = 'movements',
   USER_MOVEMENTS = 'userMovements',

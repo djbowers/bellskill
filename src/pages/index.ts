@@ -3,5 +3,7 @@ export * from './ActiveWorkoutPage';
 export * from './CompletedWorkoutPage';
 export * from './HistoryPage';
 export * from './MovementsPage';
+export * from './PaywallPage';
+export * from './RecommendationsPage';
 export * from './SignupPage';
 export * from './StartWorkoutPage';

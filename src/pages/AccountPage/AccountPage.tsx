@@ -5,7 +5,7 @@ import {
   useState,
 } from 'react';
 
-import { Page } from '~/components';
+import { Page, TrialStatusPill } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
@@ -67,6 +67,8 @@ export const AccountPage = () => {
 
   return (
     <Page title="Account">
+      <TrialStatusPill />
+
       <form onSubmit={updateProfile} className="flex flex-col space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input id="email" value={session.user.email} disabled={true} />
