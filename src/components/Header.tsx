@@ -88,6 +88,13 @@ export const Header = () => {
             </NavigationMenuLink>
           </NavigationMenuItem>
         )}
+        {features.premium && (
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+              <NavLink to="/recommendations">AI</NavLink>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        )}
         <NavigationMenuItem>
           <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
             <NavLink to="/history">History</NavLink>

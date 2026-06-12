@@ -266,24 +266,42 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          current_period_end: string | null
           full_name: string | null
           id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
+          subscription_tier: string
+          trial_ends_at: string | null
           updated_at: string | null
           username: string | null
           website: string | null
         }
         Insert: {
           avatar_url?: string | null
+          current_period_end?: string | null
           full_name?: string | null
           id: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string
+          trial_ends_at?: string | null
           updated_at?: string | null
           username?: string | null
           website?: string | null
         }
         Update: {
           avatar_url?: string | null
+          current_period_end?: string | null
           full_name?: string | null
           id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string
+          trial_ends_at?: string | null
           updated_at?: string | null
           username?: string | null
           website?: string | null
@@ -465,7 +483,12 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      has_premium_access: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       "Body Region":
