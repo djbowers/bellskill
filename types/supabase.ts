@@ -483,12 +483,7 @@ export type Database = {
       }
     }
     Functions: {
-      has_premium_access: {
-        Args: {
-          user_id: string
-        }
-        Returns: boolean
-      }
+      has_premium_access: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
       "Body Region":
