@@ -39,6 +39,9 @@ supabase/.temp
 # E2E test env (contains local Supabase keys)
 .env.e2e
 
+# Edge Function local secrets (Stripe keys etc.)
+supabase/functions/.env
+
 # Playwright
 playwright-report
 test-results
