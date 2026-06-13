@@ -1,0 +1,3 @@
+# SPA fallback: serve index.html for all client-side routes so React Router
+# deep links (e.g. /checkout/success) resolve instead of returning a 404.
+/*    /index.html   200
