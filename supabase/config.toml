@@ -265,6 +265,12 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/create-checkout-session/deno.json"
 
+# Called by Stripe (no Supabase JWT) — authenticated by the Stripe signature.
+[functions.stripe-webhook]
+enabled = true
+verify_jwt = false
+import_map = "./functions/stripe-webhook/deno.json"
+
 [analytics]
 enabled = true
 port = 54327
