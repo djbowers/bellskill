@@ -5,18 +5,30 @@ import {
   useState,
 } from 'react';
 
+import { useCreatePortalSession } from '~/api';
 import { Page, TrialStatusPill } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
-import { useSession } from '~/contexts';
+import { useEntitlement, useSession } from '~/contexts';
 import { supabase } from '~/supabaseClient';
 
 export const AccountPage = () => {
   const session = useSession();
+  const { isPremium } = useEntitlement();
+  const { mutate: openPortal, isLoading: portalLoading } =
+    useCreatePortalSession();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [username, setUsername] = useState<string>('');
+
+  const handleManageSubscription = () => {
+    openPortal(undefined, {
+      onSuccess: (url) => {
+        window.location.href = url;
+      },
+    });
+  };
 
   useEffect(() => {
     async function getProfile() {
@@ -82,6 +94,19 @@ export const AccountPage = () => {
           </Button>
         </div>
       </form>
+
+      {isPremium && (
+        <div className="flex flex-col gap-1 border-t pt-2">
+          <Label>Subscription</Label>
+          <Button
+            variant="outline"
+            onClick={handleManageSubscription}
+            loading={portalLoading}
+          >
+            Manage Subscription
+          </Button>
+        </div>
+      )}
     </Page>
   );
 };
