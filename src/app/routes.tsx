@@ -4,6 +4,8 @@ import { features } from '../config/features';
 import {
   AccountPage,
   ActiveWorkoutPage,
+  CheckoutCancelPage,
+  CheckoutSuccessPage,
   CompletedWorkoutPage,
   HistoryPage,
   MovementsPage,
@@ -41,6 +43,14 @@ export const routes: RouteObject[] = [
       {
         path: 'paywall',
         element: <PaywallPage />,
+      },
+      {
+        path: 'checkout/success',
+        element: <CheckoutSuccessPage />,
+      },
+      {
+        path: 'checkout/cancel',
+        element: <CheckoutCancelPage />,
       },
       ...(features.explore ? [{ path: 'movements', element: <MovementsPage /> }] : []),
       ...(features.premium

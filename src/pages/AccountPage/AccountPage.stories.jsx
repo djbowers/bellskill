@@ -1,3 +1,6 @@
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { MemoryRouter } from 'react-router-dom';
+
 import { EntitlementContext, SessionProvider } from '~/contexts';
 
 import { AccountPage } from './AccountPage';
@@ -16,11 +19,15 @@ export default {
   component: AccountPage,
   decorators: [
     (Story) => (
-      <SessionProvider value={{ user: { email: 'luke@skywalker.com' } }}>
-        <EntitlementContext.Provider value={freeEntitlement}>
-          <Story />
-        </EntitlementContext.Provider>
-      </SessionProvider>
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <SessionProvider value={{ user: { email: 'luke@skywalker.com' } }}>
+            <EntitlementContext.Provider value={freeEntitlement}>
+              <Story />
+            </EntitlementContext.Provider>
+          </SessionProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
     ),
   ],
 };

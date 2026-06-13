@@ -271,6 +271,11 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/stripe-webhook/deno.json"
 
+[functions.create-portal-session]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create-portal-session/deno.json"
+
 [analytics]
 enabled = true
 port = 54327

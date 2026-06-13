@@ -2,11 +2,14 @@ import { CheckIcon } from '@radix-ui/react-icons';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { CheckoutPlan, useCreateCheckoutSession } from '~/api';
 import { Page } from '~/components';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
+import { features } from '~/config/features';
 import { useEntitlement } from '~/contexts';
+import { cn } from '~/lib/utils';
 
 const NOTIFY_INTENT_KEY = 'premium_notify_intent';
 
@@ -15,11 +18,7 @@ const PREMIUM_FEATURES = [
   'Tetris programming — auto-fitted workouts',
 ];
 
-const FREE_FOREVER = [
-  'Workout logging',
-  'Skill tree',
-  'Basic analytics',
-];
+const FREE_FOREVER = ['Workout logging', 'Skill tree', 'Basic analytics'];
 
 interface PaywallHeadline {
   eyebrow: string | null;
@@ -58,19 +57,70 @@ const getHeadline = (
   };
 };
 
+interface PlanCardProps {
+  selected: boolean;
+  onSelect: () => void;
+  label: string;
+  price: string;
+  caption: string;
+  badge?: string;
+}
+
+const PlanCard = ({
+  selected,
+  onSelect,
+  label,
+  price,
+  caption,
+  badge,
+}: PlanCardProps) => (
+  <button
+    type="button"
+    onClick={onSelect}
+    aria-pressed={selected}
+    className="flex-1"
+  >
+    <Card
+      className={cn('h-full', selected && 'border-primary ring-1 ring-primary')}
+    >
+      <CardContent className="flex flex-col items-center gap-0.5 p-2 text-center">
+        {badge && <Badge className="mb-0.5">{badge}</Badge>}
+        <div className="text-sm text-muted-foreground">{label}</div>
+        <div className="text-lg font-semibold">{price}</div>
+        <div className="text-xs text-muted-foreground">{caption}</div>
+      </CardContent>
+    </Card>
+  </button>
+);
+
 export const PaywallPage = () => {
   const navigate = useNavigate();
   const { isTrialing, trialExpired, trialDaysRemaining } = useEntitlement();
+
+  const [plan, setPlan] = useState<CheckoutPlan>('yearly');
+  const {
+    mutate: startCheckout,
+    isLoading: checkoutLoading,
+    isError: checkoutError,
+  } = useCreateCheckoutSession();
+
   const [notified, setNotified] = useState<boolean>(
     () => localStorage.getItem(NOTIFY_INTENT_KEY) === 'true',
   );
 
   const headline = getHeadline(isTrialing, trialExpired, trialDaysRemaining);
 
+  const handleSubscribe = () => {
+    startCheckout(plan, {
+      onSuccess: (url) => {
+        window.location.href = url;
+      },
+    });
+  };
+
   const handleNotify = () => {
     localStorage.setItem(NOTIFY_INTENT_KEY, 'true');
     setNotified(true);
-    // Phase 2: replace with create-checkout-session + open Stripe Checkout.
   };
 
   return (
@@ -102,31 +152,44 @@ export const PaywallPage = () => {
         </Card>
 
         <div className="flex gap-1">
-          <Card className="flex-1">
-            <CardContent className="flex flex-col items-center gap-0.5 p-2 text-center">
-              <div className="text-sm text-muted-foreground">Monthly</div>
-              <div className="text-lg font-semibold">$9.99</div>
-              <div className="text-xs text-muted-foreground">per month</div>
-            </CardContent>
-          </Card>
-          <Card className="flex-1 border-primary">
-            <CardContent className="flex flex-col items-center gap-0.5 p-2 text-center">
-              <Badge className="mb-0.5">Best value</Badge>
-              <div className="text-sm text-muted-foreground">Yearly</div>
-              <div className="text-lg font-semibold">$79</div>
-              <div className="text-xs text-muted-foreground">
-                per year — under $6.59/mo
-              </div>
-            </CardContent>
-          </Card>
+          <PlanCard
+            selected={plan === 'monthly'}
+            onSelect={() => setPlan('monthly')}
+            label="Monthly"
+            price="$9.99"
+            caption="per month"
+          />
+          <PlanCard
+            selected={plan === 'yearly'}
+            onSelect={() => setPlan('yearly')}
+            label="Yearly"
+            price="$79"
+            caption="per year — under $6.59/mo"
+            badge="Best value"
+          />
         </div>
 
         <p className="text-center text-xs text-muted-foreground">
           Cancel anytime. No card required during your trial.
         </p>
 
-        {/* Phase 1: payments are not live yet, so the CTA records interest. */}
-        {notified ? (
+        {features.premium ? (
+          <>
+            <Button
+              onClick={handleSubscribe}
+              loading={checkoutLoading}
+              className="w-full"
+            >
+              Subscribe — {plan === 'yearly' ? '$79/yr' : '$9.99/mo'}
+            </Button>
+            {checkoutError && (
+              <p className="text-center text-xs text-destructive">
+                Something went wrong starting checkout. Please try again.
+              </p>
+            )}
+          </>
+        ) : /* Premium not launched yet — record interest instead of charging. */
+        notified ? (
           <Button variant="secondary" disabled className="w-full">
             We'll let you know — thanks!
           </Button>
@@ -136,11 +199,7 @@ export const PaywallPage = () => {
           </Button>
         )}
 
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="w-full"
-        >
+        <Button variant="ghost" onClick={() => navigate(-1)} className="w-full">
           Not now
         </Button>
       </div>
