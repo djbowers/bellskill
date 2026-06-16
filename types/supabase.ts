@@ -273,6 +273,7 @@ export type Database = {
           stripe_subscription_id: string | null
           subscription_status: string | null
           subscription_tier: string
+          training_goal: string | null
           trial_ends_at: string | null
           updated_at: string | null
           username: string | null
@@ -287,6 +288,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           subscription_status?: string | null
           subscription_tier?: string
+          training_goal?: string | null
           trial_ends_at?: string | null
           updated_at?: string | null
           username?: string | null
@@ -301,12 +303,57 @@ export type Database = {
           stripe_subscription_id?: string | null
           subscription_status?: string | null
           subscription_tier?: string
+          training_goal?: string | null
           trial_ends_at?: string | null
           updated_at?: string | null
           username?: string | null
           website?: string | null
         }
         Relationships: []
+      }
+      session_recommendations: {
+        Row: {
+          acted_at: string | null
+          created_at: string
+          error: string | null
+          id: string
+          inputs: Json
+          output: Json | null
+          status: string
+          user_id: string
+          workout_log_id: number | null
+        }
+        Insert: {
+          acted_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          inputs: Json
+          output?: Json | null
+          status?: string
+          user_id: string
+          workout_log_id?: number | null
+        }
+        Update: {
+          acted_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          inputs?: Json
+          output?: Json | null
+          status?: string
+          user_id?: string
+          workout_log_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_recommendations_workout_log_id_fkey"
+            columns: ["workout_log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_logs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_movements: {
         Row: {

@@ -13,6 +13,7 @@ export class ExampleProfile implements Profile {
   stripe_subscription_id: string | null;
   subscription_status: string | null;
   subscription_tier: string;
+  training_goal: string | null;
   trial_ends_at: string | null;
   updated_at: string | null;
   username: string | null;
@@ -26,6 +27,7 @@ export class ExampleProfile implements Profile {
     stripe_subscription_id = null,
     subscription_status = null,
     subscription_tier = 'free',
+    training_goal = null,
     trial_ends_at = null,
     updated_at = '2024-02-20T14:12:05.335714+00:00',
     username = 'lukeskywalker',
@@ -39,6 +41,7 @@ export class ExampleProfile implements Profile {
     this.stripe_subscription_id = stripe_subscription_id;
     this.subscription_status = subscription_status;
     this.subscription_tier = subscription_tier;
+    this.training_goal = training_goal;
     this.trial_ends_at = trial_ends_at;
     this.updated_at = updated_at;
     this.username = username;
