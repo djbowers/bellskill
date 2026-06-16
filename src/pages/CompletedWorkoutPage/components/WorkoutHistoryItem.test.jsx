@@ -3,79 +3,132 @@ import { render, screen } from '@testing-library/react';
 
 import * as stories from './WorkoutHistoryItem.stories';
 
-const {
-  Default,
-  RoundsGoal,
-  ComplexSet,
-  CatalogLinkedLongName,
-  Bodyweight,
-  WithTimers,
-} = composeStories(stories);
+const { Default, WithTimers, RoundsGoal, ComplexSet, CatalogLinkedLongName } =
+  composeStories(stories);
 
 vi.setSystemTime(new Date('2024-01-02T12:00:00'));
 
-describe('hero metric', () => {
-  test('displays total volume and round/rep summary', async () => {
+describe('workout overview', () => {
+  test('displays the date of the workout', async () => {
     render(<Default />);
-    expect(screen.getByText('You moved')).toBeInTheDocument();
-    expect(screen.getByText('1,000')).toBeInTheDocument();
-    expect(
-      screen.getByText('across 10 rounds · 50 reps'),
-    ).toBeInTheDocument();
+    await screen.findByText('Monday, Jan 1');
   });
 
-  test('displays workout goal pill', async () => {
-    render(<RoundsGoal />);
-    expect(screen.getByText('15 ROUNDS GOAL')).toBeInTheDocument();
+  test('displays the time range of the workout', async () => {
+    render(<Default />);
+    await screen.findByText('12:00 PM - 1:15 PM');
   });
 
-  test('displays workout details when provided', async () => {
+  test('displays workout details', async () => {
     render(<Default />);
     await screen.findByText('The Giant 3.0 W1D2');
   });
 });
 
-describe('workout timers', () => {
-  test('displays interval and rest when timers were used', async () => {
-    render(<WithTimers />);
-    expect(screen.getByText('Intervals')).toBeInTheDocument();
-    expect(screen.getByText('60s')).toBeInTheDocument();
-    expect(screen.getByText('Rest')).toBeInTheDocument();
-    expect(screen.getByText('30s')).toBeInTheDocument();
-  });
-
-  test('omits timer row when interval and rest are zero', async () => {
-    render(<Default />);
-    expect(screen.queryByText('Intervals')).not.toBeInTheDocument();
-    expect(screen.queryByText('Rest')).not.toBeInTheDocument();
-  });
-});
-
-describe('movement rows', () => {
-  test('displays movements with compact rep scheme and per-movement volume', async () => {
+describe('workout options', () => {
+  test('displays the movements performed in the workout', async () => {
     render(<Default />);
     await screen.findByText('Single Arm Front Squat');
     await screen.findByText('Single Arm Overhead Press');
-    expect(screen.getAllByText(/5 reps . 10/).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/800 kg/).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/×50/).length).toBeGreaterThanOrEqual(2);
   });
 
-  test('omits per-movement volume for bodyweight movements', async () => {
-    render(<Bodyweight />);
-    expect(screen.getByText(/×50/)).toBeInTheDocument();
-    expect(screen.queryByText(/\d+ kg/)).not.toBeInTheDocument();
+  test('displays rep scheme', async () => {
+    render(<Default />);
+    expect(screen.getAllByLabelText('Rep Scheme')[0]).toHaveTextContent(
+      '5 / 5',
+    );
+  });
+
+  test('displays weights and number of hands used', async () => {
+    render(<Default />);
+    expect(screen.getAllByLabelText('Weights')[0]).toHaveTextContent(
+      '16 kg (1h)',
+    );
+  });
+
+  test('displays workout goal', async () => {
+    render(<RoundsGoal />);
+    expect(screen.getByLabelText('Goal')).toHaveTextContent('15 rounds');
+  });
+
+  test('displays interval timer', async () => {
+    render(<WithTimers />);
+    expect(screen.getByLabelText('Intervals')).toHaveTextContent('60s');
+  });
+
+  test('displays rest timer', async () => {
+    render(<WithTimers />);
+    expect(screen.getByLabelText('Rest')).toHaveTextContent('30s');
   });
 });
 
 describe('complex set workouts', () => {
-  test('displays carried weights block without per-movement weights', async () => {
+  test('displays shared weight once instead of per-movement weights', async () => {
     render(<ComplexSet />);
 
-    expect(screen.getByText('Carried')).toBeInTheDocument();
-    expect(screen.getByText('24 kg')).toBeInTheDocument();
-    expect(screen.getByText('shared across the complex')).toBeInTheDocument();
-    expect(screen.queryByText('800 kg')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Shared Weight')).toHaveTextContent(
+      '24 kg (2h)',
+    );
+    expect(screen.queryAllByLabelText('Weights')).toHaveLength(0);
+  });
+
+  test('displays rep scheme using shared weight for unilateral formatting', async () => {
+    render(
+      <ComplexSet
+        sharedWeightTwoValue={0}
+        sharedWeightTwoUnit="kilograms"
+        movementLogs={[
+          {
+            movementName: 'Clean and Press',
+            id: 1,
+            repScheme: [5],
+            userMovementId: null,
+            functionalMovementId: null,
+            weightOneUnit: 'kilograms',
+            weightOneValue: 16,
+            weightTwoUnit: null,
+            weightTwoValue: 0,
+          },
+          {
+            movementName: 'Front Squat',
+            id: 2,
+            repScheme: [5],
+            userMovementId: null,
+            functionalMovementId: null,
+            weightOneUnit: 'kilograms',
+            weightOneValue: 16,
+            weightTwoUnit: null,
+            weightTwoValue: 0,
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getAllByLabelText('Rep Scheme')[0]).toHaveTextContent(
+      '5 / 5',
+    );
+  });
+});
+
+describe('workout summary', () => {
+  test('displays the duration of the workout', async () => {
+    render(<Default />);
+    expect(screen.getByLabelText('Elapsed')).toHaveTextContent('1h 15m');
+  });
+
+  test('displays number of rounds completed', async () => {
+    render(<Default />);
+    expect(screen.getByLabelText('Rounds')).toHaveTextContent('10');
+  });
+
+  test('displays number of reps completed', async () => {
+    render(<Default />);
+    expect(screen.getByLabelText('Reps')).toHaveTextContent('50');
+  });
+
+  test('displays volume completed in the workout', async () => {
+    render(<Default />);
+    expect(screen.getByLabelText('Volume')).toHaveTextContent('1000 kg');
   });
 });
 
@@ -87,7 +140,7 @@ describe('movement linking', () => {
       screen.getByRole('button', { name: 'Unlink from catalog' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Link to catalog' }),
+      screen.queryByRole('button', { name: 'Link' }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByText('Double Kettlebell Push Press'),

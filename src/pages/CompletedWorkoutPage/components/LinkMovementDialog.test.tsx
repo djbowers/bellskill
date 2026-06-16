@@ -120,13 +120,13 @@ describe('LinkMovementDialog', () => {
   test('opens dialog and shows current movement name', async () => {
     renderDialog();
 
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Link to catalog' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Link' }));
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText(/Currently: My Custom Swing/)).toBeInTheDocument();
-    expect(screen.getByText(/Catalog filtered to Two-Hand/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Catalog filtered to Two-Hand/),
+    ).toBeInTheDocument();
   });
 
   test('confirm is enabled with typed input and persists link on confirm', async () => {
@@ -162,9 +162,7 @@ describe('LinkMovementDialog', () => {
 
     renderDialog();
 
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Link to catalog' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Link' }));
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
     await userEvent.clear(input);
