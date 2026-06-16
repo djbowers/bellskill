@@ -1,8 +1,4 @@
 import {
-  formatTimerSeconds,
-  getCompactRepScheme,
-  getMovementTotalReps,
-  getMovementVolume,
   getRepSchemeDisplayValue,
   getWeightsDisplayValue,
 } from './displayValues';
@@ -50,59 +46,5 @@ describe('getRepSchemeDisplayValue', () => {
 
   test('returns single rep count as is when no bells specified', () => {
     expect(getRepSchemeDisplayValue([5], [0, 0])).toBe('5');
-  });
-});
-
-describe('formatTimerSeconds', () => {
-  test('formats seconds with s suffix', () => {
-    expect(formatTimerSeconds(60)).toBe('60s');
-  });
-});
-
-describe('getMovementTotalReps', () => {
-  test('multiplies rep scheme sum by completed rounds', () => {
-    expect(getMovementTotalReps([5, 3], 4)).toBe(32);
-  });
-});
-
-describe('getMovementVolume', () => {
-  test('returns total kg for loaded movements', () => {
-    expect(
-      getMovementVolume(
-        {
-          repScheme: [5],
-          weightOneValue: 16,
-          weightTwoValue: 0,
-        },
-        10,
-      ),
-    ).toBe(800);
-  });
-
-  test('returns null for bodyweight movements', () => {
-    expect(
-      getMovementVolume(
-        {
-          repScheme: [5],
-          weightOneValue: null,
-          weightTwoValue: null,
-        },
-        10,
-      ),
-    ).toBeNull();
-  });
-});
-
-describe('getCompactRepScheme', () => {
-  test('formats uniform rep scheme with rung count multiplier', () => {
-    expect(getCompactRepScheme([5], 4)).toBe('5 reps × 4');
-  });
-
-  test('uses singular rep when rung value is 1', () => {
-    expect(getCompactRepScheme([1], 3)).toBe('1 rep × 3');
-  });
-
-  test('falls back to ladder format for non-uniform schemes', () => {
-    expect(getCompactRepScheme([3, 2, 1], 4)).toBe('3, 2, 1 reps × 4');
   });
 });

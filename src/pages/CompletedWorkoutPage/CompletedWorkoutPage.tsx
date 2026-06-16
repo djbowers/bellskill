@@ -1,5 +1,5 @@
-import { ArrowRightIcon } from '@heroicons/react/24/outline';
-import { useEffect, useRef, useState } from 'react';
+import { ArrowRightIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import {
@@ -10,8 +10,8 @@ import {
   useWorkoutLog,
 } from '~/api';
 import { Loading, Page } from '~/components';
-import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
+import { Card } from '~/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -25,8 +25,9 @@ import { Textarea } from '~/components/ui/textarea';
 import { useWorkoutOptions } from '~/contexts';
 import { WorkoutGoalUnits, WorkoutLog } from '~/types';
 
+import { Section } from '../StartWorkoutPage/components';
 import { RPESelector, WorkoutHistoryItem } from './components';
-import { getShortDateAndStartTime, resolveSharedWeights } from './utils';
+import { resolveSharedWeights } from './utils';
 
 export const CompletedWorkoutPage = () => {
   const { id = '' } = useParams<{ id: string }>();
@@ -48,17 +49,10 @@ export const CompletedWorkoutPage = () => {
   const { mutate: updateWorkoutNotes } = useUpdateWorkoutNotes(id);
 
   const notesRef = useRef<HTMLTextAreaElement>(null);
-  const [showNotes, setShowNotes] = useState(false);
-
-  useEffect(() => {
-    if (workoutLog) {
-      setShowNotes(workoutLog.workoutNotes !== null);
-    }
-  }, [workoutLog?.id, workoutLog?.workoutNotes]);
 
   useEffect(() => {
     if (deletedWorkoutLogId) navigate('/history');
-  }, [deletedWorkoutLogId, navigate]);
+  }, [deletedWorkoutLogId]);
 
   if (workoutLogLoading) return <Loading />;
   if (!workoutLog) return <>Not Found</>;
@@ -71,23 +65,17 @@ export const CompletedWorkoutPage = () => {
     selectRPE(selectedRPE);
 
   const handleAddNotes = () => updateWorkoutNotes('');
+  const handleClearNotes = () => updateWorkoutNotes(null);
   const handleBlurNotes = () =>
     updateWorkoutNotes(notesRef.current?.value || null);
 
-  const handleClickNotes = () => {
-    if (workoutLog.workoutNotes === null) {
-      handleAddNotes();
-      setShowNotes(true);
-      return;
-    }
-    setShowNotes((prev) => !prev);
-  };
-
   const handleClickRepeat = () => {
+    // Calculate actual completed duration in minutes
     const completedDurationMs =
       workoutLog.completedAt.getTime() - workoutLog.startedAt.getTime();
     const completedDurationMinutes = Math.round(completedDurationMs / 60000);
 
+    // Use actual completed values for all unit types
     const previousMinutes = completedDurationMinutes;
     const previousRounds = workoutLog.completedRounds ?? 0;
     const previousVolume =
@@ -95,8 +83,9 @@ export const CompletedWorkoutPage = () => {
         ? workoutLog.completedVolume
         : undefined;
 
-    const workoutGoal: number = workoutLog.workoutGoal;
-    const workoutGoalUnits: WorkoutGoalUnits = workoutLog.workoutGoalUnits;
+    // Determine workoutGoal and workoutGoalUnits based on original workout
+    let workoutGoal: number = workoutLog.workoutGoal;
+    let workoutGoalUnits: WorkoutGoalUnits = workoutLog.workoutGoalUnits;
 
     const isComplexSet = workoutLog.complexSet === true;
     const sharedWeights = resolveSharedWeights(
@@ -141,63 +130,40 @@ export const CompletedWorkoutPage = () => {
     navigate('/');
   };
 
-  const isComplexSet = workoutLog.complexSet === true;
-  const headerDateTime = getShortDateAndStartTime(workoutLog.startedAt);
-
   return (
     <Dialog>
       <Page
+        title="Workout Log"
         actions={
-          <div className="flex w-full flex-col items-center gap-1">
-            <div className="grid w-full grid-cols-3 gap-1">
+          <div className="flex flex-col items-center gap-1">
+            <div className="grid grid-cols-3 gap-1">
               <Button variant="ghost" onClick={handleClickRepeat}>
                 Repeat
               </Button>
               <Button
                 onClick={handleClickContinue}
-                className="flex items-center justify-center gap-0.5"
+                className="flex items-center gap-0.5"
               >
                 Continue
                 <ArrowRightIcon className="h-2 w-2" />
               </Button>
-              <Button variant="ghost" onClick={handleClickNotes}>
-                Notes
-              </Button>
+              {workoutLog.workoutNotes === null && (
+                <Button variant="ghost" onClick={handleAddNotes}>
+                  Add Notes
+                </Button>
+              )}
             </div>
             <DialogTrigger asChild>
               <Button
                 variant="ghost"
-                size="sm"
-                className="text-xs text-red-500 hover:text-red-600"
+                className="flex items-center gap-0.5 text-red-500"
               >
-                Delete
+                Delete <TrashIcon className="h-2.5 w-2.5" />
               </Button>
             </DialogTrigger>
           </div>
         }
       >
-        <header className="border-b border-border pb-2">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex flex-col gap-0.5">
-              {/* TODO: prepend workout number when backend exposes it (e.g. NO. 143) */}
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                Workout
-              </span>
-              {isComplexSet && (
-                <Badge variant="secondary" className="w-fit text-xs uppercase">
-                  Complex
-                </Badge>
-              )}
-            </div>
-            <time
-              className="text-xs text-muted-foreground"
-              dateTime={workoutLog.startedAt.toISOString()}
-            >
-              {headerDateTime}
-            </time>
-          </div>
-        </header>
-
         <WorkoutHistoryItem
           completedAt={workoutLog.completedAt}
           completedReps={workoutLog.completedReps}
@@ -222,14 +188,31 @@ export const CompletedWorkoutPage = () => {
 
         <RPESelector onSelectRPE={handleSelectRPE} rpeValue={workoutLog.rpe} />
 
-        {showNotes && workoutLog.workoutNotes !== null && (
-          <Textarea
-            aria-label="Workout Notes"
-            className="w-full"
-            defaultValue={workoutLog.workoutNotes}
-            onBlur={handleBlurNotes}
-            ref={notesRef}
-          />
+        {workoutLog.workoutNotes !== null && (
+          <Card>
+            <Section
+              title="Workout Notes"
+              actions={
+                workoutLog.workoutNotes?.length > 0 && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleClearNotes}
+                  >
+                    Clear Notes
+                  </Button>
+                )
+              }
+            >
+              <Textarea
+                aria-label="Workout Notes"
+                className="w-full"
+                defaultValue={workoutLog.workoutNotes}
+                onBlur={handleBlurNotes}
+                ref={notesRef}
+              />
+            </Section>
+          </Card>
         )}
       </Page>
 

@@ -1,8 +1,4 @@
-import {
-  getDisplayDate,
-  getDuration,
-  getShortDateAndStartTime,
-} from './datetimes';
+import { getDisplayDate, getDuration } from './datetimes';
 
 describe('getDisplayDate', () => {
   test('formats date with year when not current year', () => {
@@ -15,24 +11,6 @@ describe('getDisplayDate', () => {
     vi.setSystemTime(new Date('2024-01-01T12:00:00.000Z'));
     const date = new Date('2024-06-15T12:00:00.000Z');
     expect(getDisplayDate(date)).toBe('Saturday, Jun 15');
-  });
-});
-
-describe('getShortDateAndStartTime', () => {
-  test('formats short date and start time in current year', () => {
-    vi.setSystemTime(new Date('2024-05-25T12:00:00.000Z'));
-    const startedAt = new Date('2024-05-23T14:05:00.000Z');
-    expect(getShortDateAndStartTime(startedAt)).toMatch(
-      /^Thu, May 23 · \d{1,2}:\d{2} (AM|PM)$/,
-    );
-  });
-
-  test('includes year when workout is not in the current year', () => {
-    vi.setSystemTime(new Date('2024-01-01T12:00:00.000Z'));
-    const startedAt = new Date('2023-05-23T14:05:00.000Z');
-    expect(getShortDateAndStartTime(startedAt)).toMatch(
-      /^Tue, May 23 2023 · \d{1,2}:\d{2} (AM|PM)$/,
-    );
   });
 });
 
