@@ -576,7 +576,7 @@ export const StartWorkoutPage = () => {
                       }
                     />
                   }
-                  value={movement.weightOneValue}
+                  value={movement.weightOneValue!}
                   onChange={(value) =>
                     handleChangeWeightOneValue(index, value!)
                   }

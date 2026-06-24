@@ -23,7 +23,7 @@ const session = {
     id: 'user-123',
     user_metadata: { full_name: 'Test User' },
   },
-} as Session;
+} as unknown as Session;
 
 function mockProfilesTable({
   profile,
