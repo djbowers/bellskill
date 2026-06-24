@@ -42,8 +42,13 @@ const searchMovements = async (
   const { data, error } = await movementsQuery.limit(CATALOG_SEARCH_LIMIT);
 
   if (error) throw error;
-  return (data ?? []).map((movement) => ({
-    id: movement.id,
-    name: movement.name,
-  }));
+  return (data ?? [])
+    .filter(
+      (movement): movement is { id: string; name: string } =>
+        movement.id !== null && movement.name !== null,
+    )
+    .map((movement) => ({
+      id: movement.id,
+      name: movement.name,
+    }));
 };
