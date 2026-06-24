@@ -12,6 +12,7 @@ import {
   PaywallPage,
   RecommendationsPage,
   StartWorkoutPage,
+  WeeklyBalancePage,
 } from '../pages';
 import { Root } from './Root';
 
@@ -51,6 +52,10 @@ export const routes: RouteObject[] = [
       {
         path: 'checkout/cancel',
         element: <CheckoutCancelPage />,
+      },
+      {
+        path: 'balance',
+        element: <WeeklyBalancePage />,
       },
       ...(features.explore ? [{ path: 'movements', element: <MovementsPage /> }] : []),
       ...(features.premium

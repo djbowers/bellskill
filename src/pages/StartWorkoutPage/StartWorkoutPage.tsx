@@ -2,7 +2,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Page, WeeklyBalanceContainer } from '~/components';
+import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
@@ -362,8 +362,6 @@ export const StartWorkoutPage = () => {
         </Button>
       }
     >
-      <WeeklyBalanceContainer />
-
       <BuildNewWorkoutDivider />
 
       <Card>

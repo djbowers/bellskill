@@ -9,3 +9,4 @@ export * from './PaywallPage';
 export * from './RecommendationsPage';
 export * from './SignupPage';
 export * from './StartWorkoutPage';
+export * from './WeeklyBalancePage';
