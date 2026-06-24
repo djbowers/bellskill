@@ -1,13 +1,18 @@
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { AnalyticsEvent, trackEvent, useWorkoutLogs } from '~/api';
 import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
-import { DEFAULT_MOVEMENT_OPTIONS, useWorkoutOptions } from '~/contexts';
+import {
+  DEFAULT_MOVEMENT_OPTIONS,
+  useSession,
+  useWorkoutOptions,
+} from '~/contexts';
 import { getWeightsDisplayValue } from '~/pages/CompletedWorkoutPage/utils/displayValues';
 import {
   MovementOptions,
@@ -51,6 +56,27 @@ export const StartWorkoutPage = () => {
   const features = useFeatures();
   const navigate = useNavigate();
   const [workoutOptions, updateWorkoutOptions] = useWorkoutOptions();
+
+  // Activation funnel (PROD-157): a user with zero workout logs is "new".
+  const session = useSession();
+  const { data: workoutLogs } = useWorkoutLogs();
+  const isFirstWorkout = workoutLogs?.length === 0;
+  const firstSessionTracked = useRef(false);
+
+  useEffect(
+    function trackFirstSession() {
+      if (firstSessionTracked.current) return;
+      if (!session?.user || !workoutLogs) return;
+      if (workoutLogs.length > 0) return;
+
+      firstSessionTracked.current = true;
+      void trackEvent({
+        event: AnalyticsEvent.FirstSessionStarted,
+        userId: session.user.id,
+      });
+    },
+    [session, workoutLogs],
+  );
 
   const [workoutGoal, setWorkoutGoal] = useState<number>(
     workoutOptions.workoutGoal,
@@ -330,6 +356,19 @@ export const StartWorkoutPage = () => {
       workoutGoalUnits,
     };
     updateWorkoutOptions(workoutOptions);
+
+    if (session?.user) {
+      void trackEvent({
+        event: AnalyticsEvent.WorkoutStarted,
+        userId: session.user.id,
+        properties: {
+          is_first_workout: isFirstWorkout,
+          movement_count: movements.length,
+          workout_goal_units: workoutGoalUnits,
+        },
+      });
+    }
+
     navigate('active');
   };
 
