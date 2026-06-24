@@ -7,8 +7,8 @@ import { Page } from '~/components';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
-import { features } from '~/config/features';
 import { useEntitlement } from '~/contexts';
+import { useFeatures } from '~/hooks';
 import { cn } from '~/lib/utils';
 
 const NOTIFY_INTENT_KEY = 'premium_notify_intent';
@@ -94,6 +94,7 @@ const PlanCard = ({
 );
 
 export const PaywallPage = () => {
+  const features = useFeatures();
   const navigate = useNavigate();
   const { isTrialing, trialExpired, trialDaysRemaining } = useEntitlement();
 

@@ -7,11 +7,12 @@ import { EntitlementProvider } from '~/contexts/EntitlementContext';
 import { WorkoutOptionsProvider } from '~/contexts/WorkoutOptionsContext';
 import { resolveAuthSession } from '~/utils';
 
+import { getFeatures } from '../config/features';
 import { SessionProvider } from '../contexts';
 import { Signup } from '../pages';
 import { supabase } from '../supabaseClient';
 import '../tailwind.css';
-import { routes } from './routes';
+import { createRoutes } from './routes';
 
 export function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -30,7 +31,9 @@ export function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const router = createBrowserRouter(routes);
+  // Build routes from the session-aware feature flags so that feature-gated
+  // routes become reachable when an owner enables the preview override.
+  const router = createBrowserRouter(createRoutes(getFeatures(session)));
 
   return (
     <SafeAreaWrapper>

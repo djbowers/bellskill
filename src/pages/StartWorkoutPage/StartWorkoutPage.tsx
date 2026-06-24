@@ -18,7 +18,7 @@ import {
 } from '~/types';
 import { getWeightTabValue, getWeightUnitLabel, WEIGHT_MODE_LABELS } from '~/utils';
 
-import { features } from '~/config/features';
+import { useFeatures } from '~/hooks';
 
 import {
   AddToWorkoutSection,
@@ -48,6 +48,7 @@ const DEFAULT_MINUTES: number = 10; // minutes
 const DEFAULT_ROUNDS: number = 10; // rounds
 
 export const StartWorkoutPage = () => {
+  const features = useFeatures();
   const navigate = useNavigate();
   const [workoutOptions, updateWorkoutOptions] = useWorkoutOptions();
 
