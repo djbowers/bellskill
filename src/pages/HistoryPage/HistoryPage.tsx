@@ -1,16 +1,20 @@
 import { DateTime } from 'luxon';
 import { Link } from 'react-router-dom';
 
-import { useWorkoutLogs } from '~/api';
+import { useInfiniteWorkoutLogs } from '~/api';
 import { Loading, Page } from '~/components';
 import { Badge } from '~/components/ui/badge';
+import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { WorkoutLog } from '~/types';
 
 import { RpeBadge } from '../CompletedWorkoutPage/components';
 
 export const HistoryPage = () => {
-  const { data: workoutLogs, isLoading } = useWorkoutLogs();
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteWorkoutLogs();
+
+  const workoutLogs = data?.pages.flatMap((page) => page.workoutLogs) ?? [];
 
   const workoutDays = groupByDate(workoutLogs);
   const workoutWeeks = groupByWeek(workoutDays);
@@ -26,6 +30,19 @@ export const HistoryPage = () => {
           />
         ))}
       </div>
+
+      {hasNextPage && (
+        <div className="mt-4 flex justify-center">
+          <Button
+            variant="outline"
+            loading={isFetchingNextPage}
+            disabled={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          >
+            Load More
+          </Button>
+        </div>
+      )}
 
       {isLoading && <Loading />}
     </Page>

@@ -6,4 +6,5 @@ export enum QUERIES {
   USER_MOVEMENTS = 'userMovements',
   WORKOUT_LOG = 'workoutLog',
   WORKOUT_LOGS = 'workoutLogs',
+  WORKOUT_LOGS_INFINITE = 'workoutLogsInfinite',
 }
