@@ -7,6 +7,7 @@ export * from './useUnlinkMovementLog';
 export * from './useLogWorkout';
 export * from './useMovementLogs';
 export * from './useMovements';
+export * from './usePatternDebt';
 export * from './useSelectRPE';
 export * from './useUpdateWorkoutNotes';
 export * from './useWorkoutLog';
