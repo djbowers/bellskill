@@ -95,11 +95,13 @@ export const Header = () => {
             </NavigationMenuLink>
           </NavigationMenuItem>
         )}
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <NavLink to="/balance">Balance</NavLink>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
+        {features.weeklyBalance && (
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+              <NavLink to="/balance">Balance</NavLink>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        )}
         <NavigationMenuItem>
           <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
             <NavLink to="/history">History</NavLink>

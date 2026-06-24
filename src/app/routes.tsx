@@ -53,10 +53,9 @@ export const routes: RouteObject[] = [
         path: 'checkout/cancel',
         element: <CheckoutCancelPage />,
       },
-      {
-        path: 'balance',
-        element: <WeeklyBalancePage />,
-      },
+      ...(features.weeklyBalance
+        ? [{ path: 'balance', element: <WeeklyBalancePage /> }]
+        : []),
       ...(features.explore ? [{ path: 'movements', element: <MovementsPage /> }] : []),
       ...(features.premium
         ? [{ path: 'recommendations', element: <RecommendationsPage /> }]
