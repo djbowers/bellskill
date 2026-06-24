@@ -1,7 +1,8 @@
 import { ButtonIcon, SunIcon } from '@radix-ui/react-icons';
 import { NavLink } from 'react-router-dom';
 
-import { features } from '../config/features';
+import { useFeatures } from '~/hooks';
+
 import { supabase } from '../supabaseClient';
 import './Header.styles.css';
 import { Badge } from './ui/badge';
@@ -18,6 +19,7 @@ import {
 import { Separator } from './ui/separator';
 
 export const Header = () => {
+  const features = useFeatures();
   const handleSignOut = () => supabase.auth.signOut();
 
   function handleClickLightDarkMode() {

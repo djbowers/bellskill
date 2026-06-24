@@ -1,6 +1,6 @@
 import { RouteObject } from 'react-router-dom';
 
-import { features } from '../config/features';
+import { Features, features } from '../config/features';
 import {
   AccountPage,
   ActiveWorkoutPage,
@@ -16,7 +16,12 @@ import {
 } from '../pages';
 import { Root } from './Root';
 
-export const routes: RouteObject[] = [
+/**
+ * Builds the route table for a given set of effective feature flags. Pass the
+ * session-aware flags from `getFeatures(session)` so feature-gated routes
+ * become reachable when an owner enables the preview override.
+ */
+export const createRoutes = (flags: Features = features): RouteObject[] => [
   {
     path: '/',
     element: <Root />,
@@ -53,13 +58,16 @@ export const routes: RouteObject[] = [
         path: 'checkout/cancel',
         element: <CheckoutCancelPage />,
       },
-      ...(features.weeklyBalance
+      ...(flags.weeklyBalance
         ? [{ path: 'balance', element: <WeeklyBalancePage /> }]
         : []),
-      ...(features.explore ? [{ path: 'movements', element: <MovementsPage /> }] : []),
-      ...(features.premium
+      ...(flags.explore ? [{ path: 'movements', element: <MovementsPage /> }] : []),
+      ...(flags.premium
         ? [{ path: 'recommendations', element: <RecommendationsPage /> }]
         : []),
     ],
   },
 ];
+
+/** Default route table built from the static (no-override) feature flags. */
+export const routes: RouteObject[] = createRoutes();

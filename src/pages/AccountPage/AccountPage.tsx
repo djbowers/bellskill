@@ -10,6 +10,11 @@ import { Page, TrialStatusPill } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
+import {
+  isOwner,
+  isPreviewOverrideEnabled,
+  setPreviewOverrideEnabled,
+} from '~/config/features';
 import { useEntitlement, useSession } from '~/contexts';
 import { supabase } from '~/supabaseClient';
 
@@ -21,6 +26,17 @@ export const AccountPage = () => {
 
   const [loading, setLoading] = useState<boolean>(true);
   const [username, setUsername] = useState<string>('');
+  const [previewEnabled, setPreviewEnabled] = useState<boolean>(
+    isPreviewOverrideEnabled(),
+  );
+
+  const handleTogglePreview = () => {
+    const next = !previewEnabled;
+    setPreviewOverrideEnabled(next);
+    setPreviewEnabled(next);
+    // Routes are built once from the effective flags, so reload to apply.
+    window.location.reload();
+  };
 
   const handleManageSubscription = () => {
     openPortal(undefined, {
@@ -104,6 +120,21 @@ export const AccountPage = () => {
             loading={portalLoading}
           >
             Manage Subscription
+          </Button>
+        </div>
+      )}
+
+      {isOwner(session) && (
+        <div className="flex flex-col gap-1 border-t pt-2">
+          <Label>Developer</Label>
+          <p className="text-xs text-muted-foreground">
+            Preview every feature in production, even when its flag is disabled.
+            Owner-only — has no effect for other accounts.
+          </p>
+          <Button variant="outline" onClick={handleTogglePreview}>
+            {previewEnabled
+              ? 'Disable feature preview'
+              : 'Enable feature preview'}
           </Button>
         </div>
       )}

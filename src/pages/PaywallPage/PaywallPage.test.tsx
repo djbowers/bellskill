@@ -2,19 +2,30 @@ import { composeStories } from '@storybook/react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 
-import { features } from '~/config/features';
-
 import * as stories from './PaywallPage.stories';
 
-// Control the launch flag per test (drives notify-me vs real Subscribe).
-vi.mock('~/config/features', () => ({ features: { premium: false } }));
+// Control the launch flag per test (drives notify-me vs real Subscribe) by
+// mocking the effective-features hook the page reads.
+const { mockUseFeatures } = vi.hoisted(() => ({ mockUseFeatures: vi.fn() }));
+vi.mock('~/hooks', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('~/hooks')>()),
+  useFeatures: mockUseFeatures,
+}));
+
+const setPremium = (premium: boolean) =>
+  mockUseFeatures.mockReturnValue({
+    complexMode: false,
+    explore: false,
+    premium,
+    recommender: false,
+  });
 
 const { Trialing, Expired, Free } = composeStories(stories);
 
 describe('paywall page', () => {
   beforeEach(() => {
     localStorage.clear();
-    (features as { premium: boolean }).premium = false;
+    setPremium(false);
   });
 
   test('trialing variant shows days remaining', () => {
@@ -47,7 +58,7 @@ describe('paywall page', () => {
 
   describe('premium flag ON (launched)', () => {
     beforeEach(() => {
-      (features as { premium: boolean }).premium = true;
+      setPremium(true);
     });
 
     test('shows real Subscribe CTA, not notify-me', () => {
