@@ -58,24 +58,31 @@ export const StartWorkoutPage = () => {
   const [workoutOptions, updateWorkoutOptions] = useWorkoutOptions();
 
   // Activation funnel (PROD-157): a user with zero workout logs is "new".
+  // While the logs query is still loading (workoutLogs === undefined) we don't
+  // yet know, so emit null rather than a misleading `false` for a genuine
+  // first-timer who taps Start before the query resolves.
   const session = useSession();
+  const userId = session?.user?.id;
   const { data: workoutLogs } = useWorkoutLogs();
-  const isFirstWorkout = workoutLogs?.length === 0;
+  const isFirstWorkout =
+    workoutLogs === undefined ? null : workoutLogs.length === 0;
   const firstSessionTracked = useRef(false);
 
   useEffect(
     function trackFirstSession() {
       if (firstSessionTracked.current) return;
-      if (!session?.user || !workoutLogs) return;
+      if (!userId || !workoutLogs) return;
       if (workoutLogs.length > 0) return;
 
       firstSessionTracked.current = true;
       void trackEvent({
         event: AnalyticsEvent.FirstSessionStarted,
-        userId: session.user.id,
+        userId,
       });
     },
-    [session, workoutLogs],
+    // Depend on the stable user id, not the session object (which is replaced on
+    // every token refresh), so this effect doesn't needlessly re-run.
+    [userId, workoutLogs],
   );
 
   const [workoutGoal, setWorkoutGoal] = useState<number>(
@@ -357,10 +364,10 @@ export const StartWorkoutPage = () => {
     };
     updateWorkoutOptions(workoutOptions);
 
-    if (session?.user) {
+    if (userId) {
       void trackEvent({
         event: AnalyticsEvent.WorkoutStarted,
-        userId: session.user.id,
+        userId,
         properties: {
           is_first_workout: isFirstWorkout,
           movement_count: movements.length,

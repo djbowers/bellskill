@@ -26,6 +26,17 @@ CREATE INDEX idx_analytics_events_user_created
 CREATE INDEX idx_analytics_events_name_created
   ON public.analytics_events (event_name, created_at DESC);
 
+-- Once-per-user funnel events. signup_completed is emitted exactly-once by the
+-- handle_new_user() trigger, but first_session_started is client-emitted and its
+-- in-memory ref guard resets on unmount/remount, so a re-mounted new user could
+-- insert a second row. This partial unique index is the right-layer backstop: a
+-- duplicate insert hits a unique violation, which trackEvent() swallows
+-- (fire-and-forget). Other events (workout_started/completed) are intentionally
+-- repeatable and excluded.
+CREATE UNIQUE INDEX idx_analytics_events_once_per_user
+  ON public.analytics_events (user_id, event_name)
+  WHERE event_name IN ('signup_completed', 'first_session_started');
+
 ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
 
 -- Clients may append their own events and read their own back. No UPDATE/DELETE

@@ -38,7 +38,9 @@ export const useLogWorkout = () => {
       // Activation funnel (PROD-157). is_first_workout is read from the
       // WORKOUT_LOGS cache, warmed by StartWorkoutPage before the user reaches
       // the active workout; the canonical value is also derivable server-side
-      // from workout_logs (see the user_activation view).
+      // from workout_logs (see the user_activation view). On a cold cache (e.g.
+      // a deep link straight to /active) the value is unknown, so emit null
+      // rather than a misleading `false`.
       const cachedLogs = queryClient.getQueryData<WorkoutLog[]>(
         QUERIES.WORKOUT_LOGS,
       );
@@ -50,8 +52,12 @@ export const useLogWorkout = () => {
         event: AnalyticsEvent.WorkoutCompleted,
         userId: user.id,
         properties: {
+          // Integer PK of the workout_logs row (workout_logs.id), not a UUID.
           workout_log_id: workoutLogId,
-          is_first_workout: cachedLogs?.length === 0,
+          is_first_workout:
+            cachedLogs === undefined ? null : cachedLogs.length === 0,
+          // null when the start time is genuinely unknown (no startedAt on the
+          // options); the DB workout_logs.started_at has its own now() fallback.
           duration_seconds:
             startedAtMs != null
               ? Math.round((completedAt - startedAtMs) / 1000)
