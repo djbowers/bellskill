@@ -531,6 +531,17 @@ export type Database = {
     }
     Functions: {
       has_premium_access: { Args: { user_id: string }; Returns: boolean }
+      pattern_debt_window: {
+        Args: { p_window_days?: number; p_baseline_days?: number }
+        Returns: {
+          pattern: string
+          last_trained_at: string | null
+          set_count: number
+          total_reps: number
+          total_volume_kg: number
+          baseline_volume_kg: number | null
+        }[]
+      }
     }
     Enums: {
       "Body Region":
