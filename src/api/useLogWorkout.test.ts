@@ -17,6 +17,7 @@ import { useLogWorkout } from './useLogWorkout';
 const WORKOUT_LOGS_URL = `${VITE_SUPABASE_URL}/rest/v1/workout_logs`;
 const MOVEMENT_LOGS_URL = `${VITE_SUPABASE_URL}/rest/v1/movement_logs`;
 const USER_MOVEMENTS_URL = `${VITE_SUPABASE_URL}/rest/v1/user_movements`;
+const ANALYTICS_URL = `${VITE_SUPABASE_URL}/rest/v1/analytics_events`;
 
 const mockSession = {
   user: {
@@ -125,5 +126,44 @@ describe('useLogWorkout — complex_set persistence', () => {
 
     expect(capturedBody).not.toBeNull();
     expect(capturedBody!.complex_set).toBe(false);
+  });
+});
+
+describe('useLogWorkout — activation funnel analytics (PROD-157)', () => {
+  beforeEach(() => {
+    server.use(
+      http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
+      http.post(MOVEMENT_LOGS_URL, () => HttpResponse.json([])),
+      http.post(WORKOUT_LOGS_URL, () => HttpResponse.json([{ id: 1 }])),
+    );
+  });
+
+  test('emits is_first_workout: null (not false) when the WORKOUT_LOGS cache is cold', async () => {
+    let analyticsBody: Record<string, unknown> | null = null;
+
+    server.use(
+      http.post(ANALYTICS_URL, async ({ request }) => {
+        analyticsBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json([]);
+      }),
+    );
+
+    // The wrapper's query client never seeds WORKOUT_LOGS, so the cache is cold:
+    // is_first_workout is unknown and must be null rather than a misleading false.
+    const { result } = renderHook(() => useLogWorkout(), {
+      wrapper: makeWrapper(false),
+    });
+
+    act(() => {
+      result.current.mutate(logWorkoutInput);
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(analyticsBody).not.toBeNull());
+
+    const properties = analyticsBody!.properties as Record<string, unknown>;
+    expect(analyticsBody!.event_name).toBe('workout_completed');
+    expect(properties.is_first_workout).toBeNull();
+    expect(properties.workout_log_id).toBe(1);
   });
 });

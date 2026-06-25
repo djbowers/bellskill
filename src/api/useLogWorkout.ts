@@ -1,9 +1,11 @@
-import { useMutation } from 'react-query';
+import { useMutation, useQueryClient } from 'react-query';
 
+import { QUERIES } from '~/constants';
 import { useSession, useWorkoutOptions } from '~/contexts';
-import { WorkoutOptions } from '~/types';
+import { WorkoutLog, WorkoutOptions } from '~/types';
 
 import { supabase } from '../supabaseClient';
+import { AnalyticsEvent, trackEvent } from './analytics';
 
 interface LogWorkoutInput {
   completedReps: number;
@@ -15,6 +17,7 @@ interface LogWorkoutInput {
 export const useLogWorkout = () => {
   const [workoutOptions] = useWorkoutOptions();
   const { user } = useSession();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
@@ -31,6 +34,40 @@ export const useLogWorkout = () => {
         userId: user.id,
         workoutOptions,
       }),
+    onSuccess: (workoutLogId) => {
+      // Activation funnel (PROD-157). is_first_workout is read from the
+      // WORKOUT_LOGS cache, warmed by StartWorkoutPage before the user reaches
+      // the active workout; the canonical value is also derivable server-side
+      // from workout_logs (see the user_activation view). On a cold cache (e.g.
+      // a deep link straight to /active) the value is unknown, so emit null
+      // rather than a misleading `false`.
+      const cachedLogs = queryClient.getQueryData<WorkoutLog[]>(
+        QUERIES.WORKOUT_LOGS,
+      );
+      const completedAt = Date.now();
+      const startedAtMs = workoutOptions.startedAt?.getTime();
+      const signupAtMs = user.created_at ? Date.parse(user.created_at) : NaN;
+
+      void trackEvent({
+        event: AnalyticsEvent.WorkoutCompleted,
+        userId: user.id,
+        properties: {
+          // Integer PK of the workout_logs row (workout_logs.id), not a UUID.
+          workout_log_id: workoutLogId,
+          is_first_workout:
+            cachedLogs === undefined ? null : cachedLogs.length === 0,
+          // null when the start time is genuinely unknown (no startedAt on the
+          // options); the DB workout_logs.started_at has its own now() fallback.
+          duration_seconds:
+            startedAtMs != null
+              ? Math.round((completedAt - startedAtMs) / 1000)
+              : null,
+          seconds_since_signup: Number.isNaN(signupAtMs)
+            ? null
+            : Math.round((completedAt - signupAtMs) / 1000),
+        },
+      });
+    },
   });
 };
 
