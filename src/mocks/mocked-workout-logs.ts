@@ -22,7 +22,32 @@ export const mockedWorkoutLogsGet = http.get(
       return HttpResponse.json([workoutLog]);
     }
 
-    return HttpResponse.json(workoutLogs);
+    // Match the real ordering used by the paginated hook (started_at desc).
+    let logs = workoutLogs;
+    if (url.searchParams.get('order')?.startsWith('started_at')) {
+      logs = [...workoutLogs].sort(
+        (a, b) =>
+          new Date(b.started_at).getTime() - new Date(a.started_at).getTime(),
+      );
+    }
+
+    // Honor Supabase's range-based pagination. supabase-js's `.range()` is sent
+    // as `offset`/`limit` query params, and reads the total count from the
+    // `Content-Range` response header when `{ count: 'exact' }` is requested.
+    const offsetParam = url.searchParams.get('offset');
+    const limitParam = url.searchParams.get('limit');
+    if (offsetParam !== null && limitParam !== null) {
+      const from = Number(offsetParam);
+      const to = from + Number(limitParam) - 1;
+      const page = logs.slice(from, from + Number(limitParam));
+      return HttpResponse.json(page, {
+        headers: {
+          'Content-Range': `${from}-${to}/${logs.length}`,
+        },
+      });
+    }
+
+    return HttpResponse.json(logs);
   },
 );
 
