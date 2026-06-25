@@ -73,7 +73,9 @@ export const CompletedWorkoutPage = () => {
     // Prefill the builder from the completed workout, then let the user review
     // and adjust before starting (routes to the Start page, not /active).
     updateWorkoutOptions(workoutLogToWorkoutOptions(workoutLog, movementLogs));
-    navigate('/');
+    // Tell the Start page to open the builder (it now defaults to the collapsed
+    // recommendations view) so the prefilled workout is shown for editing.
+    navigate('/', { state: { editWorkout: true } });
   };
 
   return (

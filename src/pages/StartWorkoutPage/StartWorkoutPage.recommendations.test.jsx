@@ -156,4 +156,60 @@ describe('StartWorkoutPage recommendations', () => {
       expect(screen.getByText('active workout page')).toBeInTheDocument();
     });
   });
+
+  // Regression: the history "Repeat" action prefills context and navigates here
+  // with `editWorkout` nav state; the builder must open directly on that
+  // workout rather than showing the collapsed recommendations.
+  describe('repeat from history (editWorkout nav state)', () => {
+    test('opens the prefilled builder directly, not the recommendations', async () => {
+      const repeated = {
+        ...DEFAULT_WORKOUT_OPTIONS,
+        movements: [
+          {
+            movementName: 'Clean and Press',
+            repScheme: [3],
+            weightOneUnit: 'kilograms',
+            weightOneValue: 20,
+            weightTwoUnit: null,
+            weightTwoValue: null,
+          },
+        ],
+        workoutDetails: 'The Giant 3.0 W1D2',
+      };
+
+      render(
+        <QueryClientProvider client={makeQueryClient()}>
+          <MemoryRouter
+            initialEntries={[{ pathname: '/', state: { editWorkout: true } }]}
+          >
+            <WorkoutOptionsContext.Provider value={[repeated, vi.fn()]}>
+              <Routes>
+                <Route path="/" element={<StartWorkoutPage />} />
+                <Route
+                  path="/active"
+                  element={<div>active workout page</div>}
+                />
+              </Routes>
+            </WorkoutOptionsContext.Provider>
+          </MemoryRouter>
+        </QueryClientProvider>,
+      );
+
+      // Builder is open and prefilled with the repeated workout...
+      expect(await screen.findByLabelText('Movement Input')).toHaveValue(
+        'Clean and Press',
+      );
+
+      // ...and the recommendation browse view is not shown.
+      expect(
+        screen.queryByRole('button', { name: /build custom workout/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Pick up where you left off'),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: 'Two-Hand Swing' }),
+      ).not.toBeInTheDocument();
+    });
+  });
 });

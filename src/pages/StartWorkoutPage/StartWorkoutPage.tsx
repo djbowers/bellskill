@@ -1,5 +1,6 @@
 import { ArrowLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import {
   AnalyticsEvent,
@@ -72,7 +73,12 @@ export const StartWorkoutPage = () => {
 
   // The page opens in "browse" mode (recommendations + a Build-custom button).
   // Selecting a recommendation or tapping Build-custom switches to the builder.
-  const [showBuilder, setShowBuilder] = useState(false);
+  // The history "Repeat" action prefills context and navigates here with
+  // `editWorkout` so the builder opens directly on the repeated workout.
+  const location = useLocation();
+  const [showBuilder, setShowBuilder] = useState<boolean>(
+    Boolean((location.state as { editWorkout?: boolean } | null)?.editWorkout),
+  );
   // Where the (eventual) start originated, carried through any edits the user
   // makes in the builder so `workout_started` stays attributed to the surface.
   const [startSource, setStartSource] = useState<WorkoutStartSource>('builder');
