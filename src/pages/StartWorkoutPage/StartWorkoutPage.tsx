@@ -1,41 +1,51 @@
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
-import { AnalyticsEvent, trackEvent, useWorkoutLogs } from '~/api';
+import {
+  AnalyticsEvent,
+  RepeatableWorkout,
+  trackEvent,
+  useWorkoutLogs,
+} from '~/api';
 import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import { CURATED_WORKOUTS_VERSION } from '~/constants';
 import {
   DEFAULT_MOVEMENT_OPTIONS,
   useSession,
   useWorkoutOptions,
 } from '~/contexts';
+import { useFeatures, useStartWorkout } from '~/hooks';
 import { getWeightsDisplayValue } from '~/pages/CompletedWorkoutPage/utils/displayValues';
 import {
+  CuratedWorkout,
   MovementOptions,
   WeightTabValue,
   WeightUnit,
   WorkoutGoalUnits,
-  WorkoutOptions,
 } from '~/types';
-import { getWeightTabValue, getWeightUnitLabel, WEIGHT_MODE_LABELS } from '~/utils';
-
-import { useFeatures } from '~/hooks';
+import {
+  WEIGHT_MODE_LABELS,
+  getWeightTabValue,
+  getWeightUnitLabel,
+} from '~/utils';
 
 import {
   AddToWorkoutSection,
   BuildNewWorkoutDivider,
   ModifyCountButtons,
-  MovementAutocomplete,
   ModifyWorkoutButtons,
+  MovementAutocomplete,
   MovementsHeader,
+  RecommendedWorkoutsSection,
   Section,
   WeightModeTabs,
   WeightUnitTabs,
 } from './components';
+import { useRecommendedWorkouts } from './hooks';
 
 const DEFAULT_INTERVAL_TIMER: number = 30; // seconds
 const DEFAULT_REST_TIMER: number = 30; // seconds
@@ -54,8 +64,9 @@ const DEFAULT_ROUNDS: number = 10; // rounds
 
 export const StartWorkoutPage = () => {
   const features = useFeatures();
-  const navigate = useNavigate();
-  const [workoutOptions, updateWorkoutOptions] = useWorkoutOptions();
+  const startWorkout = useStartWorkout();
+  const [workoutOptions] = useWorkoutOptions();
+  const { curated, recentRepeats } = useRecommendedWorkouts();
 
   // Activation funnel (PROD-157): a user with zero workout logs is "new".
   // While the logs query is still loading (workoutLogs === undefined) we don't
@@ -107,15 +118,13 @@ export const StartWorkoutPage = () => {
   const [sharedWeightOneValue, setSharedWeightOneValue] = useState<
     number | null
   >(workoutOptions.sharedWeightOneValue);
-  const [sharedWeightOneUnit, setSharedWeightOneUnit] = useState<
-    WeightUnit | null
-  >(workoutOptions.sharedWeightOneUnit);
+  const [sharedWeightOneUnit, setSharedWeightOneUnit] =
+    useState<WeightUnit | null>(workoutOptions.sharedWeightOneUnit);
   const [sharedWeightTwoValue, setSharedWeightTwoValue] = useState<
     number | null
   >(workoutOptions.sharedWeightTwoValue);
-  const [sharedWeightTwoUnit, setSharedWeightTwoUnit] = useState<
-    WeightUnit | null
-  >(workoutOptions.sharedWeightTwoUnit);
+  const [sharedWeightTwoUnit, setSharedWeightTwoUnit] =
+    useState<WeightUnit | null>(workoutOptions.sharedWeightTwoUnit);
 
   const detailsRef = useRef<HTMLInputElement>(null);
 
@@ -348,36 +357,41 @@ export const StartWorkoutPage = () => {
     );
 
   const handleClickStart = () => {
-    const workoutOptions: WorkoutOptions = {
-      complexSet,
-      intervalTimer,
-      movements,
-      restTimer,
-      sharedWeightOneUnit,
-      sharedWeightOneValue,
-      sharedWeightTwoUnit,
-      sharedWeightTwoValue,
-      startedAt: new Date(),
-      workoutDetails: workoutDetails?.trim() || null,
-      workoutGoal,
-      workoutGoalUnits,
-    };
-    updateWorkoutOptions(workoutOptions);
-
-    if (userId) {
-      void trackEvent({
-        event: AnalyticsEvent.WorkoutStarted,
-        userId,
-        properties: {
-          is_first_workout: isFirstWorkout,
-          movement_count: movements.length,
-          workout_goal_units: workoutGoalUnits,
-        },
-      });
-    }
-
-    navigate('active');
+    startWorkout(
+      {
+        complexSet,
+        intervalTimer,
+        movements,
+        restTimer,
+        sharedWeightOneUnit,
+        sharedWeightOneValue,
+        sharedWeightTwoUnit,
+        sharedWeightTwoValue,
+        workoutDetails: workoutDetails?.trim() || null,
+        workoutGoal,
+        workoutGoalUnits,
+      },
+      'builder',
+      {
+        is_first_workout: isFirstWorkout,
+        movement_count: movements.length,
+        workout_goal_units: workoutGoalUnits,
+      },
+    );
   };
+
+  const handleStartCurated = (workout: CuratedWorkout) =>
+    startWorkout(workout.workoutOptions, 'curated', {
+      template_id: workout.id,
+      curated_version: CURATED_WORKOUTS_VERSION,
+      is_first_workout: isFirstWorkout,
+    });
+
+  const handleStartRepeat = (repeat: RepeatableWorkout) =>
+    startWorkout(repeat.workoutOptions, 'history_repeat', {
+      workout_log_id: repeat.workoutLogId,
+      is_first_workout: isFirstWorkout,
+    });
 
   const sharedWeightTabValue = getWeightTabValue({
     weightOneValue: sharedWeightOneValue,
@@ -409,6 +423,14 @@ export const StartWorkoutPage = () => {
         </Button>
       }
     >
+      <RecommendedWorkoutsSection
+        curated={curated}
+        recentRepeats={recentRepeats}
+        isFirstWorkout={isFirstWorkout}
+        onStartCurated={handleStartCurated}
+        onStartRepeat={handleStartRepeat}
+      />
+
       <BuildNewWorkoutDivider />
 
       <Card>

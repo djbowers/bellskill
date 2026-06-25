@@ -23,11 +23,11 @@ import {
 } from '~/components/ui/dialog';
 import { Textarea } from '~/components/ui/textarea';
 import { useWorkoutOptions } from '~/contexts';
-import { WorkoutGoalUnits, WorkoutLog } from '~/types';
+import { WorkoutLog } from '~/types';
+import { workoutLogToWorkoutOptions } from '~/utils';
 
 import { Section } from '../StartWorkoutPage/components';
 import { RPESelector, WorkoutHistoryItem } from './components';
-import { resolveSharedWeights } from './utils';
 
 export const CompletedWorkoutPage = () => {
   const { id = '' } = useParams<{ id: string }>();
@@ -70,63 +70,9 @@ export const CompletedWorkoutPage = () => {
     updateWorkoutNotes(notesRef.current?.value || null);
 
   const handleClickRepeat = () => {
-    // Calculate actual completed duration in minutes
-    const completedDurationMs =
-      workoutLog.completedAt.getTime() - workoutLog.startedAt.getTime();
-    const completedDurationMinutes = Math.round(completedDurationMs / 60000);
-
-    // Use actual completed values for all unit types
-    const previousMinutes = completedDurationMinutes;
-    const previousRounds = workoutLog.completedRounds ?? 0;
-    const previousVolume =
-      workoutLog.workoutGoalUnits === 'kilograms' && workoutLog.completedVolume
-        ? workoutLog.completedVolume
-        : undefined;
-
-    // Determine workoutGoal and workoutGoalUnits based on original workout
-    let workoutGoal: number = workoutLog.workoutGoal;
-    let workoutGoalUnits: WorkoutGoalUnits = workoutLog.workoutGoalUnits;
-
-    const isComplexSet = workoutLog.complexSet === true;
-    const sharedWeights = resolveSharedWeights(
-      workoutLog.sharedWeightOneValue,
-      workoutLog.sharedWeightOneUnit,
-      workoutLog.sharedWeightTwoValue,
-      workoutLog.sharedWeightTwoUnit,
-      movementLogs,
-    );
-
-    updateWorkoutOptions({
-      complexSet: isComplexSet,
-      intervalTimer: workoutLog.intervalTimer,
-      movements: movementLogs.map((movementLog) => ({
-        movementName: movementLog.movementName,
-        repScheme: movementLog.repScheme,
-        weightOneUnit: isComplexSet
-          ? sharedWeights.weightOneUnit
-          : movementLog.weightOneUnit,
-        weightOneValue: isComplexSet
-          ? sharedWeights.weightOneValue
-          : movementLog.weightOneValue,
-        weightTwoUnit: isComplexSet
-          ? sharedWeights.weightTwoUnit
-          : movementLog.weightTwoUnit,
-        weightTwoValue: isComplexSet
-          ? sharedWeights.weightTwoValue
-          : movementLog.weightTwoValue,
-      })),
-      restTimer: workoutLog.restTimer,
-      sharedWeightOneUnit: isComplexSet ? sharedWeights.weightOneUnit : null,
-      sharedWeightOneValue: isComplexSet ? sharedWeights.weightOneValue : null,
-      sharedWeightTwoUnit: isComplexSet ? sharedWeights.weightTwoUnit : null,
-      sharedWeightTwoValue: isComplexSet ? sharedWeights.weightTwoValue : null,
-      workoutDetails: workoutLog.workoutDetails,
-      workoutGoal,
-      workoutGoalUnits,
-      previousVolume,
-      previousMinutes,
-      previousRounds,
-    });
+    // Prefill the builder from the completed workout, then let the user review
+    // and adjust before starting (routes to the Start page, not /active).
+    updateWorkoutOptions(workoutLogToWorkoutOptions(workoutLog, movementLogs));
     navigate('/');
   };
 

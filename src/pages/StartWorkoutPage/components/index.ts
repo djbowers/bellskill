@@ -2,6 +2,8 @@ export * from './AddToWorkoutSection';
 export * from './BuildNewWorkoutDivider';
 export * from './ModifyCountButtons';
 export * from './MovementsHeader';
+export * from './RecommendedWorkoutCard';
+export * from './RecommendedWorkoutsSection';
 export * from './WorkoutAddonToggle';
 export * from './MovementAutocomplete';
 export * from './ModifyWorkoutButtons';
