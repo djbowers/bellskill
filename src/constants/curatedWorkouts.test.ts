@@ -36,8 +36,26 @@ describe('CURATED_WORKOUTS', () => {
       expect(workout.title.length).toBeGreaterThan(0);
       expect(workout.subtitle.length).toBeGreaterThan(0);
       expect(workout.estimatedMinutes).toBeGreaterThan(0);
+
+      // Notes should be a distinct session label, not the movement name.
+      expect(workoutOptions.workoutDetails?.length ?? 0).toBeGreaterThan(0);
+      expect(workoutOptions.workoutDetails).not.toBe(
+        workoutOptions.movements[0].movementName,
+      );
     },
   );
+
+  test('uses catalog movement names', () => {
+    const byId = Object.fromEntries(CURATED_WORKOUTS.map((w) => [w.id, w]));
+    const nameOf = (id: string) =>
+      byId[id].workoutOptions.movements[0].movementName;
+
+    expect(nameOf('beginner-two-hand-swing')).toBe('Kettlebell Swing');
+    expect(nameOf('beginner-overhead-press')).toBe(
+      'Single Arm Kettlebell Overhead Press',
+    );
+    expect(nameOf('beginner-goblet-squat')).toBe('Kettlebell Goblet Squat');
+  });
 
   test('encodes weight modes the same way the builder would', () => {
     const byId = Object.fromEntries(CURATED_WORKOUTS.map((w) => [w.id, w]));
@@ -82,7 +100,7 @@ describe('CURATED_WORKOUTS', () => {
       sharedWeightOneValue: null,
       sharedWeightTwoUnit: null,
       sharedWeightTwoValue: null,
-      workoutDetails: 'Two-Hand Swing',
+      workoutDetails: 'Beginner: Hinge Foundation',
       workoutGoal: 5,
       workoutGoalUnits: 'rounds',
     });

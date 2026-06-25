@@ -9,7 +9,7 @@ import { CuratedWorkout } from '~/types';
  * Bump CURATED_WORKOUTS_VERSION whenever the content changes so analytics can
  * attribute starts to a known revision.
  */
-export const CURATED_WORKOUTS_VERSION = 1;
+export const CURATED_WORKOUTS_VERSION = 2;
 
 export const CURATED_WORKOUTS: CuratedWorkout[] = [
   {
@@ -35,7 +35,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
       sharedWeightOneValue: null,
       sharedWeightTwoUnit: null,
       sharedWeightTwoValue: null,
-      workoutDetails: 'Two-Hand Swing',
+      workoutDetails: 'Beginner: Hinge Foundation',
       workoutGoal: 5,
       workoutGoalUnits: 'rounds',
     },
@@ -51,7 +51,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
       restTimer: 60,
       movements: [
         {
-          movementName: 'Overhead Press',
+          movementName: 'Single Arm Kettlebell Overhead Press',
           repScheme: [5],
           weightOneUnit: 'kilograms',
           weightOneValue: 12,
@@ -64,7 +64,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
       sharedWeightOneValue: null,
       sharedWeightTwoUnit: null,
       sharedWeightTwoValue: null,
-      workoutDetails: 'Overhead Press',
+      workoutDetails: 'Beginner: Overhead Strength',
       workoutGoal: 5,
       workoutGoalUnits: 'rounds',
     },
@@ -80,7 +80,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
       restTimer: 60,
       movements: [
         {
-          movementName: 'Goblet Squat',
+          movementName: 'Kettlebell Goblet Squat',
           repScheme: [8],
           weightOneUnit: 'kilograms',
           weightOneValue: 16,
@@ -92,7 +92,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
       sharedWeightOneValue: null,
       sharedWeightTwoUnit: null,
       sharedWeightTwoValue: null,
-      workoutDetails: 'Goblet Squat',
+      workoutDetails: 'Beginner: Squat Foundation',
       workoutGoal: 5,
       workoutGoalUnits: 'rounds',
     },

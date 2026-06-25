@@ -48,7 +48,7 @@ describe('StartWorkoutPage recommendations', () => {
   describe('new user (no history)', () => {
     beforeEach(returnZeroWorkoutLogs);
 
-    test('shows the curated first workouts and no recent repeats', async () => {
+    test('shows the curated workouts, no recent repeats, and no builder yet', async () => {
       renderPage();
 
       expect(
@@ -60,20 +60,52 @@ describe('StartWorkoutPage recommendations', () => {
       expect(
         screen.getByRole('button', { name: 'Goblet Squat' }),
       ).toBeInTheDocument();
-
       expect(
         screen.getByRole('heading', { name: 'Your recommended first workout' }),
       ).toBeInTheDocument();
       expect(
         screen.queryByText('Pick up where you left off'),
       ).not.toBeInTheDocument();
+
+      // Builder is collapsed until a card or "Build custom workout" is tapped.
+      expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /start workout/i }),
+      ).not.toBeInTheDocument();
     });
 
-    test('one-tap on a curated workout prefills context and enters the active workout', async () => {
+    test('"Build custom workout" reveals an empty builder and hides recommendations', async () => {
+      renderPage();
+
+      await userEvent.click(
+        await screen.findByRole('button', {
+          name: /build custom workout/i,
+        }),
+      );
+
+      expect(screen.getByLabelText('Movement Input')).toHaveValue('');
+      expect(
+        screen.queryByRole('button', { name: 'Two-Hand Swing' }),
+      ).not.toBeInTheDocument();
+    });
+
+    test('tapping a curated workout fills the builder for editing without starting', async () => {
       const { updateWorkoutOptions } = renderPage();
 
       await userEvent.click(
         await screen.findByRole('button', { name: 'Two-Hand Swing' }),
+      );
+
+      // Lands in the builder, prefilled with the catalog movement — not /active.
+      expect(screen.getByLabelText('Movement Input')).toHaveValue(
+        'Kettlebell Swing',
+      );
+      expect(updateWorkoutOptions).not.toHaveBeenCalled();
+      expect(screen.queryByText('active workout page')).not.toBeInTheDocument();
+
+      // The user can then start the (optionally edited) workout.
+      await userEvent.click(
+        screen.getByRole('button', { name: /start workout/i }),
       );
 
       expect(updateWorkoutOptions).toHaveBeenCalledTimes(1);
@@ -89,7 +121,6 @@ describe('StartWorkoutPage recommendations', () => {
     test('shows recent repeats alongside the curated workouts', async () => {
       renderPage();
 
-      // Both surfaces are shown for returning users ("always show both").
       expect(
         await screen.findByText('Pick up where you left off'),
       ).toBeInTheDocument();
@@ -101,12 +132,19 @@ describe('StartWorkoutPage recommendations', () => {
       ).toBeInTheDocument();
     });
 
-    test('one-tap on a recent workout prefills it and enters the active workout', async () => {
+    test('tapping a recent workout fills the builder, then starts on confirm', async () => {
       const { updateWorkoutOptions } = renderPage();
 
       // The most recent logged session in the mock data is a "Pull-Ups" workout.
       await userEvent.click(
         await screen.findByRole('button', { name: 'Pull-Ups' }),
+      );
+
+      expect(screen.getByLabelText('Movement Input')).toHaveValue('Pull-Ups');
+      expect(updateWorkoutOptions).not.toHaveBeenCalled();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: /start workout/i }),
       );
 
       expect(updateWorkoutOptions).toHaveBeenCalledTimes(1);

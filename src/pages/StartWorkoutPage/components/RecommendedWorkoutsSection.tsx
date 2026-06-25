@@ -8,8 +8,9 @@ export interface RecommendedWorkoutsSectionProps {
   recentRepeats: RepeatableWorkout[];
   /** null while the logs query is still resolving. */
   isFirstWorkout: boolean | null;
-  onStartCurated: (curated: CuratedWorkout) => void;
-  onStartRepeat: (repeat: RepeatableWorkout) => void;
+  /** Opens the workout in the builder for review/edits before starting. */
+  onSelectCurated: (curated: CuratedWorkout) => void;
+  onSelectRepeat: (repeat: RepeatableWorkout) => void;
 }
 
 const goalLabel = (goal: number, units: WorkoutGoalUnits) => {
@@ -34,8 +35,8 @@ export const RecommendedWorkoutsSection = ({
   curated,
   recentRepeats,
   isFirstWorkout,
-  onStartCurated,
-  onStartRepeat,
+  onSelectCurated,
+  onSelectRepeat,
 }: RecommendedWorkoutsSectionProps) => {
   const curatedHeading =
     isFirstWorkout === true
@@ -61,7 +62,7 @@ export const RecommendedWorkoutsSection = ({
                 title={title}
                 summary={summary}
                 meta={goalLabel(workoutGoal, workoutGoalUnits)}
-                onStart={() => onStartRepeat(repeat)}
+                onSelect={() => onSelectRepeat(repeat)}
               />
             );
           })}
@@ -80,7 +81,7 @@ export const RecommendedWorkoutsSection = ({
               subtitle={workout.subtitle}
               summary={movementsSummary(movements)}
               meta={`${goalLabel(workoutGoal, workoutGoalUnits)} · ~${workout.estimatedMinutes} min`}
-              onStart={() => onStartCurated(workout)}
+              onSelect={() => onSelectCurated(workout)}
             />
           );
         })}

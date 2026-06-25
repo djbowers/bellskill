@@ -10,7 +10,8 @@ export interface RecommendedWorkoutCardProps {
   summary: string;
   /** Short metadata, e.g. "5 rounds · ~10 min". */
   meta?: string;
-  onStart: () => void;
+  /** Opens the workout in the builder for review/edits before starting. */
+  onSelect: () => void;
 }
 
 export const RecommendedWorkoutCard = ({
@@ -18,14 +19,14 @@ export const RecommendedWorkoutCard = ({
   subtitle,
   summary,
   meta,
-  onStart,
+  onSelect,
 }: RecommendedWorkoutCardProps) => {
   return (
     <Card>
       <button
         type="button"
         aria-label={title}
-        onClick={onStart}
+        onClick={onSelect}
         className="flex w-full items-center justify-between gap-2 p-2 text-left"
       >
         <div className="flex flex-col gap-0.5">
