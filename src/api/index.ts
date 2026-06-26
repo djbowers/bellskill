@@ -10,6 +10,7 @@ export * from './useMovementLogs';
 export * from './useMovements';
 export * from './usePatternDebt';
 export * from './useRecentRepeatableWorkouts';
+export * from './useRecommendSession';
 export * from './useSelectRPE';
 export * from './useSetSubscription';
 export * from './useUpdateWorkoutNotes';

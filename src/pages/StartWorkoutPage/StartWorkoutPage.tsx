@@ -26,6 +26,7 @@ import { getWeightsDisplayValue } from '~/pages/CompletedWorkoutPage/utils/displ
 import {
   CuratedWorkout,
   MovementOptions,
+  Recommendation,
   WeightTabValue,
   WeightUnit,
   WorkoutGoalUnits,
@@ -44,11 +45,13 @@ import {
   MovementAutocomplete,
   MovementsHeader,
   RecommendedWorkoutsSection,
+  RecommendSessionSection,
   Section,
   WeightModeTabs,
   WeightUnitTabs,
 } from './components';
 import { useRecommendedWorkouts } from './hooks';
+import { recommendationToWorkoutOptions } from './utils/recommendationToMovements';
 
 const DEFAULT_INTERVAL_TIMER: number = 30; // seconds
 const DEFAULT_REST_TIMER: number = 30; // seconds
@@ -407,6 +410,18 @@ export const StartWorkoutPage = () => {
     setShowBuilder(true);
   };
 
+  // Accept an AI recommendation: load it into the builder for review/edits, then
+  // start via the existing Start button (attributed to the recommender source).
+  const handleAcceptRecommendation = (
+    recommendation: Recommendation,
+    recommendationId: string,
+  ) => {
+    loadIntoBuilder(recommendationToWorkoutOptions(recommendation));
+    setStartSource('recommender');
+    setStartSourceProps({ recommendation_id: recommendationId });
+    setShowBuilder(true);
+  };
+
   const handleClickBuildCustom = () => {
     loadIntoBuilder(DEFAULT_WORKOUT_OPTIONS);
     setStartSource('builder');
@@ -482,6 +497,13 @@ export const StartWorkoutPage = () => {
             onSelectCurated={handleSelectCurated}
             onSelectRepeat={handleSelectRepeat}
           />
+
+          {features.recommender && (
+            <RecommendSessionSection
+              userId={userId}
+              onAccept={handleAcceptRecommendation}
+            />
+          )}
 
           <Button
             variant="secondary"
