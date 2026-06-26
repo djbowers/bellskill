@@ -276,6 +276,12 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/create-portal-session/deno.json"
 
+# AI Next Session Recommender (PROD-87). Premium-gated; calls the Anthropic API.
+[functions.recommend-session]
+enabled = true
+verify_jwt = true
+import_map = "./functions/recommend-session/deno.json"
+
 [analytics]
 enabled = true
 port = 54327
