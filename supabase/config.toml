@@ -282,6 +282,13 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/recommend-session/deno.json"
 
+# Owner-only subscription toggle (QA + friends/family grants). Writes the
+# write-locked subscription columns via the service role.
+[functions.set-subscription]
+enabled = true
+verify_jwt = true
+import_map = "./functions/set-subscription/deno.json"
+
 [analytics]
 enabled = true
 port = 54327
