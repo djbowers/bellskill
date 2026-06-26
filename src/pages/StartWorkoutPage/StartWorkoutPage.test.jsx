@@ -4,7 +4,14 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter } from 'react-router-dom';
 
-import { DEFAULT_MOVEMENT_OPTIONS, DEFAULT_WORKOUT_OPTIONS, WorkoutOptionsContext } from '~/contexts';
+import {
+  DEFAULT_MOVEMENT_OPTIONS,
+  DEFAULT_WORKOUT_OPTIONS,
+  WorkoutOptionsContext,
+} from '~/contexts';
+
+import { StartWorkoutPage } from './StartWorkoutPage';
+import * as stories from './StartWorkoutPage.stories';
 
 function makeQueryClient() {
   return new QueryClient({
@@ -12,22 +19,27 @@ function makeQueryClient() {
   });
 }
 
-import * as stories from './StartWorkoutPage.stories';
-import { StartWorkoutPage } from './StartWorkoutPage';
-
 const { Default, WithoutPreviousVolume } = composeStories(stories);
 
 const startedAt = new Date();
 vi.setSystemTime(startedAt);
 
+// The builder is now collapsed behind a "Build custom workout" button; reveal
+// it before exercising the builder controls.
+const enterBuildMode = () =>
+  userEvent.click(
+    screen.getByRole('button', { name: /build custom workout/i }),
+  );
+
 describe('start workout page', () => {
   let startWorkout;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     startWorkout = vi.fn();
     Default.parameters.updateWorkoutOptions = startWorkout;
 
     render(<Default />);
+    await enterBuildMode();
   });
 
   test('start button is disabled by default', () => {
@@ -35,12 +47,16 @@ describe('start workout page', () => {
     expect(startButton).toBeDisabled();
   });
 
-  test('renders the "Build new workout" divider label', () => {
-    expect(screen.getByText(/build new workout/i)).toBeInTheDocument();
+  test('shows a back link to recommendations in build mode', () => {
+    expect(
+      screen.getByRole('button', { name: /recommendations/i }),
+    ).toBeInTheDocument();
   });
 
   test('renders the Movements header with count', () => {
-    expect(screen.getByRole('heading', { name: 'Movements' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Movements' }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText('1 movements')).toBeInTheDocument();
   });
 
@@ -102,7 +118,9 @@ describe('start workout page', () => {
   test('can remove movements', async () => {
     await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
 
-    const removeButtons = screen.getAllByRole('button', { name: 'Remove movement' });
+    const removeButtons = screen.getAllByRole('button', {
+      name: 'Remove movement',
+    });
     await userEvent.click(removeButtons[0]);
 
     const movementInputs = screen.getAllByLabelText('Movement Input');
@@ -370,7 +388,9 @@ describe('start workout page', () => {
       await userEvent.click(volumeTab);
 
       // Find and click the increment button for the goal
-      const incrementButton = screen.getByRole('button', { name: '+ kilograms' });
+      const incrementButton = screen.getByRole('button', {
+        name: '+ kilograms',
+      });
       await userEvent.click(incrementButton);
 
       const startButton = screen.getByRole('button', { name: /Start/i });
@@ -389,7 +409,9 @@ describe('start workout page', () => {
       await userEvent.click(volumeTab);
 
       // Find and click the decrement button for the goal
-      const decrementButton = screen.getByRole('button', { name: '- kilograms' });
+      const decrementButton = screen.getByRole('button', {
+        name: '- kilograms',
+      });
       await userEvent.click(decrementButton);
 
       const startButton = screen.getByRole('button', { name: /Start/i });
@@ -408,7 +430,9 @@ describe('start workout page', () => {
       await userEvent.click(volumeTab);
 
       // Decrement many times to try to go below 1
-      const decrementButton = screen.getByRole('button', { name: '- kilograms' });
+      const decrementButton = screen.getByRole('button', {
+        name: '- kilograms',
+      });
       for (let i = 0; i < 150; i++) {
         await userEvent.click(decrementButton);
       }
@@ -429,12 +453,13 @@ describe('start workout page', () => {
 describe('start workout page - without previous volume', () => {
   let startWorkoutWithoutPrevious;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     startWorkoutWithoutPrevious = vi.fn();
     WithoutPreviousVolume.parameters.updateWorkoutOptions =
       startWorkoutWithoutPrevious;
 
     render(<WithoutPreviousVolume />);
+    await enterBuildMode();
   });
 
   test('initializes volume goal to default 1000kg when no previous volume exists', async () => {
@@ -461,25 +486,32 @@ describe('start workout page - without previous volume', () => {
 describe('Notes', () => {
   let startWorkout;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     startWorkout = vi.fn();
     Default.parameters.updateWorkoutOptions = startWorkout;
     render(<Default />);
+    await enterBuildMode();
   });
 
   test('clicking Notes toggle on shows the notes section', async () => {
     await userEvent.click(screen.getByRole('button', { name: 'Notes, off' }));
 
     expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Notes, on' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Notes, on' }),
+    ).toBeInTheDocument();
   });
 
   test('clicking Notes toggle off hides the notes section when input is focused and empty', async () => {
     await userEvent.click(screen.getByRole('button', { name: 'Notes, off' }));
     await userEvent.click(screen.getByRole('button', { name: 'Notes, on' }));
 
-    expect(screen.queryByRole('heading', { name: 'Notes' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Notes, off' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Notes' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Notes, off' }),
+    ).toBeInTheDocument();
   });
 
   test('clicking Notes toggle off hides the notes section when input has text', async () => {
@@ -487,8 +519,12 @@ describe('Notes', () => {
     await userEvent.keyboard('Heavy day');
     await userEvent.click(screen.getByRole('button', { name: 'Notes, on' }));
 
-    expect(screen.queryByRole('heading', { name: 'Notes' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Notes, off' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Notes' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Notes, off' }),
+    ).toBeInTheDocument();
   });
 
   test('clicking away from empty notes input keeps the section visible', async () => {
@@ -496,7 +532,9 @@ describe('Notes', () => {
     await userEvent.click(screen.getByLabelText('Movement Input'));
 
     expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Notes, on' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Notes, on' }),
+    ).toBeInTheDocument();
   });
 
   test('starting a workout with Notes on but empty saves workoutDetails as null', async () => {
@@ -516,27 +554,38 @@ describe('Notes', () => {
 describe('Complex Mode', () => {
   let startWorkout;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     startWorkout = vi.fn();
     Default.parameters.updateWorkoutOptions = startWorkout;
     render(<Default />);
+    await enterBuildMode();
   });
 
   test('Add to workout row includes Complex toggle off by default', () => {
-    expect(screen.getByRole('button', { name: 'Complex, off' })).toBeInTheDocument();
     expect(
-      screen.queryByText('Complete all movements before setting the weight down.'),
+      screen.getByRole('button', { name: 'Complex, off' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        'Complete all movements before setting the weight down.',
+      ),
     ).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Shared Weight' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Shared Weight' }),
+    ).not.toBeInTheDocument();
   });
 
   test('selecting Complex reveals shared weight section with all four weight-type options', async () => {
     await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
 
     expect(
-      screen.getByText('Complete all movements before setting the weight down.'),
+      screen.getByText(
+        'Complete all movements before setting the weight down.',
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Shared Weight' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Bodyweight' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Two-Hand' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Single' })).toBeInTheDocument();
@@ -550,16 +599,22 @@ describe('Complex Mode', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
 
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
-    expect(screen.getAllByRole('heading', { name: 'Rep Scheme' })).toHaveLength(2);
+    expect(screen.getAllByRole('heading', { name: 'Rep Scheme' })).toHaveLength(
+      2,
+    );
   });
 
   test('toggling Complex off hides shared weight section and restores per-movement weight sections', async () => {
     await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
-    expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Shared Weight' }),
+    ).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Complex, on' }));
 
-    expect(screen.queryByRole('heading', { name: 'Shared Weight' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Shared Weight' }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Load' })).toBeInTheDocument();
   });
 
@@ -587,7 +642,9 @@ describe('Complex Mode', () => {
     await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
 
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
-    expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Shared Weight' }),
+    ).toBeInTheDocument();
   });
 
   test('complex mode toggle is preserved when removing movements', async () => {
@@ -595,11 +652,15 @@ describe('Complex Mode', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
 
-    const removeButtons = screen.getAllByRole('button', { name: 'Remove movement' });
+    const removeButtons = screen.getAllByRole('button', {
+      name: 'Remove movement',
+    });
     await userEvent.click(removeButtons[0]);
 
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
-    expect(screen.getByRole('heading', { name: 'Shared Weight' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Shared Weight' }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -614,13 +675,16 @@ describe('integration tests for previous volume retrieval', () => {
     render(
       <QueryClientProvider client={makeQueryClient()}>
         <MemoryRouter>
-          <WorkoutOptionsContext.Provider value={[customWorkoutOptions, startWorkout]}>
+          <WorkoutOptionsContext.Provider
+            value={[customWorkoutOptions, startWorkout]}
+          >
             <StartWorkoutPage />
           </WorkoutOptionsContext.Provider>
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
+    await enterBuildMode();
     await userEvent.type(
       screen.getByLabelText('Movement Input'),
       'Test Movement',
@@ -651,13 +715,16 @@ describe('integration tests for previous volume retrieval', () => {
     render(
       <QueryClientProvider client={makeQueryClient()}>
         <MemoryRouter>
-          <WorkoutOptionsContext.Provider value={[workoutOptionsAfterCompletion, startWorkout]}>
+          <WorkoutOptionsContext.Provider
+            value={[workoutOptionsAfterCompletion, startWorkout]}
+          >
             <StartWorkoutPage />
           </WorkoutOptionsContext.Provider>
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
+    await enterBuildMode();
     await userEvent.type(
       screen.getByLabelText('Movement Input'),
       'Clean and Press',
@@ -691,13 +758,16 @@ describe('integration tests for previous volume retrieval', () => {
     render(
       <QueryClientProvider client={makeQueryClient()}>
         <MemoryRouter>
-          <WorkoutOptionsContext.Provider value={[workoutOptionsWithAllPrevious, startWorkout]}>
+          <WorkoutOptionsContext.Provider
+            value={[workoutOptionsWithAllPrevious, startWorkout]}
+          >
             <StartWorkoutPage />
           </WorkoutOptionsContext.Provider>
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
+    await enterBuildMode();
     await userEvent.type(
       screen.getByLabelText('Movement Input'),
       'Test Movement',

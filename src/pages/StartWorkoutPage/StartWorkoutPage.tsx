@@ -1,41 +1,54 @@
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
-import { AnalyticsEvent, trackEvent, useWorkoutLogs } from '~/api';
+import {
+  AnalyticsEvent,
+  RepeatableWorkout,
+  trackEvent,
+  useWorkoutLogs,
+} from '~/api';
 import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import { CURATED_WORKOUTS_VERSION } from '~/constants';
 import {
   DEFAULT_MOVEMENT_OPTIONS,
+  DEFAULT_WORKOUT_OPTIONS,
   useSession,
   useWorkoutOptions,
 } from '~/contexts';
+import { useFeatures, useStartWorkout } from '~/hooks';
+import type { WorkoutStartSource } from '~/hooks';
 import { getWeightsDisplayValue } from '~/pages/CompletedWorkoutPage/utils/displayValues';
 import {
+  CuratedWorkout,
   MovementOptions,
   WeightTabValue,
   WeightUnit,
   WorkoutGoalUnits,
   WorkoutOptions,
 } from '~/types';
-import { getWeightTabValue, getWeightUnitLabel, WEIGHT_MODE_LABELS } from '~/utils';
-
-import { useFeatures } from '~/hooks';
+import {
+  WEIGHT_MODE_LABELS,
+  getWeightTabValue,
+  getWeightUnitLabel,
+} from '~/utils';
 
 import {
   AddToWorkoutSection,
-  BuildNewWorkoutDivider,
   ModifyCountButtons,
-  MovementAutocomplete,
   ModifyWorkoutButtons,
+  MovementAutocomplete,
   MovementsHeader,
+  RecommendedWorkoutsSection,
   Section,
   WeightModeTabs,
   WeightUnitTabs,
 } from './components';
+import { useRecommendedWorkouts } from './hooks';
 
 const DEFAULT_INTERVAL_TIMER: number = 30; // seconds
 const DEFAULT_REST_TIMER: number = 30; // seconds
@@ -54,8 +67,24 @@ const DEFAULT_ROUNDS: number = 10; // rounds
 
 export const StartWorkoutPage = () => {
   const features = useFeatures();
-  const navigate = useNavigate();
-  const [workoutOptions, updateWorkoutOptions] = useWorkoutOptions();
+  const startWorkout = useStartWorkout();
+  const [workoutOptions] = useWorkoutOptions();
+  const { curated, recentRepeats } = useRecommendedWorkouts();
+
+  // The page opens in "browse" mode (recommendations + a Build-custom button).
+  // Selecting a recommendation or tapping Build-custom switches to the builder.
+  // The history "Repeat" action prefills context and navigates here with
+  // `editWorkout` so the builder opens directly on the repeated workout.
+  const location = useLocation();
+  const [showBuilder, setShowBuilder] = useState<boolean>(
+    Boolean((location.state as { editWorkout?: boolean } | null)?.editWorkout),
+  );
+  // Where the (eventual) start originated, carried through any edits the user
+  // makes in the builder so `workout_started` stays attributed to the surface.
+  const [startSource, setStartSource] = useState<WorkoutStartSource>('builder');
+  const [startSourceProps, setStartSourceProps] = useState<
+    Record<string, string | number | boolean | null>
+  >({});
 
   // Activation funnel (PROD-157): a user with zero workout logs is "new".
   // While the logs query is still loading (workoutLogs === undefined) we don't
@@ -107,15 +136,13 @@ export const StartWorkoutPage = () => {
   const [sharedWeightOneValue, setSharedWeightOneValue] = useState<
     number | null
   >(workoutOptions.sharedWeightOneValue);
-  const [sharedWeightOneUnit, setSharedWeightOneUnit] = useState<
-    WeightUnit | null
-  >(workoutOptions.sharedWeightOneUnit);
+  const [sharedWeightOneUnit, setSharedWeightOneUnit] =
+    useState<WeightUnit | null>(workoutOptions.sharedWeightOneUnit);
   const [sharedWeightTwoValue, setSharedWeightTwoValue] = useState<
     number | null
   >(workoutOptions.sharedWeightTwoValue);
-  const [sharedWeightTwoUnit, setSharedWeightTwoUnit] = useState<
-    WeightUnit | null
-  >(workoutOptions.sharedWeightTwoUnit);
+  const [sharedWeightTwoUnit, setSharedWeightTwoUnit] =
+    useState<WeightUnit | null>(workoutOptions.sharedWeightTwoUnit);
 
   const detailsRef = useRef<HTMLInputElement>(null);
 
@@ -347,36 +374,71 @@ export const StartWorkoutPage = () => {
       ),
     );
 
+  // Fan a set of workout options out to the builder's local state so the user
+  // can review/edit before starting.
+  const loadIntoBuilder = (options: Omit<WorkoutOptions, 'startedAt'>) => {
+    setMovements(options.movements);
+    setWorkoutGoal(options.workoutGoal);
+    setWorkoutGoalUnits(options.workoutGoalUnits);
+    setWorkoutDetails(options.workoutDetails);
+    setIntervalTimer(options.intervalTimer);
+    setRestTimer(options.restTimer);
+    setComplexSet(options.complexSet);
+    setSharedWeightOneValue(options.sharedWeightOneValue);
+    setSharedWeightOneUnit(options.sharedWeightOneUnit);
+    setSharedWeightTwoValue(options.sharedWeightTwoValue);
+    setSharedWeightTwoUnit(options.sharedWeightTwoUnit);
+  };
+
+  const handleSelectCurated = (workout: CuratedWorkout) => {
+    loadIntoBuilder(workout.workoutOptions);
+    setStartSource('curated');
+    setStartSourceProps({
+      template_id: workout.id,
+      curated_version: CURATED_WORKOUTS_VERSION,
+    });
+    setShowBuilder(true);
+  };
+
+  const handleSelectRepeat = (repeat: RepeatableWorkout) => {
+    loadIntoBuilder(repeat.workoutOptions);
+    setStartSource('history_repeat');
+    setStartSourceProps({ workout_log_id: repeat.workoutLogId });
+    setShowBuilder(true);
+  };
+
+  const handleClickBuildCustom = () => {
+    loadIntoBuilder(DEFAULT_WORKOUT_OPTIONS);
+    setStartSource('builder');
+    setStartSourceProps({});
+    setShowBuilder(true);
+  };
+
+  const handleBackToRecommendations = () => setShowBuilder(false);
+
   const handleClickStart = () => {
-    const workoutOptions: WorkoutOptions = {
-      complexSet,
-      intervalTimer,
-      movements,
-      restTimer,
-      sharedWeightOneUnit,
-      sharedWeightOneValue,
-      sharedWeightTwoUnit,
-      sharedWeightTwoValue,
-      startedAt: new Date(),
-      workoutDetails: workoutDetails?.trim() || null,
-      workoutGoal,
-      workoutGoalUnits,
-    };
-    updateWorkoutOptions(workoutOptions);
-
-    if (userId) {
-      void trackEvent({
-        event: AnalyticsEvent.WorkoutStarted,
-        userId,
-        properties: {
-          is_first_workout: isFirstWorkout,
-          movement_count: movements.length,
-          workout_goal_units: workoutGoalUnits,
-        },
-      });
-    }
-
-    navigate('active');
+    startWorkout(
+      {
+        complexSet,
+        intervalTimer,
+        movements,
+        restTimer,
+        sharedWeightOneUnit,
+        sharedWeightOneValue,
+        sharedWeightTwoUnit,
+        sharedWeightTwoValue,
+        workoutDetails: workoutDetails?.trim() || null,
+        workoutGoal,
+        workoutGoalUnits,
+      },
+      startSource,
+      {
+        ...startSourceProps,
+        is_first_workout: isFirstWorkout,
+        movement_count: movements.length,
+        workout_goal_units: workoutGoalUnits,
+      },
+    );
   };
 
   const sharedWeightTabValue = getWeightTabValue({
@@ -399,315 +461,353 @@ export const StartWorkoutPage = () => {
   return (
     <Page
       actions={
-        <Button
-          className="w-full"
-          size="lg"
-          onClick={handleClickStart}
-          disabled={startDisabled}
-        >
-          Start workout
-        </Button>
+        showBuilder ? (
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={handleClickStart}
+            disabled={startDisabled}
+          >
+            Start workout
+          </Button>
+        ) : undefined
       }
     >
-      <BuildNewWorkoutDivider />
-
-      <Card>
-        <Section
-          title="Goal"
-          actions={
-            <Tabs
-              value={workoutGoalUnits}
-              onValueChange={handleChangeWorkoutGoalUnits}
-            >
-              <TabsList>
-                <TabsTrigger size="sm" value="minutes">
-                  Time
-                </TabsTrigger>
-                <TabsTrigger size="sm" value="rounds">
-                  Rounds
-                </TabsTrigger>
-                <TabsTrigger size="sm" value="kilograms">
-                  Volume
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          }
-        >
-          <ModifyCountButtons
-            onClickMinus={handleDecrementGoalValue}
-            onClickPlus={handleIncrementGoalValue}
-            onChange={setWorkoutGoal}
-            unit={workoutGoalUnits}
-            value={workoutGoal}
+      {!showBuilder && (
+        <>
+          <RecommendedWorkoutsSection
+            curated={curated}
+            recentRepeats={recentRepeats}
+            isFirstWorkout={isFirstWorkout}
+            onSelectCurated={handleSelectCurated}
+            onSelectRepeat={handleSelectRepeat}
           />
-        </Section>
-      </Card>
 
-      <AddToWorkoutSection
-        complexSet={complexSet}
-        hasNotes={workoutDetails !== null}
-        hasInterval={intervalTimer > 0}
-        hasRest={restTimer > 0}
-        showComplex={features.complexMode}
-        onToggleComplex={handleToggleComplex}
-        onToggleInterval={handleToggleInterval}
-        onToggleNotes={handleToggleNotes}
-        onToggleRest={handleToggleRest}
-      />
-
-      {features.complexMode && complexSet && (
-        <Card>
-          <Section title="Shared Weight">
-            <p className="text-xs text-muted-foreground">
-              Complete all movements before setting the weight down.
-            </p>
-            <WeightModeTabs
-              value={sharedWeightTabValue}
-              onValueChange={handleChangeSharedWeightTab}
-            />
-            {sharedWeightOneValue !== null && (
-              <ModifyCountButtons
-                onClickMinus={() =>
-                  handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
-                }
-                onClickPlus={() =>
-                  handleChangeSharedWeightOneValue(sharedWeightOneValue + 1)
-                }
-                unit={getWeightUnitLabel(sharedWeightOneUnit)}
-                unitTabs={
-                  <WeightUnitTabs
-                    value={sharedWeightOneUnit}
-                    onChange={handleChangeSharedWeightOneUnit}
-                  />
-                }
-                value={sharedWeightOneValue}
-                onChange={(value) => handleChangeSharedWeightOneValue(value!)}
-              />
-            )}
-            {sharedWeightTwoValue !== null && sharedWeightTwoValue > 0 && (
-              <ModifyCountButtons
-                onClickMinus={() =>
-                  handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
-                }
-                onClickPlus={() =>
-                  handleChangeSharedWeightTwoValue(sharedWeightTwoValue + 1)
-                }
-                unit={getWeightUnitLabel(sharedWeightTwoUnit)}
-                unitTabs={
-                  <WeightUnitTabs
-                    value={sharedWeightTwoUnit}
-                    onChange={handleChangeSharedWeightTwoUnit}
-                  />
-                }
-                value={sharedWeightTwoValue}
-                onChange={(value) => handleChangeSharedWeightTwoValue(value)}
-              />
-            )}
-          </Section>
-        </Card>
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={handleClickBuildCustom}
+          >
+            Build custom workout
+          </Button>
+        </>
       )}
 
-      {workoutDetails !== null && (
-        <Card>
-          <Section title="Notes">
-            <Input
-              autoFocus
-              className="w-full"
-              defaultValue={workoutDetails}
-              onBlur={handleBlurDetails}
-              ref={detailsRef}
-            />
-          </Section>
-        </Card>
-      )}
+      {showBuilder && (
+        <>
+          <button
+            type="button"
+            onClick={handleBackToRecommendations}
+            className="flex items-center gap-0.5 self-start text-xs font-medium text-muted-foreground"
+          >
+            <ArrowLeftIcon className="h-2 w-2" aria-hidden="true" />
+            Recommendations
+          </button>
 
-      {intervalTimer > 0 && (
-        <Card>
-          <Section title="Interval Timer">
-            <ModifyCountButtons
-              onClickMinus={handleDecrementInterval}
-              onClickPlus={handleIncrementInterval}
-              unit="sec"
-              value={intervalTimer}
-              onChange={setIntervalTimer}
-            />
-          </Section>
-        </Card>
-      )}
-
-      {restTimer > 0 && (
-        <Card>
-          <Section title="Rest Timer">
-            <ModifyCountButtons
-              onClickMinus={handleDecrementRest}
-              onClickPlus={handleIncrementRest}
-              unit="sec"
-              value={restTimer}
-              onChange={setRestTimer}
-            />
-          </Section>
-        </Card>
-      )}
-
-      <MovementsHeader count={movements.length} />
-
-      {movements.map((movement, index) => {
-        const weightTabValue = getWeightTabValue(movement);
-        const activeWeightMode: WeightTabValue = complexSet
-          ? sharedWeightTabValue
-          : weightTabValue;
-        const weightSummary =
-          movement.movementName.length > 0
-            ? getWeightsDisplayValue(
-                movement.weightOneValue,
-                movement.weightOneUnit,
-                movement.weightTwoValue,
-                movement.weightTwoUnit,
-              )
-            : null;
-
-        return (
-          <Card key={index}>
+          <Card>
             <Section
-              title={`Movement #${index + 1}`}
+              title="Goal"
               actions={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Remove movement"
-                  onClick={() => handleClickRemoveMovement(index)}
+                <Tabs
+                  value={workoutGoalUnits}
+                  onValueChange={handleChangeWorkoutGoalUnits}
                 >
-                  <XMarkIcon className="h-2.5 w-2.5" />
-                </Button>
+                  <TabsList>
+                    <TabsTrigger size="sm" value="minutes">
+                      Time
+                    </TabsTrigger>
+                    <TabsTrigger size="sm" value="rounds">
+                      Rounds
+                    </TabsTrigger>
+                    <TabsTrigger size="sm" value="kilograms">
+                      Volume
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               }
             >
-              <MovementAutocomplete
-                value={movement.movementName}
-                onChange={(name) => handleChangeMovementName(index, name)}
-                weightMode={activeWeightMode}
-                onWeightModeChange={(mode) =>
-                  complexSet
-                    ? handleChangeSharedWeightTab(mode)
-                    : handleChangeWeightTab(index, mode)
-                }
-                showWeightModeTabs={!complexSet}
-                weightModeHint={
-                  complexSet
-                    ? `Using shared weight: ${WEIGHT_MODE_LABELS[sharedWeightTabValue]}`
-                    : null
-                }
-                weightSummary={weightSummary}
+              <ModifyCountButtons
+                onClickMinus={handleDecrementGoalValue}
+                onClickPlus={handleIncrementGoalValue}
+                onChange={setWorkoutGoal}
+                unit={workoutGoalUnits}
+                value={workoutGoal}
               />
             </Section>
-            {!complexSet && weightTabValue !== 'none' && (
-              <Section title="Load">
-                <ModifyCountButtons
-                  onClickMinus={() =>
-                    handleChangeWeightOneValue(
-                      index,
-                      movement.weightOneValue! - 1,
-                    )
-                  }
-                  onClickPlus={() =>
-                    handleChangeWeightOneValue(
-                      index,
-                      movement.weightOneValue! + 1,
-                    )
-                  }
-                  unit={getWeightUnitLabel(movement.weightOneUnit)}
-                  unitTabs={
-                    <WeightUnitTabs
-                      value={movement.weightOneUnit}
-                      onChange={(value) =>
-                        handleChangeWeightOneUnit(index, value)
-                      }
-                    />
-                  }
-                  value={movement.weightOneValue!}
-                  onChange={(value) =>
-                    handleChangeWeightOneValue(index, value!)
-                  }
+          </Card>
+
+          <AddToWorkoutSection
+            complexSet={complexSet}
+            hasNotes={workoutDetails !== null}
+            hasInterval={intervalTimer > 0}
+            hasRest={restTimer > 0}
+            showComplex={features.complexMode}
+            onToggleComplex={handleToggleComplex}
+            onToggleInterval={handleToggleInterval}
+            onToggleNotes={handleToggleNotes}
+            onToggleRest={handleToggleRest}
+          />
+
+          {features.complexMode && complexSet && (
+            <Card>
+              <Section title="Shared Weight">
+                <p className="text-xs text-muted-foreground">
+                  Complete all movements before setting the weight down.
+                </p>
+                <WeightModeTabs
+                  value={sharedWeightTabValue}
+                  onValueChange={handleChangeSharedWeightTab}
                 />
-                {movement.weightTwoValue !== null &&
-                  movement.weightTwoValue > 0 && (
+                {sharedWeightOneValue !== null && (
+                  <ModifyCountButtons
+                    onClickMinus={() =>
+                      handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
+                    }
+                    onClickPlus={() =>
+                      handleChangeSharedWeightOneValue(sharedWeightOneValue + 1)
+                    }
+                    unit={getWeightUnitLabel(sharedWeightOneUnit)}
+                    unitTabs={
+                      <WeightUnitTabs
+                        value={sharedWeightOneUnit}
+                        onChange={handleChangeSharedWeightOneUnit}
+                      />
+                    }
+                    value={sharedWeightOneValue}
+                    onChange={(value) =>
+                      handleChangeSharedWeightOneValue(value!)
+                    }
+                  />
+                )}
+                {sharedWeightTwoValue !== null && sharedWeightTwoValue > 0 && (
+                  <ModifyCountButtons
+                    onClickMinus={() =>
+                      handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
+                    }
+                    onClickPlus={() =>
+                      handleChangeSharedWeightTwoValue(sharedWeightTwoValue + 1)
+                    }
+                    unit={getWeightUnitLabel(sharedWeightTwoUnit)}
+                    unitTabs={
+                      <WeightUnitTabs
+                        value={sharedWeightTwoUnit}
+                        onChange={handleChangeSharedWeightTwoUnit}
+                      />
+                    }
+                    value={sharedWeightTwoValue}
+                    onChange={(value) =>
+                      handleChangeSharedWeightTwoValue(value)
+                    }
+                  />
+                )}
+              </Section>
+            </Card>
+          )}
+
+          {workoutDetails !== null && (
+            <Card>
+              <Section title="Notes">
+                <Input
+                  autoFocus
+                  className="w-full"
+                  defaultValue={workoutDetails}
+                  onBlur={handleBlurDetails}
+                  ref={detailsRef}
+                />
+              </Section>
+            </Card>
+          )}
+
+          {intervalTimer > 0 && (
+            <Card>
+              <Section title="Interval Timer">
+                <ModifyCountButtons
+                  onClickMinus={handleDecrementInterval}
+                  onClickPlus={handleIncrementInterval}
+                  unit="sec"
+                  value={intervalTimer}
+                  onChange={setIntervalTimer}
+                />
+              </Section>
+            </Card>
+          )}
+
+          {restTimer > 0 && (
+            <Card>
+              <Section title="Rest Timer">
+                <ModifyCountButtons
+                  onClickMinus={handleDecrementRest}
+                  onClickPlus={handleIncrementRest}
+                  unit="sec"
+                  value={restTimer}
+                  onChange={setRestTimer}
+                />
+              </Section>
+            </Card>
+          )}
+
+          <MovementsHeader count={movements.length} />
+
+          {movements.map((movement, index) => {
+            const weightTabValue = getWeightTabValue(movement);
+            const activeWeightMode: WeightTabValue = complexSet
+              ? sharedWeightTabValue
+              : weightTabValue;
+            const weightSummary =
+              movement.movementName.length > 0
+                ? getWeightsDisplayValue(
+                    movement.weightOneValue,
+                    movement.weightOneUnit,
+                    movement.weightTwoValue,
+                    movement.weightTwoUnit,
+                  )
+                : null;
+
+            return (
+              <Card key={index}>
+                <Section
+                  title={`Movement #${index + 1}`}
+                  actions={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Remove movement"
+                      onClick={() => handleClickRemoveMovement(index)}
+                    >
+                      <XMarkIcon className="h-2.5 w-2.5" />
+                    </Button>
+                  }
+                >
+                  <MovementAutocomplete
+                    value={movement.movementName}
+                    onChange={(name) => handleChangeMovementName(index, name)}
+                    weightMode={activeWeightMode}
+                    onWeightModeChange={(mode) =>
+                      complexSet
+                        ? handleChangeSharedWeightTab(mode)
+                        : handleChangeWeightTab(index, mode)
+                    }
+                    showWeightModeTabs={!complexSet}
+                    weightModeHint={
+                      complexSet
+                        ? `Using shared weight: ${WEIGHT_MODE_LABELS[sharedWeightTabValue]}`
+                        : null
+                    }
+                    weightSummary={weightSummary}
+                  />
+                </Section>
+                {!complexSet && weightTabValue !== 'none' && (
+                  <Section title="Load">
                     <ModifyCountButtons
                       onClickMinus={() =>
-                        handleChangeWeightTwoValue(
+                        handleChangeWeightOneValue(
                           index,
-                          movement.weightTwoValue! - 1,
+                          movement.weightOneValue! - 1,
                         )
                       }
                       onClickPlus={() =>
-                        handleChangeWeightTwoValue(
+                        handleChangeWeightOneValue(
                           index,
-                          movement.weightTwoValue! + 1,
+                          movement.weightOneValue! + 1,
                         )
                       }
-                      unit={getWeightUnitLabel(movement.weightTwoUnit)}
+                      unit={getWeightUnitLabel(movement.weightOneUnit)}
                       unitTabs={
                         <WeightUnitTabs
-                          value={movement.weightTwoUnit}
+                          value={movement.weightOneUnit}
                           onChange={(value) =>
-                            handleChangeWeightTwoUnit(index, value)
+                            handleChangeWeightOneUnit(index, value)
                           }
                         />
                       }
-                      value={movement.weightTwoValue}
+                      value={movement.weightOneValue!}
                       onChange={(value) =>
-                        handleChangeWeightTwoValue(index, value)
+                        handleChangeWeightOneValue(index, value!)
                       }
                     />
-                  )}
-              </Section>
-            )}
-            <Section
-              title="Rep Scheme"
-              actions={
-                <ModifyWorkoutButtons
-                  count={movement.repScheme.length}
-                  label="Rung"
-                  onClickMinus={() => handleClickMinusRung(index)}
-                  onClickPlus={() => handleClickPlusRung(index)}
-                />
-              }
-            >
-              {movement.repScheme.map((_, rungIndex) => (
-                <ModifyCountButtons
-                  key={rungIndex}
-                  value={movement.repScheme[rungIndex]}
-                  onChange={(value) =>
-                    handleChangeRepScheme(index, rungIndex, value)
+                    {movement.weightTwoValue !== null &&
+                      movement.weightTwoValue > 0 && (
+                        <ModifyCountButtons
+                          onClickMinus={() =>
+                            handleChangeWeightTwoValue(
+                              index,
+                              movement.weightTwoValue! - 1,
+                            )
+                          }
+                          onClickPlus={() =>
+                            handleChangeWeightTwoValue(
+                              index,
+                              movement.weightTwoValue! + 1,
+                            )
+                          }
+                          unit={getWeightUnitLabel(movement.weightTwoUnit)}
+                          unitTabs={
+                            <WeightUnitTabs
+                              value={movement.weightTwoUnit}
+                              onChange={(value) =>
+                                handleChangeWeightTwoUnit(index, value)
+                              }
+                            />
+                          }
+                          value={movement.weightTwoValue}
+                          onChange={(value) =>
+                            handleChangeWeightTwoValue(index, value)
+                          }
+                        />
+                      )}
+                  </Section>
+                )}
+                <Section
+                  title="Rep Scheme"
+                  actions={
+                    <ModifyWorkoutButtons
+                      count={movement.repScheme.length}
+                      label="Rung"
+                      onClickMinus={() => handleClickMinusRung(index)}
+                      onClickPlus={() => handleClickPlusRung(index)}
+                    />
                   }
-                  onClickMinus={() =>
-                    handleChangeRepScheme(
-                      index,
-                      rungIndex,
-                      movement.repScheme[rungIndex] - 1,
-                    )
-                  }
-                  onClickPlus={() =>
-                    handleChangeRepScheme(
-                      index,
-                      rungIndex,
-                      movement.repScheme[rungIndex] + 1,
-                    )
-                  }
-                  unit="reps"
-                />
-              ))}
-            </Section>
-          </Card>
-        );
-      })}
+                >
+                  {movement.repScheme.map((_, rungIndex) => (
+                    <ModifyCountButtons
+                      key={rungIndex}
+                      value={movement.repScheme[rungIndex]}
+                      onChange={(value) =>
+                        handleChangeRepScheme(index, rungIndex, value)
+                      }
+                      onClickMinus={() =>
+                        handleChangeRepScheme(
+                          index,
+                          rungIndex,
+                          movement.repScheme[rungIndex] - 1,
+                        )
+                      }
+                      onClickPlus={() =>
+                        handleChangeRepScheme(
+                          index,
+                          rungIndex,
+                          movement.repScheme[rungIndex] + 1,
+                        )
+                      }
+                      unit="reps"
+                    />
+                  ))}
+                </Section>
+              </Card>
+            );
+          })}
 
-      <Button variant="secondary" onClick={handleClickAddMovement}>
-        + Movement
-      </Button>
+          <Button variant="secondary" onClick={handleClickAddMovement}>
+            + Movement
+          </Button>
 
-      {isDifferentRepSchemes && (
-        <div className="text-sm text-red-500">
-          Rep schemes must contain the same number of rungs for each movement.
-        </div>
+          {isDifferentRepSchemes && (
+            <div className="text-sm text-red-500">
+              Rep schemes must contain the same number of rungs for each
+              movement.
+            </div>
+          )}
+        </>
       )}
     </Page>
   );

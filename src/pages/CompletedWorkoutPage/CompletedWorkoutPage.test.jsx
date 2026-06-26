@@ -86,7 +86,9 @@ describe('completed workout page', () => {
         ],
       }),
     );
-    expect(navigate).toHaveBeenCalledWith('/');
+    expect(navigate).toHaveBeenCalledWith('/', {
+      state: { editWorkout: true },
+    });
   });
 
   test('clicking on an RPE value updates the selected value', async () => {
