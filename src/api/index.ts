@@ -11,6 +11,7 @@ export * from './useMovements';
 export * from './usePatternDebt';
 export * from './useRecentRepeatableWorkouts';
 export * from './useSelectRPE';
+export * from './useSetSubscription';
 export * from './useUpdateWorkoutNotes';
 export * from './useInfiniteWorkoutLogs';
 export * from './useWorkoutLog';

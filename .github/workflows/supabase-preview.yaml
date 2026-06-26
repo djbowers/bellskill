@@ -46,3 +46,4 @@ jobs:
       - run: supabase functions deploy stripe-webhook --project-ref $SUPABASE_PROJECT_ID
       - run: supabase functions deploy create-portal-session --project-ref $SUPABASE_PROJECT_ID
       - run: supabase functions deploy recommend-session --project-ref $SUPABASE_PROJECT_ID
+      - run: supabase functions deploy set-subscription --project-ref $SUPABASE_PROJECT_ID
