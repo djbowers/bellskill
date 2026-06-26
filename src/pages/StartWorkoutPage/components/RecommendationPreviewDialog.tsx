@@ -38,7 +38,7 @@ export const RecommendationPreviewDialog = ({
           <DialogTitle>AI session recommendations</DialogTitle>
           <DialogDescription>
             Premium reads your history, goal, and how you feel today, then
-            programs a session like this — tap Accept and start lifting.
+            programs a session like this. Tap Accept and start lifting.
           </DialogDescription>
         </DialogHeader>
 
