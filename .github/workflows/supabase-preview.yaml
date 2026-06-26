@@ -1,21 +1,30 @@
-name: Deploy Migrations to Staging
+name: Deploy PR Backend to Staging
+
+# Deploys a PR's Supabase migrations + functions to the Bellskill Dev (staging)
+# project so the matching Netlify deploy preview (which points at staging via
+# netlify.toml) exercises the PR's real backend changes.
+#
+# NOTE: staging is a single shared project, so concurrent PRs that both touch
+# supabase/** can stomp on each other, and migrations are forward-only. This is
+# an accepted trade-off for a low-concurrency workflow; re-baseline staging from
+# main periodically (the sync-develop -> supabase-staging path already does this
+# after each merge).
 
 on:
-  push:
-    branches:
-      - develop
+  pull_request:
+    types: [opened, synchronize, reopened]
     paths:
       - supabase/**
-  workflow_run:
-    workflows: ["Sync develop from main"]
-    types:
-      - completed
   workflow_dispatch:
+
+# Cancel an in-flight run when the PR is updated again.
+concurrency:
+  group: supabase-preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
 
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -25,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: develop
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: supabase/setup-cli@v1
         with:

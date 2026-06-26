@@ -1,0 +1,23 @@
+# Netlify configuration.
+#
+# Build command / publish directory remain configured in the Netlify UI — this
+# file only pins the Supabase connection per deploy context so that:
+#   - production deploys talk to the Bellskill Prod project
+#   - deploy previews (PRs) talk to the Bellskill Dev (staging) project, where
+#     the PR's own migrations + functions are deployed by the
+#     `supabase-preview` GitHub Actions workflow.
+#
+# VITE_SUPABASE_ANON_KEY is a public, RLS-protected key (it ships in the client
+# bundle), so it is safe to commit here.
+#
+# IMPORTANT: these two variables must NOT also be set in the Netlify UI. UI
+# environment variables override netlify.toml, so a UI value scoped to "all
+# contexts" would defeat the deploy-preview override below. Keep them here only.
+
+[context.production.environment]
+  VITE_SUPABASE_URL = "https://ynzzqpajkhqjzftiynfo.supabase.co"
+  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluenpxcGFqa2hxanpmdGl5bmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTA2NjI3NjMsImV4cCI6MjAwNjIzODc2M30.xLRZaFcdp9K2HucbAkJig0GSEfyYsWOYrVOTDIrgK8g"
+
+[context.deploy-preview.environment]
+  VITE_SUPABASE_URL = "https://obtrxswejclgxjfyddow.supabase.co"
+  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9idHJ4c3dlamNsZ3hqZnlkZG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTk0Nzk2ODQsImV4cCI6MjAxNTA1NTY4NH0.insdjysFDW8dfU-IhgvN-Q3T2fNmeSL2FcejeM2KaGo"
