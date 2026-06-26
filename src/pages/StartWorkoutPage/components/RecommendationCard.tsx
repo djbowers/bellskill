@@ -25,7 +25,7 @@ export const RecommendationCard = ({
   return (
     <Card>
       <Section
-        title="Recommended session"
+        title="Your AI session"
         actions={
           <span className="text-xs capitalize text-muted-foreground">
             {confidence} confidence

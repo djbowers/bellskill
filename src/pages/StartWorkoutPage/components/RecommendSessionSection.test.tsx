@@ -86,7 +86,7 @@ describe('RecommendSessionSection', () => {
     const { onAccept } = renderSection(premium);
     await userEvent.click(recommendButton());
 
-    expect(await screen.findByText('Recommended session')).toBeInTheDocument();
+    expect(await screen.findByText('Your AI session')).toBeInTheDocument();
     expect(screen.getByText('Two-Hand Swing')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /^accept$/i }));
