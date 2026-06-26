@@ -5,7 +5,11 @@ import {
   useState,
 } from 'react';
 
-import { useCreatePortalSession } from '~/api';
+import {
+  SubscriptionState,
+  useCreatePortalSession,
+  useSetSubscription,
+} from '~/api';
 import { Page, TrialStatusPill } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -20,9 +24,12 @@ import { supabase } from '~/supabaseClient';
 
 export const AccountPage = () => {
   const session = useSession();
-  const { isPremium } = useEntitlement();
+  const { isPremium, isTrialing, refetch: refetchEntitlement } =
+    useEntitlement();
   const { mutate: openPortal, isLoading: portalLoading } =
     useCreatePortalSession();
+  const { mutate: setSubscription, isLoading: settingSubscription } =
+    useSetSubscription();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [username, setUsername] = useState<string>('');
@@ -36,6 +43,18 @@ export const AccountPage = () => {
     setPreviewEnabled(next);
     // Routes are built once from the effective flags, so reload to apply.
     window.location.reload();
+  };
+
+  const currentState: SubscriptionState = isPremium
+    ? 'premium'
+    : isTrialing
+      ? 'trialing'
+      : 'free';
+
+  const handleSetSubscription = (state: SubscriptionState) => {
+    setSubscription(state, {
+      onSuccess: () => refetchEntitlement(),
+    });
   };
 
   const handleManageSubscription = () => {
@@ -136,6 +155,31 @@ export const AccountPage = () => {
               ? 'Disable feature preview'
               : 'Enable feature preview'}
           </Button>
+        </div>
+      )}
+
+      {isOwner(session) && (
+        <div className="flex flex-col gap-1 border-t pt-2">
+          <Label>Subscription (QA)</Label>
+          <p className="text-xs text-muted-foreground">
+            Flip your account between states to test premium vs free surfaces.
+            Owner-only — has no effect for other accounts.
+          </p>
+          <div className="flex gap-1">
+            {(['free', 'premium', 'trialing'] as SubscriptionState[]).map(
+              (state) => (
+                <Button
+                  key={state}
+                  className="flex-1 capitalize"
+                  variant={currentState === state ? 'default' : 'outline'}
+                  disabled={settingSubscription}
+                  onClick={() => handleSetSubscription(state)}
+                >
+                  {state}
+                </Button>
+              ),
+            )}
+          </div>
         </div>
       )}
     </Page>
