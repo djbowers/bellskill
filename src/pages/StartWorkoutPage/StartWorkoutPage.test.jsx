@@ -7,8 +7,20 @@ import { MemoryRouter } from 'react-router-dom';
 import {
   DEFAULT_MOVEMENT_OPTIONS,
   DEFAULT_WORKOUT_OPTIONS,
+  EntitlementContext,
   WorkoutOptionsContext,
 } from '~/contexts';
+
+// The recommender surface (on in the test env) reads EntitlementContext.
+const freeEntitlement = {
+  isPremium: false,
+  isTrialing: false,
+  trialExpired: false,
+  trialDaysRemaining: null,
+  effectiveAccess: 'free',
+  isLoading: false,
+  refetch: () => {},
+};
 
 import { StartWorkoutPage } from './StartWorkoutPage';
 import * as stories from './StartWorkoutPage.stories';
@@ -675,11 +687,13 @@ describe('integration tests for previous volume retrieval', () => {
     render(
       <QueryClientProvider client={makeQueryClient()}>
         <MemoryRouter>
+          <EntitlementContext.Provider value={freeEntitlement}>
           <WorkoutOptionsContext.Provider
             value={[customWorkoutOptions, startWorkout]}
           >
             <StartWorkoutPage />
           </WorkoutOptionsContext.Provider>
+          </EntitlementContext.Provider>
         </MemoryRouter>
       </QueryClientProvider>,
     );
@@ -715,11 +729,13 @@ describe('integration tests for previous volume retrieval', () => {
     render(
       <QueryClientProvider client={makeQueryClient()}>
         <MemoryRouter>
+          <EntitlementContext.Provider value={freeEntitlement}>
           <WorkoutOptionsContext.Provider
             value={[workoutOptionsAfterCompletion, startWorkout]}
           >
             <StartWorkoutPage />
           </WorkoutOptionsContext.Provider>
+          </EntitlementContext.Provider>
         </MemoryRouter>
       </QueryClientProvider>,
     );
@@ -758,11 +774,13 @@ describe('integration tests for previous volume retrieval', () => {
     render(
       <QueryClientProvider client={makeQueryClient()}>
         <MemoryRouter>
+          <EntitlementContext.Provider value={freeEntitlement}>
           <WorkoutOptionsContext.Provider
             value={[workoutOptionsWithAllPrevious, startWorkout]}
           >
             <StartWorkoutPage />
           </WorkoutOptionsContext.Provider>
+          </EntitlementContext.Provider>
         </MemoryRouter>
       </QueryClientProvider>,
     );

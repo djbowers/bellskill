@@ -8,7 +8,11 @@ import { WorkoutOptions } from '~/types';
 import type { Json } from '../../types/supabase';
 
 /** Where a workout start originated, for activation-funnel attribution. */
-export type WorkoutStartSource = 'builder' | 'curated' | 'history_repeat';
+export type WorkoutStartSource =
+  | 'builder'
+  | 'curated'
+  | 'history_repeat'
+  | 'recommender';
 
 /**
  * Shared "start a workout" action used by the manual builder, curated

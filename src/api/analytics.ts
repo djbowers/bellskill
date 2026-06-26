@@ -12,6 +12,11 @@ export enum AnalyticsEvent {
   FirstSessionStarted = 'first_session_started',
   WorkoutStarted = 'workout_started',
   WorkoutCompleted = 'workout_completed',
+  // AI Next Session Recommender (PROD-89).
+  RecommendationRequested = 'recommendation_requested',
+  RecommendationAccepted = 'recommendation_accepted',
+  RecommendationRegenerated = 'recommendation_regenerated',
+  RecommendationPreviewShown = 'recommendation_preview_shown',
 }
 
 interface TrackEventParams {

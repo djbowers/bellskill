@@ -5,7 +5,11 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { CURATED_WORKOUTS } from '~/constants';
-import { DEFAULT_WORKOUT_OPTIONS, WorkoutOptionsContext } from '~/contexts';
+import {
+  DEFAULT_WORKOUT_OPTIONS,
+  EntitlementContext,
+  WorkoutOptionsContext,
+} from '~/contexts';
 import { VITE_SUPABASE_URL } from '~/env';
 import { server } from '~/mocks/server';
 
@@ -13,6 +17,17 @@ import { StartWorkoutPage } from './StartWorkoutPage';
 
 const startedAt = new Date('2026-06-25T12:00:00.000Z');
 vi.setSystemTime(startedAt);
+
+// The recommender surface (on in the test env) reads EntitlementContext.
+const freeEntitlement = {
+  isPremium: false,
+  isTrialing: false,
+  trialExpired: false,
+  trialDaysRemaining: null,
+  effectiveAccess: 'free',
+  isLoading: false,
+  refetch: () => {},
+};
 
 const makeQueryClient = () =>
   new QueryClient({
@@ -23,14 +38,16 @@ const renderPage = (updateWorkoutOptions = vi.fn()) => {
   render(
     <QueryClientProvider client={makeQueryClient()}>
       <MemoryRouter initialEntries={['/']}>
-        <WorkoutOptionsContext.Provider
-          value={[DEFAULT_WORKOUT_OPTIONS, updateWorkoutOptions]}
-        >
-          <Routes>
-            <Route path="/" element={<StartWorkoutPage />} />
-            <Route path="/active" element={<div>active workout page</div>} />
-          </Routes>
-        </WorkoutOptionsContext.Provider>
+        <EntitlementContext.Provider value={freeEntitlement}>
+          <WorkoutOptionsContext.Provider
+            value={[DEFAULT_WORKOUT_OPTIONS, updateWorkoutOptions]}
+          >
+            <Routes>
+              <Route path="/" element={<StartWorkoutPage />} />
+              <Route path="/active" element={<div>active workout page</div>} />
+            </Routes>
+          </WorkoutOptionsContext.Provider>
+        </EntitlementContext.Provider>
       </MemoryRouter>
     </QueryClientProvider>,
   );
