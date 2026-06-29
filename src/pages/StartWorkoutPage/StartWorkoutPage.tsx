@@ -74,13 +74,21 @@ export const StartWorkoutPage = () => {
   const [workoutOptions] = useWorkoutOptions();
   const { curated, recentRepeats } = useRecommendedWorkouts();
 
-  // The page opens in "browse" mode (recommendations + a Build-custom button).
-  // Selecting a recommendation or tapping Build-custom switches to the builder.
-  // The history "Repeat" action prefills context and navigates here with
-  // `editWorkout` so the builder opens directly on the repeated workout.
+  // Discovery surfaces are individually flag-gated (PROD-174). With every one
+  // off, there's nothing to browse, so the page is the pure custom builder.
+  const showCurated = features.curatedFirstWorkout;
+  const showRepeat = features.repeatPrevious;
+  const showBrowse = showCurated || showRepeat || features.recommender;
+
+  // When a discovery surface is enabled the page opens in "browse" mode
+  // (recommendations + a Build-custom button); selecting one or tapping
+  // Build-custom switches to the builder. With nothing to browse, or when the
+  // history "Repeat" action navigates here with `editWorkout`, the builder
+  // opens directly.
   const location = useLocation();
   const [showBuilder, setShowBuilder] = useState<boolean>(
-    Boolean((location.state as { editWorkout?: boolean } | null)?.editWorkout),
+    !showBrowse ||
+      Boolean((location.state as { editWorkout?: boolean } | null)?.editWorkout),
   );
   // Where the (eventual) start originated, carried through any edits the user
   // makes in the builder so `workout_started` stays attributed to the surface.
@@ -488,11 +496,11 @@ export const StartWorkoutPage = () => {
         ) : undefined
       }
     >
-      {!showBuilder && (
+      {!showBuilder && showBrowse && (
         <>
           <RecommendedWorkoutsSection
-            curated={curated}
-            recentRepeats={recentRepeats}
+            curated={showCurated ? curated : []}
+            recentRepeats={showRepeat ? recentRepeats : []}
             isFirstWorkout={isFirstWorkout}
             onSelectCurated={handleSelectCurated}
             onSelectRepeat={handleSelectRepeat}
@@ -517,14 +525,16 @@ export const StartWorkoutPage = () => {
 
       {showBuilder && (
         <>
-          <button
-            type="button"
-            onClick={handleBackToRecommendations}
-            className="flex items-center gap-0.5 self-start text-xs font-medium text-muted-foreground"
-          >
-            <ArrowLeftIcon className="h-2 w-2" aria-hidden="true" />
-            Recommendations
-          </button>
+          {showBrowse && (
+            <button
+              type="button"
+              onClick={handleBackToRecommendations}
+              className="flex items-center gap-0.5 self-start text-xs font-medium text-muted-foreground"
+            >
+              <ArrowLeftIcon className="h-2 w-2" aria-hidden="true" />
+              Recommendations
+            </button>
+          )}
 
           <Card>
             <Section
