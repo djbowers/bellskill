@@ -69,23 +69,25 @@ export const RecommendedWorkoutsSection = ({
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
-        <SectionLabel>{curatedHeading}</SectionLabel>
-        {curated.map((workout) => {
-          const { movements, workoutGoal, workoutGoalUnits } =
-            workout.workoutOptions;
-          return (
-            <RecommendedWorkoutCard
-              key={workout.id}
-              title={workout.title}
-              subtitle={workout.subtitle}
-              summary={movementsSummary(movements)}
-              meta={`${goalLabel(workoutGoal, workoutGoalUnits)} · ~${workout.estimatedMinutes} min`}
-              onSelect={() => onSelectCurated(workout)}
-            />
-          );
-        })}
-      </div>
+      {curated.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <SectionLabel>{curatedHeading}</SectionLabel>
+          {curated.map((workout) => {
+            const { movements, workoutGoal, workoutGoalUnits } =
+              workout.workoutOptions;
+            return (
+              <RecommendedWorkoutCard
+                key={workout.id}
+                title={workout.title}
+                subtitle={workout.subtitle}
+                summary={movementsSummary(movements)}
+                meta={`${goalLabel(workoutGoal, workoutGoalUnits)} · ~${workout.estimatedMinutes} min`}
+                onSelect={() => onSelectCurated(workout)}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
