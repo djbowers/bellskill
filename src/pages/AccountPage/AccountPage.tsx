@@ -21,6 +21,7 @@ import {
 } from '~/config/features';
 import { useEntitlement, useSession } from '~/contexts';
 import { supabase } from '~/supabaseClient';
+import { isSoundEnabled, setSoundEnabled } from '~/utils';
 
 export const AccountPage = () => {
   const session = useSession();
@@ -36,6 +37,15 @@ export const AccountPage = () => {
   const [previewEnabled, setPreviewEnabled] = useState<boolean>(
     isPreviewOverrideEnabled(),
   );
+  const [soundEnabled, setSoundEnabledState] = useState<boolean>(
+    isSoundEnabled(),
+  );
+
+  const handleToggleSound = () => {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    setSoundEnabledState(next);
+  };
 
   const handleTogglePreview = () => {
     const next = !previewEnabled;
@@ -129,6 +139,17 @@ export const AccountPage = () => {
           </Button>
         </div>
       </form>
+
+      <div className="flex flex-col gap-1 border-t pt-2">
+        <Label>Sound</Label>
+        <p className="text-xs text-muted-foreground">
+          Play a sound and vibrate when a rest or interval timer ends, so you
+          know it's time for the next set without looking at your screen.
+        </p>
+        <Button variant="outline" onClick={handleToggleSound}>
+          {soundEnabled ? 'Disable timer sounds' : 'Enable timer sounds'}
+        </Button>
+      </div>
 
       {isPremium && (
         <div className="flex flex-col gap-1 border-t pt-2">
