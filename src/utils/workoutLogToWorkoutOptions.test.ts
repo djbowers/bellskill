@@ -7,6 +7,7 @@ const baseWorkoutLog = (overrides: Partial<WorkoutLog> = {}): WorkoutLog => ({
   completedReps: 0,
   completedRounds: 5,
   completedRungs: 5,
+  completedSides: null,
   completedVolume: null,
   complexSet: false,
   id: 1,

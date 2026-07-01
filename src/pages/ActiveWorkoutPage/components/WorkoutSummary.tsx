@@ -19,6 +19,7 @@ interface WorkoutSummaryProps {
   completedReps: number;
   completedRounds: number;
   completedRungs: number;
+  completedSides: number;
   completedVolume: number;
   logWorkoutLoading: boolean;
   onClickFinish: () => void;
@@ -31,6 +32,7 @@ export const WorkoutSummary = ({
   completedReps,
   completedRounds,
   completedRungs,
+  completedSides,
   completedVolume,
   logWorkoutLoading,
   onClickFinish,
@@ -68,6 +70,7 @@ export const WorkoutSummary = ({
         <CompletedItem label="Elapsed" value={formattedElapsed} align="left" />
         <CompletedItem label="Rounds" value={completedRounds} />
         <CompletedItem label="Rungs" value={completedRungs} />
+        <CompletedItem label="Sides" value={completedSides} />
         <CompletedItem label="Reps" value={completedReps} />
         <CompletedItem
           label="Volume"

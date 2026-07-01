@@ -34,6 +34,7 @@ const meta = {
     completedReps: 50,
     completedRungs: 10,
     completedRounds: 10,
+    completedSides: 20,
     completedVolume: 1000,
     intervalTimer: 0,
     movementLogs: [

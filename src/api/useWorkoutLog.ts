@@ -30,6 +30,7 @@ const fetchWorkoutLog = async (id: string): Promise<WorkoutLog> => {
     completedReps: workoutLog.completed_reps,
     completedRounds: workoutLog.completed_rounds,
     completedRungs: workoutLog.completed_rungs,
+    completedSides: workoutLog.completed_sides,
     completedVolume: workoutLog.completed_volume,
     complexSet: workoutLog.complex_set,
     id: workoutLog.id,

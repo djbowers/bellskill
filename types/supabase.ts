@@ -439,6 +439,7 @@ export type Database = {
           completed_reps: number
           completed_rounds: number
           completed_rungs: number
+          completed_sides: number | null
           completed_volume: number | null
           complex_set: boolean
           id: number
@@ -470,6 +471,7 @@ export type Database = {
           completed_reps: number
           completed_rounds: number
           completed_rungs: number
+          completed_sides?: number | null
           completed_volume?: number | null
           complex_set?: boolean
           id?: number
@@ -501,6 +503,7 @@ export type Database = {
           completed_reps?: number
           completed_rounds?: number
           completed_rungs?: number
+          completed_sides?: number | null
           completed_volume?: number | null
           complex_set?: boolean
           id?: number

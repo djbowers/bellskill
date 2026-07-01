@@ -109,6 +109,7 @@ export const ActiveWorkoutPage = ({
   const [completedReps, setCompletedReps] = useState<number>(0);
   const [completedRounds, setCompletedRounds] = useState<number>(0);
   const [completedRungs, setCompletedRungs] = useState<number>(0);
+  const [completedSides, setCompletedSides] = useState<number>(0);
   const [completedVolume, setCompletedVolume] = useState<number>(0);
 
   const [isMirrorSet, setIsMirrorSet] = useState<boolean>(false); // for one-handed movements and mixed weights
@@ -182,6 +183,10 @@ export const ActiveWorkoutPage = ({
   const currentRound = completedRounds + 1;
   const shouldMirrorReps = isOneHanded || isMixedWeights;
 
+  // Sides (within the current rung)
+  const totalSides = shouldMirrorReps ? 2 : 1;
+  const currentSide = isMirrorSet ? 2 : 1; // 1 = first side (left), 2 = second side (right)
+
   // Interval Timer
   const totalIntervalMilliseconds = intervalTimer * 1000;
   const intervalCompletedPercentage =
@@ -221,6 +226,8 @@ export const ActiveWorkoutPage = ({
     );
 
   const incrementRungs = () => setCompletedRungs((prev) => prev + 1);
+
+  const incrementSides = () => setCompletedSides((prev) => prev + 1);
 
   const incrementRounds = () => setCompletedRounds((prev) => prev + 1);
 
@@ -316,6 +323,7 @@ export const ActiveWorkoutPage = ({
 
   const continueWorkout = () => {
     requestWakeLock();
+    incrementSides(); // each continue completes one side of work
     if (complexSet) {
       incrementRepsComplex();
       incrementVolumeComplex();
@@ -352,6 +360,7 @@ export const ActiveWorkoutPage = ({
       completedReps,
       completedRounds,
       completedRungs,
+      completedSides,
       completedVolume: Math.round(completedVolume),
     });
   };
@@ -462,6 +471,7 @@ export const ActiveWorkoutPage = ({
         <CurrentMovement
           currentMovement={currentMovement}
           currentRound={currentRound}
+          currentSide={currentSide}
           isOneHanded={isOneHanded}
           leftWeightUnit={leftWeightUnit}
           leftWeightValue={leftWeightValue}
@@ -470,6 +480,7 @@ export const ActiveWorkoutPage = ({
           rightWeightUnit={rightWeightUnit}
           rightWeightValue={rightWeightValue}
           rungIndex={currentMovementRungIndex}
+          totalSides={totalSides}
           workoutDetails={workoutDetails}
         />
       )}
@@ -497,6 +508,7 @@ export const ActiveWorkoutPage = ({
         completedReps={completedReps}
         completedRounds={completedRounds}
         completedRungs={completedRungs}
+        completedSides={completedSides}
         completedVolume={completedVolume}
         logWorkoutLoading={logWorkoutLoading}
         onClickFinish={handleClickFinish}

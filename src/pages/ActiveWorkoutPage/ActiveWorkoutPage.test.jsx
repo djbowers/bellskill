@@ -68,6 +68,7 @@ describe('finishing a workout', () => {
       completedReps: expect.any(Number),
       completedRounds: expect.any(Number),
       completedRungs: expect.any(Number),
+      completedSides: expect.any(Number),
       completedVolume: expect.any(Number),
     });
   });
@@ -86,6 +87,7 @@ describe('finishing a workout', () => {
       completedReps: expect.any(Number),
       completedRounds: expect.any(Number),
       completedRungs: expect.any(Number),
+      completedSides: expect.any(Number),
       completedVolume: expect.any(Number),
     });
   });
@@ -103,6 +105,7 @@ describe('finishing a workout', () => {
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
+      completedSides: expect.any(Number),
       completedVolume: 34,
     });
   });
@@ -140,6 +143,7 @@ describe('integration tests for previous volume persistence', () => {
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
+      completedSides: expect.any(Number),
       completedVolume: 120,
     });
   });
@@ -155,6 +159,7 @@ describe('integration tests for previous volume persistence', () => {
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
+      completedSides: expect.any(Number),
       completedVolume: 120,
     });
   });
@@ -174,6 +179,7 @@ describe('integration tests for previous volume persistence', () => {
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
+      completedSides: expect.any(Number),
       completedVolume: 120, // 120.4 rounds to 120
     });
   });
@@ -209,6 +215,7 @@ describe('volume calculation with kilogram weights', () => {
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
+      completedSides: expect.any(Number),
       completedVolume: 120,
     });
   });
@@ -226,6 +233,7 @@ describe('volume calculation with kilogram weights', () => {
       completedReps: 5,
       completedRounds: 0,
       completedRungs: 0,
+      completedSides: expect.any(Number),
       completedVolume: 140,
     });
   });
@@ -261,6 +269,7 @@ describe('volume calculation with pound weights', () => {
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
+      completedSides: expect.any(Number),
       completedVolume: expect.any(Number),
     });
 
@@ -300,6 +309,7 @@ describe('volume calculation with mixed weight units', () => {
       completedReps: 5,
       completedRounds: 0,
       completedRungs: 0,
+      completedSides: expect.any(Number),
       completedVolume: expect.any(Number),
     });
 
@@ -321,6 +331,7 @@ describe('volume calculation with mixed weight units', () => {
       completedReps: 5,
       completedRounds: 0,
       completedRungs: 0,
+      completedSides: expect.any(Number),
       completedVolume: expect.any(Number),
     });
 
@@ -361,6 +372,7 @@ describe('volume calculation with one-handed movements', () => {
       completedReps: 5,
       completedRounds: 0,
       completedRungs: 0,
+      completedSides: 1, // finished one side of the one-handed movement
       completedVolume: 80,
     });
   });
@@ -396,6 +408,7 @@ describe('volume calculation with bodyweight movements', () => {
       completedReps: 5,
       completedRounds: 0,
       completedRungs: 0,
+      completedSides: expect.any(Number),
       completedVolume: 0,
     });
   });
@@ -438,6 +451,7 @@ describe('volume accumulation across multiple rungs', () => {
       completedReps: 6, // 1 + 2 + 3
       completedRounds: 1,
       completedRungs: 3,
+      completedSides: 3, // two-handed: one side per rung across [1, 2, 3]
       completedVolume: 96, // 16 + 32 + 48
     });
   });
@@ -503,6 +517,34 @@ describe('active workout page (one-handed)', () => {
     expect(rightWeight).toHaveTextContent(weightValue);
     expect(round).toHaveTextContent('2');
   });
+
+  test('shows the current side within the rung, advancing per side', async () => {
+    const currentSide = screen.getByTestId('current-side');
+
+    expect(currentSide).toHaveTextContent('Side 1 of 2');
+
+    // Finish first side -> advances to second side, same rung
+    await clickContinue();
+    expect(currentSide).toHaveTextContent('Side 2 of 2');
+
+    // Finish second side -> completes rung, resets to first side
+    await clickContinue();
+    expect(currentSide).toHaveTextContent('Side 1 of 2');
+  });
+
+  test('increments the Sides progression counter on each finished side', async () => {
+    const getSides = () => screen.getByText('Sides').parentElement;
+
+    expect(getSides()).toHaveTextContent(/Sides\s*0/);
+
+    // Finish first side (rung not yet complete) -> Sides increments
+    await clickContinue();
+    expect(getSides()).toHaveTextContent(/Sides\s*1/);
+
+    // Finish second side (completes the rung) -> Sides increments again
+    await clickContinue();
+    expect(getSides()).toHaveTextContent(/Sides\s*2/);
+  });
 });
 
 describe('active workout page (two-handed)', () => {
@@ -535,6 +577,10 @@ describe('active workout page (two-handed)', () => {
     expect(leftWeight).toHaveTextContent(weightValue);
     expect(rightWeight).not.toHaveTextContent();
     expect(round).toHaveTextContent('3');
+  });
+
+  test('does not show a side indicator for single-side movements', () => {
+    expect(screen.queryByTestId('current-side')).toBeNull();
   });
 });
 
@@ -605,6 +651,18 @@ describe('active workout page (mixed weights)', () => {
     expect(leftWeight).toHaveTextContent(primaryWeightValue);
     expect(rightWeight).toHaveTextContent(secondaryWeightValue);
     expect(round).toHaveTextContent('2');
+  });
+
+  test('shows the current side within the rung, advancing per side', async () => {
+    const currentSide = screen.getByTestId('current-side');
+
+    expect(currentSide).toHaveTextContent('Side 1 of 2');
+
+    await clickContinue();
+    expect(currentSide).toHaveTextContent('Side 2 of 2');
+
+    await clickContinue();
+    expect(currentSide).toHaveTextContent('Side 1 of 2');
   });
 });
 
@@ -727,6 +785,7 @@ describe('automatic workout completion with volume goals', () => {
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
+      completedSides: expect.any(Number),
       completedVolume: 120,
     });
   });
@@ -742,6 +801,7 @@ describe('automatic workout completion with volume goals', () => {
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
+      completedSides: expect.any(Number),
       completedVolume: 120,
     });
   });
@@ -778,6 +838,7 @@ describe('volume rounding on workout completion', () => {
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
+      completedSides: expect.any(Number),
       completedVolume: 120, // 120.4 rounds down to 120
     });
   });
@@ -796,6 +857,7 @@ describe('volume rounding on workout completion', () => {
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
+      completedSides: expect.any(Number),
       completedVolume: 121, // 120.6 rounds up to 121
     });
   });
@@ -874,6 +936,7 @@ describe('edge case and boundary tests', () => {
         completedReps: 5,
         completedRounds: 1,
         completedRungs: 1,
+        completedSides: expect.any(Number),
         completedVolume: 0,
       });
     });
@@ -897,6 +960,7 @@ describe('edge case and boundary tests', () => {
         completedReps: 15,
         completedRounds: 3,
         completedRungs: 3,
+        completedSides: expect.any(Number),
         completedVolume: 360,
       });
     });
@@ -929,6 +993,7 @@ describe('edge case and boundary tests', () => {
         completedReps: 5,
         completedRounds: 1,
         completedRungs: 1,
+        completedSides: expect.any(Number),
         completedVolume: 123,
       });
     });
@@ -950,6 +1015,7 @@ describe('edge case and boundary tests', () => {
         completedReps: 15,
         completedRounds: 3,
         completedRungs: 3,
+        completedSides: expect.any(Number),
         completedVolume: 369,
       });
     });
@@ -970,6 +1036,7 @@ describe('edge case and boundary tests', () => {
         completedReps: 10,
         completedRounds: 2,
         completedRungs: 2,
+        completedSides: expect.any(Number),
         completedVolume: 246,
       });
     });
@@ -1008,6 +1075,7 @@ describe('volume calculation for complex mode', () => {
       completedReps: 15,   // 5 + 5 + 5
       completedRounds: 0,  // still in round 1 (only 1 of 5 rungs done)
       completedRungs: 1,
+      completedSides: expect.any(Number),
       completedVolume: 360,
     });
   });
@@ -1031,6 +1099,7 @@ describe('volume calculation for complex mode', () => {
       completedReps: 45,   // (5+4+3+2+1) × 3 movements
       completedRounds: 1,
       completedRungs: 5,
+      completedSides: expect.any(Number),
       completedVolume: 1080,
     });
   });
@@ -1049,6 +1118,7 @@ describe('volume calculation for complex mode', () => {
       completedReps: 10,   // 5 + 5
       completedRounds: 1,  // repScheme [5] has 1 rung — round completes on first press
       completedRungs: 1,
+      completedSides: expect.any(Number),
       completedVolume: 360,
     });
   });
