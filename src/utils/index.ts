@@ -5,5 +5,7 @@ export * from './patternDebt';
 export * from './rankMovements';
 export * from './resolveAuthSession';
 export * from './resolveSharedWeights';
+export * from './soundPreference';
+export * from './timerSound';
 export * from './weightUnits';
 export * from './workoutLogToWorkoutOptions';

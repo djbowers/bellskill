@@ -5,6 +5,7 @@ import { useLogWorkout } from '~/api';
 import { Page } from '~/components';
 import { useWorkoutOptions } from '~/contexts';
 import { useCountdownTimer } from '~/hooks';
+import { playDing, playStartCue, unlockAudio } from '~/utils';
 
 import {
   ActiveWorkoutControls,
@@ -307,6 +308,7 @@ export const ActiveWorkoutPage = ({
   };
 
   const finishRest = () => {
+    playDing();
     pauseRestTimer();
     resetRestTimer();
     setIsRestActive(false);
@@ -314,6 +316,7 @@ export const ActiveWorkoutPage = ({
   };
 
   const finishInterval = () => {
+    playDing();
     continueWorkout();
     resetIntervalTimer();
   };
@@ -334,6 +337,7 @@ export const ActiveWorkoutPage = ({
   };
 
   const finishCountdown = () => {
+    playStartCue();
     pauseCountdownTimer();
     setIsCountdownActive(false);
     resetCountdownTimer();
@@ -363,11 +367,13 @@ export const ActiveWorkoutPage = ({
 
   // Event Handlers
   const handleClickContinue = () => {
+    unlockAudio();
     setIsEffectActive(true);
     continueWorkout();
   };
 
   const handleClickStart = () => {
+    unlockAudio();
     startCountdownTimer();
     setIsCountdownActive(true);
   };
