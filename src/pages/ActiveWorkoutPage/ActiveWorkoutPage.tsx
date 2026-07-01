@@ -356,6 +356,7 @@ export const ActiveWorkoutPage = ({
       completedReps,
       completedRounds,
       completedRungs,
+      completedSides,
       completedVolume: Math.round(completedVolume),
     });
   };

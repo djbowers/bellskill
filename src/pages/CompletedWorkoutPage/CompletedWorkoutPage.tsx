@@ -117,6 +117,7 @@ export const CompletedWorkoutPage = () => {
           completedReps={workoutLog.completedReps}
           completedRounds={workoutLog.completedRounds}
           completedRungs={workoutLog.completedRungs}
+          completedSides={workoutLog.completedSides}
           completedVolume={workoutLog.completedVolume ?? 0}
           complexSet={workoutLog.complexSet}
           intervalTimer={workoutLog.intervalTimer}

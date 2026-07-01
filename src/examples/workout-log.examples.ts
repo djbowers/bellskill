@@ -11,6 +11,7 @@ export class ExampleWorkoutLog implements WorkoutLog {
   completed_reps: number;
   completed_rounds: number;
   completed_rungs: number;
+  completed_sides: number | null;
   completed_volume: number | null;
   complex_set: boolean;
   id: number;
@@ -44,6 +45,7 @@ export class ExampleWorkoutLog implements WorkoutLog {
     completed_reps = 0,
     completed_rounds = 0,
     completed_rungs = 0,
+    completed_sides = null,
     completed_volume = 0,
     complex_set = false,
     interval_timer = 0,
@@ -70,6 +72,7 @@ export class ExampleWorkoutLog implements WorkoutLog {
     this.completed_reps = completed_reps;
     this.completed_rounds = completed_rounds;
     this.completed_rungs = completed_rungs;
+    this.completed_sides = completed_sides;
     this.completed_volume = completed_volume;
     this.complex_set = complex_set;
     this.id = id;

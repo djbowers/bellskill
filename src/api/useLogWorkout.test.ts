@@ -69,6 +69,7 @@ const logWorkoutInput = {
   completedReps: 5,
   completedRounds: 1,
   completedRungs: 1,
+  completedSides: 2,
   completedVolume: 120,
 };
 
@@ -126,6 +127,30 @@ describe('useLogWorkout — complex_set persistence', () => {
 
     expect(capturedBody).not.toBeNull();
     expect(capturedBody!.complex_set).toBe(false);
+  });
+
+  test('persists completed_sides from the log input', async () => {
+    let capturedBody: Record<string, unknown> | null = null;
+
+    server.use(
+      http.post(WORKOUT_LOGS_URL, async ({ request }) => {
+        capturedBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json([{ id: 1 }]);
+      }),
+    );
+
+    const { result } = renderHook(() => useLogWorkout(), {
+      wrapper: makeWrapper(false),
+    });
+
+    act(() => {
+      result.current.mutate(logWorkoutInput);
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(capturedBody).not.toBeNull();
+    expect(capturedBody!.completed_sides).toBe(logWorkoutInput.completedSides);
   });
 });
 
