@@ -8,6 +8,7 @@ const meta = {
     completedReps: 15,
     completedRounds: 3,
     completedRungs: 3,
+    completedSides: 6,
     completedVolume: 600,
     logWorkoutLoading: false,
     onClickFinish: () => {},

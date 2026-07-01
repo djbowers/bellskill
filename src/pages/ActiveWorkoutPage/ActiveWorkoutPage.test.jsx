@@ -503,6 +503,34 @@ describe('active workout page (one-handed)', () => {
     expect(rightWeight).toHaveTextContent(weightValue);
     expect(round).toHaveTextContent('2');
   });
+
+  test('shows the current side within the rung, advancing per side', async () => {
+    const currentSide = screen.getByTestId('current-side');
+
+    expect(currentSide).toHaveTextContent('Side 1 of 2');
+
+    // Finish first side -> advances to second side, same rung
+    await clickContinue();
+    expect(currentSide).toHaveTextContent('Side 2 of 2');
+
+    // Finish second side -> completes rung, resets to first side
+    await clickContinue();
+    expect(currentSide).toHaveTextContent('Side 1 of 2');
+  });
+
+  test('increments the Sides progression counter on each finished side', async () => {
+    const getSides = () => screen.getByText('Sides').parentElement;
+
+    expect(getSides()).toHaveTextContent(/Sides\s*0/);
+
+    // Finish first side (rung not yet complete) -> Sides increments
+    await clickContinue();
+    expect(getSides()).toHaveTextContent(/Sides\s*1/);
+
+    // Finish second side (completes the rung) -> Sides increments again
+    await clickContinue();
+    expect(getSides()).toHaveTextContent(/Sides\s*2/);
+  });
 });
 
 describe('active workout page (two-handed)', () => {
@@ -535,6 +563,10 @@ describe('active workout page (two-handed)', () => {
     expect(leftWeight).toHaveTextContent(weightValue);
     expect(rightWeight).not.toHaveTextContent();
     expect(round).toHaveTextContent('3');
+  });
+
+  test('does not show a side indicator for single-side movements', () => {
+    expect(screen.queryByTestId('current-side')).toBeNull();
   });
 });
 
@@ -605,6 +637,18 @@ describe('active workout page (mixed weights)', () => {
     expect(leftWeight).toHaveTextContent(primaryWeightValue);
     expect(rightWeight).toHaveTextContent(secondaryWeightValue);
     expect(round).toHaveTextContent('2');
+  });
+
+  test('shows the current side within the rung, advancing per side', async () => {
+    const currentSide = screen.getByTestId('current-side');
+
+    expect(currentSide).toHaveTextContent('Side 1 of 2');
+
+    await clickContinue();
+    expect(currentSide).toHaveTextContent('Side 2 of 2');
+
+    await clickContinue();
+    expect(currentSide).toHaveTextContent('Side 1 of 2');
   });
 });
 

@@ -13,6 +13,7 @@ import { getWeightUnitLabel } from '~/utils';
 interface CurrentMovementProps {
   currentMovement: MovementOptions;
   currentRound: number;
+  currentSide: number;
   isOneHanded: boolean | null;
   leftWeightUnit: WeightUnit | null;
   leftWeightValue: number | null;
@@ -21,12 +22,14 @@ interface CurrentMovementProps {
   rightWeightUnit: WeightUnit | null;
   rightWeightValue: number | null;
   rungIndex: number;
+  totalSides: number;
   workoutDetails: string | null;
 }
 
 export const CurrentMovement = ({
   currentMovement,
   currentRound,
+  currentSide,
   isOneHanded,
   leftWeightUnit,
   leftWeightValue,
@@ -35,6 +38,7 @@ export const CurrentMovement = ({
   rightWeightUnit,
   rightWeightValue,
   rungIndex,
+  totalSides,
   workoutDetails,
 }: CurrentMovementProps) => {
   const isThreeColumn = isOneHanded || rightWeightValue;
@@ -70,6 +74,12 @@ export const CurrentMovement = ({
 
       <CardContent>
         <div className="flex flex-col gap-1">
+          {totalSides > 1 && (
+            <CardDescription className="text-center" data-testid="current-side">
+              Side {currentSide} of {totalSides}
+            </CardDescription>
+          )}
+
           <div
             className={clsx(
               'grid items-center gap-3 text-center',
