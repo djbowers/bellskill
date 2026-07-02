@@ -110,25 +110,11 @@ describe('complex set workouts', () => {
   });
 });
 
-describe('workout summary', () => {
-  test('displays the duration of the workout', async () => {
+describe('unset timers', () => {
+  test('omits interval and rest rows when no timers were set', async () => {
     render(<Default />);
-    expect(screen.getByLabelText('Elapsed')).toHaveTextContent('1h 15m');
-  });
-
-  test('displays number of rounds completed', async () => {
-    render(<Default />);
-    expect(screen.getByLabelText('Rounds')).toHaveTextContent('10');
-  });
-
-  test('displays number of reps completed', async () => {
-    render(<Default />);
-    expect(screen.getByLabelText('Reps')).toHaveTextContent('50');
-  });
-
-  test('displays volume completed in the workout', async () => {
-    render(<Default />);
-    expect(screen.getByLabelText('Volume')).toHaveTextContent('1000 kg');
+    expect(screen.queryByLabelText('Intervals')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Rest')).not.toBeInTheDocument();
   });
 });
 
@@ -140,7 +126,7 @@ describe('movement linking', () => {
       screen.getByRole('button', { name: 'Unlink from catalog' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Link' }),
+      screen.queryByRole('button', { name: 'Match to catalog' }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByText('Double Kettlebell Push Press'),

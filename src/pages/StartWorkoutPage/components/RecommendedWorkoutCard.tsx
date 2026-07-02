@@ -36,7 +36,9 @@ export const RecommendedWorkoutCard = ({
               <span className="text-xs text-muted-foreground">{meta}</span>
             )}
           </div>
-          <span className="text-sm text-muted-foreground">{summary}</span>
+          {summary && (
+            <span className="text-sm text-muted-foreground">{summary}</span>
+          )}
           {subtitle && (
             <span className="text-xs text-muted-foreground">{subtitle}</span>
           )}

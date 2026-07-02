@@ -38,22 +38,24 @@ export const ProgressBar = ({
         })}
         style={{ width: `${completedPercentage}%` }}
       />
-      <div
-        className={clsx(
-          'absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-0.5 font-mono font-medium text-foreground',
-          {
-            'text-xl': size === 'default',
-            'text-3xl': size === 'large',
-          },
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div
+          className={clsx(
+            'font-mono font-medium leading-none text-foreground',
+            {
+              'text-xl': size === 'default',
+              'text-3xl': size === 'large',
+            },
+          )}
+        >
+          {value ?? <>&infin;</>}
+        </div>
+        {description && (
+          <span className="text-[10px] uppercase leading-none tracking-wide text-muted-foreground">
+            {description}
+          </span>
         )}
-      >
-        {value ?? <>&infin;</>}
       </div>
-      {description && (
-        <span className="absolute right-0 top-1/2 mr-2 -translate-y-1/2 text-sm uppercase text-muted-foreground">
-          {description}
-        </span>
-      )}
     </div>
   );
 };

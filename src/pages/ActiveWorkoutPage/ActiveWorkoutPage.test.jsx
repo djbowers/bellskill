@@ -487,7 +487,7 @@ describe('active workout page (one-handed)', () => {
     render(<OneHanded />);
   });
 
-  test('alternates single weight between right and left side for each rung', async () => {
+  test('alternates the active hand between left and right for each side', async () => {
     const { movements } = workoutOptions;
     const weightValue = movements[0].weightOneValue;
 
@@ -495,55 +495,44 @@ describe('active workout page (one-handed)', () => {
     const rightWeight = screen.getByTestId('right-weight');
     const round = screen.getByTestId('current-round');
 
+    // Both sides show the single bell's weight; the active hand is marked.
     expect(leftWeight).toHaveTextContent(weightValue);
-    expect(rightWeight).not.toHaveTextContent();
-    expect(round).toHaveTextContent('1');
-
-    await clickContinue();
-
-    expect(leftWeight).not.toHaveTextContent();
     expect(rightWeight).toHaveTextContent(weightValue);
+    expect(leftWeight).toHaveAttribute('data-active', 'true');
+    expect(rightWeight).toHaveAttribute('data-active', 'false');
     expect(round).toHaveTextContent('1');
 
     await clickContinue();
 
-    expect(leftWeight).toHaveTextContent(weightValue);
-    expect(rightWeight).not.toHaveTextContent();
+    expect(leftWeight).toHaveAttribute('data-active', 'false');
+    expect(rightWeight).toHaveAttribute('data-active', 'true');
+    expect(round).toHaveTextContent('1');
+
+    await clickContinue();
+
+    expect(leftWeight).toHaveAttribute('data-active', 'true');
+    expect(rightWeight).toHaveAttribute('data-active', 'false');
     expect(round).toHaveTextContent('2');
 
     await clickContinue();
 
-    expect(leftWeight).not.toHaveTextContent();
-    expect(rightWeight).toHaveTextContent(weightValue);
+    expect(leftWeight).toHaveAttribute('data-active', 'false');
+    expect(rightWeight).toHaveAttribute('data-active', 'true');
     expect(round).toHaveTextContent('2');
   });
 
-  test('shows the current side within the rung, advancing per side', async () => {
+  test('shows the active hand and current side, advancing per side', async () => {
     const currentSide = screen.getByTestId('current-side');
 
-    expect(currentSide).toHaveTextContent('Side 1 of 2');
+    expect(currentSide).toHaveTextContent('Left hand · side 1 of 2');
 
     // Finish first side -> advances to second side, same rung
     await clickContinue();
-    expect(currentSide).toHaveTextContent('Side 2 of 2');
+    expect(currentSide).toHaveTextContent('Right hand · side 2 of 2');
 
     // Finish second side -> completes rung, resets to first side
     await clickContinue();
-    expect(currentSide).toHaveTextContent('Side 1 of 2');
-  });
-
-  test('increments the Sides progression counter on each finished side', async () => {
-    const getSides = () => screen.getByText('Sides').parentElement;
-
-    expect(getSides()).toHaveTextContent(/Sides\s*0/);
-
-    // Finish first side (rung not yet complete) -> Sides increments
-    await clickContinue();
-    expect(getSides()).toHaveTextContent(/Sides\s*1/);
-
-    // Finish second side (completes the rung) -> Sides increments again
-    await clickContinue();
-    expect(getSides()).toHaveTextContent(/Sides\s*2/);
+    expect(currentSide).toHaveTextContent('Left hand · side 1 of 2');
   });
 });
 
@@ -1072,8 +1061,8 @@ describe('volume calculation for complex mode', () => {
 
     // 3 movements × 24kg × 5 reps = 360kg
     expect(logWorkout).toHaveBeenCalledWith({
-      completedReps: 15,   // 5 + 5 + 5
-      completedRounds: 0,  // still in round 1 (only 1 of 5 rungs done)
+      completedReps: 15, // 5 + 5 + 5
+      completedRounds: 0, // still in round 1 (only 1 of 5 rungs done)
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 360,
@@ -1096,7 +1085,7 @@ describe('volume calculation for complex mode', () => {
 
     // 3 movements × 24kg × (5+4+3+2+1) reps = 3 × 24 × 15 = 1080kg
     expect(logWorkout).toHaveBeenCalledWith({
-      completedReps: 45,   // (5+4+3+2+1) × 3 movements
+      completedReps: 45, // (5+4+3+2+1) × 3 movements
       completedRounds: 1,
       completedRungs: 5,
       completedSides: expect.any(Number),
@@ -1115,8 +1104,8 @@ describe('volume calculation for complex mode', () => {
 
     // 2 movements × (20 + 16)kg × 5 reps = 2 × 36 × 5 = 360kg
     expect(logWorkout).toHaveBeenCalledWith({
-      completedReps: 10,   // 5 + 5
-      completedRounds: 1,  // repScheme [5] has 1 rung — round completes on first press
+      completedReps: 10, // 5 + 5
+      completedRounds: 1, // repScheme [5] has 1 rung — round completes on first press
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 360,
@@ -1168,18 +1157,18 @@ describe('active workout page (complex mode)', () => {
   test('advances all movements rung indices simultaneously', async () => {
     // repScheme [5, 4, 3, 2, 1] — rung 0 shows 5 for all movements
     workoutOptions.movements.forEach((movement, index) => {
-      expect(screen.getByTestId(`complex-movement-reps-${index}`)).toHaveTextContent(
-        String(movement.repScheme[0]),
-      );
+      expect(
+        screen.getByTestId(`complex-movement-reps-${index}`),
+      ).toHaveTextContent(String(movement.repScheme[0]));
     });
 
     await clickCompleteSet();
 
     // After first press, all advance to rung 1 → shows 4 for all movements
     workoutOptions.movements.forEach((movement, index) => {
-      expect(screen.getByTestId(`complex-movement-reps-${index}`)).toHaveTextContent(
-        String(movement.repScheme[1]),
-      );
+      expect(
+        screen.getByTestId(`complex-movement-reps-${index}`),
+      ).toHaveTextContent(String(movement.repScheme[1]));
     });
     expect(screen.getByTestId('current-round')).toHaveTextContent('1');
   });
@@ -1196,18 +1185,18 @@ describe('active workout page (complex mode)', () => {
     // Still on round 1 at the last rung
     expect(round).toHaveTextContent('1');
     workoutOptions.movements.forEach((movement, index) => {
-      expect(screen.getByTestId(`complex-movement-reps-${index}`)).toHaveTextContent(
-        String(movement.repScheme[4]),
-      );
+      expect(
+        screen.getByTestId(`complex-movement-reps-${index}`),
+      ).toHaveTextContent(String(movement.repScheme[4]));
     });
 
     await clickCompleteSet(); // completes round — round increments, rung resets
 
     expect(round).toHaveTextContent('2');
     workoutOptions.movements.forEach((movement, index) => {
-      expect(screen.getByTestId(`complex-movement-reps-${index}`)).toHaveTextContent(
-        String(movement.repScheme[0]),
-      );
+      expect(
+        screen.getByTestId(`complex-movement-reps-${index}`),
+      ).toHaveTextContent(String(movement.repScheme[0]));
     });
   });
 });
@@ -1277,8 +1266,12 @@ describe('active workout page (complex mode, different rep schemes)', () => {
     await clickCompleteSet(); // completes round
 
     expect(round).toHaveTextContent('2');
-    expect(screen.getByTestId('complex-movement-reps-0')).toHaveTextContent('5'); // Swing resets
-    expect(screen.getByTestId('complex-movement-reps-1')).toHaveTextContent('3'); // Clean resets
+    expect(screen.getByTestId('complex-movement-reps-0')).toHaveTextContent(
+      '5',
+    ); // Swing resets
+    expect(screen.getByTestId('complex-movement-reps-1')).toHaveTextContent(
+      '3',
+    ); // Clean resets
   });
 });
 

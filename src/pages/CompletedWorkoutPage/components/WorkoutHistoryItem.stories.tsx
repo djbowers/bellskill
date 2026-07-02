@@ -31,11 +31,6 @@ const meta = {
   args: {
     workoutLogId: 1,
     completedAt: new Date('2024-01-01T13:15:00'),
-    completedReps: 50,
-    completedRungs: 10,
-    completedRounds: 10,
-    completedSides: 20,
-    completedVolume: 1000,
     intervalTimer: 0,
     movementLogs: [
       {

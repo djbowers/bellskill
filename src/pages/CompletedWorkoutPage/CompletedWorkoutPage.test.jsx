@@ -6,7 +6,7 @@ import { useDeleteWorkoutLog } from '~/api';
 
 import * as stories from './CompletedWorkoutPage.stories';
 
-const { Default } = composeStories(stories);
+const { Default, JustFinished } = composeStories(stories);
 
 const navigate = vi.fn();
 
@@ -44,6 +44,34 @@ describe('completed workout page', () => {
     render(<Default />);
 
     await screen.findByTestId('workout-history-item');
+  });
+
+  test('leads with the outcome stats of the session', async () => {
+    render(<Default />);
+
+    const headline = await screen.findByTestId('headline-stats');
+    expect(headline).toHaveTextContent('21m');
+    expect(headline).toHaveTextContent('9');
+    expect(headline).toHaveTextContent('54');
+    expect(headline).toHaveTextContent('1000 kg');
+  });
+
+  test('celebrates a just-finished workout and hides Delete', async () => {
+    render(<JustFinished />);
+
+    await screen.findByText('Workout complete');
+    expect(
+      screen.queryByRole('button', { name: /delete/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  test('shows the archival title and Delete when visited from history', async () => {
+    render(<Default />);
+
+    await screen.findByText('Workout Log');
+    expect(
+      await screen.findByRole('button', { name: /delete/i }),
+    ).toBeInTheDocument();
   });
 
   test('renders Complex badge in header when workout is complex', async () => {

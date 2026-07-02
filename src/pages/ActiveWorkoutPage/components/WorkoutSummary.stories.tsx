@@ -7,14 +7,10 @@ const meta = {
   args: {
     completedReps: 15,
     completedRounds: 3,
-    completedRungs: 3,
-    completedSides: 6,
     completedVolume: 600,
     logWorkoutLoading: false,
     onClickFinish: () => {},
     startedAt: new Date(),
-    workoutGoal: 30,
-    workoutGoalUnits: 'minutes',
   },
   decorators: [
     (Story) => (
@@ -30,9 +26,10 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const Rounds: Story = {
+export const HighVolume: Story = {
   args: {
-    workoutGoal: 10,
-    workoutGoalUnits: 'rounds',
+    completedReps: 120,
+    completedRounds: 12,
+    completedVolume: 4860,
   },
 };

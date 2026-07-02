@@ -236,10 +236,7 @@ export const ActiveWorkoutPage = ({
 
   const incrementVolumeComplex = () => {
     const complexVolume = movements.reduce((sum, m) => {
-      const repIdx = Math.min(
-        currentMovementRungIndex,
-        m.repScheme.length - 1,
-      );
+      const repIdx = Math.min(currentMovementRungIndex, m.repScheme.length - 1);
       const reps = m.repScheme[repIdx];
       const weight =
         (m.weightOneUnit === 'pounds'
@@ -432,7 +429,10 @@ export const ActiveWorkoutPage = ({
 
   useEffect(
     function handleFinishWorkout() {
-      if (workoutLogId) navigate(`/history/${workoutLogId}`);
+      if (workoutLogId)
+        navigate(`/history/${workoutLogId}`, {
+          state: { justFinished: true },
+        });
     },
     [workoutLogId],
   );
@@ -507,14 +507,10 @@ export const ActiveWorkoutPage = ({
       <WorkoutSummary
         completedReps={completedReps}
         completedRounds={completedRounds}
-        completedRungs={completedRungs}
-        completedSides={completedSides}
         completedVolume={completedVolume}
         logWorkoutLoading={logWorkoutLoading}
         onClickFinish={handleClickFinish}
         startedAt={startedAt ?? new Date()}
-        workoutGoal={workoutGoal}
-        workoutGoalUnits={workoutGoalUnits}
       />
     </Page>
   );
