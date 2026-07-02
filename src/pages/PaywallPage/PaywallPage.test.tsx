@@ -2,22 +2,29 @@ import { composeStories } from '@storybook/react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 
+import { Features } from '~/config/features';
+
 import * as stories from './PaywallPage.stories';
 
-// Control the launch flag per test (drives notify-me vs real Subscribe) by
-// mocking the effective-features hook the page reads.
+// Control the flags per test (premium drives notify-me vs real Subscribe;
+// weeklyBalance drives the free-forever list) by mocking the
+// effective-features hook the page reads.
 const { mockUseFeatures } = vi.hoisted(() => ({ mockUseFeatures: vi.fn() }));
 vi.mock('~/hooks', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/hooks')>()),
   useFeatures: mockUseFeatures,
 }));
 
-const setPremium = (premium: boolean) =>
+const setFeatures = (overrides: Partial<Features> = {}) =>
   mockUseFeatures.mockReturnValue({
     complexMode: false,
+    curatedFirstWorkout: false,
     explore: false,
-    premium,
+    premium: false,
     recommender: false,
+    repeatPrevious: false,
+    weeklyBalance: false,
+    ...overrides,
   });
 
 const { Trialing, Expired, Free } = composeStories(stories);
@@ -25,7 +32,7 @@ const { Trialing, Expired, Free } = composeStories(stories);
 describe('paywall page', () => {
   beforeEach(() => {
     localStorage.clear();
-    setPremium(false);
+    setFeatures();
   });
 
   test('trialing variant shows days remaining', () => {
@@ -36,11 +43,41 @@ describe('paywall page', () => {
   test('expired variant reads as the unlock path', () => {
     render(<Expired />);
     expect(screen.getByText('Your trial has ended')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Your workout logging and history are still here. Premium brings back the intelligence layer.',
+      ),
+    ).toBeInTheDocument();
   });
 
   test('free variant shows the generic unlock pitch', () => {
     render(<Free />);
     expect(screen.getByText('Unlock BellSkill Premium')).toBeInTheDocument();
+  });
+
+  test('free-forever list only names shipped features', () => {
+    render(<Free />);
+    expect(
+      screen.getByText('Free forever: Workout logging, Workout history.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/skill tree/i)).not.toBeInTheDocument();
+  });
+
+  test('free-forever list includes weekly balance when flag-enabled', () => {
+    setFeatures({ weeklyBalance: true });
+    render(<Free />);
+    expect(
+      screen.getByText(
+        'Free forever: Workout logging, Workout history, Weekly pattern balance.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  test('unshipped Tetris programming is framed as upcoming', () => {
+    render(<Free />);
+    expect(
+      screen.getByText('Weekly Tetris programming — coming soon'),
+    ).toBeInTheDocument();
   });
 
   describe('premium flag OFF (pre-launch)', () => {
@@ -58,7 +95,7 @@ describe('paywall page', () => {
 
   describe('premium flag ON (launched)', () => {
     beforeEach(() => {
-      setPremium(true);
+      setFeatures({ premium: true });
     });
 
     test('shows real Subscribe CTA, not notify-me', () => {
