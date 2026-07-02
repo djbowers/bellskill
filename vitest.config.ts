@@ -10,7 +10,7 @@ export default mergeConfig(
       globals: true,
       environment: 'jsdom',
       setupFiles: './config/vitest.setup.ts',
-      exclude: ['**/node_modules/**', 'e2e/**'],
+      exclude: ['**/node_modules/**', 'e2e/**', '**/.claude/**'],
       // Reduce test output verbosity
       reporters: ['basic'],
       logHeapUsage: false,
