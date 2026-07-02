@@ -15,10 +15,8 @@ const NOTIFY_INTENT_KEY = 'premium_notify_intent';
 
 const PREMIUM_FEATURES = [
   'AI session recommendations tuned to your training',
-  'Tetris programming — auto-fitted workouts',
+  'Weekly Tetris programming — coming soon',
 ];
-
-const FREE_FOREVER = ['Workout logging', 'Skill tree', 'Basic analytics'];
 
 interface PaywallHeadline {
   eyebrow: string | null;
@@ -46,7 +44,7 @@ const getHeadline = (
       eyebrow: 'Your trial has ended',
       title: 'Unlock BellSkill Premium',
       subtitle:
-        'Your logging, skill tree, and analytics are still here. Premium brings back the intelligence layer.',
+        'Your workout logging and history are still here. Premium brings back the intelligence layer.',
     };
   }
 
@@ -111,6 +109,12 @@ export const PaywallPage = () => {
 
   const headline = getHeadline(isTrialing, trialExpired, trialDaysRemaining);
 
+  const freeForever = [
+    'Workout logging',
+    'Workout history',
+    ...(features.weeklyBalance ? ['Weekly pattern balance'] : []),
+  ];
+
   const handleSubscribe = () => {
     startCheckout(plan, {
       onSuccess: (url) => {
@@ -147,7 +151,7 @@ export const PaywallPage = () => {
               </div>
             ))}
             <div className="pt-0.5 text-xs text-muted-foreground">
-              Free forever: {FREE_FOREVER.join(', ')}.
+              Free forever: {freeForever.join(', ')}.
             </div>
           </CardContent>
         </Card>
