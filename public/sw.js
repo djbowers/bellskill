@@ -1,5 +1,5 @@
 // Unregister service worker to clean up old installations
-self.addEventListener('install', function(event) {
+self.addEventListener('install', function() {
   // Skip waiting to activate immediately
   self.skipWaiting();
 });
