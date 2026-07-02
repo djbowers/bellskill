@@ -149,7 +149,7 @@ describe('MovementAutocomplete', () => {
     expect(onWeightModeChange).toHaveBeenCalledWith('1h');
   });
 
-  test('closes dropdown when input loses focus', async () => {
+  test('keeps dropdown open while focus moves to the weight-mode tabs', async () => {
     renderAutocomplete();
 
     const input = screen.getByRole('textbox', { name: 'Movement Input' });
@@ -157,6 +157,24 @@ describe('MovementAutocomplete', () => {
     await userEvent.type(input, 'Swing');
     expect(screen.getByRole('listbox')).toBeInTheDocument();
 
+    // The tabs filter the dropdown's catalog results, so moving focus onto
+    // them must not dismiss the results being filtered.
+    await userEvent.tab();
+    expect(screen.getByRole('tab', { name: 'Two-Hand' })).toHaveFocus();
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  test('closes dropdown when focus leaves the picker', async () => {
+    renderAutocomplete();
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+    await userEvent.type(input, 'Swing');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+    // First tab lands on the weight-mode tabs (still inside the picker);
+    // the second leaves the component entirely.
+    await userEvent.tab();
     await userEvent.tab();
     await waitFor(() => {
       expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
@@ -503,8 +521,12 @@ describe('MovementAutocomplete', () => {
       weightModeHint: 'Using shared weight: Two-Hand',
     });
 
-    expect(screen.getByText('Using shared weight: Two-Hand')).toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'Two-Hand' })).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Using shared weight: Two-Hand'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('tab', { name: 'Two-Hand' }),
+    ).not.toBeInTheDocument();
   });
 
   test('does not show recent movements when there is no session', async () => {

@@ -44,7 +44,6 @@ export const MovementAutocomplete = ({
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(value);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setInputValue(value);
@@ -169,11 +168,13 @@ export const MovementAutocomplete = ({
     persistUserMovement(inputValue, null);
   };
 
-  const handleInputBlur = () => {
-    // The dropdown overlays the weight-mode tabs below the input, so close it
-    // as soon as focus leaves the input area (not just the whole container).
+  // The tabs double as the dropdown's mode filter, so the whole picker is one
+  // focus scope: moving focus to the tabs keeps the dropdown open (refiltered
+  // live); leaving the picker entirely closes it. Attached to the container —
+  // React's onBlur bubbles — so it also fires when focus leaves from the tabs.
+  const handleContainerBlur = () => {
     window.setTimeout(() => {
-      if (!inputWrapRef.current?.contains(document.activeElement)) {
+      if (!containerRef.current?.contains(document.activeElement)) {
         setIsOpen(false);
       }
     }, 0);
@@ -183,103 +184,30 @@ export const MovementAutocomplete = ({
   const showSummaryChip = value.length > 0 && weightSummary && !isOpen;
 
   // The name comes first — you pick the exercise before you pick the grip.
-  // The open dropdown is anchored to the input and overlays the tabs below it.
+  // The open dropdown is anchored to the bottom of the whole picker so the
+  // weight-mode tabs stay visible and clickable while browsing results (they
+  // filter the catalog list).
   return (
-    <div ref={containerRef} className="w-full">
-      <div ref={inputWrapRef} className="relative">
-        <input
-          aria-label="Movement Input"
-          autoComplete="off"
-          className={cn(
-            'flex h-4 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm ring-offset-background',
-            'file:border-0 file:bg-transparent file:text-sm file:font-medium',
-            'placeholder:text-muted-foreground',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-            'disabled:cursor-not-allowed disabled:opacity-50',
-            className,
-          )}
-          value={inputValue}
-          onChange={handleInputChange}
-          onFocus={() => setIsOpen(true)}
-          onBlur={handleInputBlur}
-        />
-
-        {showDropdown && (
-          <ul
-            role="listbox"
-            className="absolute left-0 right-0 top-full z-50 mt-0.5 max-h-[220px] overflow-y-auto rounded-md border border-input bg-background shadow-md"
-          >
-            {filteredRecent.length > 0 && (
-              <>
-                <li className="px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  Recent
-                </li>
-                {filteredRecent.map((movement) => (
-                  <li
-                    key={movement.id}
-                    role="option"
-                    aria-selected={inputValue === movement.canonicalName}
-                    className="cursor-pointer px-2 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      handleSelect(
-                        movement.canonicalName,
-                        movement.functionalMovementId,
-                      );
-                    }}
-                  >
-                    {movement.canonicalName}
-                  </li>
-                ))}
-              </>
-            )}
-
-            {rankedCatalog.length > 0 && (
-              <>
-                <li className="px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  {catalogSectionLabel}
-                </li>
-                {rankedCatalog.map((movement) => (
-                  <li
-                    key={movement.id}
-                    role="option"
-                    aria-selected={inputValue === movement.name}
-                    className="cursor-pointer px-2 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      handleSelect(movement.name, movement.id);
-                    }}
-                  >
-                    {movement.name}
-                  </li>
-                ))}
-              </>
-            )}
-
-            {showCatalogEmpty && (
-              <li className="px-2 py-1 text-sm text-muted-foreground">
-                No {WEIGHT_MODE_LABELS[weightMode].toLowerCase()} movements for
-                &ldquo;
-                {inputValue}&rdquo; — try another mode
-              </li>
-            )}
-
-            {showCustomEntry && (
-              <li
-                role="option"
-                aria-selected={false}
-                className="cursor-pointer px-2 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  handleCustomEntry();
-                }}
-              >
-                Use &ldquo;{inputValue}&rdquo; as custom movement
-              </li>
-            )}
-          </ul>
+    <div
+      ref={containerRef}
+      className="relative w-full"
+      onBlur={handleContainerBlur}
+    >
+      <input
+        aria-label="Movement Input"
+        autoComplete="off"
+        className={cn(
+          'flex h-4 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm ring-offset-background',
+          'file:border-0 file:bg-transparent file:text-sm file:font-medium',
+          'placeholder:text-muted-foreground',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          className,
         )}
-      </div>
+        value={inputValue}
+        onChange={handleInputChange}
+        onFocus={() => setIsOpen(true)}
+      />
 
       {showSummaryChip && (
         <p className="mt-1 text-xs text-muted-foreground">{weightSummary}</p>
@@ -295,6 +223,82 @@ export const MovementAutocomplete = ({
 
       {weightModeHint && (
         <p className="mt-1 text-xs text-muted-foreground">{weightModeHint}</p>
+      )}
+
+      {showDropdown && (
+        <ul
+          role="listbox"
+          className="absolute left-0 right-0 top-full z-50 mt-0.5 max-h-[220px] overflow-y-auto rounded-md border border-input bg-background shadow-md"
+        >
+          {filteredRecent.length > 0 && (
+            <>
+              <li className="px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                Recent
+              </li>
+              {filteredRecent.map((movement) => (
+                <li
+                  key={movement.id}
+                  role="option"
+                  aria-selected={inputValue === movement.canonicalName}
+                  className="cursor-pointer px-2 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleSelect(
+                      movement.canonicalName,
+                      movement.functionalMovementId,
+                    );
+                  }}
+                >
+                  {movement.canonicalName}
+                </li>
+              ))}
+            </>
+          )}
+
+          {rankedCatalog.length > 0 && (
+            <>
+              <li className="px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {catalogSectionLabel}
+              </li>
+              {rankedCatalog.map((movement) => (
+                <li
+                  key={movement.id}
+                  role="option"
+                  aria-selected={inputValue === movement.name}
+                  className="cursor-pointer px-2 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleSelect(movement.name, movement.id);
+                  }}
+                >
+                  {movement.name}
+                </li>
+              ))}
+            </>
+          )}
+
+          {showCatalogEmpty && (
+            <li className="px-2 py-1 text-sm text-muted-foreground">
+              No {WEIGHT_MODE_LABELS[weightMode].toLowerCase()} movements for
+              &ldquo;
+              {inputValue}&rdquo; — try another mode
+            </li>
+          )}
+
+          {showCustomEntry && (
+            <li
+              role="option"
+              aria-selected={false}
+              className="cursor-pointer px-2 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleCustomEntry();
+              }}
+            >
+              Use &ldquo;{inputValue}&rdquo; as custom movement
+            </li>
+          )}
+        </ul>
       )}
     </div>
   );
