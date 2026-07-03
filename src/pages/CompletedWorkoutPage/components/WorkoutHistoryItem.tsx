@@ -4,16 +4,13 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import { Separator } from '~/components/ui/separator';
 import { MovementLog, WeightUnit } from '~/types';
 
 import {
   getDisplayDate,
-  getDuration,
   getRepSchemeDisplayValue,
   getTimeRange,
   getWeightsDisplayValue,
@@ -24,11 +21,6 @@ import { LinkMovementDialog } from './LinkMovementDialog';
 
 export interface WorkoutHistoryItemProps {
   completedAt: Date;
-  completedReps: number;
-  completedRounds: number;
-  completedRungs: number;
-  completedSides?: number | null;
-  completedVolume: number;
   complexSet?: boolean | null;
   intervalTimer: number;
   movementLogs: MovementLog[];
@@ -47,11 +39,6 @@ export interface WorkoutHistoryItemProps {
 
 export const WorkoutHistoryItem = ({
   completedAt,
-  completedReps,
-  completedRounds,
-  completedRungs,
-  completedSides,
-  completedVolume,
   complexSet,
   intervalTimer,
   movementLogs,
@@ -68,7 +55,6 @@ export const WorkoutHistoryItem = ({
   workoutLogId,
 }: WorkoutHistoryItemProps) => {
   const displayDate = getDisplayDate(completedAt);
-  const duration = getDuration(startedAt, completedAt);
   const timeRange = getTimeRange(startedAt, completedAt);
   const isComplexSet = complexSet === true;
   const sharedWeights = resolveSharedWeights(
@@ -105,18 +91,18 @@ export const WorkoutHistoryItem = ({
                 : `${workoutGoal} ${workoutGoalUnits}`}
           </div>
         </div>
-        <div className="grow text-right">
-          <CardDescription id="intervals">Intervals</CardDescription>
-          <div aria-labelledby="intervals">
-            {intervalTimer > 0 ? `${intervalTimer}s` : 'None'}
+        {intervalTimer > 0 && (
+          <div className="grow text-right">
+            <CardDescription id="intervals">Intervals</CardDescription>
+            <div aria-labelledby="intervals">{`${intervalTimer}s`}</div>
           </div>
-        </div>
-        <div className="grow text-right">
-          <CardDescription id="rest">Rest</CardDescription>
-          <div aria-labelledby="rest">
-            {restTimer > 0 ? `${restTimer}s` : 'None'}
+        )}
+        {restTimer > 0 && (
+          <div className="grow text-right">
+            <CardDescription id="rest">Rest</CardDescription>
+            <div aria-labelledby="rest">{`${restTimer}s`}</div>
           </div>
-        </div>
+        )}
       </CardContent>
 
       {movementLogsLoading ? (
@@ -205,43 +191,6 @@ export const WorkoutHistoryItem = ({
           ))}
         </>
       )}
-
-      <CardContent>
-        <Separator />
-      </CardContent>
-
-      <CardContent>
-        <CardTitle>Workout Summary</CardTitle>
-      </CardContent>
-
-      <CardFooter className="flex gap-2">
-        <div className="grow">
-          <CardDescription id="elapsed">Elapsed</CardDescription>
-          <div aria-labelledby="elapsed">{duration}</div>
-        </div>
-        <div className="grow text-right">
-          <CardDescription id="rounds">Rounds</CardDescription>
-          <div aria-labelledby="rounds">{completedRounds}</div>
-        </div>
-        <div className="grow text-right">
-          <CardDescription id="rungs">Rungs</CardDescription>
-          <div aria-labelledby="rungs">{completedRungs}</div>
-        </div>
-        <div className="grow text-right">
-          <CardDescription id="sides">Sides</CardDescription>
-          <div aria-labelledby="sides">{completedSides ?? 'N/A'}</div>
-        </div>
-        <div className="grow text-right">
-          <CardDescription id="reps">Reps</CardDescription>
-          <div aria-labelledby="reps">{completedReps}</div>
-        </div>
-        <div className="grow text-right">
-          <CardDescription id="volume">Volume</CardDescription>
-          <div aria-labelledby="volume">
-            {completedVolume > 0 ? `${completedVolume} kg` : 'N/A'}
-          </div>
-        </div>
-      </CardFooter>
     </Card>
   );
 };

@@ -168,7 +168,11 @@ export const MovementAutocomplete = ({
     persistUserMovement(inputValue, null);
   };
 
-  const handleInputBlur = () => {
+  // The tabs double as the dropdown's mode filter, so the whole picker is one
+  // focus scope: moving focus to the tabs keeps the dropdown open (refiltered
+  // live); leaving the picker entirely closes it. Attached to the container —
+  // React's onBlur bubbles — so it also fires when focus leaves from the tabs.
+  const handleContainerBlur = () => {
     window.setTimeout(() => {
       if (!containerRef.current?.contains(document.activeElement)) {
         setIsOpen(false);
@@ -179,20 +183,16 @@ export const MovementAutocomplete = ({
   const showDropdown = isOpen && (hasOptions || showCustomEntry);
   const showSummaryChip = value.length > 0 && weightSummary && !isOpen;
 
+  // The name comes first — you pick the exercise before you pick the grip.
+  // The open dropdown is anchored to the bottom of the whole picker so the
+  // weight-mode tabs stay visible and clickable while browsing results (they
+  // filter the catalog list).
   return (
-    <div ref={containerRef} className="relative w-full">
-      {showWeightModeTabs && (
-        <WeightModeTabs
-          value={weightMode}
-          onValueChange={handleWeightModeChange}
-          className="mb-1"
-        />
-      )}
-
-      {weightModeHint && (
-        <p className="mb-1 text-xs text-muted-foreground">{weightModeHint}</p>
-      )}
-
+    <div
+      ref={containerRef}
+      className="relative w-full"
+      onBlur={handleContainerBlur}
+    >
       <input
         aria-label="Movement Input"
         autoComplete="off"
@@ -207,11 +207,22 @@ export const MovementAutocomplete = ({
         value={inputValue}
         onChange={handleInputChange}
         onFocus={() => setIsOpen(true)}
-        onBlur={handleInputBlur}
       />
 
       {showSummaryChip && (
         <p className="mt-1 text-xs text-muted-foreground">{weightSummary}</p>
+      )}
+
+      {showWeightModeTabs && (
+        <WeightModeTabs
+          value={weightMode}
+          onValueChange={handleWeightModeChange}
+          className="mt-1"
+        />
+      )}
+
+      {weightModeHint && (
+        <p className="mt-1 text-xs text-muted-foreground">{weightModeHint}</p>
       )}
 
       {showDropdown && (

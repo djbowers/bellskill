@@ -1,6 +1,6 @@
 import { ArrowRightIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import {
   useDeleteWorkoutLog,
@@ -28,11 +28,19 @@ import { workoutLogToWorkoutOptions } from '~/utils';
 
 import { Section } from '../StartWorkoutPage/components';
 import { RPESelector, WorkoutHistoryItem } from './components';
+import { getDuration } from './utils';
 
 export const CompletedWorkoutPage = () => {
   const { id = '' } = useParams<{ id: string }>();
 
   const navigate = useNavigate();
+
+  // The active workout navigates here with `justFinished` so the page can
+  // celebrate the session; visiting from history renders the archival view.
+  const location = useLocation();
+  const justFinished = Boolean(
+    (location.state as { justFinished?: boolean } | null)?.justFinished,
+  );
 
   const [, updateWorkoutOptions] = useWorkoutOptions();
 
@@ -81,7 +89,7 @@ export const CompletedWorkoutPage = () => {
   return (
     <Dialog>
       <Page
-        title="Workout Log"
+        title={justFinished ? 'Workout complete' : 'Workout Log'}
         actions={
           <div className="flex flex-col items-center gap-1">
             <div className="grid grid-cols-3 gap-1">
@@ -101,24 +109,25 @@ export const CompletedWorkoutPage = () => {
                 </Button>
               )}
             </div>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                className="flex items-center gap-0.5 text-red-500"
-              >
-                Delete <TrashIcon className="h-2.5 w-2.5" />
-              </Button>
-            </DialogTrigger>
+            {!justFinished && (
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-0.5 text-red-500"
+                >
+                  Delete <TrashIcon className="h-2.5 w-2.5" />
+                </Button>
+              </DialogTrigger>
+            )}
           </div>
         }
       >
+        <HeadlineStats workoutLog={workoutLog} />
+
+        <RPESelector onSelectRPE={handleSelectRPE} rpeValue={workoutLog.rpe} />
+
         <WorkoutHistoryItem
           completedAt={workoutLog.completedAt}
-          completedReps={workoutLog.completedReps}
-          completedRounds={workoutLog.completedRounds}
-          completedRungs={workoutLog.completedRungs}
-          completedSides={workoutLog.completedSides}
-          completedVolume={workoutLog.completedVolume ?? 0}
           complexSet={workoutLog.complexSet}
           intervalTimer={workoutLog.intervalTimer}
           movementLogs={movementLogs}
@@ -134,8 +143,6 @@ export const CompletedWorkoutPage = () => {
           workoutGoalUnits={workoutLog.workoutGoalUnits}
           workoutLogId={workoutLog.id}
         />
-
-        <RPESelector onSelectRPE={handleSelectRPE} rpeValue={workoutLog.rpe} />
 
         {workoutLog.workoutNotes !== null && (
           <Card>
@@ -186,3 +193,53 @@ export const CompletedWorkoutPage = () => {
     </Dialog>
   );
 };
+
+// The outcome of the session, front and center: what you did, not how it was
+// configured. Volume is omitted for bodyweight-only sessions where it's zero.
+const HeadlineStats = ({ workoutLog }: { workoutLog: WorkoutLog }) => {
+  const duration = getDuration(workoutLog.startedAt, workoutLog.completedAt);
+  const volume = workoutLog.completedVolume ?? 0;
+
+  return (
+    <div
+      className="flex items-center justify-between rounded-md bg-accent px-2 py-1 text-accent-foreground"
+      data-testid="headline-stats"
+    >
+      <HeadlineStat label="Elapsed" value={duration} align="left" />
+      <HeadlineStat label="Rounds" value={workoutLog.completedRounds} />
+      <HeadlineStat label="Reps" value={workoutLog.completedReps} />
+      {volume > 0 && <HeadlineStat label="Volume" value={volume} unit="kg" />}
+    </div>
+  );
+};
+
+const HeadlineStat = ({
+  label,
+  value,
+  unit,
+  align = 'right',
+}: {
+  label: string;
+  value: string | number;
+  unit?: string;
+  align?: 'left' | 'right';
+}) => (
+  <div
+    className={
+      align === 'left'
+        ? 'flex flex-col items-start gap-0.5'
+        : 'flex flex-col items-end gap-0.5'
+    }
+  >
+    <div className="text-sm text-muted-foreground">{label}</div>
+    <div className="text-lg font-semibold">
+      {value}
+      {unit && (
+        <span className="text-sm font-medium text-muted-foreground">
+          {' '}
+          {unit}
+        </span>
+      )}
+    </div>
+  </div>
+);

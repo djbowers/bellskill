@@ -12,9 +12,8 @@ export const CatalogedBadge = ({
   movementLogId,
   workoutLogId,
 }: CatalogedBadgeProps) => {
-  const { mutate: unlinkMovementLog, isLoading } = useUnlinkMovementLog(
-    workoutLogId,
-  );
+  const { mutate: unlinkMovementLog, isLoading } =
+    useUnlinkMovementLog(workoutLogId);
 
   return (
     <Badge

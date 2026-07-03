@@ -60,7 +60,7 @@ export const RecommendedWorkoutsSection = ({
               <RecommendedWorkoutCard
                 key={repeat.workoutLogId}
                 title={title}
-                summary={summary}
+                summary={summary === title ? '' : summary}
                 meta={goalLabel(workoutGoal, workoutGoalUnits)}
                 onSelect={() => onSelectRepeat(repeat)}
               />

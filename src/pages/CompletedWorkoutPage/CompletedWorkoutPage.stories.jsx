@@ -9,8 +9,15 @@ import { CompletedWorkoutPage } from './CompletedWorkoutPage';
 export default {
   component: CompletedWorkoutPage,
   decorators: [
-    (Story) => (
-      <MemoryRouter initialEntries={[`/history/${workoutLogs[0].id}`]}>
+    (Story, { parameters }) => (
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: `/history/${workoutLogs[0].id}`,
+            state: parameters.routerState ?? null,
+          },
+        ]}
+      >
         <Routes>
           <Route path="/history/:id" element={<Story />} />
         </Routes>
@@ -32,3 +39,9 @@ export default {
 };
 
 export const Default = {};
+
+export const JustFinished = {
+  parameters: {
+    routerState: { justFinished: true },
+  },
+};
