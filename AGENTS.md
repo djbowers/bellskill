@@ -101,7 +101,8 @@ pages/
 - Queries use `useQuery`, mutations use `useMutation` (react-query v3).
 - Supabase client is the `supabase` named export from `~/supabaseClient`.
 - Query keys are defined in `src/constants/queries.enum.ts`.
-- `src/types/supabase.ts` is auto-generated — regenerate with `npm run gen:types` after any schema change (requires `supabase start` to be running).
+- `npm run gen:types` writes the **repo-root** `types/supabase.ts` — commit that file after any schema change (requires `supabase start` to be running). `src/types/supabase.ts` is just a 3-line alias (`export type Supabase = Database`) re-exporting the root file; it is not regenerated.
+- Schema changes that must reach staging/production (e.g. seeded shared content) belong in a **migration**, not `supabase/seed.sql`. `seed.sql` runs only on local `supabase db reset` (`config.toml [db.seed]`); migrations auto-deploy via `.github/workflows/supabase-*.yaml`.
 
 ## Testing Setup
 

@@ -36,8 +36,8 @@ export type Database = {
             foreignKeyName: "analytics_events_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -82,6 +82,13 @@ export type Database = {
           workout_log_id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "movement_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "movement_logs_user_movement_id_fkey"
             columns: ["user_movement_id"]
@@ -341,7 +348,172 @@ export type Database = {
           username?: string | null
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      program_session_completions: {
+        Row: {
+          completed_at: string
+          id: string
+          program_session_id: string
+          status: string
+          user_id: string
+          user_program_id: string
+          workout_log_id: number | null
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          program_session_id: string
+          status?: string
+          user_id: string
+          user_program_id: string
+          workout_log_id?: number | null
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          program_session_id?: string
+          status?: string
+          user_id?: string
+          user_program_id?: string
+          workout_log_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_session_completions_program_session_id_fkey"
+            columns: ["program_session_id"]
+            isOneToOne: false
+            referencedRelation: "program_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_session_completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "program_session_completions_user_program_id_fkey"
+            columns: ["user_program_id"]
+            isOneToOne: false
+            referencedRelation: "user_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_session_completions_workout_log_id_fkey"
+            columns: ["workout_log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_sessions: {
+        Row: {
+          day_number: number
+          id: string
+          notes: string | null
+          program_id: string
+          sequence_index: number
+          title: string
+          week_number: number
+          workout_options: Json
+        }
+        Insert: {
+          day_number: number
+          id?: string
+          notes?: string | null
+          program_id: string
+          sequence_index: number
+          title: string
+          week_number: number
+          workout_options: Json
+        }
+        Update: {
+          day_number?: number
+          id?: string
+          notes?: string | null
+          program_id?: string
+          sequence_index?: number
+          title?: string
+          week_number?: number
+          workout_options?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_sessions_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      programs: {
+        Row: {
+          author_name: string | null
+          created_at: string
+          days_per_week: number
+          description: string | null
+          id: string
+          is_public: boolean
+          num_weeks: number
+          owner_id: string | null
+          slug: string | null
+          source_program_id: string | null
+          title: string
+        }
+        Insert: {
+          author_name?: string | null
+          created_at?: string
+          days_per_week: number
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          num_weeks: number
+          owner_id?: string | null
+          slug?: string | null
+          source_program_id?: string | null
+          title: string
+        }
+        Update: {
+          author_name?: string | null
+          created_at?: string
+          days_per_week?: number
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          num_weeks?: number
+          owner_id?: string | null
+          slug?: string | null
+          source_program_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programs_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "programs_source_program_id_fkey"
+            columns: ["source_program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       session_recommendations: {
         Row: {
@@ -378,6 +550,13 @@ export type Database = {
           workout_log_id?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "session_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "session_recommendations_workout_log_id_fkey"
             columns: ["workout_log_id"]
@@ -429,6 +608,58 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "movements_catalog"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_movements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_programs: {
+        Row: {
+          completed_at: string | null
+          config: Json
+          id: string
+          program_id: string
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          config?: Json
+          id?: string
+          program_id: string
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          config?: Json
+          id?: string
+          program_id?: string
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_programs_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_programs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -529,10 +760,32 @@ export type Database = {
           workout_goal_units?: Database["public"]["Enums"]["workout_goal_units"]
           workout_notes?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "workout_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
     }
     Views: {
+      activation_funnel_summary: {
+        Row: {
+          activated_24h_count: number | null
+          activated_24h_rate: number | null
+          activated_north_star_count: number | null
+          activated_north_star_rate: number | null
+          avg_seconds_to_first_workout: number | null
+          median_seconds_to_first_workout: number | null
+          signup_to_first_workout_rate: number | null
+          total_signups: number | null
+          users_with_first_workout: number | null
+        }
+        Relationships: []
+      }
       movements_catalog: {
         Row: {
           id: string | null
@@ -563,18 +816,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activation: {
+        Row: {
+          activated_24h: boolean | null
+          activated_north_star: boolean | null
+          first_workout_at: string | null
+          seconds_to_first_workout: number | null
+          signup_at: string | null
+          user_id: string | null
+          workouts_within_14d: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      activation_funnel_window: {
+        Args: { p_signup_from?: string; p_signup_to?: string }
+        Returns: {
+          activated_24h_count: number
+          activated_24h_rate: number
+          activated_north_star_count: number
+          activated_north_star_rate: number
+          avg_seconds_to_first_workout: number
+          mature_signups: number
+          median_seconds_to_first_workout: number
+          signup_from: string
+          signup_to: string
+          signup_to_first_workout_rate: number
+          total_signups: number
+          users_with_first_workout: number
+        }[]
+      }
+      enroll_in_program: { Args: { p_program_id: string }; Returns: string }
       has_premium_access: { Args: { user_id: string }; Returns: boolean }
       pattern_debt_window: {
-        Args: { p_window_days?: number; p_baseline_days?: number }
+        Args: { p_baseline_days?: number; p_window_days?: number }
         Returns: {
+          baseline_volume_kg: number
+          last_trained_at: string
           pattern: string
-          last_trained_at: string | null
           set_count: number
           total_reps: number
           total_volume_kg: number
-          baseline_volume_kg: number | null
         }[]
       }
     }
