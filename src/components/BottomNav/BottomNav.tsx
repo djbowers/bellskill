@@ -8,9 +8,9 @@ import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 import { useFeatures } from '~/hooks';
+import { handleClickLightDarkMode, handleSignOut } from '~/lib/nav-actions';
 import { cn } from '~/lib/utils';
 
-import { supabase } from '../../supabaseClient';
 import {
   Dialog,
   DialogClose,
@@ -27,24 +27,6 @@ const SUPPRESSED_ROUTES = ['/active'];
 
 const cellClasses =
   'flex flex-1 flex-col items-center justify-center gap-0.5 text-muted-foreground transition-colors active:bg-accent/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
-
-const handleSignOut = () => supabase.auth.signOut();
-
-// Mirrors the theme toggle in Header.tsx — flips the `dark` class on <html> and
-// persists the preference in localStorage.
-function handleClickLightDarkMode() {
-  if (localStorage.theme === 'dark' || !('theme' in localStorage)) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-
-  if (localStorage.theme === 'dark') {
-    localStorage.theme = 'light';
-  } else {
-    localStorage.theme = 'dark';
-  }
-}
 
 /**
  * Fixed bottom "thumb" navigation for mobile viewports. Hidden on desktop
