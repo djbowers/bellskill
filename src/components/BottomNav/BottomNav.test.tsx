@@ -1,0 +1,119 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { Mock, beforeEach, vi } from 'vitest';
+
+import { Features } from '~/config/features';
+import { useFeatures } from '~/hooks';
+
+import { BottomNav } from './BottomNav';
+
+vi.mock('~/hooks', () => ({
+  useFeatures: vi.fn(),
+}));
+
+const mockedUseFeatures = useFeatures as unknown as Mock;
+
+const featuresWith = (overrides: Partial<Features> = {}): Features => ({
+  bottomNav: true,
+  complexMode: false,
+  curatedFirstWorkout: false,
+  explore: false,
+  premium: false,
+  recommender: false,
+  repeatPrevious: false,
+  weeklyBalance: false,
+  ...overrides,
+});
+
+const renderNav = (initialPath = '/') =>
+  render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <BottomNav />
+    </MemoryRouter>,
+  );
+
+beforeEach(() => {
+  mockedUseFeatures.mockReset();
+});
+
+describe('BottomNav', () => {
+  test('renders nothing when the bottomNav flag is off', () => {
+    mockedUseFeatures.mockReturnValue(featuresWith({ bottomNav: false }));
+    const { container } = renderNav();
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  test('renders Home, History and More by default', () => {
+    mockedUseFeatures.mockReturnValue(featuresWith());
+    renderNav();
+    expect(
+      screen.getByRole('navigation', { name: 'Primary' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'History' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
+  });
+
+  test('promotes the AI tab when premium is enabled', () => {
+    mockedUseFeatures.mockReturnValue(featuresWith({ premium: true }));
+    renderNav();
+    expect(screen.getByRole('link', { name: 'AI' })).toBeInTheDocument();
+  });
+
+  test('marks the active route with aria-current', () => {
+    mockedUseFeatures.mockReturnValue(featuresWith());
+    renderNav('/history');
+    expect(screen.getByRole('link', { name: 'History' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    // `end` on Home keeps it inactive on other routes.
+    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute(
+      'aria-current',
+    );
+  });
+
+  test('is hidden on the immersive /active route', () => {
+    mockedUseFeatures.mockReturnValue(featuresWith());
+    const { container } = renderNav('/active');
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  test('More sheet exposes Account, theme toggle and Sign Out', () => {
+    mockedUseFeatures.mockReturnValue(featuresWith());
+    renderNav();
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(screen.getByRole('link', { name: /Account/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Light \/ Dark/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Sign Out/ }),
+    ).toBeInTheDocument();
+  });
+
+  test('non-promoted features fall into the More sheet', () => {
+    mockedUseFeatures.mockReturnValue(
+      featuresWith({ premium: true, weeklyBalance: true }),
+    );
+    renderNav();
+    // AI is promoted into the bar; Balance overflows into More.
+    expect(screen.getByRole('link', { name: 'AI' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(screen.getByRole('link', { name: /Balance/ })).toBeInTheDocument();
+  });
+
+  test('hides while a text input is focused (mobile keyboard)', () => {
+    mockedUseFeatures.mockReturnValue(featuresWith());
+    const { container } = render(
+      <MemoryRouter>
+        <input aria-label="weight" />
+        <BottomNav />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('navigation', { name: 'Primary' })).toBeVisible();
+
+    fireEvent.focusIn(screen.getByLabelText('weight'));
+    expect(container.querySelector('nav[aria-label="Primary"]')).toBeNull();
+  });
+});

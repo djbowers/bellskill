@@ -1,3 +1,4 @@
+export * from './BottomNav';
 export * from './Header';
 export * from './Loading';
 export * from './PWAInstallPrompt';

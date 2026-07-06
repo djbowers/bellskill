@@ -1,6 +1,7 @@
 import { Session } from '@supabase/supabase-js';
 
 export type FeatureName =
+  | 'bottomNav'
   | 'complexMode'
   | 'curatedFirstWorkout'
   | 'explore'
@@ -16,6 +17,7 @@ export type Features = Record<FeatureName, boolean>;
  * by env vars. This is what every user sees by default.
  */
 const baseFeatures: Features = {
+  bottomNav: import.meta.env.VITE_FEATURE_BOTTOMNAV === 'true',
   complexMode: import.meta.env.VITE_FEATURE_COMPLEX_MODE === 'true',
   curatedFirstWorkout:
     import.meta.env.VITE_FEATURE_CURATED_FIRST_WORKOUT === 'true',
@@ -78,6 +80,7 @@ export const isPreviewingAllFeatures = (session?: Session | null): boolean =>
 export const getFeatures = (session?: Session | null): Features => {
   if (isPreviewingAllFeatures(session)) {
     return {
+      bottomNav: true,
       complexMode: true,
       curatedFirstWorkout: true,
       explore: true,

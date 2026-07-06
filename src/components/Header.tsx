@@ -39,7 +39,14 @@ export const Header = () => {
   }
 
   return (
-    <NavigationMenu className="grid grid-cols-1 sm:grid-cols-3">
+    <NavigationMenu
+      className={
+        features.bottomNav
+          ? // Bottom bar owns mobile nav; keep the top nav for desktop only.
+            'hidden grid-cols-1 sm:grid sm:grid-cols-3'
+          : 'grid grid-cols-1 sm:grid-cols-3'
+      }
+    >
       <NavigationMenuList>
         <NavigationMenuItem className="mr-auto">
           <NavigationMenuTrigger className="flex items-center gap-1">
