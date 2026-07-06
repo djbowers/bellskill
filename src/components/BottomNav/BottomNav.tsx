@@ -5,7 +5,7 @@ import {
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 import { useFeatures } from '~/hooks';
 import { handleClickLightDarkMode, handleSignOut } from '~/lib/nav-actions';
@@ -20,10 +20,7 @@ import {
   DialogTrigger,
 } from '../ui/dialog';
 import { buildTabs } from './buildTabs';
-import { useIsKeyboardOpen } from './useIsKeyboardOpen';
-
-// Routes that hide the bar entirely for an immersive, focused experience.
-const SUPPRESSED_ROUTES = ['/active'];
+import { useBottomNavVisible } from './useBottomNavVisible';
 
 const cellClasses =
   'flex flex-1 flex-col items-center justify-center gap-0.5 text-muted-foreground transition-colors active:bg-accent/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
@@ -36,13 +33,10 @@ const cellClasses =
  */
 export const BottomNav = () => {
   const features = useFeatures();
-  const { pathname } = useLocation();
-  const isKeyboardOpen = useIsKeyboardOpen();
+  const isVisible = useBottomNavVisible();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  if (!features.bottomNav) return null;
-  if (SUPPRESSED_ROUTES.includes(pathname)) return null;
-  if (isKeyboardOpen) return null;
+  if (!isVisible) return null;
 
   const { tabs, moreFeatures } = buildTabs(features);
 
