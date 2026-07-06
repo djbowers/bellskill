@@ -24,24 +24,28 @@ export default {
   decorators: [
     (Story: () => JSX.Element) => (
       <SessionProvider value={ownerSession}>
-        <MemoryRouter initialEntries={['/']}>
-          <Story />
-        </MemoryRouter>
+        <Story />
       </SessionProvider>
     ),
   ],
 };
 
-export const Default = {};
+export const Default = {
+  decorators: [
+    (Story: () => JSX.Element) => (
+      <MemoryRouter initialEntries={['/']}>
+        <Story />
+      </MemoryRouter>
+    ),
+  ],
+};
 
 export const OnHistory = {
   decorators: [
     (Story: () => JSX.Element) => (
-      <SessionProvider value={ownerSession}>
-        <MemoryRouter initialEntries={['/history']}>
-          <Story />
-        </MemoryRouter>
-      </SessionProvider>
+      <MemoryRouter initialEntries={['/history']}>
+        <Story />
+      </MemoryRouter>
     ),
   ],
 };
