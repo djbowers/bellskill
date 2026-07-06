@@ -38,7 +38,11 @@ export const useIsKeyboardOpen = (): boolean => {
       if (isTextInput(event.target)) setIsOpen(true);
     };
     const handleFocusOut = (event: FocusEvent) => {
-      if (isTextInput(event.target)) setIsOpen(false);
+      if (!isTextInput(event.target)) return;
+      // Focus moving straight to another text input keeps the keyboard up, so
+      // stay open to avoid the bar flickering back for a frame between fields.
+      if (isTextInput(event.relatedTarget)) return;
+      setIsOpen(false);
     };
 
     document.addEventListener('focusin', handleFocusIn);
