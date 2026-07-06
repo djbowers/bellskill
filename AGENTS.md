@@ -58,7 +58,7 @@ src/
   contexts/     # React contexts (SessionContext, WorkoutOptionsContext)
   examples/     # Test fixture factories
   hooks/        # Shared hooks (useCountdownTimer, useDebouncedCallback)
-  lib/          # Utility library wrappers (cn() from tailwind-merge + clsx)
+  lib/          # Utility wrappers (cn() from tailwind-merge + clsx) and shared action helpers (nav-actions: theme toggle, sign-out)
   mocks/        # MSW handlers, Node server, browser SW setup
   pages/        # One folder per route (see Page Structure below)
   types/        # TypeScript interfaces and types (supabase.ts is auto-generated)
