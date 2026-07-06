@@ -75,21 +75,30 @@ export const Header = () => {
         </NavigationMenuItem>
         {features.explore && (
           <NavigationMenuItem>
-            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <NavigationMenuLink
+              asChild
+              className={navigationMenuTriggerStyle()}
+            >
               <NavLink to="/movements">Explore</NavLink>
             </NavigationMenuLink>
           </NavigationMenuItem>
         )}
         {features.premium && (
           <NavigationMenuItem>
-            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <NavigationMenuLink
+              asChild
+              className={navigationMenuTriggerStyle()}
+            >
               <NavLink to="/recommendations">AI</NavLink>
             </NavigationMenuLink>
           </NavigationMenuItem>
         )}
         {features.weeklyBalance && (
           <NavigationMenuItem>
-            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <NavigationMenuLink
+              asChild
+              className={navigationMenuTriggerStyle()}
+            >
               <NavLink to="/balance">Balance</NavLink>
             </NavigationMenuLink>
           </NavigationMenuItem>
