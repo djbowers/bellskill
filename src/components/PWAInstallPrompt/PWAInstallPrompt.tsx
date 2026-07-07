@@ -2,6 +2,9 @@ import { ArrowUpTrayIcon } from '@heroicons/react/20/solid';
 import { DevicePhoneMobileIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 
+import { useFeatures } from '~/hooks';
+import { cn } from '~/lib/utils';
+
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
   readonly userChoice: Promise<{
@@ -12,6 +15,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PWAInstallPrompt() {
+  const features = useFeatures();
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -110,7 +114,18 @@ export function PWAInstallPrompt() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-sm">
+    <div
+      className={cn(
+        'fixed left-4 right-4 z-50 mx-auto max-w-sm',
+        // Lift above the fixed bottom nav on mobile when it is enabled; the bar
+        // is desktop-hidden, so restore the default offset at `sm`. 80px is the
+        // 64px bar height plus ~16px of intentional breathing room above it, not
+        // an off-by-one against the bar.
+        features.bottomNav
+          ? 'bottom-[calc(80px+env(safe-area-inset-bottom,0))] sm:bottom-4'
+          : 'bottom-4',
+      )}
+    >
       <div className="relative rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
         <button
           onClick={handleDismiss}

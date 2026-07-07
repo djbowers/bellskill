@@ -2,8 +2,8 @@ import { ButtonIcon, SunIcon } from '@radix-ui/react-icons';
 import { NavLink } from 'react-router-dom';
 
 import { useFeatures } from '~/hooks';
+import { handleClickLightDarkMode, handleSignOut } from '~/lib/nav-actions';
 
-import { supabase } from '../supabaseClient';
 import './Header.styles.css';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -20,26 +20,16 @@ import { Separator } from './ui/separator';
 
 export const Header = () => {
   const features = useFeatures();
-  const handleSignOut = () => supabase.auth.signOut();
-
-  function handleClickLightDarkMode() {
-    if (localStorage.theme === 'dark' || !('theme' in localStorage)) {
-      //add class=dark in html element
-      document.documentElement.classList.add('dark');
-    } else {
-      //remove class=dark in html element
-      document.documentElement.classList.remove('dark');
-    }
-
-    if (localStorage.theme === 'dark') {
-      localStorage.theme = 'light';
-    } else {
-      localStorage.theme = 'dark';
-    }
-  }
 
   return (
-    <NavigationMenu className="grid grid-cols-1 sm:grid-cols-3">
+    <NavigationMenu
+      className={
+        features.bottomNav
+          ? // Bottom bar owns mobile nav; keep the top nav for desktop only.
+            'hidden grid-cols-1 sm:grid sm:grid-cols-3'
+          : 'grid grid-cols-1 sm:grid-cols-3'
+      }
+    >
       <NavigationMenuList>
         <NavigationMenuItem className="mr-auto">
           <NavigationMenuTrigger className="flex items-center gap-1">
@@ -85,21 +75,30 @@ export const Header = () => {
         </NavigationMenuItem>
         {features.explore && (
           <NavigationMenuItem>
-            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <NavigationMenuLink
+              asChild
+              className={navigationMenuTriggerStyle()}
+            >
               <NavLink to="/movements">Explore</NavLink>
             </NavigationMenuLink>
           </NavigationMenuItem>
         )}
         {features.premium && (
           <NavigationMenuItem>
-            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <NavigationMenuLink
+              asChild
+              className={navigationMenuTriggerStyle()}
+            >
               <NavLink to="/recommendations">AI</NavLink>
             </NavigationMenuLink>
           </NavigationMenuItem>
         )}
         {features.weeklyBalance && (
           <NavigationMenuItem>
-            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <NavigationMenuLink
+              asChild
+              className={navigationMenuTriggerStyle()}
+            >
               <NavLink to="/balance">Balance</NavLink>
             </NavigationMenuLink>
           </NavigationMenuItem>

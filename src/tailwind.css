@@ -105,6 +105,12 @@
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
+  /* Offset for the fixed bottom "thumb" nav: bar height (h-6 = 64px) plus the
+     home-indicator safe area, so page content clears the bar on mobile. */
+  .pb-bottomnav {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0));
+  }
+
   .safe-area-left {
     padding-left: env(safe-area-inset-left, 0);
   }
