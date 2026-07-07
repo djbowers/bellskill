@@ -2,6 +2,7 @@ import {
   ClockIcon,
   HomeIcon,
   MagnifyingGlassIcon,
+  RectangleStackIcon,
   ScaleIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
@@ -83,10 +84,18 @@ const stripFlag = (f: (typeof PRIORITY_FEATURES)[number]): NavTab => ({
 export const buildTabs = (features: Features): BuiltTabs => {
   const tabs: NavTab[] = [
     { key: 'home', label: 'Home', to: '/', icon: HomeIcon },
-    // TODO: wire Programs tab when the programs feature lands. It is reserved as
-    // slot 2 in the design, but the `programs` flag/route do not exist in the
-    // codebase yet, so it is intentionally omitted here to keep this change
-    // self-contained and avoid a cross-build dependency.
+    // Slot 2 is reserved for Programs (design plan §3), gated by the `programs`
+    // flag until the feature is flipped on.
+    ...(features.programs
+      ? [
+          {
+            key: 'programs',
+            label: 'Programs',
+            to: '/programs',
+            icon: RectangleStackIcon,
+          },
+        ]
+      : []),
     { key: 'history', label: 'History', to: '/history', icon: ClockIcon },
   ];
 

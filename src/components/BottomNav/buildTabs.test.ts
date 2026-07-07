@@ -8,6 +8,7 @@ const allOff: Features = {
   curatedFirstWorkout: false,
   explore: false,
   premium: false,
+  programs: false,
   recommender: false,
   repeatPrevious: false,
   weeklyBalance: false,
@@ -25,8 +26,14 @@ describe('buildTabs', () => {
     expect(tabs[1]).toMatchObject({ label: 'History', to: '/history' });
   });
 
-  test('does not render a Programs slot yet (reserved for a later change)', () => {
+  test('omits the Programs slot when the programs flag is off', () => {
     expect(keys(allOff)).not.toContain('programs');
+  });
+
+  test('renders Programs as slot 2 (between Home and History) when enabled', () => {
+    const { tabs } = buildTabs({ ...allOff, programs: true });
+    expect(tabs.map((t) => t.key)).toEqual(['home', 'programs', 'history']);
+    expect(tabs[1]).toMatchObject({ label: 'Programs', to: '/programs' });
   });
 
   test('no promoted feature when all feature flags are off', () => {

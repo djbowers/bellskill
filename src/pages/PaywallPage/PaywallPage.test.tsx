@@ -23,6 +23,7 @@ const setFeatures = (overrides: Partial<Features> = {}) =>
     premium: false,
     recommender: false,
     repeatPrevious: false,
+    programs: false,
     weeklyBalance: false,
     ...overrides,
   });

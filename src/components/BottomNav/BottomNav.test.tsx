@@ -21,6 +21,7 @@ const featuresWith = (overrides: Partial<Features> = {}): Features => ({
   premium: false,
   recommender: false,
   repeatPrevious: false,
+  programs: false,
   weeklyBalance: false,
   ...overrides,
 });

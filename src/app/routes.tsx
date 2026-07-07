@@ -10,6 +10,8 @@ import {
   HistoryPage,
   MovementsPage,
   PaywallPage,
+  ProgramSessionBuilderPage,
+  ProgramsPage,
   RecommendationsPage,
   StartWorkoutPage,
   WeeklyBalancePage,
@@ -61,9 +63,20 @@ export const createRoutes = (flags: Features = features): RouteObject[] => [
       ...(flags.weeklyBalance
         ? [{ path: 'balance', element: <WeeklyBalancePage /> }]
         : []),
-      ...(flags.explore ? [{ path: 'movements', element: <MovementsPage /> }] : []),
+      ...(flags.explore
+        ? [{ path: 'movements', element: <MovementsPage /> }]
+        : []),
       ...(flags.premium
         ? [{ path: 'recommendations', element: <RecommendationsPage /> }]
+        : []),
+      ...(flags.programs
+        ? [
+            { path: 'programs', element: <ProgramsPage /> },
+            {
+              path: 'programs/:id/sessions/new',
+              element: <ProgramSessionBuilderPage />,
+            },
+          ]
         : []),
     ],
   },

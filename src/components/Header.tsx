@@ -73,6 +73,16 @@ export const Header = () => {
             <NavLink to="/">Start</NavLink>
           </NavigationMenuLink>
         </NavigationMenuItem>
+        {features.programs && (
+          <NavigationMenuItem>
+            <NavigationMenuLink
+              asChild
+              className={navigationMenuTriggerStyle()}
+            >
+              <NavLink to="/programs">Programs</NavLink>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        )}
         {features.explore && (
           <NavigationMenuItem>
             <NavigationMenuLink
