@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import {
   useActiveProgram,
@@ -185,7 +185,9 @@ export const ProgramsPage = () => {
         <Card key={program.id}>
           <CardHeader>
             <CardTitle className="flex items-center gap-1">
-              {program.title}
+              <Link to={`/programs/${program.id}`} className="hover:underline">
+                {program.title}
+              </Link>
               {isActive(program) && (
                 <span className="rounded bg-primary px-0.5 text-xs text-primary-foreground">
                   Active
@@ -196,20 +198,29 @@ export const ProgramsPage = () => {
               {program.numWeeks} weeks · {program.daysPerWeek}/week
             </p>
           </CardHeader>
-          <CardContent className="flex gap-2">
+          <CardContent className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => navigate(`/programs/${program.id}/sessions/new`)}
+              >
+                Add sessions
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => handleEnroll(program.id)}
+                disabled={enroll.isLoading || isActive(program)}
+              >
+                {isActive(program) ? 'Enrolled' : 'Start program'}
+              </Button>
+            </div>
             <Button
-              variant="secondary"
-              className="flex-1"
-              onClick={() => navigate(`/programs/${program.id}/sessions/new`)}
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(`/programs/${program.id}`)}
             >
-              Add sessions
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={() => handleEnroll(program.id)}
-              disabled={enroll.isLoading || isActive(program)}
-            >
-              {isActive(program) ? 'Enrolled' : 'Start program'}
+              View progress
             </Button>
           </CardContent>
         </Card>

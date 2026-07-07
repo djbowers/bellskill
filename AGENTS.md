@@ -141,6 +141,15 @@ from the completions set**, never a stored cursor.
   and read in `useLogWorkout.onSuccess` to write the completion linked to the new
   `workout_logs.id`. The linkage is deliberately **NOT** a `workout_logs` column
   — the completion row is the only new write; the existing log path is untouched.
+- **Progress view (Slice 4):** `ProgramProgressPage` at `programs/:id` renders
+  the program's sessions grouped by week as done ✓ / skipped ⊘ / upcoming chips,
+  plus an "N of M sessions" / "Week X of Y" summary. State is derived by
+  `useProgramProgress(programId)` **entirely** from the enrollment's
+  `program_session_completions` joined to `program_sessions` — nothing from
+  `workout_logs`. Completed chips link to `/history/<workout_log_id>` (the
+  completion row carries the log id), reusing `CompletedWorkoutPage` verbatim.
+  Entry points: each `ProgramsPage` "My programs" card and the home
+  `NextProgramWorkoutCard` (`onViewProgress`).
 - DB behaviors (RLS, the advance/skip/flip RPC, idempotency) are covered by
   Playwright e2e against the local Supabase (`e2e/program-*.spec.ts`), not MSW.
 

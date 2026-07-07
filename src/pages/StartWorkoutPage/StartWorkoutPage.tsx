@@ -1,6 +1,6 @@
 import { ArrowLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import {
   AnalyticsEvent,
@@ -95,6 +95,7 @@ export const StartWorkoutPage = ({
   programSaveMode,
 }: StartWorkoutPageProps = {}) => {
   const features = useFeatures();
+  const navigate = useNavigate();
   const startWorkout = useStartWorkout();
   const [workoutOptions] = useWorkoutOptions();
   const { curated, recentRepeats } = useRecommendedWorkouts();
@@ -653,6 +654,9 @@ export const StartWorkoutPage = ({
               onStart={handleStartProgram}
               onSkip={handleSkipProgram}
               skipping={completeProgramSession.isLoading}
+              onViewProgress={() =>
+                navigate(`/programs/${activeProgram.program.id}`)
+              }
             />
           )}
 

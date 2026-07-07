@@ -15,6 +15,7 @@ export * from './useCreateProgram';
 export * from './useDuplicateProgramSession';
 export * from './useEnrollProgram';
 export * from './useProgram';
+export * from './useProgramProgress';
 export * from './usePrograms';
 export * from './useSaveProgramSession';
 export * from './useRecentRepeatableWorkouts';

@@ -16,6 +16,8 @@ export interface NextProgramWorkoutCardProps {
   onSkip: () => void;
   /** Whether a skip is in flight (disables both actions). */
   skipping: boolean;
+  /** Open the program's progress page. Omitted → the link is not rendered. */
+  onViewProgress?: () => void;
 }
 
 const estimatedDuration = (
@@ -35,7 +37,18 @@ export const NextProgramWorkoutCard = ({
   onStart,
   onSkip,
   skipping,
+  onViewProgress,
 }: NextProgramWorkoutCardProps) => {
+  const viewProgressLink = onViewProgress && (
+    <button
+      type="button"
+      onClick={onViewProgress}
+      className="self-start text-xs font-medium text-muted-foreground hover:underline"
+    >
+      View progress →
+    </button>
+  );
+
   if (isComplete || !nextSession) {
     return (
       <Card className="flex flex-col gap-1 p-2">
@@ -47,6 +60,7 @@ export const NextProgramWorkoutCard = ({
           You finished all {progress.total} sessions. Pick a new program to keep
           going.
         </span>
+        {viewProgressLink}
       </Card>
     );
   }
@@ -88,6 +102,8 @@ export const NextProgramWorkoutCard = ({
           {skipping ? 'Skipping…' : 'Skip'}
         </Button>
       </div>
+
+      {viewProgressLink}
     </Card>
   );
 };

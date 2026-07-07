@@ -6,6 +6,7 @@ export * from './CompletedWorkoutPage';
 export * from './HistoryPage';
 export * from './MovementsPage';
 export * from './PaywallPage';
+export * from './ProgramProgressPage';
 export * from './ProgramSessionBuilderPage';
 export * from './ProgramsPage';
 export * from './RecommendationsPage';
