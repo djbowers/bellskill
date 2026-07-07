@@ -105,7 +105,7 @@ const fetchProgramProgress = async (
       .select('*')
       .eq('user_id', userId)
       .eq('program_id', programId)
-      .order('completed_at', { ascending: false, nullsFirst: true }),
+      .order('completed_at', { ascending: false, nullsFirst: false }),
   ]);
 
   if (programResult.error) throw programResult.error;
