@@ -99,7 +99,7 @@ describe('ProgramsPage', () => {
   it('prompts to switch when a different program is already active, then enrolls on confirm', () => {
     mockUseActiveProgram.mockReturnValue({
       data: {
-        enrollment: { programId: 'other-program' },
+        enrollment: { programId: 'other-program', status: 'active' },
         program: { title: 'Other Program' },
       },
     });

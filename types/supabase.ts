@@ -847,6 +847,15 @@ export type Database = {
           users_with_first_workout: number
         }[]
       }
+      complete_program_session: {
+        Args: {
+          p_program_session_id: string
+          p_status?: string
+          p_user_program_id: string
+          p_workout_log_id?: number
+        }
+        Returns: boolean
+      }
       enroll_in_program: { Args: { p_program_id: string }; Returns: string }
       has_premium_access: { Args: { user_id: string }; Returns: boolean }
       pattern_debt_window: {

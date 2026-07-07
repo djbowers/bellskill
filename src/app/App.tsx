@@ -4,6 +4,7 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 
 import { Loading, PWAInstallPrompt, SafeAreaWrapper } from '~/components';
 import { EntitlementProvider } from '~/contexts/EntitlementContext';
+import { ProgramSessionProvider } from '~/contexts/ProgramSessionContext';
 import { WorkoutOptionsProvider } from '~/contexts/WorkoutOptionsContext';
 import { resolveAuthSession } from '~/utils';
 
@@ -45,7 +46,9 @@ export function App() {
         <SessionProvider value={session}>
           <EntitlementProvider>
             <WorkoutOptionsProvider>
-              <RouterProvider router={router} />
+              <ProgramSessionProvider>
+                <RouterProvider router={router} />
+              </ProgramSessionProvider>
             </WorkoutOptionsProvider>
           </EntitlementProvider>
         </SessionProvider>

@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from 'react-query';
 
 import { QUERIES } from '~/constants';
-import { useSession, useWorkoutOptions } from '~/contexts';
+import { useProgramSession, useSession, useWorkoutOptions } from '~/contexts';
 import { WorkoutLog, WorkoutOptions } from '~/types';
 
 import { supabase } from '../supabaseClient';
 import { AnalyticsEvent, trackEvent } from './analytics';
+import { completeProgramSession } from './useCompleteProgramSession';
 
 interface LogWorkoutInput {
   completedReps: number;
@@ -18,6 +19,7 @@ interface LogWorkoutInput {
 export const useLogWorkout = () => {
   const [workoutOptions] = useWorkoutOptions();
   const { user } = useSession();
+  const [programSession, setProgramSession] = useProgramSession();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -38,6 +40,30 @@ export const useLogWorkout = () => {
         workoutOptions,
       }),
     onSuccess: (workoutLogId) => {
+      // Program tracking (Slice 3): if this workout was started from a program
+      // session, advance the program — write a completion linked to the new
+      // workout_logs row (flipping the enrollment to `completed` when it was the
+      // last session, atomically inside the RPC). The completion is a separate
+      // write; the workout_logs insert above is untouched. Fire-and-forget so it
+      // never blocks the normal log/navigation path; clear the pending session
+      // so a subsequent non-program log can't re-attach to it.
+      if (programSession) {
+        const { userProgramId, programSessionId } = programSession;
+        setProgramSession(null);
+        void completeProgramSession({
+          userProgramId,
+          programSessionId,
+          workoutLogId,
+          status: 'completed',
+        })
+          .then(() => {
+            void queryClient.invalidateQueries([QUERIES.ACTIVE_PROGRAM]);
+          })
+          .catch((error) => {
+            console.error('Failed to advance program session', error);
+          });
+      }
+
       // Activation funnel (PROD-157). is_first_workout is read from the
       // WORKOUT_LOGS cache, warmed by StartWorkoutPage before the user reaches
       // the active workout; the canonical value is also derivable server-side
