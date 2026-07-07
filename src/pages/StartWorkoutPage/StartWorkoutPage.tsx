@@ -1,5 +1,5 @@
 import { ArrowLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import {
@@ -44,8 +44,8 @@ import {
   ModifyWorkoutButtons,
   MovementAutocomplete,
   MovementsHeader,
-  RecommendedWorkoutsSection,
   RecommendSessionSection,
+  RecommendedWorkoutsSection,
   Section,
   WeightModeTabs,
   WeightUnitTabs,
@@ -68,17 +68,40 @@ const DEFAULT_VOLUME: number = 1000; // kg
 const DEFAULT_MINUTES: number = 10; // minutes
 const DEFAULT_ROUNDS: number = 10; // rounds
 
-export const StartWorkoutPage = () => {
+/**
+ * Save-session mode (Slice 2): the builder authors a program session instead of
+ * starting a workout. When provided, the footer swaps from "Start workout" to
+ * "Save session" and everything above it — the whole builder — is reused as-is.
+ * This is `loadIntoBuilder` in reverse.
+ */
+export interface ProgramSaveMode {
+  /** Persist the builder's current options as a program session. */
+  onSave: (options: Omit<WorkoutOptions, 'startedAt'>, title: string) => void;
+  /** Whether a save is in flight (disables the footer). */
+  saving: boolean;
+  /** Program-specific UI (saved-session list + duplicate helpers) rendered above the builder. */
+  beforeBuilder?: ReactNode;
+}
+
+interface StartWorkoutPageProps {
+  programSaveMode?: ProgramSaveMode;
+}
+
+export const StartWorkoutPage = ({
+  programSaveMode,
+}: StartWorkoutPageProps = {}) => {
   const features = useFeatures();
   const startWorkout = useStartWorkout();
   const [workoutOptions] = useWorkoutOptions();
   const { curated, recentRepeats } = useRecommendedWorkouts();
 
   // Discovery surfaces are individually flag-gated (PROD-174). With every one
-  // off, there's nothing to browse, so the page is the pure custom builder.
+  // off, there's nothing to browse, so the page is the pure custom builder. In
+  // save-session mode the page is always the builder — no browse surfaces.
   const showCurated = features.curatedFirstWorkout;
   const showRepeat = features.repeatPrevious;
-  const showBrowse = showCurated || showRepeat || features.recommender;
+  const showBrowse =
+    !programSaveMode && (showCurated || showRepeat || features.recommender);
 
   // When a discovery surface is enabled the page opens in "browse" mode
   // (recommendations + a Build-custom button); selecting one or tapping
@@ -88,7 +111,9 @@ export const StartWorkoutPage = () => {
   const location = useLocation();
   const [showBuilder, setShowBuilder] = useState<boolean>(
     !showBrowse ||
-      Boolean((location.state as { editWorkout?: boolean } | null)?.editWorkout),
+      Boolean(
+        (location.state as { editWorkout?: boolean } | null)?.editWorkout,
+      ),
   );
   // Where the (eventual) start originated, carried through any edits the user
   // makes in the builder so `workout_started` stays attributed to the surface.
@@ -96,6 +121,9 @@ export const StartWorkoutPage = () => {
   const [startSourceProps, setStartSourceProps] = useState<
     Record<string, string | number | boolean | null>
   >({});
+
+  // Save-session mode only: the title for the program session being authored.
+  const [sessionTitle, setSessionTitle] = useState<string>('');
 
   // Activation funnel (PROD-157): a user with zero workout logs is "new".
   // While the logs query is still loading (workoutLogs === undefined) we don't
@@ -464,6 +492,27 @@ export const StartWorkoutPage = () => {
     );
   };
 
+  // Save-session mode: capture the builder's current options as a program
+  // session instead of starting a workout.
+  const handleSaveSession = () => {
+    programSaveMode?.onSave(
+      {
+        complexSet,
+        intervalTimer,
+        movements,
+        restTimer,
+        sharedWeightOneUnit,
+        sharedWeightOneValue,
+        sharedWeightTwoUnit,
+        sharedWeightTwoValue,
+        workoutDetails: workoutDetails?.trim() || null,
+        workoutGoal,
+        workoutGoalUnits,
+      },
+      sessionTitle.trim(),
+    );
+  };
+
   const sharedWeightTabValue = getWeightTabValue({
     weightOneValue: sharedWeightOneValue,
     weightTwoValue: sharedWeightTwoValue,
@@ -485,14 +534,29 @@ export const StartWorkoutPage = () => {
     <Page
       actions={
         showBuilder ? (
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={handleClickStart}
-            disabled={startDisabled}
-          >
-            Start workout
-          </Button>
+          programSaveMode ? (
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={handleSaveSession}
+              disabled={
+                startDisabled ||
+                sessionTitle.trim().length === 0 ||
+                programSaveMode.saving
+              }
+            >
+              {programSaveMode.saving ? 'Saving…' : 'Save session'}
+            </Button>
+          ) : (
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={handleClickStart}
+              disabled={startDisabled}
+            >
+              Start workout
+            </Button>
+          )
         ) : undefined
       }
     >
@@ -534,6 +598,22 @@ export const StartWorkoutPage = () => {
               <ArrowLeftIcon className="h-2 w-2" aria-hidden="true" />
               Recommendations
             </button>
+          )}
+
+          {programSaveMode && (
+            <>
+              {programSaveMode.beforeBuilder}
+              <Card>
+                <Section title="Session title">
+                  <Input
+                    className="w-full"
+                    value={sessionTitle}
+                    onChange={(e) => setSessionTitle(e.target.value)}
+                    placeholder="e.g. Ladders 1-2-3"
+                  />
+                </Section>
+              </Card>
+            </>
           )}
 
           <Card>

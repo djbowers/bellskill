@@ -6,6 +6,7 @@ export type FeatureName =
   | 'curatedFirstWorkout'
   | 'explore'
   | 'premium'
+  | 'programs'
   | 'recommender'
   | 'repeatPrevious'
   | 'weeklyBalance';
@@ -23,6 +24,7 @@ const baseFeatures: Features = {
     import.meta.env.VITE_FEATURE_CURATED_FIRST_WORKOUT === 'true',
   explore: import.meta.env.VITE_FEATURE_EXPLORE === 'true',
   premium: import.meta.env.VITE_FEATURE_PREMIUM === 'true',
+  programs: import.meta.env.VITE_FEATURE_PROGRAMS === 'true',
   recommender: import.meta.env.VITE_FEATURE_RECOMMENDER === 'true',
   repeatPrevious: import.meta.env.VITE_FEATURE_REPEAT_PREVIOUS === 'true',
   weeklyBalance: import.meta.env.VITE_FEATURE_WEEKLY_BALANCE === 'true',
@@ -85,6 +87,7 @@ export const getFeatures = (session?: Session | null): Features => {
       curatedFirstWorkout: true,
       explore: true,
       premium: true,
+      programs: true,
       recommender: true,
       repeatPrevious: true,
       weeklyBalance: true,
