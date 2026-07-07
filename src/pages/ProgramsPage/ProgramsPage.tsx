@@ -49,8 +49,17 @@ export const ProgramsPage = () => {
   const enrollIn = (programId: string) =>
     enroll.mutate(programId, { onSuccess: () => navigate('/') });
 
+  // Only an *active* enrollment blocks a fresh enroll — a completed program may
+  // still be returned by useActiveProgram (to drive the home "complete" card),
+  // but starting a new program then needs no "switch?" confirmation.
+  const activeEnrollment =
+    activeProgram?.enrollment.status === 'active' ? activeProgram : null;
+
   const handleEnroll = (programId: string) => {
-    if (activeProgram && activeProgram.enrollment.programId !== programId) {
+    if (
+      activeEnrollment &&
+      activeEnrollment.enrollment.programId !== programId
+    ) {
       setPendingSwitchId(programId);
     } else {
       enrollIn(programId);
@@ -76,7 +85,7 @@ export const ProgramsPage = () => {
   };
 
   const isActive = (program: Program) =>
-    activeProgram?.enrollment.programId === program.id;
+    activeEnrollment?.enrollment.programId === program.id;
 
   return (
     <Page title="Programs">
@@ -217,7 +226,7 @@ export const ProgramsPage = () => {
             <DialogTitle>Switch program?</DialogTitle>
             <DialogDescription>
               You already have an active program
-              {activeProgram ? ` (${activeProgram.program.title})` : ''}.
+              {activeEnrollment ? ` (${activeEnrollment.program.title})` : ''}.
               Starting a new one abandons your current progress.
             </DialogDescription>
           </DialogHeader>

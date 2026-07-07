@@ -6,6 +6,8 @@ import {
   AnalyticsEvent,
   RepeatableWorkout,
   trackEvent,
+  useActiveProgram,
+  useCompleteProgramSession,
   useWorkoutLogs,
 } from '~/api';
 import { Page } from '~/components';
@@ -17,6 +19,7 @@ import { CURATED_WORKOUTS_VERSION } from '~/constants';
 import {
   DEFAULT_MOVEMENT_OPTIONS,
   DEFAULT_WORKOUT_OPTIONS,
+  PendingProgramSession,
   useSession,
   useWorkoutOptions,
 } from '~/contexts';
@@ -44,6 +47,7 @@ import {
   ModifyWorkoutButtons,
   MovementAutocomplete,
   MovementsHeader,
+  NextProgramWorkoutCard,
   RecommendSessionSection,
   RecommendedWorkoutsSection,
   Section,
@@ -95,13 +99,34 @@ export const StartWorkoutPage = ({
   const [workoutOptions] = useWorkoutOptions();
   const { curated, recentRepeats } = useRecommendedWorkouts();
 
+  // Program tracking (Slice 3), behind the `programs` flag. The query is gated so
+  // non-program builds fire zero extra requests (zero regression). `data` is
+  // undefined only while the enabled query is still loading, so `programGate-
+  // Pending` reliably holds the page in browse mode until we know whether to
+  // surface the next-workout card — avoiding a builder→card flash on open.
+  const activeProgramQuery = useActiveProgram({ enabled: features.programs });
+  const activeProgram = activeProgramQuery.data ?? null;
+  const hasActiveProgram = Boolean(activeProgram);
+  const programGatePending =
+    features.programs &&
+    !programSaveMode &&
+    activeProgramQuery.data === undefined;
+  const completeProgramSession = useCompleteProgramSession();
+
   // Discovery surfaces are individually flag-gated (PROD-174). With every one
   // off, there's nothing to browse, so the page is the pure custom builder. In
-  // save-session mode the page is always the builder — no browse surfaces.
+  // save-session mode the page is always the builder — no browse surfaces. An
+  // active program forces browse so its next-workout card is the first thing the
+  // user sees on open.
   const showCurated = features.curatedFirstWorkout;
   const showRepeat = features.repeatPrevious;
   const showBrowse =
-    !programSaveMode && (showCurated || showRepeat || features.recommender);
+    !programSaveMode &&
+    (hasActiveProgram ||
+      programGatePending ||
+      showCurated ||
+      showRepeat ||
+      features.recommender);
 
   // When a discovery surface is enabled the page opens in "browse" mode
   // (recommendations + a Build-custom button); selecting one or tapping
@@ -121,6 +146,11 @@ export const StartWorkoutPage = ({
   const [startSourceProps, setStartSourceProps] = useState<
     Record<string, string | number | boolean | null>
   >({});
+  // Program session the builder was loaded from (Slice 3), carried into the log
+  // step so completion advances the program. Cleared whenever a non-program
+  // surface loads the builder, so a stale session never attaches.
+  const [pendingProgramSession, setPendingProgramSession] =
+    useState<PendingProgramSession | null>(null);
 
   // Save-session mode only: the title for the program session being authored.
   const [sessionTitle, setSessionTitle] = useState<string>('');
@@ -151,6 +181,19 @@ export const StartWorkoutPage = ({
     // Depend on the stable user id, not the session object (which is replaced on
     // every token refresh), so this effect doesn't needlessly re-run.
     [userId, workoutLogs],
+  );
+
+  useEffect(
+    function dropIntoBuilderWhenNothingToBrowse() {
+      // The initial `showBuilder` is fixed at mount, before the (async) program
+      // gate resolves. If it resolves to "no program" and there is nothing else
+      // to browse, fall into the builder — matching the non-program default —
+      // so the page never renders blank (neither browse nor builder).
+      if (!programGatePending && !showBrowse && !showBuilder) {
+        setShowBuilder(true);
+      }
+    },
+    [programGatePending, showBrowse, showBuilder],
   );
 
   const [workoutGoal, setWorkoutGoal] = useState<number>(
@@ -436,6 +479,7 @@ export const StartWorkoutPage = ({
       template_id: workout.id,
       curated_version: CURATED_WORKOUTS_VERSION,
     });
+    setPendingProgramSession(null);
     setShowBuilder(true);
   };
 
@@ -443,6 +487,7 @@ export const StartWorkoutPage = ({
     loadIntoBuilder(repeat.workoutOptions);
     setStartSource('history_repeat');
     setStartSourceProps({ workout_log_id: repeat.workoutLogId });
+    setPendingProgramSession(null);
     setShowBuilder(true);
   };
 
@@ -455,6 +500,7 @@ export const StartWorkoutPage = ({
     loadIntoBuilder(recommendationToWorkoutOptions(recommendation));
     setStartSource('recommender');
     setStartSourceProps({ recommendation_id: recommendationId });
+    setPendingProgramSession(null);
     setShowBuilder(true);
   };
 
@@ -462,10 +508,45 @@ export const StartWorkoutPage = ({
     loadIntoBuilder(DEFAULT_WORKOUT_OPTIONS);
     setStartSource('builder');
     setStartSourceProps({});
+    setPendingProgramSession(null);
     setShowBuilder(true);
   };
 
-  const handleBackToRecommendations = () => setShowBuilder(false);
+  // Load the program's next session into the builder for review/edits, tagged so
+  // the eventual start attributes to `program` and the log step advances it.
+  const handleStartProgram = () => {
+    if (!activeProgram?.nextSession) return;
+    const { session } = activeProgram.nextSession;
+    loadIntoBuilder(activeProgram.nextSession.workoutOptions);
+    setStartSource('program');
+    setStartSourceProps({
+      user_program_id: activeProgram.enrollment.id,
+      program_session_id: session.id,
+    });
+    setPendingProgramSession({
+      userProgramId: activeProgram.enrollment.id,
+      programSessionId: session.id,
+    });
+    setShowBuilder(true);
+  };
+
+  // Skip the next session: writes a `skipped` completion (no workout_log), which
+  // advances the cursor to the following session without leaving the home card.
+  const handleSkipProgram = () => {
+    if (!activeProgram?.nextSession || completeProgramSession.isLoading) return;
+    completeProgramSession.mutate({
+      userProgramId: activeProgram.enrollment.id,
+      programSessionId: activeProgram.nextSession.session.id,
+      status: 'skipped',
+    });
+  };
+
+  const handleBackToRecommendations = () => {
+    setStartSource('builder');
+    setStartSourceProps({});
+    setPendingProgramSession(null);
+    setShowBuilder(false);
+  };
 
   const handleClickStart = () => {
     startWorkout(
@@ -489,6 +570,7 @@ export const StartWorkoutPage = ({
         movement_count: movements.length,
         workout_goal_units: workoutGoalUnits,
       },
+      pendingProgramSession,
     );
   };
 
@@ -562,6 +644,18 @@ export const StartWorkoutPage = ({
     >
       {!showBuilder && showBrowse && (
         <>
+          {activeProgram && (
+            <NextProgramWorkoutCard
+              programTitle={activeProgram.program.title}
+              nextSession={activeProgram.nextSession}
+              progress={activeProgram.progress}
+              isComplete={activeProgram.isComplete}
+              onStart={handleStartProgram}
+              onSkip={handleSkipProgram}
+              skipping={completeProgramSession.isLoading}
+            />
+          )}
+
           <RecommendedWorkoutsSection
             curated={showCurated ? curated : []}
             recentRepeats={showRepeat ? recentRepeats : []}

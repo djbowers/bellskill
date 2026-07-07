@@ -114,6 +114,36 @@ pages/
 - Test data lives in `src/examples/` and `src/mocks/mocked-*.ts`.
 - Test files collocate with source: `ComponentName.test.tsx`.
 
+## Program Tracking (behind the `programs` flag)
+
+A sequencing/progress layer over the existing `workout_logs` pipeline. Four
+tables (`programs`, `program_sessions`, `user_programs`,
+`program_session_completions`) plus two SQL functions: `enroll_in_program`
+(copy-on-enroll clone + activate) and `complete_program_session` (record a
+completion/skip, advance, and flip the enrollment to `completed` on the final
+session — atomic). Both are `SECURITY INVOKER` RPCs; progress is fully **derived
+from the completions set**, never a stored cursor.
+
+- **Next session** = lowest-`sequenceIndex` `program_sessions` row with no
+  completion. `useActiveProgram` runs this client-side over the program's ≤~15
+  sessions (a dedicated SQL function buys nothing at that size). It returns the
+  **active _or_ most-recently-completed** enrollment so the "🎉 complete" card
+  still renders after the terminal status flip — consumers that must treat only
+  active enrollments specially (e.g. `ProgramsPage`) guard on
+  `enrollment.status === 'active'`.
+- **Home surfacing:** an active program forces browse mode
+  (`StartWorkoutPage`), rendering `NextProgramWorkoutCard` above the recommended
+  sections. A `programGatePending` flag holds the page in browse until the
+  (async) program query resolves, avoiding a builder→card flash.
+- **Card → start → log seam:** starting a program session threads
+  `{ userProgramId, programSessionId }` through **`ProgramSessionContext`** (a
+  sibling of `WorkoutOptionsProvider` in `App.tsx`), set by `useStartWorkout`
+  and read in `useLogWorkout.onSuccess` to write the completion linked to the new
+  `workout_logs.id`. The linkage is deliberately **NOT** a `workout_logs` column
+  — the completion row is the only new write; the existing log path is untouched.
+- DB behaviors (RLS, the advance/skip/flip RPC, idempotency) are covered by
+  Playwright e2e against the local Supabase (`e2e/program-*.spec.ts`), not MSW.
+
 ## Authentication
 
 - Uses Supabase Auth with both magic links and OTP (one-time passwords)
