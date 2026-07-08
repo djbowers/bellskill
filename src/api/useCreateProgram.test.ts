@@ -7,10 +7,10 @@ import { SessionProvider, ToastContext } from '~/contexts';
 import { server } from '~/mocks/server';
 
 import { VITE_SUPABASE_URL } from '../env';
-import { useEnrollProgram } from './useEnrollProgram';
+import { useCreateProgram } from './useCreateProgram';
 import { PROGRAM_MUTATION_ERROR_MESSAGE } from './useProgramMutationErrorHandler';
 
-const RPC_URL = `${VITE_SUPABASE_URL}/rest/v1/rpc/enroll_in_program`;
+const PROGRAMS_URL = `${VITE_SUPABASE_URL}/rest/v1/programs`;
 
 const showToast = vi.fn();
 
@@ -27,6 +27,22 @@ const mockSession = {
   expires_in: 10000,
   token_type: '',
 };
+
+const programRow = {
+  id: 'program-1',
+  owner_id: 'user-123',
+  source_program_id: null,
+  slug: null,
+  title: 'My Program',
+  description: null,
+  author_name: null,
+  num_weeks: 4,
+  days_per_week: 3,
+  is_public: false,
+  created_at: '2026-01-01T00:00:00Z',
+};
+
+const input = { title: 'My Program', numWeeks: 4, daysPerWeek: 3 };
 
 const makeWrapper = () => {
   const queryClient = new QueryClient({
@@ -48,59 +64,37 @@ const makeWrapper = () => {
     );
 };
 
-describe('useEnrollProgram', () => {
+describe('useCreateProgram', () => {
   beforeEach(() => showToast.mockClear());
 
-  it('calls the enroll_in_program RPC and resolves with the new enrollment id', async () => {
-    let receivedBody: unknown;
-    server.use(
-      http.post(RPC_URL, async ({ request }) => {
-        receivedBody = await request.json();
-        return HttpResponse.json('new-user-program-id');
-      }),
-    );
+  it('inserts the program and does not toast on success', async () => {
+    server.use(http.post(PROGRAMS_URL, () => HttpResponse.json(programRow)));
 
-    const { result } = renderHook(() => useEnrollProgram(), {
+    const { result } = renderHook(() => useCreateProgram(), {
       wrapper: makeWrapper(),
     });
 
-    const enrolled = await result.current.mutateAsync('program-abc');
+    const created = await result.current.mutateAsync(input);
 
-    expect(enrolled).toBe('new-user-program-id');
-    expect(receivedBody).toEqual({ p_program_id: 'program-abc' });
+    expect(created.id).toBe('program-1');
+    expect(showToast).not.toHaveBeenCalled();
   });
 
-  it('surfaces RPC errors', async () => {
+  it('toasts on failure', async () => {
     server.use(
-      http.post(RPC_URL, () =>
+      http.post(PROGRAMS_URL, () =>
         HttpResponse.json({ message: 'boom' }, { status: 400 }),
       ),
     );
 
-    const { result } = renderHook(() => useEnrollProgram(), {
+    const { result } = renderHook(() => useCreateProgram(), {
       wrapper: makeWrapper(),
     });
 
-    await expect(
-      result.current.mutateAsync('program-abc'),
-    ).rejects.toBeTruthy();
+    await expect(result.current.mutateAsync(input)).rejects.toBeTruthy();
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(showToast).toHaveBeenCalledWith(PROGRAM_MUTATION_ERROR_MESSAGE, {
       variant: 'destructive',
     });
-  });
-
-  it('does not toast on the happy path', async () => {
-    server.use(
-      http.post(RPC_URL, () => HttpResponse.json('new-user-program-id')),
-    );
-
-    const { result } = renderHook(() => useEnrollProgram(), {
-      wrapper: makeWrapper(),
-    });
-
-    await result.current.mutateAsync('program-abc');
-
-    expect(showToast).not.toHaveBeenCalled();
   });
 });

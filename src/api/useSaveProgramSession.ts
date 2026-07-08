@@ -6,6 +6,7 @@ import { ProgramSession, WorkoutOptions } from '~/types';
 import type { Json } from '../../types/supabase';
 import { supabase } from '../supabaseClient';
 import { mapProgramSessionRow } from './program';
+import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
 export interface SaveProgramSessionInput {
   programId: string;
@@ -25,6 +26,7 @@ export interface SaveProgramSessionInput {
  */
 export const useSaveProgramSession = () => {
   const queryClient = useQueryClient();
+  const onError = useProgramMutationErrorHandler();
 
   return useMutation({
     mutationFn: async (
@@ -51,5 +53,6 @@ export const useSaveProgramSession = () => {
       queryClient.invalidateQueries([QUERIES.PROGRAM, variables.programId]);
       queryClient.invalidateQueries([QUERIES.PROGRAMS]);
     },
+    onError,
   });
 };

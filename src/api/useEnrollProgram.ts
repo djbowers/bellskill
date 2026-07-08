@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from 'react-query';
 import { QUERIES } from '~/constants';
 
 import { supabase } from '../supabaseClient';
+import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
 /**
  * Enrolls the user in a program via the Slice-1 `enroll_in_program` RPC
@@ -15,6 +16,7 @@ import { supabase } from '../supabaseClient';
  */
 export const useEnrollProgram = () => {
   const queryClient = useQueryClient();
+  const onError = useProgramMutationErrorHandler();
 
   return useMutation({
     mutationFn: async (programId: string): Promise<string> => {
@@ -29,5 +31,6 @@ export const useEnrollProgram = () => {
       queryClient.invalidateQueries([QUERIES.ACTIVE_PROGRAM]);
       queryClient.invalidateQueries([QUERIES.PROGRAMS]);
     },
+    onError,
   });
 };

@@ -17,6 +17,7 @@ export * from './useDuplicateProgramSession';
 export * from './useReorderProgramSession';
 export * from './useEnrollProgram';
 export * from './useProgram';
+export * from './useProgramMutationErrorHandler';
 export * from './useProgramProgress';
 export * from './usePrograms';
 export * from './useSaveProgramSession';

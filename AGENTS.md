@@ -167,6 +167,13 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
 - DB behaviors (RLS, the advance/skip/flip RPC, idempotency, the reorder/delete
   reindex + constraint-safety) are covered by Playwright e2e against the local
   Supabase (`e2e/program-*.spec.ts`), not MSW.
+- **Error feedback (PROD-220):** program mutations surface failures through one
+  reusable toast — `ToastProvider`/`useToast` (`~/contexts/ToastContext`, mounted
+  app-wide in `App.tsx`; presentational `Toast` in `~/components/ui/toast`). Each
+  program `useMutation` wires the shared `useProgramMutationErrorHandler` as its
+  `onError`; a new program mutation reuses it by adding that `onError`. The
+  behavior is scoped to programs structurally (it is wired only into program
+  hooks), not via a runtime flag check.
 
 ## Authentication
 
