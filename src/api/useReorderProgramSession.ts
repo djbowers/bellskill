@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from 'react-query';
 import { QUERIES } from '~/constants';
 
 import { supabase } from '../supabaseClient';
+import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
 export interface ReorderProgramSessionsInput {
   programId: string;
@@ -26,6 +27,7 @@ export interface ReorderProgramSessionsInput {
  */
 export const useReorderProgramSessions = () => {
   const queryClient = useQueryClient();
+  const onError = useProgramMutationErrorHandler();
 
   return useMutation({
     mutationFn: async (input: ReorderProgramSessionsInput): Promise<void> => {
@@ -40,5 +42,6 @@ export const useReorderProgramSessions = () => {
       queryClient.invalidateQueries([QUERIES.ACTIVE_PROGRAM]);
       queryClient.invalidateQueries([QUERIES.PROGRAM_PROGRESS]);
     },
+    onError,
   });
 };
