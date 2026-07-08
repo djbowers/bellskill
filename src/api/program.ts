@@ -1,6 +1,8 @@
 import {
   Program,
   ProgramSession,
+  ProgramSessionCompletion,
+  ProgramSessionCompletionStatus,
   UserProgram,
   UserProgramStatus,
   WorkoutOptions,
@@ -12,6 +14,8 @@ type ProgramRow = Database['public']['Tables']['programs']['Row'];
 type ProgramSessionRow =
   Database['public']['Tables']['program_sessions']['Row'];
 type UserProgramRow = Database['public']['Tables']['user_programs']['Row'];
+type ProgramSessionCompletionRow =
+  Database['public']['Tables']['program_session_completions']['Row'];
 
 /** camelCase mapper for a raw `programs` row. */
 export const mapProgramRow = (row: ProgramRow): Program => ({
@@ -47,6 +51,19 @@ export const mapProgramSessionRow = (
     'startedAt'
   >,
   notes: row.notes,
+});
+
+/** camelCase mapper for a raw `program_session_completions` row. */
+export const mapProgramSessionCompletionRow = (
+  row: ProgramSessionCompletionRow,
+): ProgramSessionCompletion => ({
+  id: row.id,
+  userProgramId: row.user_program_id,
+  programSessionId: row.program_session_id,
+  userId: row.user_id,
+  workoutLogId: row.workout_log_id,
+  status: row.status as ProgramSessionCompletionStatus,
+  completedAt: row.completed_at,
 });
 
 /** camelCase mapper for a raw `user_programs` enrollment row. */
