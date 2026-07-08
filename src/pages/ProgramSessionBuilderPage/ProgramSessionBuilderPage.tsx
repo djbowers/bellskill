@@ -1,14 +1,17 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import {
+  useDeleteProgramSession,
   useDuplicateProgramSession,
   useDuplicateProgramWeek,
   useProgram,
+  useReorderProgramSessions,
   useSaveProgramSession,
 } from '~/api';
 import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
+import { useSession } from '~/contexts';
 import { ProgramSession, WorkoutOptions } from '~/types';
 
 import { StartWorkoutPage } from '../StartWorkoutPage';
@@ -38,10 +41,13 @@ const groupByWeek = (sessions: ProgramSession[]): WeekGroup[] => {
 export const ProgramSessionBuilderPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const session = useSession();
   const { data, isLoading, isError } = useProgram(id);
   const saveSession = useSaveProgramSession();
   const duplicateSession = useDuplicateProgramSession();
   const duplicateWeek = useDuplicateProgramWeek();
+  const reorderSessions = useReorderProgramSessions();
+  const deleteSession = useDeleteProgramSession();
 
   if (isLoading) {
     return (
@@ -69,6 +75,14 @@ export const ProgramSessionBuilderPage = () => {
   const nextDay = (nextSequenceIndex % daysPerWeek) + 1;
   const maxWeek = sessions.reduce((max, s) => Math.max(max, s.weekNumber), 0);
   const weekGroups = groupByWeek(sessions);
+
+  // Reorder/delete write to program_sessions, which RLS restricts to the
+  // program owner — so only show those controls on an owned program (the shared
+  // read-only DFW is never editable here). `sessions` is already ordered by
+  // `sequenceIndex`, so its array position is the flat move index.
+  const canEdit = !!session?.user?.id && program.ownerId === session.user.id;
+  const reordering = reorderSessions.isLoading;
+  const deleting = deleteSession.isLoading;
 
   const handleSave = (
     options: Omit<WorkoutOptions, 'startedAt'>,
@@ -100,6 +114,28 @@ export const ProgramSessionBuilderPage = () => {
       newWeekNumber: maxWeek + 1,
       startSequenceIndex: nextSequenceIndex,
     });
+  };
+
+  // Move the session at flat `index` by `direction` (-1 up / +1 down), persisting
+  // the full new order. Reindexing goes through the RPC because the UNIQUE
+  // (program_id, sequence_index) constraint is not deferrable.
+  const handleMove = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= sessions.length) return;
+    const orderedIds = sessions.map((s) => s.id);
+    [orderedIds[index], orderedIds[target]] = [
+      orderedIds[target],
+      orderedIds[index],
+    ];
+    reorderSessions.mutate({ programId: program.id, orderedIds });
+  };
+
+  const handleDelete = (target: ProgramSession) => {
+    const confirmed = window.confirm(
+      `Delete "${target.title}"? This can't be undone.`,
+    );
+    if (!confirmed) return;
+    deleteSession.mutate({ sessionId: target.id, programId: program.id });
   };
 
   const beforeBuilder = (
@@ -134,24 +170,70 @@ export const ProgramSessionBuilderPage = () => {
                     Duplicate week
                   </Button>
                 </div>
-                {group.sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span>
-                      Day {session.dayNumber} · {session.title}
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDuplicateSession(session)}
-                      disabled={duplicateSession.isLoading}
+                {group.sessions.map((groupSession) => {
+                  const flatIndex = sessions.findIndex(
+                    (s) => s.id === groupSession.id,
+                  );
+                  return (
+                    <div
+                      key={groupSession.id}
+                      className="flex items-center justify-between text-sm"
                     >
-                      Duplicate
-                    </Button>
-                  </div>
-                ))}
+                      <span>
+                        Day {groupSession.dayNumber} · {groupSession.title}
+                      </span>
+                      <div className="flex items-center gap-0.5">
+                        {canEdit && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              aria-label={`Move ${groupSession.title} up`}
+                              onClick={() => handleMove(flatIndex, -1)}
+                              disabled={
+                                reordering || deleting || flatIndex === 0
+                              }
+                            >
+                              ↑
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              aria-label={`Move ${groupSession.title} down`}
+                              onClick={() => handleMove(flatIndex, 1)}
+                              disabled={
+                                reordering ||
+                                deleting ||
+                                flatIndex === sessions.length - 1
+                              }
+                            >
+                              ↓
+                            </Button>
+                          </>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDuplicateSession(groupSession)}
+                          disabled={duplicateSession.isLoading}
+                        >
+                          Duplicate
+                        </Button>
+                        {canEdit && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            aria-label={`Delete ${groupSession.title}`}
+                            onClick={() => handleDelete(groupSession)}
+                            disabled={deleting || reordering}
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </CardContent>

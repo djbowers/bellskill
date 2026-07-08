@@ -118,11 +118,12 @@ pages/
 
 A sequencing/progress layer over the existing `workout_logs` pipeline. Four
 tables (`programs`, `program_sessions`, `user_programs`,
-`program_session_completions`) plus two SQL functions: `enroll_in_program`
-(copy-on-enroll clone + activate) and `complete_program_session` (record a
+`program_session_completions`) plus four SQL functions: `enroll_in_program`
+(copy-on-enroll clone + activate), `complete_program_session` (record a
 completion/skip, advance, and flip the enrollment to `completed` on the final
-session — atomic). Both are `SECURITY INVOKER` RPCs; progress is fully **derived
-from the completions set**, never a stored cursor.
+session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
+`delete_program_session`. All are `SECURITY INVOKER` RPCs; progress is fully
+**derived from the completions set**, never a stored cursor.
 
 - **Next session** = lowest-`sequenceIndex` `program_sessions` row with no
   completion. `useActiveProgram` runs this client-side over the program's ≤~15
@@ -150,8 +151,22 @@ from the completions set**, never a stored cursor.
   completion row carries the log id), reusing `CompletedWorkoutPage` verbatim.
   Entry points: each `ProgramsPage` "My programs" card and the home
   `NextProgramWorkoutCard` (`onViewProgress`).
-- DB behaviors (RLS, the advance/skip/flip RPC, idempotency) are covered by
-  Playwright e2e against the local Supabase (`e2e/program-*.spec.ts`), not MSW.
+- **Reorder / delete (PROD-219, owner-editable programs only):** the builder
+  save-mode surface (`ProgramSessionBuilderPage`) shows up/down + Delete controls
+  per session, gated on `program.ownerId === session.user.id` so the read-only
+  shared DFW is never editable. Both persist through RPCs
+  (`useReorderProgramSessions` / `useDeleteProgramSession`) because
+  `UNIQUE (program_id, sequence_index)` is **NOT deferrable** — a naive
+  client-side permutation transiently duplicates an index and 409s. Each RPC
+  reindexes atomically with a temp offset (bump every affected row past the
+  current MAX index, then assign 0..N-1) and **relabels week/day** from
+  `days_per_week`, keeping the hand-built order coherent. Delete compacts the
+  survivors to 0..N-1 (no gap) so the ADD path's `sequenceIndex = sessions.length`
+  never collides. Session ids are stable across a reorder (completions keep
+  pointing correctly); a deleted session's completion cascades.
+- DB behaviors (RLS, the advance/skip/flip RPC, idempotency, the reorder/delete
+  reindex + constraint-safety) are covered by Playwright e2e against the local
+  Supabase (`e2e/program-*.spec.ts`), not MSW.
 
 ## Authentication
 
@@ -188,3 +203,10 @@ from the completions set**, never a stored cursor.
 - MSW for API mocking in tests
 - Vitest + React Testing Library for testing
 - Storybook for component development
+
+## Maintaining this file
+
+Keep this file for knowledge useful to almost every future agent session in this project.
+Do not repeat what the codebase already shows; point to the authoritative file or command instead.
+Prefer rewriting or pruning existing entries over appending new ones.
+When updating this file, preserve this bar for all agents and keep entries concise.

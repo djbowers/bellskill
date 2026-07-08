@@ -856,6 +856,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      delete_program_session: {
+        Args: { p_session_id: string }
+        Returns: undefined
+      }
       enroll_in_program: { Args: { p_program_id: string }; Returns: string }
       has_premium_access: { Args: { user_id: string }; Returns: boolean }
       pattern_debt_window: {
@@ -868,6 +872,10 @@ export type Database = {
           total_reps: number
           total_volume_kg: number
         }[]
+      }
+      reorder_program_sessions: {
+        Args: { p_ordered_ids: string[]; p_program_id: string }
+        Returns: undefined
       }
     }
     Enums: {
