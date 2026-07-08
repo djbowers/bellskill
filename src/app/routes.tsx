@@ -9,6 +9,7 @@ import {
   CompletedWorkoutPage,
   HistoryPage,
   MovementsPage,
+  NotFoundPage,
   PaywallPage,
   ProgramProgressPage,
   ProgramSessionBuilderPage,
@@ -17,6 +18,7 @@ import {
   StartWorkoutPage,
   WeeklyBalancePage,
 } from '../pages';
+import { RouteErrorBoundary } from './RouteErrorBoundary';
 import { Root } from './Root';
 
 /**
@@ -28,6 +30,7 @@ export const createRoutes = (flags: Features = features): RouteObject[] => [
   {
     path: '/',
     element: <Root />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         path: '',
@@ -80,6 +83,13 @@ export const createRoutes = (flags: Features = features): RouteObject[] => [
             },
           ]
         : []),
+      // Catch-all for any unmatched path — including feature-gated routes whose
+      // flag is off (e.g. `/programs` when `programs` is disabled). Kept outside
+      // every `flags.*` spread so it is always present regardless of flags.
+      {
+        path: '*',
+        element: <NotFoundPage />,
+      },
     ],
   },
 ];
