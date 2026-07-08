@@ -61,7 +61,9 @@ describe('createRoutes catch-all', () => {
 describe('RouteErrorBoundary', () => {
   it('renders a friendly fallback when a route throws', () => {
     // Swallow React Router's expected error-boundary console output.
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
 
     const Boom = () => {
       throw new Error('kaboom');

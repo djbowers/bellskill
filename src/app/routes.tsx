@@ -18,8 +18,8 @@ import {
   StartWorkoutPage,
   WeeklyBalancePage,
 } from '../pages';
-import { RouteErrorBoundary } from './RouteErrorBoundary';
 import { Root } from './Root';
+import { RouteErrorBoundary } from './RouteErrorBoundary';
 
 /**
  * Builds the route table for a given set of effective feature flags. Pass the
