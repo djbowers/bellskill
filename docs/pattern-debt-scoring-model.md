@@ -16,8 +16,9 @@ Recommender (PROD-86/87) reasons over — the `pattern_debt` key reserved in
 
 ## The seven coarse patterns
 
-The movement catalog tags each exercise with a granular `Movement Pattern` enum
-(35+ values). The engine collapses those into the seven patterns a lifter actually
+The movement catalog tags each exercise with a `Movement Pattern #1` value — a
+free-`text` column (PROD-153) constrained by a CHECK to the controlled vocabulary
+below. The engine collapses those into the seven patterns a lifter actually
 programs around:
 
 | Coarse pattern | Source `Movement Pattern` values |
@@ -33,8 +34,9 @@ programs around:
 `get_up` is detected by name because the Turkish get-up is a complex/combo
 movement, not a single catalog pattern. Name detection is checked **first**; if a
 movement is a get-up it is bucketed there, otherwise it falls through to the
-pattern-enum mapping (using `Movement Pattern #1`). Movements that map to no coarse
-pattern are ignored. `#2`/`#3` pattern tags are reserved for a future refinement.
+pattern mapping (using `Movement Pattern #1`). Movements that map to no coarse
+pattern are ignored. The slim catalog keeps only `Movement Pattern #1` — the
+`#2`/`#3` columns were dropped (PROD-153).
 
 ## Windows
 
