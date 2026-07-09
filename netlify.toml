@@ -1,12 +1,27 @@
 # Netlify configuration.
 #
-# Build command / publish directory remain configured in the Netlify UI — this
-# file only pins the Supabase connection per deploy context so that:
+# The [build] section below OVERRIDES the build command / publish directory
+# that were previously configured in the Netlify UI. It replicates the app
+# build (`vite build` → dist/) and additionally builds Storybook into
+# dist/storybook, so every deploy serves the app at `/` and a live Storybook
+# at `/storybook` (e.g. https://deploy-preview-<PR#>--bellskill.netlify.app/storybook).
+# Netlify still runs dependency install separately, so `command` only lists the
+# build steps. NODE_VERSION matches .nvmrc (Node 24), the version CI builds on.
+#
+# The rest of this file pins the Supabase connection per deploy context so that:
 #   - production deploys talk to the Bellskill Prod project
 #   - deploy previews (PRs) talk to the Bellskill Dev (staging) project, where
 #     the PR's own migrations + functions are deployed by the
 #     `supabase-preview` GitHub Actions workflow.
 #
+
+[build]
+  command = "npm run build && npm run build-storybook -- -o dist/storybook"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "24"
+
 # VITE_SUPABASE_ANON_KEY is a public, RLS-protected key (it ships in the client
 # bundle), so it is safe to commit here.
 #
