@@ -6,6 +6,7 @@ import { ProgramSession } from '~/types';
 import type { Json } from '../../types/supabase';
 import { supabase } from '../supabaseClient';
 import { mapProgramSessionRow } from './program';
+import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
 export interface DuplicateProgramSessionInput {
   /** The session to copy. */
@@ -44,6 +45,7 @@ const sessionInsert = (
 /** Copies a single session, appending it to the end of the program. */
 export const useDuplicateProgramSession = () => {
   const queryClient = useQueryClient();
+  const onError = useProgramMutationErrorHandler();
 
   return useMutation({
     mutationFn: async (
@@ -71,6 +73,7 @@ export const useDuplicateProgramSession = () => {
         variables.session.programId,
       ]);
     },
+    onError,
   });
 };
 
@@ -81,6 +84,7 @@ export const useDuplicateProgramSession = () => {
  */
 export const useDuplicateProgramWeek = () => {
   const queryClient = useQueryClient();
+  const onError = useProgramMutationErrorHandler();
 
   return useMutation({
     mutationFn: async (
@@ -106,5 +110,6 @@ export const useDuplicateProgramWeek = () => {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries([QUERIES.PROGRAM, variables.programId]);
     },
+    onError,
   });
 };

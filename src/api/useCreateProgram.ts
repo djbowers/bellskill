@@ -6,6 +6,7 @@ import { Program } from '~/types';
 
 import { supabase } from '../supabaseClient';
 import { mapProgramRow } from './program';
+import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
 export interface CreateProgramInput {
   title: string;
@@ -20,6 +21,7 @@ export interface CreateProgramInput {
 export const useCreateProgram = () => {
   const session = useSession();
   const queryClient = useQueryClient();
+  const onError = useProgramMutationErrorHandler();
   const userId = session?.user?.id;
 
   return useMutation({
@@ -48,5 +50,6 @@ export const useCreateProgram = () => {
     onSuccess: () => {
       queryClient.invalidateQueries([QUERIES.PROGRAMS]);
     },
+    onError,
   });
 };

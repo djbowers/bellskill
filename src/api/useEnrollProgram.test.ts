@@ -3,13 +3,16 @@ import { HttpResponse, http } from 'msw';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
-import { SessionProvider } from '~/contexts';
+import { SessionProvider, ToastContext } from '~/contexts';
 import { server } from '~/mocks/server';
 
 import { VITE_SUPABASE_URL } from '../env';
 import { useEnrollProgram } from './useEnrollProgram';
+import { PROGRAM_MUTATION_ERROR_MESSAGE } from './useProgramMutationErrorHandler';
 
 const RPC_URL = `${VITE_SUPABASE_URL}/rest/v1/rpc/enroll_in_program`;
+
+const showToast = vi.fn();
 
 const mockSession = {
   user: {
@@ -33,11 +36,21 @@ const makeWrapper = () => {
     React.createElement(
       QueryClientProvider,
       { client: queryClient },
-      React.createElement(SessionProvider, { value: mockSession }, children),
+      React.createElement(
+        SessionProvider,
+        { value: mockSession },
+        React.createElement(
+          ToastContext.Provider,
+          { value: { showToast } },
+          children,
+        ),
+      ),
     );
 };
 
 describe('useEnrollProgram', () => {
+  beforeEach(() => showToast.mockClear());
+
   it('calls the enroll_in_program RPC and resolves with the new enrollment id', async () => {
     let receivedBody: unknown;
     server.use(
@@ -72,5 +85,22 @@ describe('useEnrollProgram', () => {
       result.current.mutateAsync('program-abc'),
     ).rejects.toBeTruthy();
     await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(showToast).toHaveBeenCalledWith(PROGRAM_MUTATION_ERROR_MESSAGE, {
+      variant: 'destructive',
+    });
+  });
+
+  it('does not toast on the happy path', async () => {
+    server.use(
+      http.post(RPC_URL, () => HttpResponse.json('new-user-program-id')),
+    );
+
+    const { result } = renderHook(() => useEnrollProgram(), {
+      wrapper: makeWrapper(),
+    });
+
+    await result.current.mutateAsync('program-abc');
+
+    expect(showToast).not.toHaveBeenCalled();
   });
 });

@@ -7,10 +7,10 @@ import { SessionProvider, ToastContext } from '~/contexts';
 import { server } from '~/mocks/server';
 
 import { VITE_SUPABASE_URL } from '../env';
+import { useCreateProgram } from './useCreateProgram';
 import { PROGRAM_MUTATION_ERROR_MESSAGE } from './useProgramMutationErrorHandler';
-import { useReorderProgramSessions } from './useReorderProgramSession';
 
-const RPC_URL = `${VITE_SUPABASE_URL}/rest/v1/rpc/reorder_program_sessions`;
+const PROGRAMS_URL = `${VITE_SUPABASE_URL}/rest/v1/programs`;
 
 const showToast = vi.fn();
 
@@ -27,6 +27,22 @@ const mockSession = {
   expires_in: 10000,
   token_type: '',
 };
+
+const programRow = {
+  id: 'program-1',
+  owner_id: 'user-123',
+  source_program_id: null,
+  slug: null,
+  title: 'My Program',
+  description: null,
+  author_name: null,
+  num_weeks: 4,
+  days_per_week: 3,
+  is_public: false,
+  created_at: '2026-01-01T00:00:00Z',
+};
+
+const input = { title: 'My Program', numWeeks: 4, daysPerWeek: 3 };
 
 const makeWrapper = () => {
   const queryClient = new QueryClient({
@@ -48,51 +64,34 @@ const makeWrapper = () => {
     );
 };
 
-describe('useReorderProgramSessions', () => {
+describe('useCreateProgram', () => {
   beforeEach(() => showToast.mockClear());
 
-  it('sends the program id and the full ordered id array to the RPC and does not toast on success', async () => {
-    let receivedBody: unknown;
-    server.use(
-      http.post(RPC_URL, async ({ request }) => {
-        receivedBody = await request.json();
-        return new HttpResponse(null, { status: 204 });
-      }),
-    );
+  it('inserts the program and does not toast on success', async () => {
+    server.use(http.post(PROGRAMS_URL, () => HttpResponse.json(programRow)));
 
-    const { result } = renderHook(() => useReorderProgramSessions(), {
+    const { result } = renderHook(() => useCreateProgram(), {
       wrapper: makeWrapper(),
     });
 
-    await result.current.mutateAsync({
-      programId: 'prog-1',
-      orderedIds: ['s-2', 's-0', 's-1'],
-    });
+    const created = await result.current.mutateAsync(input);
 
-    expect(receivedBody).toEqual({
-      p_program_id: 'prog-1',
-      p_ordered_ids: ['s-2', 's-0', 's-1'],
-    });
+    expect(created.id).toBe('program-1');
     expect(showToast).not.toHaveBeenCalled();
   });
 
-  it('surfaces RPC errors and toasts on failure', async () => {
+  it('toasts on failure', async () => {
     server.use(
-      http.post(RPC_URL, () =>
+      http.post(PROGRAMS_URL, () =>
         HttpResponse.json({ message: 'boom' }, { status: 400 }),
       ),
     );
 
-    const { result } = renderHook(() => useReorderProgramSessions(), {
+    const { result } = renderHook(() => useCreateProgram(), {
       wrapper: makeWrapper(),
     });
 
-    await expect(
-      result.current.mutateAsync({
-        programId: 'prog-1',
-        orderedIds: ['s-0'],
-      }),
-    ).rejects.toBeTruthy();
+    await expect(result.current.mutateAsync(input)).rejects.toBeTruthy();
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(showToast).toHaveBeenCalledWith(PROGRAM_MUTATION_ERROR_MESSAGE, {
       variant: 'destructive',

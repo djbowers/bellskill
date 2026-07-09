@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from 'react-query';
 import { QUERIES } from '~/constants';
 
 import { supabase } from '../supabaseClient';
+import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
 export interface DeleteProgramSessionInput {
   sessionId: string;
@@ -21,6 +22,7 @@ export interface DeleteProgramSessionInput {
  */
 export const useDeleteProgramSession = () => {
   const queryClient = useQueryClient();
+  const onError = useProgramMutationErrorHandler();
 
   return useMutation({
     mutationFn: async (input: DeleteProgramSessionInput): Promise<void> => {
@@ -35,5 +37,6 @@ export const useDeleteProgramSession = () => {
       queryClient.invalidateQueries([QUERIES.ACTIVE_PROGRAM]);
       queryClient.invalidateQueries([QUERIES.PROGRAM_PROGRESS]);
     },
+    onError,
   });
 };
