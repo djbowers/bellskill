@@ -1,12 +1,15 @@
 # Netlify configuration.
 #
-# The [build] section below OVERRIDES the build command / publish directory
-# that were previously configured in the Netlify UI. It replicates the app
-# build (`vite build` → dist/) and additionally builds Storybook into
-# dist/storybook, so every deploy serves the app at `/` and a live Storybook
-# at `/storybook` (e.g. https://deploy-preview-<PR#>--bellskill.netlify.app/storybook).
-# Netlify still runs dependency install separately, so `command` only lists the
-# build steps. NODE_VERSION matches .nvmrc (Node 24), the version CI builds on.
+# The [context.deploy-preview] section below scopes a Storybook build to PR
+# deploy previews ONLY. On a preview it OVERRIDES the Netlify UI build command,
+# replicating the app build (`vite build` → dist/) and additionally building
+# Storybook into dist/storybook, so each preview serves the app at `/` and a
+# live Storybook at `/storybook`
+# (e.g. https://deploy-preview-<PR#>--bellskill.netlify.app/storybook).
+# Production build behavior is intentionally unchanged: it keeps the existing
+# Netlify-UI-configured build command and publish dir, so no Storybook is ever
+# built or served on the production site. NODE_VERSION matches .nvmrc (Node 24),
+# the version CI builds on.
 #
 # The rest of this file pins the Supabase connection per deploy context so that:
 #   - production deploys talk to the Bellskill Prod project
@@ -15,12 +18,9 @@
 #     `supabase-preview` GitHub Actions workflow.
 #
 
-[build]
+[context.deploy-preview]
   command = "npm run build && npm run build-storybook -- -o dist/storybook"
   publish = "dist"
-
-[build.environment]
-  NODE_VERSION = "24"
 
 # VITE_SUPABASE_ANON_KEY is a public, RLS-protected key (it ships in the client
 # bundle), so it is safe to commit here.
@@ -34,5 +34,6 @@
   VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluenpxcGFqa2hxanpmdGl5bmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTA2NjI3NjMsImV4cCI6MjAwNjIzODc2M30.xLRZaFcdp9K2HucbAkJig0GSEfyYsWOYrVOTDIrgK8g"
 
 [context.deploy-preview.environment]
+  NODE_VERSION = "24"
   VITE_SUPABASE_URL = "https://obtrxswejclgxjfyddow.supabase.co"
   VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9idHJ4c3dlamNsZ3hqZnlkZG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTk0Nzk2ODQsImV4cCI6MjAxNTA1NTY4NH0.insdjysFDW8dfU-IhgvN-Q3T2fNmeSL2FcejeM2KaGo"
