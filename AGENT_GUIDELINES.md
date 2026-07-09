@@ -4,7 +4,7 @@ This section defines what the automated agents (Bellskill PM and Bellskill Build
 
 ## Current critical path
 
-**Movement Foundation (CB-70, CB-71, CB-72, CB-73, CB-74).** Bellskill is becoming an AI-powered kettlebell coaching platform. The single blocking dependency for the entire intelligent-features roadmap is replacing free-text movement entry with a structured movement selection UI backed by the ingested functional movement database (3,000+ exercises tagged with pattern, equipment, plane, and difficulty).
+**Movement Foundation (CB-70, CB-71, CB-72, CB-73, CB-74).** Bellskill is becoming an AI-powered kettlebell coaching platform. The single blocking dependency for the entire intelligent-features roadmap is replacing free-text movement entry with a structured movement selection UI backed by a self-authored, commercially-clean movement catalog (~250 curated Kettlebell + Bodyweight movements tagged with pattern, equipment, arm/weight-mode, muscle group, and difficulty).
 
 Downstream features that are blocked until this ships:
 - **Pattern Debt Engine** — needs movements tagged by pattern
