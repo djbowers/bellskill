@@ -7,6 +7,7 @@ This section defines what the automated agents (Bellskill PM and Bellskill Build
 **Movement Foundation (CB-70, CB-71, CB-72, CB-73, CB-74).** Bellskill is becoming an AI-powered kettlebell coaching platform. The single blocking dependency for the entire intelligent-features roadmap is replacing free-text movement entry with a structured movement selection UI backed by a self-authored, commercially-clean movement catalog (~250 curated Kettlebell + Bodyweight movements tagged with pattern, equipment, arm/weight-mode, muscle group, and difficulty).
 
 Downstream features that are blocked until this ships:
+
 - **Pattern Debt Engine** — needs movements tagged by pattern
 - **AI Next Session Recommender** — needs a structured catalog to draw from
 - **Skill Tree** — needs reliable movement identity for progression logic
@@ -93,6 +94,7 @@ A Linear label meaning "a human has looked at this and confirmed it's safe for a
 Every state change an agent makes to a Linear ticket must be accompanied by a comment from that agent explaining what it did and why. No silent modifications.
 
 Required comment moments:
+
 - **PM** after triaging a ticket (acceptance criteria added, assigned to self).
 - **Builder** when picking up a ticket (Implementation Plan).
 - **Builder** when opening a PR (link + summary).
@@ -107,6 +109,7 @@ Required comment moments:
 ## When agents should stop and ask
 
 Both agents should prefer stopping and asking to improvising when they hit:
+
 - Ambiguous or contradictory acceptance criteria
 - Missing context (e.g., a ticket references a document they can't find)
 - A required change in an off-limits path
@@ -117,4 +120,4 @@ Both agents should prefer stopping and asking to improvising when they hit:
 
 ---
 
-*Last updated: 2026-05-20. Both agents read this file at the start of every run — edit here to change their behavior.*
+_Last updated: 2026-05-20. Both agents read this file at the start of every run — edit here to change their behavior._

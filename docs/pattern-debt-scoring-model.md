@@ -21,15 +21,15 @@ free-`text` column (PROD-153) constrained by a CHECK to the controlled vocabular
 below. The engine collapses those into the seven patterns a lifter actually
 programs around:
 
-| Coarse pattern | Source `Movement Pattern` values |
-| --- | --- |
-| `hinge`    | Hip Hinge, Hip Dominant, Hip Extension |
-| `squat`    | Knee Dominant |
-| `push`     | Vertical Push, Horizontal Push |
-| `pull`     | Vertical Pull, Horizontal Pull |
-| `carry`    | Loaded Carry |
-| `rotation` | Rotational, Spinal Rotational |
-| `get_up`   | *name-based* — movement name matches `get-up` / `get up` / `getup` / `turkish` |
+| Coarse pattern | Source `Movement Pattern` values                                               |
+| -------------- | ------------------------------------------------------------------------------ |
+| `hinge`        | Hip Hinge, Hip Dominant, Hip Extension                                         |
+| `squat`        | Knee Dominant                                                                  |
+| `push`         | Vertical Push, Horizontal Push                                                 |
+| `pull`         | Vertical Pull, Horizontal Pull                                                 |
+| `carry`        | Loaded Carry                                                                   |
+| `rotation`     | Rotational, Spinal Rotational                                                  |
+| `get_up`       | _name-based_ — movement name matches `get-up` / `get up` / `getup` / `turkish` |
 
 `get_up` is detected by name because the Turkish get-up is a complex/combo
 movement, not a single catalog pattern. Name detection is checked **first**; if a
@@ -40,10 +40,10 @@ pattern are ignored. The slim catalog keeps only `Movement Pattern #1` — the
 
 ## Windows
 
-| Param | Default | Meaning |
-| --- | --- | --- |
-| `windowDays`   | 14 | The "recent" window the debt is computed over. |
-| `baselineDays` | 84 | Trailing window (6 × 14d) used to establish each pattern's personal volume baseline. |
+| Param          | Default | Meaning                                                                              |
+| -------------- | ------- | ------------------------------------------------------------------------------------ |
+| `windowDays`   | 14      | The "recent" window the debt is computed over.                                       |
+| `baselineDays` | 84      | Trailing window (6 × 14d) used to establish each pattern's personal volume baseline. |
 
 Both are configurable arguments to the SQL function so the UI and the recommender
 can request different horizons.
