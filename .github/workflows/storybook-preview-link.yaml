@@ -1,0 +1,57 @@
+# Comments the live Storybook preview link on each PR.
+#
+# Storybook is built into dist/storybook by the netlify.toml [build] step, so it
+# ships inside the same deploy preview as the app. The deploy-preview URL is
+# deterministic (https://deploy-preview-<PR#>--bellskill.netlify.app), which
+# makes the Storybook link derivable without waiting on Netlify's API. This
+# complements Netlify's own deploy-preview comment rather than replacing it.
+#
+# The comment is posted once and updated in place (matched by a hidden marker),
+# so re-runs never pile up duplicates.
+
+name: Storybook preview link
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment Storybook preview link
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.issue.number;
+            const url = `https://deploy-preview-${pr}--bellskill.netlify.app/storybook`;
+            const marker = '<!-- storybook-preview-link -->';
+            const body = `${marker}\n📚 **Storybook preview:** ${url}\n\n` +
+              `Live once this PR's Netlify deploy preview finishes building. ` +
+              `Bundled into the same deploy as the app (served at \`/storybook\`).`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr,
+            });
+            const existing = comments.find((c) => c.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr,
+                body,
+              });
+            }

@@ -1,3 +1,10 @@
+# Storybook lives as a static build under /storybook. Serve those files as-is
+# and keep them out of the SPA fallback below. Netlify already serves existing
+# static files before applying a non-forced 200 rewrite, but this explicit rule
+# (ahead of the catch-all) documents the intent and 404s unknown /storybook
+# paths instead of quietly rendering the app.
+/storybook/*    /storybook/:splat   200
+
 # SPA fallback: serve index.html for all client-side routes so React Router
 # deep links (e.g. /checkout/success) resolve instead of returning a 404.
 /*    /index.html   200
