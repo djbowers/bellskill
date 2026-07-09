@@ -38,41 +38,30 @@ export const COLUMNS = [
 // These MUST stay in sync with the surviving `movements` columns and their
 // consumers. Equipment is intentionally narrowed to the two classes the workout
 // builder can ever surface (src/utils/movementWeightModeFilter.ts). Muscle
-// groups / difficulty levels mirror the "Muscle Group" / "Difficulty Level"
-// enums the old schema carried (and MovementsPage's filter constants). Movement
-// patterns are restricted to the values the pattern_debt_window CASE recognizes
+// groups / difficulty levels mirror the app's filterable vocabulary — the
+// MuscleGroup / DifficultyLevel unions in src/types and the matching Explore
+// filter constants in MovementsPage — so the CSV, validator, and Explore filters
+// share one value set. Movement patterns are restricted to the values the
+// pattern_debt_window CASE recognizes
 // (supabase/migrations/20260624000000_create_pattern_debt_function.sql).
 const EQUIPMENT = new Set(['Bodyweight', 'Kettlebell']);
 const ARM = new Set(['Single Arm', 'Double Arm', 'No Arms']);
 const PRIMARY_ITEMS = new Set([1, 2]);
 const MUSCLE_GROUPS = new Set([
   'Abdominals',
-  'Abductors',
   'Adductors',
   'Back',
-  'Biceps',
   'Calves',
   'Chest',
   'Forearms',
   'Glutes',
   'Hamstrings',
-  'Hip Flexors',
   'Quadriceps',
-  'Shins',
   'Shoulders',
   'Trapezius',
   'Triceps',
 ]);
-const DIFFICULTY_LEVELS = new Set([
-  'Beginner',
-  'Novice',
-  'Intermediate',
-  'Advanced',
-  'Expert',
-  'Master',
-  'Grand Master',
-  'Legendary',
-]);
+const DIFFICULTY_LEVELS = new Set(['Beginner', 'Intermediate', 'Expert']);
 const MOVEMENT_PATTERNS = new Set([
   'Hip Hinge',
   'Hip Dominant',
