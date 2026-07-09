@@ -1,0 +1,53 @@
+name: Validate Supabase Types
+
+# Blocks merges into main when the committed types/supabase.ts is out of sync
+# with the schema in supabase/migrations/**. Spins up the local stack (which
+# applies every migration), regenerates the types with the same `gen:types`
+# script developers run locally, and fails if the working tree changed.
+#
+# Path-filtered: types can only drift from a schema change, so this runs only
+# when a PR touches supabase/** or the generated types file itself.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - supabase/**
+      - types/supabase.ts
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-types-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-types:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 24.x
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Regenerate types from local schema
+        run: npm run gen:types
+
+      - name: Fail if committed types are stale
+        run: |
+          if ! git diff --exit-code -- types/supabase.ts; then
+            echo "::error::types/supabase.ts is out of date. Run 'npm run gen:types' locally and commit the result."
+            exit 1
+          fi
