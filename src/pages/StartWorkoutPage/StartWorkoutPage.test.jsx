@@ -11,6 +11,23 @@ import {
   WorkoutOptionsContext,
 } from '~/contexts';
 
+// These discovery surfaces (curated / repeat / recommender) migrated off the
+// build-time env flags onto the runtime feature-flag mechanism (PROD-175) —
+// force them on so this suite still opens in browse mode (enterBuildMode()
+// below) the way it did under the old always-on test-env flags.
+const { mockUseFeatureFlags } = vi.hoisted(() => ({
+  mockUseFeatureFlags: vi.fn(),
+}));
+vi.mock('~/api', async (importOriginal) => ({
+  ...(await importOriginal()),
+  useFeatureFlags: mockUseFeatureFlags,
+}));
+mockUseFeatureFlags.mockReturnValue({
+  curatedFirstWorkout: true,
+  repeatPrevious: true,
+  recommender: true,
+});
+
 // The recommender surface (on in the test env) reads EntitlementContext.
 const freeEntitlement = {
   isPremium: false,

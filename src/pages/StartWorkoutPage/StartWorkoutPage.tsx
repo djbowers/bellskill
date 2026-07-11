@@ -8,6 +8,7 @@ import {
   trackEvent,
   useActiveProgram,
   useCompleteProgramSession,
+  useFeatureFlags,
   useWorkoutLogs,
 } from '~/api';
 import { Page } from '~/components';
@@ -95,6 +96,11 @@ export const StartWorkoutPage = ({
   programSaveMode,
 }: StartWorkoutPageProps = {}) => {
   const features = useFeatures();
+  // Discovery surfaces (curated / repeat / recommender) migrated onto the
+  // runtime feature-flag mechanism (PROD-175). Resolved per user, defaulting to
+  // all-OFF (pure builder) while loading, on error, or until deliberately
+  // toggled — so production behavior is unchanged.
+  const experimentFeatures = useFeatureFlags();
   const navigate = useNavigate();
   const startWorkout = useStartWorkout();
   const [workoutOptions] = useWorkoutOptions();
@@ -119,15 +125,15 @@ export const StartWorkoutPage = ({
   // save-session mode the page is always the builder — no browse surfaces. An
   // active program forces browse so its next-workout card is the first thing the
   // user sees on open.
-  const showCurated = features.curatedFirstWorkout;
-  const showRepeat = features.repeatPrevious;
+  const showCurated = experimentFeatures.curatedFirstWorkout;
+  const showRepeat = experimentFeatures.repeatPrevious;
   const showBrowse =
     !programSaveMode &&
     (hasActiveProgram ||
       programGatePending ||
       showCurated ||
       showRepeat ||
-      features.recommender);
+      experimentFeatures.recommender);
 
   // When a discovery surface is enabled the page opens in "browse" mode
   // (recommendations + a Build-custom button); selecting one or tapping
@@ -668,7 +674,7 @@ export const StartWorkoutPage = ({
             onSelectRepeat={handleSelectRepeat}
           />
 
-          {features.recommender && (
+          {experimentFeatures.recommender && (
             <RecommendSessionSection
               userId={userId}
               onAccept={handleAcceptRecommendation}

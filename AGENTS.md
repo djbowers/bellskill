@@ -201,6 +201,39 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   behavior is scoped to programs structurally (it is wired only into program
   hooks), not via a runtime flag check.
 
+## Runtime Feature Flags (PROD-175)
+
+Server-authoritative, per-user flag/assignment mechanism that replaced the
+build-time `VITE_FEATURE_*` env vars for **experiment** flags (as opposed to
+the release-toggle flags in `~/config/features`, which stay build-time). Schema
++ RPCs in `supabase/migrations/20260709000000_create_feature_flags.sql`; eval
+client in `~/api/useFeatureFlags` (`useFeatureFlags()` hook); app-facing
+flag keys/types and the safe-default mapping in `~/config/experiments`.
+
+- Two tables: `feature_flags` (runtime-toggleable definitions — enabled /
+  rollout_percentage / default_variant, client-readable, never client-writable)
+  and `feature_flag_assignments` (sticky per-user variant, `user_id, flag_key`
+  PK, readable only by its own user, **writable only by the RPC** — no client
+  insert/update policy exists, so a user cannot forge their own bucket).
+- `evaluate_feature_flag(flag_key)` / batch `evaluate_feature_flags(flag_keys[])`
+  are `SECURITY DEFINER`: on first eval of an enabled flag they bucket the user
+  deterministically (`hashtextextended(user_id || flag_key)` mod 100 vs
+  `rollout_percentage`) and persist the assignment; every later eval reads that
+  row back, so the bucket can't drift even if rollout changes. Disabled flags
+  and unknown flag keys resolve to `default_variant`/`control` with no
+  assignment row written, so re-enabling later re-buckets fresh.
+- `useFeatureFlags()` maps DB variants to the app-facing `ExperimentFeatures`
+  boolean record (`curatedFirstWorkout`, `repeatPrevious`, `recommender` — the
+  PROD-174 discovery flags plus the AI recommender). It falls back to
+  `SAFE_DEFAULT_FEATURES` (all off) on any query error, while loading, and when
+  unauthenticated — the eval client never flips a user into treatment on
+  failure. `staleTime: Infinity` since assignment is server-sticky.
+- Migrating another build-time flag onto this mechanism: add its key to
+  `EXPERIMENT_FLAG_KEYS`/`KEY_TO_FEATURE` in `~/config/experiments`, add a row
+  to the migration's seed `INSERT` (defaulted `enabled = false` to preserve
+  current behavior), and swap the read site from `useFeatures()` to
+  `useFeatureFlags()`.
+
 ## Authentication
 
 - Uses Supabase Auth with both magic links and OTP (one-time passwords)

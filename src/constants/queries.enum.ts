@@ -1,6 +1,7 @@
 export enum QUERIES {
   ACTIVE_PROGRAM = 'activeProgram',
   ENTITLEMENT = 'entitlement',
+  FEATURE_FLAGS = 'featureFlags',
   MOVEMENT_LOGS = 'movementLogs',
   MOVEMENTS = 'movements',
   PATTERN_DEBT = 'patternDebt',

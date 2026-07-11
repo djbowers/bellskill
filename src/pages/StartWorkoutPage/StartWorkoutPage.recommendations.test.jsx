@@ -15,6 +15,23 @@ import { server } from '~/mocks/server';
 
 import { StartWorkoutPage } from './StartWorkoutPage';
 
+// These discovery surfaces (curated / repeat / recommender) migrated off the
+// build-time env flags onto the runtime feature-flag mechanism (PROD-175) —
+// force them on so this suite still exercises the browse-mode behavior it did
+// under the old always-on test-env flags.
+const { mockUseFeatureFlags } = vi.hoisted(() => ({
+  mockUseFeatureFlags: vi.fn(),
+}));
+vi.mock('~/api', async (importOriginal) => ({
+  ...(await importOriginal()),
+  useFeatureFlags: mockUseFeatureFlags,
+}));
+mockUseFeatureFlags.mockReturnValue({
+  curatedFirstWorkout: true,
+  repeatPrevious: true,
+  recommender: true,
+});
+
 const startedAt = new Date('2026-06-25T12:00:00.000Z');
 vi.setSystemTime(startedAt);
 

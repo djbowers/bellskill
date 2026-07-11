@@ -25,12 +25,9 @@ vi.mock('~/hooks', async (importOriginal) => ({
 const allFlagsOff = {
   bottomNav: false,
   complexMode: false,
-  curatedFirstWorkout: false,
   explore: false,
   premium: false,
   programs: false,
-  recommender: false,
-  repeatPrevious: false,
   weeklyBalance: false,
 };
 

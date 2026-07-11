@@ -18,11 +18,8 @@ vi.mock('~/hooks', async (importOriginal) => ({
 const setFeatures = (overrides: Partial<Features> = {}) =>
   mockUseFeatures.mockReturnValue({
     complexMode: false,
-    curatedFirstWorkout: false,
     explore: false,
     premium: false,
-    recommender: false,
-    repeatPrevious: false,
     programs: false,
     weeklyBalance: false,
     ...overrides,

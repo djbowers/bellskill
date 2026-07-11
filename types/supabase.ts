@@ -41,6 +41,72 @@ export type Database = {
           },
         ]
       }
+      feature_flag_assignments: {
+        Row: {
+          assigned_at: string
+          flag_key: string
+          user_id: string
+          variant: string
+        }
+        Insert: {
+          assigned_at?: string
+          flag_key: string
+          user_id: string
+          variant: string
+        }
+        Update: {
+          assigned_at?: string
+          flag_key?: string
+          user_id?: string
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_flag_assignments_flag_key_fkey"
+            columns: ["flag_key"]
+            isOneToOne: false
+            referencedRelation: "feature_flags"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "feature_flag_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      feature_flags: {
+        Row: {
+          created_at: string
+          default_variant: string
+          description: string | null
+          enabled: boolean
+          key: string
+          rollout_percentage: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_variant?: string
+          description?: string | null
+          enabled?: boolean
+          key: string
+          rollout_percentage?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_variant?: string
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          rollout_percentage?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       movement_logs: {
         Row: {
           created_at: string | null
@@ -691,6 +757,14 @@ export type Database = {
         Returns: undefined
       }
       enroll_in_program: { Args: { p_program_id: string }; Returns: string }
+      evaluate_feature_flag: { Args: { p_flag_key: string }; Returns: string }
+      evaluate_feature_flags: {
+        Args: { p_flag_keys: string[] }
+        Returns: {
+          flag_key: string
+          variant: string
+        }[]
+      }
       has_premium_access: { Args: { user_id: string }; Returns: boolean }
       pattern_debt_window: {
         Args: { p_baseline_days?: number; p_window_days?: number }
