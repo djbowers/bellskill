@@ -16,32 +16,34 @@ Recommender (PROD-86/87) reasons over — the `pattern_debt` key reserved in
 
 ## The seven coarse patterns
 
-The movement catalog tags each exercise with a granular `Movement Pattern` enum
-(35+ values). The engine collapses those into the seven patterns a lifter actually
+The movement catalog tags each exercise with a `Movement Pattern #1` value — a
+free-`text` column (PROD-153) constrained by a CHECK to the controlled vocabulary
+below. The engine collapses those into the seven patterns a lifter actually
 programs around:
 
-| Coarse pattern | Source `Movement Pattern` values |
-| --- | --- |
-| `hinge`    | Hip Hinge, Hip Dominant, Hip Extension |
-| `squat`    | Knee Dominant |
-| `push`     | Vertical Push, Horizontal Push |
-| `pull`     | Vertical Pull, Horizontal Pull |
-| `carry`    | Loaded Carry |
-| `rotation` | Rotational, Spinal Rotational |
-| `get_up`   | *name-based* — movement name matches `get-up` / `get up` / `getup` / `turkish` |
+| Coarse pattern | Source `Movement Pattern` values                                               |
+| -------------- | ------------------------------------------------------------------------------ |
+| `hinge`        | Hip Hinge, Hip Dominant, Hip Extension                                         |
+| `squat`        | Knee Dominant                                                                  |
+| `push`         | Vertical Push, Horizontal Push                                                 |
+| `pull`         | Vertical Pull, Horizontal Pull                                                 |
+| `carry`        | Loaded Carry                                                                   |
+| `rotation`     | Rotational, Spinal Rotational                                                  |
+| `get_up`       | _name-based_ — movement name matches `get-up` / `get up` / `getup` / `turkish` |
 
 `get_up` is detected by name because the Turkish get-up is a complex/combo
 movement, not a single catalog pattern. Name detection is checked **first**; if a
 movement is a get-up it is bucketed there, otherwise it falls through to the
-pattern-enum mapping (using `Movement Pattern #1`). Movements that map to no coarse
-pattern are ignored. `#2`/`#3` pattern tags are reserved for a future refinement.
+pattern mapping (using `Movement Pattern #1`). Movements that map to no coarse
+pattern are ignored. The slim catalog keeps only `Movement Pattern #1` — the
+`#2`/`#3` columns were dropped (PROD-153).
 
 ## Windows
 
-| Param | Default | Meaning |
-| --- | --- | --- |
-| `windowDays`   | 14 | The "recent" window the debt is computed over. |
-| `baselineDays` | 84 | Trailing window (6 × 14d) used to establish each pattern's personal volume baseline. |
+| Param          | Default | Meaning                                                                              |
+| -------------- | ------- | ------------------------------------------------------------------------------------ |
+| `windowDays`   | 14      | The "recent" window the debt is computed over.                                       |
+| `baselineDays` | 84      | Trailing window (6 × 14d) used to establish each pattern's personal volume baseline. |
 
 Both are configurable arguments to the SQL function so the UI and the recommender
 can request different horizons.

@@ -104,6 +104,32 @@ pages/
 - `npm run gen:types` writes the **repo-root** `types/supabase.ts` — commit that file after any schema change (requires `supabase start` to be running). `src/types/supabase.ts` is just a 3-line alias (`export type Supabase = Database`) re-exporting the root file; it is not regenerated.
 - Schema changes that must reach staging/production (e.g. seeded shared content) belong in a **migration**, not `supabase/seed.sql`. `seed.sql` runs only on local `supabase db reset` (`config.toml [db.seed]`); migrations auto-deploy via `.github/workflows/supabase-*.yaml`.
 
+## Movement Catalog (PROD-153)
+
+The `movements` table is a self-authored, commercially-clean Kettlebell +
+Bodyweight catalog (~250 rows, slim 8-field schema; the old ~3,000-row
+non-commercial "Functional Fitness Exercise Database" source and its ~24 unused
+columns / enum wall were removed). The controlled fields (`Primary Equipment`,
+`Single or Double Arm`, `Target Muscle Group`, `Difficulty Level`,
+`Movement Pattern #1`) are now free `text` guarded by CHECK constraints, not
+Postgres enums — so `~/types` defines `Equipment` / `MuscleGroup` /
+`DifficultyLevel` as hand-authored unions, not `Supabase['...']['Enums']`.
+
+- **Source of truth:** `scripts/data/movements.csv` (7 authored columns; `id` is
+  generated). `scripts/ingest-movements.mjs` validates every row against the app
+  vocabularies + Kettlebell weight-mode reachability
+  (`src/utils/movementWeightModeFilter.ts`) and recognized pattern-debt patterns
+  (`pattern_debt_window` CASE). Run `npm run movements:check`.
+- **How it loads:** the migration `*_slim_movements_catalog.sql` reloads the
+  whole catalog (its INSERT block is regenerated with `npm run movements:emit-sql`),
+  so it is reproducible on `supabase db reset` and auto-deploys. There is **no**
+  live-DB ingest path anymore.
+- **To change the catalog:** edit the CSV → `movements:check` → regenerate the
+  migration's VALUES block via `movements:emit-sql` → `supabase db reset` →
+  `gen:types`. Any new field value must already be in the app vocabularies (no
+  new enums); Explore's filter constants in `MovementsPage.tsx` mirror the CSV's
+  value set.
+
 ## Testing Setup
 
 - Vitest + React Testing Library.

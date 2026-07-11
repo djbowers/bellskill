@@ -234,9 +234,10 @@ const COLUMNS: ColumnDef<Movement>[] = [
 
 const PAGE_SIZE = 25;
 
+// Explore filter vocabularies — the value set of the self-authored slim catalog
+// (PROD-153). Keep in sync with scripts/data/movements.csv.
 const MUSCLE_GROUPS: MuscleGroup[] = [
   'Abdominals',
-  'Abductors',
   'Adductors',
   'Back',
   'Calves',
@@ -244,63 +245,16 @@ const MUSCLE_GROUPS: MuscleGroup[] = [
   'Forearms',
   'Glutes',
   'Hamstrings',
-  'Hip Flexors',
   'Quadriceps',
-  'Shins',
   'Shoulders',
   'Trapezius',
   'Triceps',
 ];
 
 const DIFFICULTY_LEVELS: DifficultyLevel[] = [
-  'Novice',
   'Beginner',
   'Intermediate',
-  'Advanced',
   'Expert',
-  'Master',
-  'Grand Master',
-  'Legendary',
 ];
 
-const EQUIPMENT_TYPES: Equipment[] = [
-  'Ab Wheel',
-  'Barbell',
-  'Battle Ropes',
-  'Bench (Decline)',
-  'Bench (Flat)',
-  'Bench (Incline)',
-  'Bodyweight',
-  'Bulgarian Bag',
-  'Cable',
-  'Clubbell',
-  'Dumbbell',
-  'EZ Bar',
-  'Gravity Boots',
-  'Gymnastic Rings',
-  'Heavy Sandbag',
-  'Indian Club',
-  'Kettlebell',
-  'Landmine',
-  'Macebell',
-  'Medicine Ball',
-  'Miniband',
-  'None',
-  'Parallette Bars',
-  'Plyo Box',
-  'Pull Up Bar',
-  'Resistance Band',
-  'Sandbag',
-  'Slam Ball',
-  'Slant Board',
-  'Sled',
-  'Sledge Hammer',
-  'Sliders',
-  'Stability Ball',
-  'Superband',
-  'Suspension Trainer',
-  'Tire',
-  'Trap Bar',
-  'Wall Ball',
-  'Weight Plate',
-];
+const EQUIPMENT_TYPES: Equipment[] = ['Bodyweight', 'Kettlebell'];
