@@ -106,13 +106,16 @@ describe('useFeatureFlags', () => {
       wrapper: makeWrapper(),
     });
 
+    // Pending while the eval query resolves, then the mapped variants land.
+    expect(result.current.isPending).toBe(true);
     await waitFor(() =>
-      expect(result.current).toEqual({
+      expect(result.current.features).toEqual({
         curatedFirstWorkout: true,
         repeatPrevious: false,
         recommender: false,
       }),
     );
+    expect(result.current.isPending).toBe(false);
   });
 
   test('falls back to the safe default (control / all off) when the RPC errors', async () => {
@@ -127,11 +130,11 @@ describe('useFeatureFlags', () => {
     });
 
     // Starts on the safe-default placeholder and stays there after the query
-    // terminally errors — never flips a user into treatment on failure.
-    expect(result.current).toEqual(SAFE_DEFAULT_FEATURES);
-    await waitFor(() =>
-      expect(result.current).toEqual(SAFE_DEFAULT_FEATURES),
-    );
+    // terminally errors — never flips a user into treatment on failure. The
+    // error path is distinct from loading: it settles with isPending false.
+    expect(result.current.features).toEqual(SAFE_DEFAULT_FEATURES);
+    await waitFor(() => expect(result.current.isPending).toBe(false));
+    expect(result.current.features).toEqual(SAFE_DEFAULT_FEATURES);
   });
 
   test('resolves to the safe default without calling the RPC when unauthenticated', async () => {
@@ -155,7 +158,9 @@ describe('useFeatureFlags', () => {
         ),
     });
 
-    expect(result.current).toEqual(SAFE_DEFAULT_FEATURES);
+    // Unauthenticated resolves immediately to the safe default — not pending.
+    expect(result.current.features).toEqual(SAFE_DEFAULT_FEATURES);
+    expect(result.current.isPending).toBe(false);
     expect(called).toBe(false);
   });
 });

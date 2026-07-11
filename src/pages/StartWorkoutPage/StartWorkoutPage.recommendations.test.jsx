@@ -27,9 +27,12 @@ vi.mock('~/api', async (importOriginal) => ({
   useFeatureFlags: mockUseFeatureFlags,
 }));
 mockUseFeatureFlags.mockReturnValue({
-  curatedFirstWorkout: true,
-  repeatPrevious: true,
-  recommender: true,
+  features: {
+    curatedFirstWorkout: true,
+    repeatPrevious: true,
+    recommender: true,
+  },
+  isPending: false,
 });
 
 const startedAt = new Date('2026-06-25T12:00:00.000Z');

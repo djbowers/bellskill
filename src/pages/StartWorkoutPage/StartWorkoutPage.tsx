@@ -99,8 +99,12 @@ export const StartWorkoutPage = ({
   // Discovery surfaces (curated / repeat / recommender) migrated onto the
   // runtime feature-flag mechanism (PROD-175). Resolved per user, defaulting to
   // all-OFF (pure builder) while loading, on error, or until deliberately
-  // toggled — so production behavior is unchanged.
-  const experimentFeatures = useFeatureFlags();
+  // toggled — so production behavior is unchanged. `experimentFlagsPending`
+  // holds the page in browse until the (async) eval resolves, so a treatment
+  // user isn't stranded in the builder by the all-OFF placeholder (mirrors
+  // `programGatePending`).
+  const { features: experimentFeatures, isPending: experimentFlagsPending } =
+    useFeatureFlags();
   const navigate = useNavigate();
   const startWorkout = useStartWorkout();
   const [workoutOptions] = useWorkoutOptions();
@@ -131,6 +135,7 @@ export const StartWorkoutPage = ({
     !programSaveMode &&
     (hasActiveProgram ||
       programGatePending ||
+      experimentFlagsPending ||
       showCurated ||
       showRepeat ||
       experimentFeatures.recommender);
@@ -193,14 +198,20 @@ export const StartWorkoutPage = ({
   useEffect(
     function dropIntoBuilderWhenNothingToBrowse() {
       // The initial `showBuilder` is fixed at mount, before the (async) program
-      // gate resolves. If it resolves to "no program" and there is nothing else
-      // to browse, fall into the builder — matching the non-program default —
-      // so the page never renders blank (neither browse nor builder).
-      if (!programGatePending && !showBrowse && !showBuilder) {
+      // and feature-flag gates resolve. Once both settle to "nothing to browse"
+      // (no program, all discovery flags OFF), fall into the builder — matching
+      // the non-program default — so the page never renders blank (neither
+      // browse nor builder).
+      if (
+        !programGatePending &&
+        !experimentFlagsPending &&
+        !showBrowse &&
+        !showBuilder
+      ) {
         setShowBuilder(true);
       }
     },
-    [programGatePending, showBrowse, showBuilder],
+    [programGatePending, experimentFlagsPending, showBrowse, showBuilder],
   );
 
   const [workoutGoal, setWorkoutGoal] = useState<number>(

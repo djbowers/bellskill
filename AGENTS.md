@@ -215,13 +215,17 @@ flag keys/types and the safe-default mapping in `~/config/experiments`.
   and `feature_flag_assignments` (sticky per-user variant, `user_id, flag_key`
   PK, readable only by its own user, **writable only by the RPC** — no client
   insert/update policy exists, so a user cannot forge their own bucket).
-- `evaluate_feature_flag(flag_key)` / batch `evaluate_feature_flags(flag_keys[])`
-  are `SECURITY DEFINER`: on first eval of an enabled flag they bucket the user
-  deterministically (`hashtextextended(user_id || flag_key)` mod 100 vs
-  `rollout_percentage`) and persist the assignment; every later eval reads that
-  row back, so the bucket can't drift even if rollout changes. Disabled flags
-  and unknown flag keys resolve to `default_variant`/`control` with no
-  assignment row written, so re-enabling later re-buckets fresh.
+- `evaluate_feature_flag(flag_key)` is `SECURITY DEFINER`: on first eval of an
+  enabled flag it buckets the user deterministically
+  (`hashtextextended(user_id || flag_key)` mod 100 vs `rollout_percentage`) and
+  persists the assignment; every later eval reads that row back, so the bucket
+  can't drift even if rollout changes. The batch
+  `evaluate_feature_flags(flag_keys[])` is a plain `LANGUAGE sql` wrapper
+  (SECURITY INVOKER) that just delegates each key to the singular DEFINER
+  function — it does no table DML itself, so the privileged assignment write
+  still happens only inside `evaluate_feature_flag`. Disabled flags and unknown
+  flag keys resolve to `default_variant`/`control` with no assignment row
+  written, so re-enabling later re-buckets fresh.
 - `useFeatureFlags()` maps DB variants to the app-facing `ExperimentFeatures`
   boolean record (`curatedFirstWorkout`, `repeatPrevious`, `recommender` — the
   PROD-174 discovery flags plus the AI recommender). It falls back to

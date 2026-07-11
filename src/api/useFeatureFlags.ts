@@ -1,14 +1,14 @@
 import { useQuery } from 'react-query';
 
-import { isPreviewingAllFeatures } from '~/config/features';
 import {
   ALL_EXPERIMENT_FEATURES_ON,
   EXPERIMENT_FLAG_KEYS,
   ExperimentFeatures,
   ExperimentFlagKey,
-  resolveExperimentFeatures,
   SAFE_DEFAULT_FEATURES,
+  resolveExperimentFeatures,
 } from '~/config/experiments';
+import { isPreviewingAllFeatures } from '~/config/features';
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
 
@@ -24,30 +24,47 @@ import { supabase } from '../supabaseClient';
  * falls back to the safe default (control / OFF) — the eval client never flips
  * a user into treatment on error.
  */
-export const fetchExperimentFeatures = async (): Promise<ExperimentFeatures> => {
-  const { data, error } = await supabase.rpc('evaluate_feature_flags', {
-    p_flag_keys: [...EXPERIMENT_FLAG_KEYS],
-  });
-  if (error) throw error;
+export const fetchExperimentFeatures =
+  async (): Promise<ExperimentFeatures> => {
+    const { data, error } = await supabase.rpc('evaluate_feature_flags', {
+      p_flag_keys: [...EXPERIMENT_FLAG_KEYS],
+    });
+    if (error) throw error;
 
-  const variants: Partial<Record<ExperimentFlagKey, string>> = {};
-  for (const row of data ?? []) {
-    variants[row.flag_key as ExperimentFlagKey] = row.variant;
-  }
-  return resolveExperimentFeatures(variants);
-};
+    const variants: Partial<Record<ExperimentFlagKey, string>> = {};
+    for (const row of data ?? []) {
+      variants[row.flag_key as ExperimentFlagKey] = row.variant;
+    }
+    return resolveExperimentFeatures(variants);
+  };
+
+export interface FeatureFlagsResult {
+  /** App-facing boolean record for the migrated experiment flags. */
+  features: ExperimentFeatures;
+  /**
+   * True only while the eval query is still resolving for a signed-in user —
+   * i.e. the returned `features` is the safe-default placeholder standing in
+   * for a not-yet-known answer, not a settled one. It is distinct from the
+   * error path: a terminal error resolves to the safe default with
+   * `isPending === false`. Consumers use this to hold UI in a neutral state
+   * until the real variants land, instead of committing to control on the
+   * async placeholder. Unauthenticated and owner-preview both resolve
+   * immediately (`isPending === false`).
+   */
+  isPending: boolean;
+}
 
 /**
  * Resolves the migrated experiment flags for the current user at runtime.
  *
  * Returns the app-facing boolean record (`curatedFirstWorkout`, `repeatPrevious`,
- * `recommender`). While the query loads, on error, or when unauthenticated it
- * returns the safe default (all OFF / pure builder), so production behavior is
- * unchanged until a flag is deliberately toggled. Owners previewing all features
- * (see `~/config/features`) get every experiment feature forced on, mirroring
- * `getFeatures()`.
+ * `recommender`) alongside an `isPending` gate. While the query loads, on error,
+ * or when unauthenticated `features` is the safe default (all OFF / pure
+ * builder), so production behavior is unchanged until a flag is deliberately
+ * toggled. Owners previewing all features (see `~/config/features`) get every
+ * experiment feature forced on, mirroring `getFeatures()`.
  */
-export const useFeatureFlags = (): ExperimentFeatures => {
+export const useFeatureFlags = (): FeatureFlagsResult => {
   const session = useSession();
   const userId = session?.user?.id;
 
@@ -69,10 +86,19 @@ export const useFeatureFlags = (): ExperimentFeatures => {
   // Owner preview override: force every experiment feature on so owners can
   // preview in-progress surfaces in production, matching getFeatures().
   if (isPreviewingAllFeatures(session)) {
-    return ALL_EXPERIMENT_FEATURES_ON;
+    return { features: ALL_EXPERIMENT_FEATURES_ON, isPending: false };
   }
 
-  // `data` is the placeholder while loading and undefined after a terminal
-  // error — both fall back to the safe default (control / OFF).
-  return query.data ?? SAFE_DEFAULT_FEATURES;
+  return {
+    // `data` is the placeholder while loading and undefined after a terminal
+    // error — both fall back to the safe default (control / OFF).
+    features: query.data ?? SAFE_DEFAULT_FEATURES,
+    // `placeholderData` makes react-query report `status: 'success'` from the
+    // first render, so `isPlaceholderData` (not `isLoading`) is what marks the
+    // initial fetch: true only while the placeholder stands in, false once the
+    // real variants land AND after a terminal error. Guarded on `userId`
+    // because a disabled (unauthenticated) query also holds the placeholder,
+    // yet its answer is already settled at the safe default.
+    isPending: !!userId && query.isPlaceholderData,
+  };
 };
