@@ -160,21 +160,15 @@ test.describe('full workout flow', () => {
     // ── 2. Load the app ───────────────────────────────────────────────────
     await page.goto('/');
 
-    // The Start page now opens in "browse" mode (curated/recent recommendations
-    // + a "Build custom workout" button). Its presence confirms we bypassed the
-    // Signup screen and landed on StartWorkoutPage.
-    const buildCustomButton = page.getByRole('button', {
-      name: 'Build custom workout',
-    });
-    await expect(buildCustomButton).toBeVisible({ timeout: 10_000 });
-
-    // Expand the custom workout builder so the goal/movement controls render.
-    await buildCustomButton.click();
-
+    // With every runtime discovery flag OFF (the production baseline, PROD-175),
+    // the Start page opens directly in the custom workout builder — there are no
+    // browse surfaces to show. The "Start workout" button's presence confirms we
+    // bypassed the Signup screen and landed on StartWorkoutPage's builder. (The
+    // eval is async, so the builder appears once the all-OFF result resolves.)
     const startWorkoutButton = page.getByRole('button', {
       name: 'Start workout',
     });
-    await expect(startWorkoutButton).toBeVisible();
+    await expect(startWorkoutButton).toBeVisible({ timeout: 10_000 });
 
     // ── 3. Switch goal unit to "Rounds" ───────────────────────────────────
     // Default is "minutes" (10 min). Switching to rounds sets goal to
