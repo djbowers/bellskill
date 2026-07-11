@@ -226,12 +226,20 @@ flag keys/types and the safe-default mapping in `~/config/experiments`.
   still happens only inside `evaluate_feature_flag`. Disabled flags and unknown
   flag keys resolve to `default_variant`/`control` with no assignment row
   written, so re-enabling later re-buckets fresh.
-- `useFeatureFlags()` maps DB variants to the app-facing `ExperimentFeatures`
-  boolean record (`curatedFirstWorkout`, `repeatPrevious`, `recommender` — the
-  PROD-174 discovery flags plus the AI recommender). It falls back to
+- `useFeatureFlags()` returns that record alongside an `isPending` gate. It maps
+  DB variants to the app-facing `ExperimentFeatures` boolean record
+  (`curatedFirstWorkout`, `repeatPrevious`, `recommender` — the PROD-174
+  discovery flags plus the AI recommender), falling back to
   `SAFE_DEFAULT_FEATURES` (all off) on any query error, while loading, and when
   unauthenticated — the eval client never flips a user into treatment on
-  failure. `staleTime: Infinity` since assignment is server-sticky.
+  failure. `staleTime: Infinity` since assignment is server-sticky. Owners
+  previewing all features (see `~/config/features`) get every experiment feature
+  forced on (`ALL_EXPERIMENT_FEATURES_ON`), mirroring `getFeatures()`.
+  `isPending` is true only while the eval is still resolving for a signed-in
+  user (the safe default is a placeholder, not a settled answer);
+  `StartWorkoutPage` gates browse mode on it (`experimentFlagsPending`, mirroring
+  `programGatePending`) so a treatment user isn't stranded in the builder by the
+  all-OFF placeholder.
 - Migrating another build-time flag onto this mechanism: add its key to
   `EXPERIMENT_FLAG_KEYS`/`KEY_TO_FEATURE` in `~/config/experiments`, add a row
   to the migration's seed `INSERT` (defaulted `enabled = false` to preserve
