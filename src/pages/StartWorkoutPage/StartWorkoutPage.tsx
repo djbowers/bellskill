@@ -11,7 +11,7 @@ import {
   useFeatureFlags,
   useWorkoutLogs,
 } from '~/api';
-import { Page } from '~/components';
+import { Loading, Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
@@ -146,12 +146,26 @@ export const StartWorkoutPage = ({
   // history "Repeat" action navigates here with `editWorkout`, the builder
   // opens directly.
   const location = useLocation();
-  const [showBuilder, setShowBuilder] = useState<boolean>(
-    !showBrowse ||
-      Boolean(
-        (location.state as { editWorkout?: boolean } | null)?.editWorkout,
-      ),
+  const editWorkout = Boolean(
+    (location.state as { editWorkout?: boolean } | null)?.editWorkout,
   );
+  // `showBrowse` is forced true while `programGatePending`/`experimentFlagsPending`
+  // are still resolving (see above), so committing to a mode from that
+  // still-forced value at mount would strand a treatment user in the builder
+  // (or paint an empty browse view for a control user) until a correction
+  // effect fires post-paint — a visible flash in both directions. Instead we
+  // render neither surface until both gates settle (below) and derive the
+  // mode fresh each render from the now-final `showBrowse`, so there's never a
+  // stale value to correct. `builderOverride` is `null` until the user
+  // explicitly switches modes (Build custom, selecting a recommendation, Back
+  // to recommendations); once set, it wins over the derived default. Save
+  // mode has no browse surface to race against, so it's excluded from the gate.
+  const [builderOverride, setBuilderOverride] = useState<boolean | null>(null);
+  const showBuilder = builderOverride ?? (editWorkout || !showBrowse);
+  const gatesPending =
+    !programSaveMode &&
+    (programGatePending || experimentFlagsPending) &&
+    !editWorkout;
   // Where the (eventual) start originated, carried through any edits the user
   // makes in the builder so `workout_started` stays attributed to the surface.
   const [startSource, setStartSource] = useState<WorkoutStartSource>('builder');
@@ -195,25 +209,6 @@ export const StartWorkoutPage = ({
     [userId, workoutLogs],
   );
 
-  useEffect(
-    function dropIntoBuilderWhenNothingToBrowse() {
-      // The initial `showBuilder` is fixed at mount, before the (async) program
-      // and feature-flag gates resolve. Once both settle to "nothing to browse"
-      // (no program, all discovery flags OFF), fall into the builder — matching
-      // the non-program default — so the page never renders blank (neither
-      // browse nor builder).
-      if (
-        !programGatePending &&
-        !experimentFlagsPending &&
-        !showBrowse &&
-        !showBuilder
-      ) {
-        setShowBuilder(true);
-      }
-    },
-    [programGatePending, experimentFlagsPending, showBrowse, showBuilder],
-  );
-
   const [workoutGoal, setWorkoutGoal] = useState<number>(
     workoutOptions.workoutGoal,
   );
@@ -245,6 +240,10 @@ export const StartWorkoutPage = ({
     useState<WeightUnit | null>(workoutOptions.sharedWeightTwoUnit);
 
   const detailsRef = useRef<HTMLInputElement>(null);
+
+  // Neither async gate above has settled, so the mode above is still derived
+  // from a forced `showBrowse` — withhold rendering rather than commit to it.
+  if (gatesPending) return <Loading />;
 
   const handleIncrementGoalValue = () => {
     if (workoutGoalUnits === 'kilograms') {
@@ -498,7 +497,7 @@ export const StartWorkoutPage = ({
       curated_version: CURATED_WORKOUTS_VERSION,
     });
     setPendingProgramSession(null);
-    setShowBuilder(true);
+    setBuilderOverride(true);
   };
 
   const handleSelectRepeat = (repeat: RepeatableWorkout) => {
@@ -506,7 +505,7 @@ export const StartWorkoutPage = ({
     setStartSource('history_repeat');
     setStartSourceProps({ workout_log_id: repeat.workoutLogId });
     setPendingProgramSession(null);
-    setShowBuilder(true);
+    setBuilderOverride(true);
   };
 
   // Accept an AI recommendation: load it into the builder for review/edits, then
@@ -519,7 +518,7 @@ export const StartWorkoutPage = ({
     setStartSource('recommender');
     setStartSourceProps({ recommendation_id: recommendationId });
     setPendingProgramSession(null);
-    setShowBuilder(true);
+    setBuilderOverride(true);
   };
 
   const handleClickBuildCustom = () => {
@@ -527,7 +526,7 @@ export const StartWorkoutPage = ({
     setStartSource('builder');
     setStartSourceProps({});
     setPendingProgramSession(null);
-    setShowBuilder(true);
+    setBuilderOverride(true);
   };
 
   // Load the program's next session into the builder for review/edits, tagged so
@@ -545,7 +544,7 @@ export const StartWorkoutPage = ({
       userProgramId: activeProgram.enrollment.id,
       programSessionId: session.id,
     });
-    setShowBuilder(true);
+    setBuilderOverride(true);
   };
 
   // Skip the next session: writes a `skipped` completion (no workout_log), which
@@ -563,7 +562,7 @@ export const StartWorkoutPage = ({
     setStartSource('builder');
     setStartSourceProps({});
     setPendingProgramSession(null);
-    setShowBuilder(false);
+    setBuilderOverride(false);
   };
 
   const handleClickStart = () => {
