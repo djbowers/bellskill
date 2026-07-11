@@ -206,16 +206,17 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
 Server-authoritative, per-user flag/assignment mechanism that replaced the
 build-time `VITE_FEATURE_*` env vars for **experiment** flags (as opposed to
 the release-toggle flags in `~/config/features`, which stay build-time). Schema
-+ RPCs in `supabase/migrations/20260709000000_create_feature_flags.sql`; eval
-client in `~/api/useFeatureFlags` (`useFeatureFlags()` hook); app-facing
-flag keys/types and the safe-default mapping in `~/config/experiments`.
 
-- Two tables: `feature_flags` (runtime-toggleable definitions — enabled /
+- RPCs in `supabase/migrations/20260709000000_create_feature_flags.sql`; eval
+  client in `~/api/useFeatureFlags` (`useFeatureFlags()` hook); app-facing
+  flag keys/types and the safe-default mapping in `~/config/experiments`.
+
+* Two tables: `feature_flags` (runtime-toggleable definitions — enabled /
   rollout_percentage / default_variant, client-readable, never client-writable)
   and `feature_flag_assignments` (sticky per-user variant, `user_id, flag_key`
   PK, readable only by its own user, **writable only by the RPC** — no client
   insert/update policy exists, so a user cannot forge their own bucket).
-- `evaluate_feature_flag(flag_key)` is `SECURITY DEFINER`: on first eval of an
+* `evaluate_feature_flag(flag_key)` is `SECURITY DEFINER`: on first eval of an
   enabled flag it buckets the user deterministically
   (`hashtextextended(user_id || flag_key)` mod 100 vs `rollout_percentage`) and
   persists the assignment; every later eval reads that row back, so the bucket
@@ -226,7 +227,7 @@ flag keys/types and the safe-default mapping in `~/config/experiments`.
   still happens only inside `evaluate_feature_flag`. Disabled flags and unknown
   flag keys resolve to `default_variant`/`control` with no assignment row
   written, so re-enabling later re-buckets fresh.
-- `useFeatureFlags()` returns that record alongside an `isPending` gate. It maps
+* `useFeatureFlags()` returns that record alongside an `isPending` gate. It maps
   DB variants to the app-facing `ExperimentFeatures` boolean record
   (`curatedFirstWorkout`, `repeatPrevious`, `recommender` — the PROD-174
   discovery flags plus the AI recommender), falling back to
@@ -240,7 +241,7 @@ flag keys/types and the safe-default mapping in `~/config/experiments`.
   `StartWorkoutPage` gates browse mode on it (`experimentFlagsPending`, mirroring
   `programGatePending`) so a treatment user isn't stranded in the builder by the
   all-OFF placeholder.
-- Migrating another build-time flag onto this mechanism: add its key to
+* Migrating another build-time flag onto this mechanism: add its key to
   `EXPERIMENT_FLAG_KEYS`/`KEY_TO_FEATURE` in `~/config/experiments`, add a row
   to the migration's seed `INSERT` (defaulted `enabled = false` to preserve
   current behavior), and swap the read site from `useFeatures()` to

@@ -1,7 +1,7 @@
 import {
   ALL_EXPERIMENT_FEATURES_ON,
-  resolveExperimentFeatures,
   SAFE_DEFAULT_FEATURES,
+  resolveExperimentFeatures,
 } from './experiments';
 
 describe('resolveExperimentFeatures', () => {
