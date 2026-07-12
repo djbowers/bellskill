@@ -80,6 +80,12 @@ export const useFeatureFlags = (): FeatureFlagsResult => {
       placeholderData: SAFE_DEFAULT_FEATURES,
       // Assignment is server-sticky, so there's nothing to gain from refetching.
       staleTime: Infinity,
+      // StartWorkoutPage holds a blocking skeleton until this settles, so bound
+      // the worst case: one quick retry (~1s) instead of react-query's default
+      // 3 retries with exponential backoff (~7s) degrading the core flow on a
+      // flags-backend hiccup. Failure still resolves to the safe default.
+      retry: 1,
+      retryDelay: 750,
     },
   );
 
