@@ -45,12 +45,17 @@ async function signUpThrowawayUser(): Promise<TestUser> {
     `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+      },
       body: JSON.stringify({ email, password }),
     },
   );
   if (!signInRes.ok) {
-    throw new Error(`sign-in failed (${signInRes.status}): ${await signInRes.text()}`);
+    throw new Error(
+      `sign-in failed (${signInRes.status}): ${await signInRes.text()}`,
+    );
   }
   const session = (await signInRes.json()) as AuthSession;
   return { token: session.access_token, uid: session.user.id, email };
@@ -181,8 +186,12 @@ test.describe('program schema — Easy Strength seed', () => {
       expect(byName['Pull-Up'].weightTwoValue).toBeNull();
       expect(byName['Kettlebell Swing'].weightOneValue).toBe(24);
       expect(byName['Kettlebell Swing'].weightTwoValue).toBeNull();
-      expect(byName['Two-Arm Kettlebell Military Press'].weightTwoValue).toBe(24);
-      expect(byName['Front Squat With Two Kettlebells'].weightTwoValue).toBe(24);
+      expect(byName['Two-Arm Kettlebell Military Press'].weightTwoValue).toBe(
+        24,
+      );
+      expect(byName['Front Squat With Two Kettlebells'].weightTwoValue).toBe(
+        24,
+      );
       expect(byName["Kettlebell Farmer's Carry"].weightTwoValue).toBe(24);
     });
   });
@@ -199,7 +208,9 @@ test.describe('program schema — Easy Strength seed', () => {
       user.token,
     );
 
-    expect(session.workout_options.movements[0].repScheme).toEqual([1, 1, 1, 1, 1, 1]);
+    expect(session.workout_options.movements[0].repScheme).toEqual([
+      1, 1, 1, 1, 1, 1,
+    ]);
 
     // The seam that makes the schema-level approximation honest to the user: the
     // details must tell them to add weight manually across the six singles.
