@@ -174,7 +174,7 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   shared pair (not per-movement weights) — DFW's non-complex sessions leave those
   null.
 - **Next session** = lowest-`sequenceIndex` `program_sessions` row with no
-  completion. `useActiveProgram` runs this client-side over the program's ≤~15
+  completion. `useActiveProgram` runs this client-side over the program's ≤~20
   sessions (a dedicated SQL function buys nothing at that size). It returns the
   **active _or_ most-recently-completed** enrollment so the "🎉 complete" card
   still renders after the terminal status flip — consumers that must treat only
