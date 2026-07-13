@@ -1,4 +1,4 @@
-import { expect, Page, test } from '@playwright/test';
+import { Page, expect, test } from '@playwright/test';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -40,17 +40,14 @@ async function signInWithPassword(
   email: string,
   password: string,
 ): Promise<AuthSession> {
-  const res = await fetch(
-    `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_ANON_KEY,
-      },
-      body: JSON.stringify({ email, password }),
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_ANON_KEY,
     },
-  );
+    body: JSON.stringify({ email, password }),
+  });
 
   if (!res.ok) {
     const text = await res.text();
@@ -117,21 +114,23 @@ async function queryWorkoutLog(
   return rows[0] ?? null;
 }
 
-async function deleteWorkoutLog(id: number, accessToken: string): Promise<void> {
+async function deleteWorkoutLog(
+  id: number,
+  accessToken: string,
+): Promise<void> {
   // movement_logs has ON DELETE CASCADE so only the parent row needs deleting
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/workout_logs?id=eq.${id}`,
-    {
-      method: 'DELETE',
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${accessToken}`,
-      },
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/workout_logs?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${accessToken}`,
     },
-  );
+  });
 
   if (!res.ok) {
-    console.warn(`Cleanup: could not delete workout_log id=${id}: ${res.status}`);
+    console.warn(
+      `Cleanup: could not delete workout_log id=${id}: ${res.status}`,
+    );
   }
 }
 
@@ -220,7 +219,10 @@ test.describe('full workout flow', () => {
     await expect(page.getByTestId('headline-stats')).toBeVisible();
 
     // ── 9. Verify the database record ─────────────────────────────────────
-    const workoutLog = await queryWorkoutLog(workoutLogId, authSession.access_token);
+    const workoutLog = await queryWorkoutLog(
+      workoutLogId,
+      authSession.access_token,
+    );
 
     expect(workoutLog, 'workout log should exist in DB').not.toBeNull();
     expect(workoutLog!.user_id).toBe(authSession.user.id);
