@@ -151,6 +151,17 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
 `delete_program_session`. All are `SECURITY INVOKER` RPCs; progress is fully
 **derived from the completions set**, never a stored cursor.
 
+- **Shared programs (seeded, system-owned):** the public shared programs
+  (`owner_id NULL`, `is_public`) ship as migrations (not `seed.sql`, so they
+  also reach staging/prod) — Dry Fighting Weight
+  (`*_seed_dry_fighting_weight.sql`) and Dan John's 10,000 Swing Challenge
+  (`*_seed_10000_swing_challenge.sql`). Each is idempotent on `slug` and builds
+  every session's `WorkoutOptions` JSONB (shape `Omit<WorkoutOptions,'startedAt'>`,
+  camelCase keys) via a `pg_temp` helper; add another by mirroring one. Seed
+  shape is asserted in `e2e/program-schema.spec.ts`. `ProgramsPage` currently
+  features only a single shared program (`sharedPrograms[0]`, preferring the DFW
+  slug), so a newly seeded program lands in the shared-program data but is not
+  yet surfaced in that UI.
 - **Next session** = lowest-`sequenceIndex` `program_sessions` row with no
   completion. `useActiveProgram` runs this client-side over the program's ≤~15
   sessions (a dedicated SQL function buys nothing at that size). It returns the

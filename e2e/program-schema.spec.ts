@@ -13,6 +13,8 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY!;
 const DFW_SLUG = 'dry-fighting-weight';
 const DFW_SESSION_COUNT = 14;
+const SWING10K_SLUG = '10000-swing-challenge';
+const SWING10K_SESSION_COUNT = 20;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,12 +60,17 @@ async function signUpThrowawayUser(): Promise<TestUser> {
     `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+      },
       body: JSON.stringify({ email, password }),
     },
   );
   if (!signInRes.ok) {
-    throw new Error(`sign-in failed (${signInRes.status}): ${await signInRes.text()}`);
+    throw new Error(
+      `sign-in failed (${signInRes.status}): ${await signInRes.text()}`,
+    );
   }
   const session = (await signInRes.json()) as AuthSession;
   return { token: session.access_token, uid: session.user.id, email };
@@ -104,7 +111,9 @@ async function restJson<T = unknown>(
 ): Promise<T> {
   const res = await rest(method, path, token, opts);
   if (!res.ok) {
-    throw new Error(`${method} ${path} failed (${res.status}): ${await res.text()}`);
+    throw new Error(
+      `${method} ${path} failed (${res.status}): ${await res.text()}`,
+    );
   }
   return res.json() as Promise<T>;
 }
@@ -131,11 +140,9 @@ async function rpc<T = unknown>(
 
 // Fetch the shared DFW program's id (as any authenticated user).
 async function getDfwProgramId(token: string): Promise<string> {
-  const rows = await restJson<Array<{ id: string; is_public: boolean; owner_id: string | null }>>(
-    'GET',
-    `programs?slug=eq.${DFW_SLUG}&select=id,is_public,owner_id`,
-    token,
-  );
+  const rows = await restJson<
+    Array<{ id: string; is_public: boolean; owner_id: string | null }>
+  >('GET', `programs?slug=eq.${DFW_SLUG}&select=id,is_public,owner_id`, token);
   expect(rows).toHaveLength(1);
   return rows[0].id;
 }
@@ -147,7 +154,13 @@ test.describe('program schema — DFW seed', () => {
     const user = await signUpThrowawayUser();
 
     const programs = await restJson<
-      Array<{ id: string; is_public: boolean; owner_id: string | null; num_weeks: number; days_per_week: number }>
+      Array<{
+        id: string;
+        is_public: boolean;
+        owner_id: string | null;
+        num_weeks: number;
+        days_per_week: number;
+      }>
     >('GET', `programs?slug=eq.${DFW_SLUG}&select=*`, user.token);
 
     expect(programs).toHaveLength(1);
@@ -158,7 +171,10 @@ test.describe('program schema — DFW seed', () => {
     expect(dfw.days_per_week).toBe(3);
 
     const sessions = await restJson<
-      Array<{ sequence_index: number; workout_options: { movements: unknown[] } }>
+      Array<{
+        sequence_index: number;
+        workout_options: { movements: unknown[] };
+      }>
     >(
       'GET',
       `program_sessions?program_id=eq.${dfw.id}&select=sequence_index,workout_options&order=sequence_index.asc`,
@@ -178,21 +194,107 @@ test.describe('program schema — DFW seed', () => {
   });
 });
 
+test.describe('program schema — 10,000 Swing Challenge seed', () => {
+  test('the shared 10k Swing Challenge is present, public, system-owned, with 20 flat sessions', async () => {
+    const user = await signUpThrowawayUser();
+
+    const programs = await restJson<
+      Array<{
+        id: string;
+        is_public: boolean;
+        owner_id: string | null;
+        num_weeks: number;
+        days_per_week: number;
+      }>
+    >('GET', `programs?slug=eq.${SWING10K_SLUG}&select=*`, user.token);
+
+    expect(programs).toHaveLength(1);
+    const challenge = programs[0];
+    expect(challenge.is_public).toBe(true);
+    expect(challenge.owner_id).toBeNull();
+    expect(challenge.num_weeks).toBe(4);
+    expect(challenge.days_per_week).toBe(5);
+
+    const sessions = await restJson<
+      Array<{
+        sequence_index: number;
+        week_number: number;
+        day_number: number;
+        workout_options: {
+          complexSet: boolean;
+          intervalTimer: number;
+          restTimer: number;
+          workoutGoal: number;
+          workoutGoalUnits: string;
+          movements: Array<{
+            movementName: string;
+            repScheme: number[];
+            weightOneUnit: string | null;
+            weightOneValue: number | null;
+            weightTwoUnit: string | null;
+            weightTwoValue: number | null;
+          }>;
+        };
+      }>
+    >(
+      'GET',
+      `program_sessions?program_id=eq.${challenge.id}&select=sequence_index,week_number,day_number,workout_options&order=sequence_index.asc`,
+      user.token,
+    );
+
+    expect(sessions).toHaveLength(SWING10K_SESSION_COUNT);
+    // Contiguous 0..19 order.
+    expect(sessions.map((s) => s.sequence_index)).toEqual(
+      Array.from({ length: SWING10K_SESSION_COUNT }, (_, i) => i),
+    );
+    // 4 weeks x 5 days, laid out in order.
+    expect(sessions.map((s) => [s.week_number, s.day_number])).toEqual(
+      Array.from({ length: SWING10K_SESSION_COUNT }, (_, i) => [
+        Math.floor(i / 5) + 1,
+        (i % 5) + 1,
+      ]),
+    );
+
+    // Every session is the identical 500-swing conditioning target.
+    for (const s of sessions) {
+      const opts = s.workout_options;
+      expect(opts.complexSet).toBe(false);
+      expect(opts.intervalTimer).toBe(0);
+      expect(opts.restTimer).toBe(0);
+      expect(opts.workoutGoal).toBe(5);
+      expect(opts.workoutGoalUnits).toBe('rounds');
+      expect(opts.movements).toHaveLength(1);
+      const [swing] = opts.movements;
+      expect(swing.movementName).toBe('Kettlebell Swing');
+      expect(swing.repScheme).toEqual([10, 15, 25, 50]);
+      expect(swing.weightOneUnit).toBe('kilograms');
+      expect(swing.weightOneValue).toBe(24);
+      expect(swing.weightTwoUnit).toBeNull();
+      expect(swing.weightTwoValue).toBeNull();
+    }
+  });
+});
+
 test.describe('program schema — RLS', () => {
-  test('a user cannot read or write another user\'s private program', async () => {
+  test("a user cannot read or write another user's private program", async () => {
     const alice = await signUpThrowawayUser();
     const bob = await signUpThrowawayUser();
 
     // Alice creates a private program she owns.
-    const [program] = await restJson<Array<{ id: string }>>('POST', 'programs', alice.token, {
-      body: {
-        owner_id: alice.uid,
-        title: "Alice's secret program",
-        num_weeks: 1,
-        days_per_week: 1,
+    const [program] = await restJson<Array<{ id: string }>>(
+      'POST',
+      'programs',
+      alice.token,
+      {
+        body: {
+          owner_id: alice.uid,
+          title: "Alice's secret program",
+          num_weeks: 1,
+          days_per_week: 1,
+        },
+        prefer: 'return=representation',
       },
-      prefer: 'return=representation',
-    });
+    );
     expect(program.id).toBeTruthy();
 
     // Bob cannot see it.
@@ -231,10 +333,15 @@ test.describe('program schema — RLS', () => {
 
     // UPDATE is silently scoped out by the RLS USING clause (owner_id is NULL):
     // 0 rows affected, and the shared row is unchanged.
-    const updated = await restJson<Array<unknown>>('PATCH', `programs?id=eq.${dfwId}`, user.token, {
-      body: { title: 'hacked' },
-      prefer: 'return=representation',
-    });
+    const updated = await restJson<Array<unknown>>(
+      'PATCH',
+      `programs?id=eq.${dfwId}`,
+      user.token,
+      {
+        body: { title: 'hacked' },
+        prefer: 'return=representation',
+      },
+    );
     expect(updated).toHaveLength(0);
 
     const stillNamed = await restJson<Array<{ title: string }>>(
@@ -265,10 +372,15 @@ test.describe('program schema — constraints', () => {
     const dfwId = await getDfwProgramId(user.token);
 
     // First active enrollment succeeds.
-    const [first] = await restJson<Array<{ id: string }>>('POST', 'user_programs', user.token, {
-      body: { user_id: user.uid, program_id: dfwId, status: 'active' },
-      prefer: 'return=representation',
-    });
+    const [first] = await restJson<Array<{ id: string }>>(
+      'POST',
+      'user_programs',
+      user.token,
+      {
+        body: { user_id: user.uid, program_id: dfwId, status: 'active' },
+        prefer: 'return=representation',
+      },
+    );
     expect(first.id).toBeTruthy();
 
     // A second active enrollment violates one_active_program_per_user.
@@ -278,10 +390,15 @@ test.describe('program schema — constraints', () => {
     expect(second.status).toBe(409);
 
     // But a non-active enrollment for the same user is fine.
-    const [abandoned] = await restJson<Array<{ id: string }>>('POST', 'user_programs', user.token, {
-      body: { user_id: user.uid, program_id: dfwId, status: 'abandoned' },
-      prefer: 'return=representation',
-    });
+    const [abandoned] = await restJson<Array<{ id: string }>>(
+      'POST',
+      'user_programs',
+      user.token,
+      {
+        body: { user_id: user.uid, program_id: dfwId, status: 'abandoned' },
+        prefer: 'return=representation',
+      },
+    );
     expect(abandoned.id).toBeTruthy();
   });
 
@@ -289,10 +406,15 @@ test.describe('program schema — constraints', () => {
     const user = await signUpThrowawayUser();
     const dfwId = await getDfwProgramId(user.token);
 
-    const [enrollment] = await restJson<Array<{ id: string }>>('POST', 'user_programs', user.token, {
-      body: { user_id: user.uid, program_id: dfwId, status: 'active' },
-      prefer: 'return=representation',
-    });
+    const [enrollment] = await restJson<Array<{ id: string }>>(
+      'POST',
+      'user_programs',
+      user.token,
+      {
+        body: { user_id: user.uid, program_id: dfwId, status: 'active' },
+        prefer: 'return=representation',
+      },
+    );
     const [session] = await restJson<Array<{ id: string }>>(
       'GET',
       `program_sessions?program_id=eq.${dfwId}&select=id&order=sequence_index.asc&limit=1`,
@@ -333,7 +455,12 @@ test.describe('program schema — enroll_in_program (copy-on-enroll)', () => {
 
     // A new user-owned, private clone exists, linked back to the source.
     const clones = await restJson<
-      Array<{ id: string; owner_id: string; is_public: boolean; source_program_id: string }>
+      Array<{
+        id: string;
+        owner_id: string;
+        is_public: boolean;
+        source_program_id: string;
+      }>
     >(
       'GET',
       `programs?source_program_id=eq.${dfwId}&owner_id=eq.${user.uid}&select=id,owner_id,is_public,source_program_id`,
@@ -369,7 +496,9 @@ test.describe('program schema — enroll_in_program (copy-on-enroll)', () => {
     );
 
     // Exactly one active enrollment, pointing at the CLONE (not the shared DFW).
-    const active = await restJson<Array<{ id: string; program_id: string; status: string }>>(
+    const active = await restJson<
+      Array<{ id: string; program_id: string; status: string }>
+    >(
       'GET',
       `user_programs?user_id=eq.${user.uid}&status=eq.active&select=id,program_id,status`,
       user.token,
@@ -384,10 +513,15 @@ test.describe('program schema — enroll_in_program (copy-on-enroll)', () => {
       `program_sessions?program_id=eq.${clone.id}&select=id&order=sequence_index.asc&limit=1`,
       user.token,
     );
-    await restJson('PATCH', `program_sessions?id=eq.${firstClone.id}`, user.token, {
-      body: { title: 'Edited by owner' },
-      prefer: 'return=representation',
-    });
+    await restJson(
+      'PATCH',
+      `program_sessions?id=eq.${firstClone.id}`,
+      user.token,
+      {
+        body: { title: 'Edited by owner' },
+        prefer: 'return=representation',
+      },
+    );
     const dfwFirst = await restJson<Array<{ title: string }>>(
       'GET',
       `program_sessions?program_id=eq.${dfwId}&select=title&order=sequence_index.asc&limit=1`,
@@ -403,9 +537,13 @@ test.describe('program schema — enroll_in_program (copy-on-enroll)', () => {
     const firstEnrollment = await rpc<string>('enroll_in_program', user.token, {
       p_program_id: dfwId,
     });
-    const secondEnrollment = await rpc<string>('enroll_in_program', user.token, {
-      p_program_id: dfwId,
-    });
+    const secondEnrollment = await rpc<string>(
+      'enroll_in_program',
+      user.token,
+      {
+        p_program_id: dfwId,
+      },
+    );
     expect(secondEnrollment).not.toBe(firstEnrollment);
 
     // The first enrollment is now abandoned; exactly one active remains (the new one).
