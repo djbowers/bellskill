@@ -37,7 +37,6 @@ AS $$
 DECLARE
   v_user_id            UUID := auth.uid();
   v_owner_id           UUID;
-  v_is_public          BOOLEAN;
   v_target_program     UUID;
   v_user_program_id    UUID;
   v_placeholder_weight NUMERIC;
@@ -48,7 +47,7 @@ BEGIN
 
   -- RLS on this SELECT already restricts to public-or-own; a NOT FOUND result
   -- means the program does not exist or is not visible to the caller.
-  SELECT owner_id, is_public INTO v_owner_id, v_is_public
+  SELECT owner_id INTO v_owner_id
   FROM programs WHERE id = p_program_id;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Program % not found or not accessible', p_program_id;
