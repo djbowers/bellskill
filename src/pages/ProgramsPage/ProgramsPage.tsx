@@ -28,8 +28,12 @@ import { getWeightTabValue, getWeightUnitLabel } from '~/utils';
 
 const DEFAULT_WEEKS = 5;
 const DEFAULT_DAYS_PER_WEEK = 3;
-// Pre-fill for the starting-weight prompt: double loading at the shared
-// programs' 24kg placeholder, so confirming the default is a one-tap no-op.
+// Pre-fill for the starting-weight prompt: double loading at 24kg, which is
+// DFW's placeholder and a reasonable generic starting point the user can edit.
+// TODO(PROD-TBD): derive the pre-fill from the enrolled program's own
+// placeholder weight/mode once the other shared programs (Snatch Test / Armor
+// Building Complex / Easy Strength) land — the prompt fires for any non-owned
+// public program, so a fixed 24kg won't match every one.
 const DEFAULT_STARTING_WEIGHT_VALUE = 24;
 const DEFAULT_WEIGHT_UNIT: WeightUnit = 'kilograms';
 
