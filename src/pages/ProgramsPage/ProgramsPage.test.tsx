@@ -218,6 +218,26 @@ describe('ProgramsPage', () => {
     );
   });
 
+  it('preserves the selected unit (lb) across a loading-mode switch', async () => {
+    renderPage();
+
+    fireEvent.click(screen.getByText('Start Dry Fighting Weight'));
+    await userEvent.click(screen.getAllByRole('tab', { name: 'lb' })[0]);
+    await userEvent.click(screen.getByRole('tab', { name: 'Two-Hand' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      {
+        programId: 'dfw-1',
+        sharedWeightOneValue: 24,
+        sharedWeightOneUnit: 'pounds',
+        sharedWeightTwoValue: null,
+        sharedWeightTwoUnit: null,
+      },
+      expect.anything(),
+    );
+  });
+
   it('enrolls in your own program directly, with no starting-weight prompt', () => {
     renderPage();
 

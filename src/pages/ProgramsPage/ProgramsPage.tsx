@@ -95,7 +95,9 @@ export const ProgramsPage = () => {
         ? null
         : sharedWeightOneValue || DEFAULT_STARTING_WEIGHT_VALUE,
     );
-    setSharedWeightOneUnit(value === 'none' ? null : DEFAULT_WEIGHT_UNIT);
+    setSharedWeightOneUnit(
+      value === 'none' ? null : sharedWeightOneUnit || DEFAULT_WEIGHT_UNIT,
+    );
     setSharedWeightTwoValue(
       value === 'double'
         ? sharedWeightTwoValue || DEFAULT_STARTING_WEIGHT_VALUE
@@ -103,7 +105,9 @@ export const ProgramsPage = () => {
           ? 0
           : null,
     );
-    setSharedWeightTwoUnit(value === 'double' ? DEFAULT_WEIGHT_UNIT : null);
+    setSharedWeightTwoUnit(
+      value === 'double' ? sharedWeightTwoUnit || DEFAULT_WEIGHT_UNIT : null,
+    );
   };
 
   const handleChangeSharedWeightOneValue = (value: number) =>
