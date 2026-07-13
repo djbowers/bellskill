@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import {
+  EnrollProgramArgs,
   useActiveProgram,
   useCreateProgram,
   useEnrollProgram,
   usePrograms,
 } from '~/api';
-import { Page } from '~/components';
+import { ModifyCountButtons, Page, WeightUnitTabs } from '~/components';
+import { WeightModeTabs } from '~/components/MovementAutocomplete';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import {
@@ -21,13 +23,15 @@ import {
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { useSession } from '~/contexts';
-import { Program } from '~/types';
+import { Program, WeightUnit } from '~/types';
+import { getWeightTabValue, getWeightUnitLabel } from '~/utils';
 
 const DEFAULT_WEEKS = 5;
 const DEFAULT_DAYS_PER_WEEK = 3;
-// Pre-fill for the starting-weight prompt: matches the shared programs'
-// double-24kg placeholder load, so confirming the default is a one-tap no-op.
-const DEFAULT_STARTING_WEIGHT_KG = 24;
+// Pre-fill for the starting-weight prompt: double loading at the shared
+// programs' 24kg placeholder, so confirming the default is a one-tap no-op.
+const DEFAULT_STARTING_WEIGHT_VALUE = 24;
+const DEFAULT_WEIGHT_UNIT: WeightUnit = 'kilograms';
 
 export const ProgramsPage = () => {
   const navigate = useNavigate();
@@ -48,18 +52,72 @@ export const ProgramsPage = () => {
   const [pendingWeightProgramId, setPendingWeightProgramId] = useState<
     string | null
   >(null);
-  const [startingWeight, setStartingWeight] = useState(
-    DEFAULT_STARTING_WEIGHT_KG,
-  );
+  // Starting shared weight for the prompt, mirroring the live builder's shared
+  // weight picker (mode + independent left/right value + unit). Default: double
+  // loading at the 24kg placeholder.
+  const [sharedWeightOneValue, setSharedWeightOneValue] = useState<
+    number | null
+  >(DEFAULT_STARTING_WEIGHT_VALUE);
+  const [sharedWeightOneUnit, setSharedWeightOneUnit] =
+    useState<WeightUnit | null>(DEFAULT_WEIGHT_UNIT);
+  const [sharedWeightTwoValue, setSharedWeightTwoValue] = useState<
+    number | null
+  >(DEFAULT_STARTING_WEIGHT_VALUE);
+  const [sharedWeightTwoUnit, setSharedWeightTwoUnit] =
+    useState<WeightUnit | null>(DEFAULT_WEIGHT_UNIT);
 
   const sharedPrograms = programs.filter((p) => p.isPublic);
   const myPrograms = programs.filter((p) => !p.isPublic);
 
-  const enrollIn = (programId: string, startingWeightKg?: number) =>
+  const enrollIn = (
+    programId: string,
+    weights?: Pick<
+      EnrollProgramArgs,
+      | 'sharedWeightOneValue'
+      | 'sharedWeightOneUnit'
+      | 'sharedWeightTwoValue'
+      | 'sharedWeightTwoUnit'
+    >,
+  ) =>
     enroll.mutate(
-      { programId, startingWeightKg },
+      { programId, ...weights },
       { onSuccess: () => navigate('/') },
     );
+
+  const sharedWeightTabValue = getWeightTabValue({
+    weightOneValue: sharedWeightOneValue,
+    weightTwoValue: sharedWeightTwoValue,
+  });
+
+  const handleChangeSharedWeightTab = (value: string) => {
+    setSharedWeightOneValue(
+      value === 'none'
+        ? null
+        : sharedWeightOneValue || DEFAULT_STARTING_WEIGHT_VALUE,
+    );
+    setSharedWeightOneUnit(value === 'none' ? null : DEFAULT_WEIGHT_UNIT);
+    setSharedWeightTwoValue(
+      value === 'double'
+        ? sharedWeightTwoValue || DEFAULT_STARTING_WEIGHT_VALUE
+        : value === '1h'
+          ? 0
+          : null,
+    );
+    setSharedWeightTwoUnit(value === 'double' ? DEFAULT_WEIGHT_UNIT : null);
+  };
+
+  const handleChangeSharedWeightOneValue = (value: number) =>
+    setSharedWeightOneValue(Math.max(1, value));
+
+  const handleChangeSharedWeightTwoValue = (value: number) =>
+    setSharedWeightTwoValue(Math.max(1, value));
+
+  const resetStartingWeight = () => {
+    setSharedWeightOneValue(DEFAULT_STARTING_WEIGHT_VALUE);
+    setSharedWeightOneUnit(DEFAULT_WEIGHT_UNIT);
+    setSharedWeightTwoValue(DEFAULT_STARTING_WEIGHT_VALUE);
+    setSharedWeightTwoUnit(DEFAULT_WEIGHT_UNIT);
+  };
 
   // Only an *active* enrollment blocks a fresh enroll — a completed program may
   // still be returned by useActiveProgram (to drive the home "complete" card),
@@ -76,7 +134,7 @@ export const ProgramsPage = () => {
   const proceedToEnroll = (programId: string) => {
     const program = programs.find((p) => p.id === programId);
     if (program && isSharedNotOwned(program)) {
-      setStartingWeight(DEFAULT_STARTING_WEIGHT_KG);
+      resetStartingWeight();
       setPendingWeightProgramId(programId);
     } else {
       enrollIn(programId);
@@ -105,7 +163,12 @@ export const ProgramsPage = () => {
     if (!pendingWeightProgramId) return;
     const target = pendingWeightProgramId;
     setPendingWeightProgramId(null);
-    enrollIn(target, startingWeight);
+    enrollIn(target, {
+      sharedWeightOneValue,
+      sharedWeightOneUnit,
+      sharedWeightTwoValue,
+      sharedWeightTwoUnit,
+    });
   };
 
   const handleCreate = () => {
@@ -300,21 +363,53 @@ export const ProgramsPage = () => {
           <DialogHeader>
             <DialogTitle>Starting weight</DialogTitle>
             <DialogDescription>
-              Every session in this program starts with this weight. You can
+              Set the weight every session in this program starts with. You can
               still adjust it session by session once you're in the program.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-0.5">
-            <Label htmlFor="starting-weight">Weight (kg)</Label>
-            <Input
-              id="starting-weight"
-              type="number"
-              min={0}
-              value={startingWeight}
-              onChange={(e) =>
-                setStartingWeight(Math.max(0, Number(e.target.value) || 0))
-              }
+          <div className="flex flex-col gap-1">
+            <WeightModeTabs
+              value={sharedWeightTabValue}
+              onValueChange={handleChangeSharedWeightTab}
             />
+            {sharedWeightOneValue !== null && (
+              <ModifyCountButtons
+                onClickMinus={() =>
+                  handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
+                }
+                onClickPlus={() =>
+                  handleChangeSharedWeightOneValue(sharedWeightOneValue + 1)
+                }
+                unit={getWeightUnitLabel(sharedWeightOneUnit)}
+                unitTabs={
+                  <WeightUnitTabs
+                    value={sharedWeightOneUnit}
+                    onChange={setSharedWeightOneUnit}
+                  />
+                }
+                value={sharedWeightOneValue}
+                onChange={handleChangeSharedWeightOneValue}
+              />
+            )}
+            {sharedWeightTwoValue !== null && sharedWeightTwoValue > 0 && (
+              <ModifyCountButtons
+                onClickMinus={() =>
+                  handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
+                }
+                onClickPlus={() =>
+                  handleChangeSharedWeightTwoValue(sharedWeightTwoValue + 1)
+                }
+                unit={getWeightUnitLabel(sharedWeightTwoUnit)}
+                unitTabs={
+                  <WeightUnitTabs
+                    value={sharedWeightTwoUnit}
+                    onChange={setSharedWeightTwoUnit}
+                  />
+                }
+                value={sharedWeightTwoValue}
+                onChange={handleChangeSharedWeightTwoValue}
+              />
+            )}
           </div>
           <DialogFooter>
             <Button

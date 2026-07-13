@@ -72,7 +72,7 @@ describe('useEnrollProgram', () => {
     expect(receivedBody).toEqual({ p_program_id: 'program-abc' });
   });
 
-  it('passes a starting weight through to the RPC', async () => {
+  it('passes mixed left/right shared weights through to the RPC', async () => {
     let receivedBody: unknown;
     server.use(
       http.post(RPC_URL, async ({ request }) => {
@@ -87,12 +87,48 @@ describe('useEnrollProgram', () => {
 
     await result.current.mutateAsync({
       programId: 'program-abc',
-      startingWeightKg: 32,
+      sharedWeightOneValue: 20,
+      sharedWeightOneUnit: 'kilograms',
+      sharedWeightTwoValue: 16,
+      sharedWeightTwoUnit: 'kilograms',
     });
 
     expect(receivedBody).toEqual({
       p_program_id: 'program-abc',
-      p_starting_weight_kg: 32,
+      p_shared_weight_one_value: 20,
+      p_shared_weight_one_unit: 'kilograms',
+      p_shared_weight_two_value: 16,
+      p_shared_weight_two_unit: 'kilograms',
+    });
+  });
+
+  it('omits weight two when enrolling with a single two-hand weight', async () => {
+    let receivedBody: unknown;
+    server.use(
+      http.post(RPC_URL, async ({ request }) => {
+        receivedBody = await request.json();
+        return HttpResponse.json('new-user-program-id');
+      }),
+    );
+
+    const { result } = renderHook(() => useEnrollProgram(), {
+      wrapper: makeWrapper(),
+    });
+
+    await result.current.mutateAsync({
+      programId: 'program-abc',
+      sharedWeightOneValue: 24,
+      sharedWeightOneUnit: 'pounds',
+      sharedWeightTwoValue: null,
+      sharedWeightTwoUnit: null,
+    });
+
+    // null value+unit are dropped from the JSON body, so the RPC receives its
+    // NULL defaults for weight two (two-hand loading).
+    expect(receivedBody).toEqual({
+      p_program_id: 'program-abc',
+      p_shared_weight_one_value: 24,
+      p_shared_weight_one_unit: 'pounds',
     });
   });
 

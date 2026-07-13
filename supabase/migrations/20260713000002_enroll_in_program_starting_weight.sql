@@ -4,12 +4,20 @@
 -- workout_options verbatim, including DFW's double-24kg placeholder load on
 -- every regular session (see 20260706170001_seed_dry_fighting_weight.sql). A
 -- user whose real working weight differs had to hand-edit every session for
--- the length of the program. p_starting_weight_kg lets the caller supply a
--- starting weight at enroll time; when set, it's written into the clone's
--- sharedWeightOneValue/sharedWeightTwoValue (both bells, matching DFW's
--- double-kettlebell loading), which resolveSharedWeights.ts already overrides
--- every movement's weight from. NULL (the default) is byte-identical to prior
--- behavior -- existing callers and every other program are unaffected.
+-- the length of the program. The four p_shared_weight_* params let the caller
+-- supply a starting shared weight at enroll time -- matching the same
+-- sharedWeightOne/Two value+unit shape resolveSharedWeights.ts already reads,
+-- so the enrollee can pick two-hand / single / double loading, independent
+-- left/right (mixed) weights, and kg or lb. When set, they're written into the
+-- clone's sharedWeightOne/TwoValue/Unit, which resolveSharedWeights.ts then
+-- overrides every movement's weight from. Leaving them NULL (the default) is
+-- byte-identical to prior behavior -- existing callers and every other program
+-- are unaffected.
+--
+-- The override is keyed off p_shared_weight_one_value: NULL there means "no
+-- override" (e.g. a bodyweight selection), so the clone is verbatim. A NULL
+-- p_shared_weight_two_value writes JSON null into sharedWeightTwoValue (two-hand
+-- loading); 0 writes a single/offset (1H) slot -- both mirror the live builder.
 --
 -- Sessions that already deviate from the shared placeholder default (e.g.
 -- DFW's W5D2 "Test a new press max", deliberately seeded heavier at 28kg to
@@ -18,16 +26,18 @@
 -- *modal* (most common) weight across the source program's sessions are
 -- placeholder sessions and get the override.
 --
--- DROP + CREATE (not CREATE OR REPLACE): appending a parameter changes the
--- function's argument-type identity, so an in-place replace would leave the
--- old enroll_in_program(uuid) overload around too -- PostgREST would then see
--- two matching candidates for a call passing only p_program_id and error
+-- DROP + CREATE (not CREATE OR REPLACE): the base enroll_in_program(uuid)
+-- overload must go, or PostgREST would see two candidates for a call passing
+-- only p_program_id (the new all-defaults overload also matches) and error
 -- "function is not unique".
 DROP FUNCTION IF EXISTS public.enroll_in_program(UUID);
 
 CREATE FUNCTION public.enroll_in_program(
   p_program_id UUID,
-  p_starting_weight_kg NUMERIC DEFAULT NULL
+  p_shared_weight_one_value NUMERIC DEFAULT NULL,
+  p_shared_weight_one_unit  TEXT    DEFAULT NULL,
+  p_shared_weight_two_value NUMERIC DEFAULT NULL,
+  p_shared_weight_two_unit  TEXT    DEFAULT NULL
 )
 RETURNS UUID
 LANGUAGE plpgsql
@@ -35,11 +45,12 @@ SECURITY INVOKER
 SET search_path = public
 AS $$
 DECLARE
-  v_user_id            UUID := auth.uid();
+  v_user_id            UUID    := auth.uid();
   v_owner_id           UUID;
   v_target_program     UUID;
   v_user_program_id    UUID;
   v_placeholder_weight NUMERIC;
+  v_override           BOOLEAN := p_shared_weight_one_value IS NOT NULL;
 BEGIN
   IF v_user_id IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
@@ -69,7 +80,7 @@ BEGIN
     FROM programs WHERE id = p_program_id
     RETURNING id INTO v_target_program;
 
-    IF p_starting_weight_kg IS NOT NULL THEN
+    IF v_override THEN
       SELECT weight_val INTO v_placeholder_weight
       FROM (
         SELECT (workout_options->'movements'->0->>'weightOneValue')::NUMERIC AS weight_val,
@@ -87,15 +98,24 @@ BEGIN
     SELECT
       v_target_program, sequence_index, week_number, day_number, title,
       CASE
-        WHEN p_starting_weight_kg IS NOT NULL
+        WHEN v_override
          AND (workout_options->'movements'->0->>'weightOneValue')::NUMERIC = v_placeholder_weight
+        -- COALESCE(..., 'null'::jsonb): jsonb_set is strict and to_jsonb(NULL)
+        -- is SQL NULL, so an unset slot (e.g. weight two in two-hand loading)
+        -- must be coerced to a JSON null or the whole workout_options nulls out.
         THEN jsonb_set(
                jsonb_set(
                  jsonb_set(
-                   jsonb_set(workout_options, '{sharedWeightOneValue}', to_jsonb(p_starting_weight_kg)),
-                   '{sharedWeightOneUnit}', to_jsonb('kilograms'::TEXT)),
-                 '{sharedWeightTwoValue}', to_jsonb(p_starting_weight_kg)),
-               '{sharedWeightTwoUnit}', to_jsonb('kilograms'::TEXT))
+                   jsonb_set(
+                     workout_options,
+                     '{sharedWeightOneValue}',
+                     COALESCE(to_jsonb(p_shared_weight_one_value), 'null'::jsonb)),
+                   '{sharedWeightOneUnit}',
+                   COALESCE(to_jsonb(p_shared_weight_one_unit), 'null'::jsonb)),
+                 '{sharedWeightTwoValue}',
+                 COALESCE(to_jsonb(p_shared_weight_two_value), 'null'::jsonb)),
+               '{sharedWeightTwoUnit}',
+               COALESCE(to_jsonb(p_shared_weight_two_unit), 'null'::jsonb))
         ELSE workout_options
       END,
       notes
@@ -111,5 +131,5 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.enroll_in_program(UUID, NUMERIC) FROM public;
-GRANT EXECUTE ON FUNCTION public.enroll_in_program(UUID, NUMERIC) TO authenticated;
+REVOKE ALL ON FUNCTION public.enroll_in_program(UUID, NUMERIC, TEXT, NUMERIC, TEXT) FROM public;
+GRANT EXECUTE ON FUNCTION public.enroll_in_program(UUID, NUMERIC, TEXT, NUMERIC, TEXT) TO authenticated;

@@ -1,17 +1,23 @@
 import { useMutation, useQueryClient } from 'react-query';
 
 import { QUERIES } from '~/constants';
+import { WeightUnit } from '~/types';
 
 import { supabase } from '../supabaseClient';
 import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
 export interface EnrollProgramArgs {
   programId: string;
-  // Kilograms. When set, overrides the placeholder load on every cloned
-  // session that still carries the source program's default weight (see
-  // enroll_in_program's p_starting_weight_kg). Omit/null leaves the clone's
-  // weights byte-identical to the source, matching prior behavior.
-  startingWeightKg?: number | null;
+  // Optional starting shared weight, mirroring workout_options'
+  // sharedWeightOne/Two value+unit shape. When weight one is set, the clone's
+  // sharedWeight* fields (which resolveSharedWeights.ts prioritizes over each
+  // movement's own weight) are overridden on every placeholder-weight session
+  // (see enroll_in_program). A null weight two means two-hand loading; 0 means
+  // a single/offset slot. Omit all four to clone verbatim (prior behavior).
+  sharedWeightOneValue?: number | null;
+  sharedWeightOneUnit?: WeightUnit | null;
+  sharedWeightTwoValue?: number | null;
+  sharedWeightTwoUnit?: WeightUnit | null;
 }
 
 /**
@@ -30,11 +36,17 @@ export const useEnrollProgram = () => {
   return useMutation({
     mutationFn: async ({
       programId,
-      startingWeightKg,
+      sharedWeightOneValue,
+      sharedWeightOneUnit,
+      sharedWeightTwoValue,
+      sharedWeightTwoUnit,
     }: EnrollProgramArgs): Promise<string> => {
       const { data, error } = await supabase.rpc('enroll_in_program', {
         p_program_id: programId,
-        p_starting_weight_kg: startingWeightKg ?? undefined,
+        p_shared_weight_one_value: sharedWeightOneValue ?? undefined,
+        p_shared_weight_one_unit: sharedWeightOneUnit ?? undefined,
+        p_shared_weight_two_value: sharedWeightTwoValue ?? undefined,
+        p_shared_weight_two_unit: sharedWeightTwoUnit ?? undefined,
       });
 
       if (error) throw error;

@@ -757,7 +757,13 @@ export type Database = {
         Returns: undefined
       }
       enroll_in_program: {
-        Args: { p_program_id: string; p_starting_weight_kg?: number }
+        Args: {
+          p_program_id: string
+          p_shared_weight_one_unit?: string
+          p_shared_weight_one_value?: number
+          p_shared_weight_two_unit?: string
+          p_shared_weight_two_value?: number
+        }
         Returns: string
       }
       evaluate_feature_flag: { Args: { p_flag_key: string }; Returns: string }

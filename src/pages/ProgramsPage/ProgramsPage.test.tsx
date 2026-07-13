@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { vi } from 'vitest';
 
@@ -111,35 +112,95 @@ describe('ProgramsPage', () => {
     });
   });
 
-  it('prompts for a starting weight before enrolling in a shared program, pre-filled with 24kg', () => {
+  it('prompts for a starting weight before enrolling in a shared program, defaulted to double 24kg', () => {
     renderPage();
 
     fireEvent.click(screen.getByText('Start Dry Fighting Weight'));
 
-    // The RPC is not called yet — the starting-weight prompt is shown first.
+    // The RPC is not called yet — the starting-weight prompt is shown first,
+    // defaulting to double loading (two weight inputs) at 24kg each.
     expect(enrollMutate).not.toHaveBeenCalled();
     expect(screen.getByText('Starting weight')).toBeInTheDocument();
-    expect(screen.getByLabelText('Weight (kg)')).toHaveValue(24);
+    const inputs = screen.getAllByRole('spinbutton');
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0]).toHaveValue(24);
+    expect(inputs[1]).toHaveValue(24);
 
     fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
 
     expect(enrollMutate).toHaveBeenCalledWith(
-      { programId: 'dfw-1', startingWeightKg: 24 },
+      {
+        programId: 'dfw-1',
+        sharedWeightOneValue: 24,
+        sharedWeightOneUnit: 'kilograms',
+        sharedWeightTwoValue: 24,
+        sharedWeightTwoUnit: 'kilograms',
+      },
       expect.anything(),
     );
   });
 
-  it('enrolls with the edited starting weight', () => {
+  it('enrolls with mixed independent left/right weights', () => {
     renderPage();
 
     fireEvent.click(screen.getByText('Start Dry Fighting Weight'));
-    fireEvent.change(screen.getByLabelText('Weight (kg)'), {
-      target: { value: '32' },
+    // Left bell stays 24kg, right bell drops to 16kg (mixed pair).
+    fireEvent.change(screen.getAllByRole('spinbutton')[1], {
+      target: { value: '16' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
 
     expect(enrollMutate).toHaveBeenCalledWith(
-      { programId: 'dfw-1', startingWeightKg: 32 },
+      {
+        programId: 'dfw-1',
+        sharedWeightOneValue: 24,
+        sharedWeightOneUnit: 'kilograms',
+        sharedWeightTwoValue: 16,
+        sharedWeightTwoUnit: 'kilograms',
+      },
+      expect.anything(),
+    );
+  });
+
+  it('enrolls with a single two-hand weight when the Two-Hand mode is selected', async () => {
+    renderPage();
+
+    fireEvent.click(screen.getByText('Start Dry Fighting Weight'));
+    await userEvent.click(screen.getByRole('tab', { name: 'Two-Hand' }));
+
+    // Two-hand loading collapses to one weight input; weight two clears.
+    expect(screen.getAllByRole('spinbutton')).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      {
+        programId: 'dfw-1',
+        sharedWeightOneValue: 24,
+        sharedWeightOneUnit: 'kilograms',
+        sharedWeightTwoValue: null,
+        sharedWeightTwoUnit: null,
+      },
+      expect.anything(),
+    );
+  });
+
+  it('enrolls with a per-slot unit choice (kg or lb)', async () => {
+    renderPage();
+
+    fireEvent.click(screen.getByText('Start Dry Fighting Weight'));
+    // Switch only the left bell to pounds; the right bell stays in kg.
+    await userEvent.click(screen.getAllByRole('tab', { name: 'lb' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      {
+        programId: 'dfw-1',
+        sharedWeightOneValue: 24,
+        sharedWeightOneUnit: 'pounds',
+        sharedWeightTwoValue: 24,
+        sharedWeightTwoUnit: 'kilograms',
+      },
       expect.anything(),
     );
   });
@@ -151,7 +212,7 @@ describe('ProgramsPage', () => {
 
     expect(screen.queryByText('Starting weight')).not.toBeInTheDocument();
     expect(enrollMutate).toHaveBeenCalledWith(
-      { programId: 'mine-1', startingWeightKg: undefined },
+      { programId: 'mine-1' },
       expect.anything(),
     );
   });
@@ -181,7 +242,13 @@ describe('ProgramsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
 
     expect(enrollMutate).toHaveBeenCalledWith(
-      { programId: 'dfw-1', startingWeightKg: 24 },
+      {
+        programId: 'dfw-1',
+        sharedWeightOneValue: 24,
+        sharedWeightOneUnit: 'kilograms',
+        sharedWeightTwoValue: 24,
+        sharedWeightTwoUnit: 'kilograms',
+      },
       expect.anything(),
     );
   });
