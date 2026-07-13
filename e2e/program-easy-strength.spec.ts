@@ -168,10 +168,10 @@ test.describe('program schema — Easy Strength seed', () => {
         expect(m.repScheme).toEqual(expectedReps);
       }
 
-      // Goal is 'rounds' == number of rungs (one full cycle per rung).
+      // Goal is a fixed 1 round: one round == completing the whole ladder once.
       expect(s.workout_options.complexSet).toBe(false);
       expect(s.workout_options.workoutGoalUnits).toBe('rounds');
-      expect(s.workout_options.workoutGoal).toBe(expectedReps.length);
+      expect(s.workout_options.workoutGoal).toBe(1);
 
       // Weight modes: press/squat/carry double, swing two-hand single, pull-up bodyweight.
       const byName = Object.fromEntries(
