@@ -662,7 +662,7 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
       {
         body: {
           owner_id: user.uid,
-          title: "My own program",
+          title: 'My own program',
           num_weeks: 1,
           days_per_week: 1,
         },

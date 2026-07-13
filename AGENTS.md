@@ -230,7 +230,7 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   optional `p_starting_weight_kg`; when set, the clone's `sharedWeightOne/Two`
   fields (which `resolveSharedWeights.ts` already prioritizes over a
   movement's own explicit weight) are overridden to that value on every
-  cloned session whose source weight matches the *modal* weight across the
+  cloned session whose source weight matches the _modal_ weight across the
   program — i.e. the shared placeholder, not a deliberately different session
   like DFW's W5D2 test day. NULL (the default) is byte-identical to the prior
   copy-verbatim behavior. `ProgramsPage` prompts for this only when enrolling
