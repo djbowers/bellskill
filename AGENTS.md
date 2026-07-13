@@ -205,9 +205,9 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
 
 Server-authoritative, per-user flag/assignment mechanism that replaced the
 build-time `VITE_FEATURE_*` env vars for **experiment** flags (as opposed to
-the release-toggle flags in `~/config/features`, which stay build-time). Schema
+the release-toggle flags in `~/config/features`, which stay build-time).
 
-- RPCs in `supabase/migrations/20260709000001_create_feature_flags.sql`; eval
+- Schema + RPCs in `supabase/migrations/20260709000001_create_feature_flags.sql`; eval
   client in `~/api/useFeatureFlags` (`useFeatureFlags()` hook); app-facing
   flag keys/types and the safe-default mapping in `~/config/experiments`.
 
