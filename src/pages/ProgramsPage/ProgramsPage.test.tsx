@@ -27,6 +27,15 @@ vi.mock('~/api', () => ({
   useEnrollProgram: mockUseEnrollProgram,
 }));
 
+vi.mock('~/contexts', async () => {
+  const actual =
+    await vi.importActual<typeof import('~/contexts')>('~/contexts');
+  return {
+    ...actual,
+    useSession: () => ({ user: { id: 'user-123' } }),
+  };
+});
+
 const dfw = {
   id: 'dfw-1',
   ownerId: null,
@@ -102,15 +111,52 @@ describe('ProgramsPage', () => {
     });
   });
 
-  it('offers a one-tap "Start Dry Fighting Weight" that enrolls directly when no program is active', () => {
+  it('prompts for a starting weight before enrolling in a shared program, pre-filled with 24kg', () => {
     renderPage();
 
     fireEvent.click(screen.getByText('Start Dry Fighting Weight'));
 
-    expect(enrollMutate).toHaveBeenCalledWith('dfw-1', expect.anything());
+    // The RPC is not called yet — the starting-weight prompt is shown first.
+    expect(enrollMutate).not.toHaveBeenCalled();
+    expect(screen.getByText('Starting weight')).toBeInTheDocument();
+    expect(screen.getByLabelText('Weight (kg)')).toHaveValue(24);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      { programId: 'dfw-1', startingWeightKg: 24 },
+      expect.anything(),
+    );
   });
 
-  it('prompts to switch when a different program is already active, then enrolls on confirm', () => {
+  it('enrolls with the edited starting weight', () => {
+    renderPage();
+
+    fireEvent.click(screen.getByText('Start Dry Fighting Weight'));
+    fireEvent.change(screen.getByLabelText('Weight (kg)'), {
+      target: { value: '32' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      { programId: 'dfw-1', startingWeightKg: 32 },
+      expect.anything(),
+    );
+  });
+
+  it('enrolls in your own program directly, with no starting-weight prompt', () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(screen.queryByText('Starting weight')).not.toBeInTheDocument();
+    expect(enrollMutate).toHaveBeenCalledWith(
+      { programId: 'mine-1', startingWeightKg: undefined },
+      expect.anything(),
+    );
+  });
+
+  it('prompts to switch when a different program is already active, then prompts for starting weight on confirm', () => {
     mockUseActiveProgram.mockReturnValue({
       data: {
         enrollment: { programId: 'other-program', status: 'active' },
@@ -128,7 +174,16 @@ describe('ProgramsPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Switch program' }));
 
-    expect(enrollMutate).toHaveBeenCalledWith('dfw-1', expect.anything());
+    // Confirming the switch leads into the starting-weight prompt.
+    expect(enrollMutate).not.toHaveBeenCalled();
+    expect(screen.getByText('Starting weight')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      { programId: 'dfw-1', startingWeightKg: 24 },
+      expect.anything(),
+    );
   });
 
   it('renders one card per shared program, each with its own enroll button', () => {

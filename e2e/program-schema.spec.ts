@@ -560,3 +560,153 @@ test.describe('program schema — enroll_in_program (copy-on-enroll)', () => {
     expect(previous?.status).toBe('abandoned');
   });
 });
+
+test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)', () => {
+  test('a starting weight overrides sharedWeight* on every placeholder-weight session but leaves the W5D2 test day exactly as authored', async () => {
+    const user = await signUpThrowawayUser();
+    const dfwId = await getDfwProgramId(user.token);
+
+    const userProgramId = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: dfwId,
+      p_starting_weight_kg: 32,
+    });
+
+    const clones = await restJson<Array<{ id: string }>>(
+      'GET',
+      `programs?source_program_id=eq.${dfwId}&owner_id=eq.${user.uid}&select=id`,
+      user.token,
+    );
+    expect(clones).toHaveLength(1);
+    const cloneId = clones[0].id;
+
+    const active = await restJson<Array<{ id: string; program_id: string }>>(
+      'GET',
+      `user_programs?id=eq.${userProgramId}&select=id,program_id`,
+      user.token,
+    );
+    expect(active[0].program_id).toBe(cloneId);
+
+    const cloneSessions = await restJson<
+      Array<{
+        sequence_index: number;
+        title: string;
+        workout_options: {
+          sharedWeightOneValue: number | null;
+          sharedWeightOneUnit: string | null;
+          sharedWeightTwoValue: number | null;
+          sharedWeightTwoUnit: string | null;
+          movements: Array<{ weightOneValue: number }>;
+        };
+      }>
+    >(
+      'GET',
+      `program_sessions?program_id=eq.${cloneId}&select=sequence_index,title,workout_options&order=sequence_index.asc`,
+      user.token,
+    );
+    expect(cloneSessions).toHaveLength(DFW_SESSION_COUNT);
+
+    // Every regular session (seq 0-12): sharedWeight overridden to the chosen
+    // weight in kg, on both bells (resolveSharedWeights then overrides every
+    // movement's own weight from these two fields).
+    const regularSessions = cloneSessions.filter((s) => s.sequence_index < 13);
+    expect(regularSessions).toHaveLength(13);
+    for (const session of regularSessions) {
+      expect(session.workout_options.sharedWeightOneValue).toBe(32);
+      expect(session.workout_options.sharedWeightOneUnit).toBe('kilograms');
+      expect(session.workout_options.sharedWeightTwoValue).toBe(32);
+      expect(session.workout_options.sharedWeightTwoUnit).toBe('kilograms');
+    }
+
+    // The W5D2 test day (seq 13) is left exactly as authored in the source:
+    // no sharedWeight override, and its own heavier 28kg movement weight
+    // untouched.
+    const testDay = cloneSessions.find((s) => s.sequence_index === 13);
+    expect(testDay?.title).toBe('Test - new press max');
+    expect(testDay?.workout_options.sharedWeightOneValue).toBeNull();
+    expect(testDay?.workout_options.sharedWeightTwoValue).toBeNull();
+    expect(testDay?.workout_options.movements[0].weightOneValue).toBe(28);
+  });
+
+  test('enrolling with no starting weight clones sharedWeight* byte-identically to the source (unchanged behavior)', async () => {
+    const user = await signUpThrowawayUser();
+    const dfwId = await getDfwProgramId(user.token);
+
+    await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: dfwId,
+    });
+
+    const clones = await restJson<Array<{ id: string }>>(
+      'GET',
+      `programs?source_program_id=eq.${dfwId}&owner_id=eq.${user.uid}&select=id`,
+      user.token,
+    );
+    const cloneSessions = await restJson<
+      Array<{ workout_options: { sharedWeightOneValue: number | null } }>
+    >(
+      'GET',
+      `program_sessions?program_id=eq.${clones[0].id}&select=workout_options&order=sequence_index.asc`,
+      user.token,
+    );
+    for (const session of cloneSessions) {
+      expect(session.workout_options.sharedWeightOneValue).toBeNull();
+    }
+  });
+
+  test('a starting weight is ignored when enrolling in your own program (no clone, no session mutation)', async () => {
+    const user = await signUpThrowawayUser();
+
+    const [program] = await restJson<Array<{ id: string }>>(
+      'POST',
+      'programs',
+      user.token,
+      {
+        body: {
+          owner_id: user.uid,
+          title: "My own program",
+          num_weeks: 1,
+          days_per_week: 1,
+        },
+        prefer: 'return=representation',
+      },
+    );
+    const workoutOptions = {
+      sharedWeightOneValue: null,
+      sharedWeightOneUnit: null,
+      sharedWeightTwoValue: null,
+      sharedWeightTwoUnit: null,
+      movements: [{ movementName: 'Front Squat', weightOneValue: 16 }],
+    };
+    await restJson('POST', 'program_sessions', user.token, {
+      body: {
+        program_id: program.id,
+        sequence_index: 0,
+        week_number: 1,
+        day_number: 1,
+        title: 'Only session',
+        workout_options: workoutOptions,
+      },
+      prefer: 'return=representation',
+    });
+
+    const userProgramId = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: program.id,
+      p_starting_weight_kg: 40,
+    });
+
+    const active = await restJson<Array<{ program_id: string }>>(
+      'GET',
+      `user_programs?id=eq.${userProgramId}&select=program_id`,
+      user.token,
+    );
+    // Own program: activated directly, no clone.
+    expect(active[0].program_id).toBe(program.id);
+
+    const sessions = await restJson<Array<{ workout_options: unknown }>>(
+      'GET',
+      `program_sessions?program_id=eq.${program.id}&select=workout_options`,
+      user.token,
+    );
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].workout_options).toEqual(workoutOptions);
+  });
+});

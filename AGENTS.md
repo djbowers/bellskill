@@ -226,6 +226,16 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   each auto-fire alternates sides, so `intervalTimer: 30` gives "left on the
   minute, right 30s later." See the `AAProtocolPlanASession` story +
   `ActiveWorkoutPage.test.jsx` EMOM-cadence test.
+- **Starting weight on enroll (PROD-TBD):** `enroll_in_program` takes an
+  optional `p_starting_weight_kg`; when set, the clone's `sharedWeightOne/Two`
+  fields (which `resolveSharedWeights.ts` already prioritizes over a
+  movement's own explicit weight) are overridden to that value on every
+  cloned session whose source weight matches the *modal* weight across the
+  program — i.e. the shared placeholder, not a deliberately different session
+  like DFW's W5D2 test day. NULL (the default) is byte-identical to the prior
+  copy-verbatim behavior. `ProgramsPage` prompts for this only when enrolling
+  in a shared program you don't own (`program.isPublic && ownerId !== you`);
+  your own programs are already fully weight-configured in the builder.
 
 ## Runtime Feature Flags (PROD-175)
 

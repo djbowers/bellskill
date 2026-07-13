@@ -20,13 +20,18 @@ import {
 } from '~/components/ui/dialog';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
+import { useSession } from '~/contexts';
 import { Program } from '~/types';
 
 const DEFAULT_WEEKS = 5;
 const DEFAULT_DAYS_PER_WEEK = 3;
+// Pre-fill for the starting-weight prompt: matches the shared programs'
+// double-24kg placeholder load, so confirming the default is a one-tap no-op.
+const DEFAULT_STARTING_WEIGHT_KG = 24;
 
 export const ProgramsPage = () => {
   const navigate = useNavigate();
+  const session = useSession();
   const { data: programs = [], isLoading } = usePrograms();
   const { data: activeProgram } = useActiveProgram();
   const createProgram = useCreateProgram();
@@ -39,18 +44,44 @@ export const ProgramsPage = () => {
 
   // Program the user is trying to switch to while another is already active.
   const [pendingSwitchId, setPendingSwitchId] = useState<string | null>(null);
+  // Shared program awaiting a starting-weight confirmation before enrolling.
+  const [pendingWeightProgramId, setPendingWeightProgramId] = useState<
+    string | null
+  >(null);
+  const [startingWeight, setStartingWeight] = useState(
+    DEFAULT_STARTING_WEIGHT_KG,
+  );
 
   const sharedPrograms = programs.filter((p) => p.isPublic);
   const myPrograms = programs.filter((p) => !p.isPublic);
 
-  const enrollIn = (programId: string) =>
-    enroll.mutate(programId, { onSuccess: () => navigate('/') });
+  const enrollIn = (programId: string, startingWeightKg?: number) =>
+    enroll.mutate(
+      { programId, startingWeightKg },
+      { onSuccess: () => navigate('/') },
+    );
 
   // Only an *active* enrollment blocks a fresh enroll — a completed program may
   // still be returned by useActiveProgram (to drive the home "complete" card),
   // but starting a new program then needs no "switch?" confirmation.
   const activeEnrollment =
     activeProgram?.enrollment.status === 'active' ? activeProgram : null;
+
+  // A shared program you don't own gets a starting-weight prompt (every
+  // session ships with the same placeholder load); your own programs are
+  // already fully weight-configured in the builder, so they skip it.
+  const isSharedNotOwned = (program: Program) =>
+    program.isPublic && program.ownerId !== session?.user?.id;
+
+  const proceedToEnroll = (programId: string) => {
+    const program = programs.find((p) => p.id === programId);
+    if (program && isSharedNotOwned(program)) {
+      setStartingWeight(DEFAULT_STARTING_WEIGHT_KG);
+      setPendingWeightProgramId(programId);
+    } else {
+      enrollIn(programId);
+    }
+  };
 
   const handleEnroll = (programId: string) => {
     if (
@@ -59,7 +90,7 @@ export const ProgramsPage = () => {
     ) {
       setPendingSwitchId(programId);
     } else {
-      enrollIn(programId);
+      proceedToEnroll(programId);
     }
   };
 
@@ -67,7 +98,14 @@ export const ProgramsPage = () => {
     if (!pendingSwitchId) return;
     const target = pendingSwitchId;
     setPendingSwitchId(null);
-    enrollIn(target);
+    proceedToEnroll(target);
+  };
+
+  const confirmStartingWeight = () => {
+    if (!pendingWeightProgramId) return;
+    const target = pendingWeightProgramId;
+    setPendingWeightProgramId(null);
+    enrollIn(target, startingWeight);
   };
 
   const handleCreate = () => {
@@ -247,6 +285,46 @@ export const ProgramsPage = () => {
             </Button>
             <Button onClick={confirmSwitch} disabled={enroll.isLoading}>
               Switch program
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={pendingWeightProgramId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingWeightProgramId(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Starting weight</DialogTitle>
+            <DialogDescription>
+              Every session in this program starts with this weight. You can
+              still adjust it session by session once you're in the program.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-0.5">
+            <Label htmlFor="starting-weight">Weight (kg)</Label>
+            <Input
+              id="starting-weight"
+              type="number"
+              min={0}
+              value={startingWeight}
+              onChange={(e) =>
+                setStartingWeight(Math.max(0, Number(e.target.value) || 0))
+              }
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setPendingWeightProgramId(null)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={confirmStartingWeight} disabled={enroll.isLoading}>
+              Start program
             </Button>
           </DialogFooter>
         </DialogContent>

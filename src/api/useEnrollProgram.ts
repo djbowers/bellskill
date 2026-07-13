@@ -5,6 +5,15 @@ import { QUERIES } from '~/constants';
 import { supabase } from '../supabaseClient';
 import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
+export interface EnrollProgramArgs {
+  programId: string;
+  // Kilograms. When set, overrides the placeholder load on every cloned
+  // session that still carries the source program's default weight (see
+  // enroll_in_program's p_starting_weight_kg). Omit/null leaves the clone's
+  // weights byte-identical to the source, matching prior behavior.
+  startingWeightKg?: number | null;
+}
+
 /**
  * Enrolls the user in a program via the Slice-1 `enroll_in_program` RPC
  * (copy-on-enroll). Enrolling in a shared program (e.g. DFW) clones it into a
@@ -19,9 +28,13 @@ export const useEnrollProgram = () => {
   const onError = useProgramMutationErrorHandler();
 
   return useMutation({
-    mutationFn: async (programId: string): Promise<string> => {
+    mutationFn: async ({
+      programId,
+      startingWeightKg,
+    }: EnrollProgramArgs): Promise<string> => {
       const { data, error } = await supabase.rpc('enroll_in_program', {
         p_program_id: programId,
+        p_starting_weight_kg: startingWeightKg ?? undefined,
       });
 
       if (error) throw error;

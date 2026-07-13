@@ -64,10 +64,36 @@ describe('useEnrollProgram', () => {
       wrapper: makeWrapper(),
     });
 
-    const enrolled = await result.current.mutateAsync('program-abc');
+    const enrolled = await result.current.mutateAsync({
+      programId: 'program-abc',
+    });
 
     expect(enrolled).toBe('new-user-program-id');
     expect(receivedBody).toEqual({ p_program_id: 'program-abc' });
+  });
+
+  it('passes a starting weight through to the RPC', async () => {
+    let receivedBody: unknown;
+    server.use(
+      http.post(RPC_URL, async ({ request }) => {
+        receivedBody = await request.json();
+        return HttpResponse.json('new-user-program-id');
+      }),
+    );
+
+    const { result } = renderHook(() => useEnrollProgram(), {
+      wrapper: makeWrapper(),
+    });
+
+    await result.current.mutateAsync({
+      programId: 'program-abc',
+      startingWeightKg: 32,
+    });
+
+    expect(receivedBody).toEqual({
+      p_program_id: 'program-abc',
+      p_starting_weight_kg: 32,
+    });
   });
 
   it('surfaces RPC errors', async () => {
@@ -82,7 +108,7 @@ describe('useEnrollProgram', () => {
     });
 
     await expect(
-      result.current.mutateAsync('program-abc'),
+      result.current.mutateAsync({ programId: 'program-abc' }),
     ).rejects.toBeTruthy();
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(showToast).toHaveBeenCalledWith(PROGRAM_MUTATION_ERROR_MESSAGE, {
@@ -99,7 +125,7 @@ describe('useEnrollProgram', () => {
       wrapper: makeWrapper(),
     });
 
-    await result.current.mutateAsync('program-abc');
+    await result.current.mutateAsync({ programId: 'program-abc' });
 
     expect(showToast).not.toHaveBeenCalled();
   });

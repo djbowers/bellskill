@@ -756,7 +756,10 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: undefined
       }
-      enroll_in_program: { Args: { p_program_id: string }; Returns: string }
+      enroll_in_program: {
+        Args: { p_program_id: string; p_starting_weight_kg?: number }
+        Returns: string
+      }
       evaluate_feature_flag: { Args: { p_flag_key: string }; Returns: string }
       evaluate_feature_flags: {
         Args: { p_flag_keys: string[] }
