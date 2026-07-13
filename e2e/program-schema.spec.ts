@@ -13,6 +13,8 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY!;
 const DFW_SLUG = 'dry-fighting-weight';
 const DFW_SESSION_COUNT = 14;
+const SWING10K_SLUG = '10000-swing-challenge';
+const SWING10K_SESSION_COUNT = 20;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -174,6 +176,81 @@ test.describe('program schema — DFW seed', () => {
     for (const s of sessions) {
       expect(Array.isArray(s.workout_options.movements)).toBe(true);
       expect(s.workout_options.movements.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+test.describe('program schema — 10,000 Swing Challenge seed', () => {
+  test('the shared 10k Swing Challenge is present, public, system-owned, with 20 flat sessions', async () => {
+    const user = await signUpThrowawayUser();
+
+    const programs = await restJson<
+      Array<{ id: string; is_public: boolean; owner_id: string | null; num_weeks: number; days_per_week: number }>
+    >('GET', `programs?slug=eq.${SWING10K_SLUG}&select=*`, user.token);
+
+    expect(programs).toHaveLength(1);
+    const challenge = programs[0];
+    expect(challenge.is_public).toBe(true);
+    expect(challenge.owner_id).toBeNull();
+    expect(challenge.num_weeks).toBe(4);
+    expect(challenge.days_per_week).toBe(5);
+
+    const sessions = await restJson<
+      Array<{
+        sequence_index: number;
+        week_number: number;
+        day_number: number;
+        workout_options: {
+          complexSet: boolean;
+          intervalTimer: number;
+          restTimer: number;
+          workoutGoal: number;
+          workoutGoalUnits: string;
+          movements: Array<{
+            movementName: string;
+            repScheme: number[];
+            weightOneUnit: string | null;
+            weightOneValue: number | null;
+            weightTwoUnit: string | null;
+            weightTwoValue: number | null;
+          }>;
+        };
+      }>
+    >(
+      'GET',
+      `program_sessions?program_id=eq.${challenge.id}&select=sequence_index,week_number,day_number,workout_options&order=sequence_index.asc`,
+      user.token,
+    );
+
+    expect(sessions).toHaveLength(SWING10K_SESSION_COUNT);
+    // Contiguous 0..19 order.
+    expect(sessions.map((s) => s.sequence_index)).toEqual(
+      Array.from({ length: SWING10K_SESSION_COUNT }, (_, i) => i),
+    );
+    // 4 weeks x 5 days, laid out in order.
+    expect(sessions.map((s) => [s.week_number, s.day_number])).toEqual(
+      Array.from({ length: SWING10K_SESSION_COUNT }, (_, i) => [
+        Math.floor(i / 5) + 1,
+        (i % 5) + 1,
+      ]),
+    );
+
+    // Every session is the identical 500-swing conditioning target.
+    for (const s of sessions) {
+      const opts = s.workout_options;
+      expect(opts.complexSet).toBe(false);
+      expect(opts.intervalTimer).toBe(0);
+      expect(opts.restTimer).toBe(0);
+      expect(opts.workoutGoal).toBe(5);
+      expect(opts.workoutGoalUnits).toBe('rounds');
+      expect(opts.movements).toHaveLength(1);
+      const [swing] = opts.movements;
+      expect(swing.movementName).toBe('Kettlebell Swing');
+      expect(swing.repScheme).toEqual([10, 15, 25, 50]);
+      expect(swing.weightOneUnit).toBe('kilograms');
+      expect(swing.weightOneValue).toBe(24);
+      expect(swing.weightTwoUnit).toBeNull();
+      expect(swing.weightTwoValue).toBeNull();
     }
   });
 });
