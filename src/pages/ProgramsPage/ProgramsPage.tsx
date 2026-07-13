@@ -371,6 +371,7 @@ export const ProgramsPage = () => {
             <WeightModeTabs
               value={sharedWeightTabValue}
               onValueChange={handleChangeSharedWeightTab}
+              hideNone
             />
             {sharedWeightOneValue !== null && (
               <ModifyCountButtons

@@ -7,12 +7,14 @@ interface WeightModeTabsProps {
   value: WeightTabValue;
   onValueChange: (value: WeightTabValue) => void;
   className?: string;
+  hideNone?: boolean;
 }
 
 export const WeightModeTabs = ({
   value,
   onValueChange,
   className,
+  hideNone = false,
 }: WeightModeTabsProps) => (
   <Tabs
     value={value}
@@ -20,9 +22,11 @@ export const WeightModeTabs = ({
     className={cn('w-full', className)}
   >
     <TabsList className="flex w-full">
-      <TabsTrigger className="min-w-0 flex-1 px-0.5" size="sm" value="none">
-        {WEIGHT_MODE_LABELS.none}
-      </TabsTrigger>
+      {!hideNone && (
+        <TabsTrigger className="min-w-0 flex-1 px-0.5" size="sm" value="none">
+          {WEIGHT_MODE_LABELS.none}
+        </TabsTrigger>
+      )}
       <TabsTrigger className="min-w-0 flex-1 px-0.5" size="sm" value="2h">
         {WEIGHT_MODE_LABELS['2h']}
       </TabsTrigger>

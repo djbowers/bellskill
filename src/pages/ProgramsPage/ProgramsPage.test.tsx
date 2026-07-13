@@ -140,6 +140,19 @@ describe('ProgramsPage', () => {
     );
   });
 
+  it('omits the Bodyweight mode from the starting-weight prompt', () => {
+    renderPage();
+
+    fireEvent.click(screen.getByText('Start Dry Fighting Weight'));
+
+    expect(
+      screen.queryByRole('tab', { name: 'Bodyweight' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Two-Hand' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Single' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Double' })).toBeInTheDocument();
+  });
+
   it('enrolls with mixed independent left/right weights', () => {
     renderPage();
 
