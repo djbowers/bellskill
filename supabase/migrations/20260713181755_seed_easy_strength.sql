@@ -17,9 +17,9 @@
 --   Week A: 2x5, 2x5, 5-3-2, 2x5, 2x5
 --   Week B: 2x5, 6x1 (ascending), 1x10, 2x5, 5-3-1
 --
--- workoutGoalUnits is 'rounds' with the goal = number of rungs (repScheme length),
--- so one full cycle through all five movements = one round (ladder-style, matching
--- how the runtime advances the shared rung index).
+-- workoutGoalUnits is 'rounds' with a fixed goal of 1: the runtime only counts a
+-- round after every rung of every movement is done, so one round = completing the
+-- whole prescribed ladder once (the repScheme already encodes all the sets/reps).
 --
 -- Movement -> catalog weight mode (see src/utils/movementWeightModeFilter.ts):
 --   * Press  Two-Arm Kettlebell Military Press  -> double bells (weightOne+weightTwo)
@@ -48,7 +48,7 @@ RETURNS JSONB LANGUAGE sql IMMUTABLE AS $$
     'complexSet', false,
     'intervalTimer', 0,
     'restTimer', 0,
-    'workoutGoal', array_length(p_reps, 1),
+    'workoutGoal', 1,
     'workoutGoalUnits', 'rounds',
     'workoutDetails', p_details,
     'sharedWeightOneUnit', NULL,
