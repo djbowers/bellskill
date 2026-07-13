@@ -154,8 +154,10 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
 - **Shared programs (seeded, system-owned):** the public shared programs
   (`owner_id NULL`, `is_public`) ship as migrations (not `seed.sql`, so they
   also reach staging/prod) — Dry Fighting Weight
-  (`*_seed_dry_fighting_weight.sql`) and Dan John's 10,000 Swing Challenge
-  (`*_seed_10000_swing_challenge.sql`). Each is idempotent on `slug` and builds
+  (`*_seed_dry_fighting_weight.sql`), Dan John's 10,000 Swing Challenge
+  (`*_seed_10000_swing_challenge.sql`), and StrongFirst's A+A Protocol "Plan A"
+  (`*_seed_aa_protocol_plan_a.sql`, the first EMOM/`intervalTimer` program). Each
+  is idempotent on `slug` and builds
   every session's `WorkoutOptions` JSONB (shape `Omit<WorkoutOptions,'startedAt'>`,
   camelCase keys) via a `pg_temp` helper; add another by mirroring one. Seed
   shape is asserted in `e2e/program-schema.spec.ts`. `ProgramsPage` currently
