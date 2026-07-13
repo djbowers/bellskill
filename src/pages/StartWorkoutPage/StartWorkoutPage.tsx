@@ -115,13 +115,20 @@ export const StartWorkoutPage = ({
   // undefined only while the enabled query is still loading, so `programGate-
   // Pending` reliably holds the page in browse mode until we know whether to
   // surface the next-workout card — avoiding a builder→card flash on open.
+  // A terminal error also settles the gate (`!isError`): this query has no
+  // `placeholderData`, so `data` stays undefined after a failed fetch — without
+  // the `isError` escape a program-enabled session would be stranded on the
+  // blocking skeleton forever. On error we fall through to the safe default
+  // (no active program → builder), mirroring how the flags gate releases via
+  // `isPlaceholderData` going false on error.
   const activeProgramQuery = useActiveProgram({ enabled: features.programs });
   const activeProgram = activeProgramQuery.data ?? null;
   const hasActiveProgram = Boolean(activeProgram);
   const programGatePending =
     features.programs &&
     !programSaveMode &&
-    activeProgramQuery.data === undefined;
+    activeProgramQuery.data === undefined &&
+    !activeProgramQuery.isError;
   const completeProgramSession = useCompleteProgramSession();
 
   // Discovery surfaces are individually flag-gated (PROD-174). With every one

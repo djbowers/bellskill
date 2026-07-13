@@ -11,13 +11,30 @@ import { StartWorkoutPage } from './StartWorkoutPage';
 // mount, then self-correct once the (async) program/feature-flag gates
 // settled — a visible flash in both directions. It now withholds rendering
 // entirely until both gates resolve.
-const { mockUseFeatureFlags } = vi.hoisted(() => ({
-  mockUseFeatureFlags: vi.fn(),
-}));
+const { mockUseFeatureFlags, mockUseActiveProgram, mockUseFeatures } =
+  vi.hoisted(() => ({
+    mockUseFeatureFlags: vi.fn(),
+    mockUseActiveProgram: vi.fn(),
+    mockUseFeatures: vi.fn(),
+  }));
 vi.mock('~/api', async (importOriginal) => ({
   ...(await importOriginal()),
   useFeatureFlags: mockUseFeatureFlags,
+  useActiveProgram: mockUseActiveProgram,
 }));
+vi.mock('~/hooks', async (importOriginal) => ({
+  ...(await importOriginal()),
+  useFeatures: mockUseFeatures,
+}));
+
+const BASE_FEATURES = {
+  bottomNav: false,
+  complexMode: false,
+  explore: false,
+  premium: false,
+  programs: false,
+  weeklyBalance: false,
+};
 
 const SAFE_DEFAULT_FEATURES = {
   curatedFirstWorkout: false,
@@ -44,6 +61,11 @@ const renderPage = (routerState = null) =>
   );
 
 describe('StartWorkoutPage pending-gate skeleton', () => {
+  beforeEach(() => {
+    mockUseFeatures.mockReturnValue(BASE_FEATURES);
+    mockUseActiveProgram.mockReturnValue({ data: undefined, isError: false });
+  });
+
   test('renders a loading state — neither browse nor builder — while flags are still resolving', () => {
     mockUseFeatureFlags.mockReturnValue({
       features: SAFE_DEFAULT_FEATURES,
@@ -96,6 +118,25 @@ describe('StartWorkoutPage pending-gate skeleton', () => {
     });
 
     renderPage({ editWorkout: true });
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Movement Input')).toBeInTheDocument();
+  });
+
+  test('a terminally-errored active-program query releases the gate instead of stranding on the skeleton', () => {
+    // `programs` on (owner preview / rollout) + flags already settled: only the
+    // program gate is in play. The query has no `placeholderData`, so a terminal
+    // error leaves `data` undefined forever — without the `isError` escape the
+    // page would be stuck on the blocking skeleton. It must fall through to the
+    // safe default (no active program → builder).
+    mockUseFeatures.mockReturnValue({ ...BASE_FEATURES, programs: true });
+    mockUseFeatureFlags.mockReturnValue({
+      features: SAFE_DEFAULT_FEATURES,
+      isPending: false,
+    });
+    mockUseActiveProgram.mockReturnValue({ data: undefined, isError: true });
+
+    renderPage();
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Movement Input')).toBeInTheDocument();
