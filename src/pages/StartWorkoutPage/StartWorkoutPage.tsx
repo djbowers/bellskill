@@ -96,29 +96,21 @@ export const StartWorkoutPage = ({
   programSaveMode,
 }: StartWorkoutPageProps = {}) => {
   const features = useFeatures();
-  // Discovery surfaces (curated / repeat / recommender) migrated onto the
-  // runtime feature-flag mechanism (PROD-175). Resolved once at app init
-  // (`FeatureFlagsGate` in `~/app/App.tsx`, gated behind its own splash)
-  // before this page ever mounts, so `useFeatureFlags()` here just reads the
-  // already-settled, cached result (`staleTime: Infinity`) — no pending state
-  // to gate on. Defaults to all-OFF (pure builder) on error or until
-  // deliberately toggled, so production behavior is unchanged.
+  // Runtime flags (PROD-175) settle at app init (`FeatureFlagsGate`) before
+  // this page mounts, so there's no pending state to gate on; they default to
+  // all-OFF (pure builder) on error.
   const { features: experimentFeatures } = useFeatureFlags();
   const navigate = useNavigate();
   const startWorkout = useStartWorkout();
   const [workoutOptions] = useWorkoutOptions();
   const { curated, recentRepeats } = useRecommendedWorkouts();
 
-  // Program tracking (Slice 3), behind the `programs` flag. The query is gated so
-  // non-program builds fire zero extra requests (zero regression). `data` is
-  // undefined only while the enabled query is still loading, so `programGate-
-  // Pending` reliably holds the page in browse mode until we know whether to
-  // surface the next-workout card — avoiding a builder→card flash on open.
-  // A terminal error also settles the gate (`!isError`): this query has no
-  // `placeholderData`, so `data` stays undefined after a failed fetch — without
-  // the `isError` escape a program-enabled session would be stranded on the
-  // blocking skeleton forever. On error we fall through to the safe default
-  // (no active program → builder).
+  // Program tracking, behind the `programs` flag (query gated so non-program
+  // builds fire zero requests). `programGatePending` holds the page in browse
+  // mode until the query settles, avoiding a builder→card flash on open. The
+  // `!isError` escape matters: `data` stays undefined after a failed fetch (no
+  // `placeholderData`), so without it an error would strand the page on the
+  // blocking skeleton instead of falling through to the builder.
   const activeProgramQuery = useActiveProgram({ enabled: features.programs });
   const activeProgram = activeProgramQuery.data ?? null;
   const hasActiveProgram = Boolean(activeProgram);
@@ -129,11 +121,9 @@ export const StartWorkoutPage = ({
     !activeProgramQuery.isError;
   const completeProgramSession = useCompleteProgramSession();
 
-  // Discovery surfaces are individually flag-gated (PROD-174). With every one
-  // off, there's nothing to browse, so the page is the pure custom builder. In
-  // save-session mode the page is always the builder — no browse surfaces. An
-  // active program forces browse so its next-workout card is the first thing the
-  // user sees on open.
+  // Discovery surfaces are individually flag-gated (PROD-174); with all of
+  // them off the page is the pure custom builder. Save-session mode never
+  // browses; an active program forces browse so its card is seen first.
   const showCurated = experimentFeatures.curatedFirstWorkout;
   const showRepeat = experimentFeatures.repeatPrevious;
   const showBrowse =
@@ -144,25 +134,19 @@ export const StartWorkoutPage = ({
       showRepeat ||
       experimentFeatures.recommender);
 
-  // When a discovery surface is enabled the page opens in "browse" mode
-  // (recommendations + a Build-custom button); selecting one or tapping
-  // Build-custom switches to the builder. With nothing to browse, or when the
-  // history "Repeat" action navigates here with `editWorkout`, the builder
-  // opens directly.
+  // Browse mode shows recommendations plus a Build-custom button; the builder
+  // opens directly when there's nothing to browse or when history's "Repeat"
+  // navigates here with `editWorkout`.
   const location = useLocation();
   const editWorkout = Boolean(
     (location.state as { editWorkout?: boolean } | null)?.editWorkout,
   );
-  // `showBrowse` is forced true while `programGatePending` is still resolving
-  // (see above), so committing to a mode from that still-forced value at
-  // mount would strand a program-enabled session in the builder until a
-  // correction effect fires post-paint — a visible flash. Instead we render
-  // neither surface until the gate settles (below) and derive the mode fresh
-  // each render from the now-final `showBrowse`, so there's never a stale
-  // value to correct. `builderOverride` is `null` until the user explicitly
-  // switches modes (Build custom, selecting a recommendation, Back to
-  // recommendations); once set, it wins over the derived default. Save mode
-  // has no browse surface to race against, so it's excluded from the gate.
+  // Committing to a mode at mount would use the still-forced `showBrowse` and
+  // need a post-paint correction (a visible flash), so render neither surface
+  // until the gate settles and derive the mode fresh each render.
+  // `builderOverride` is null until the user explicitly switches modes, then
+  // wins over the derived default. Save mode has no browse surface to race
+  // against, so it's excluded from the gate.
   const [builderOverride, setBuilderOverride] = useState<boolean | null>(null);
   const showBuilder = builderOverride ?? (editWorkout || !showBrowse);
   const gatesPending = !programSaveMode && programGatePending && !editWorkout;

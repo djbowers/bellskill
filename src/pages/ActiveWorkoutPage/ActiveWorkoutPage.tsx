@@ -117,12 +117,10 @@ export const ActiveWorkoutPage = ({
   const [isRestActive, setIsRestActive] = useState<boolean>(false);
   const [isCountdownActive, setIsCountdownActive] = useState<boolean>(false);
 
-  // Movements
   const lastMovementIndex = movements.length - 1;
   const isLastMovement = currentMovementIndex === lastMovementIndex;
   const currentMovement = movements[currentMovementIndex];
 
-  // Weights
   const primaryWeightSide = isMirrorSet ? 'right' : 'left'; // todo: make primary weight side configurable
 
   const primaryWeightUnit = currentMovement.weightOneUnit;
@@ -173,28 +171,23 @@ export const ActiveWorkoutPage = ({
         ? null
         : secondaryWeightValue;
 
-  // Rungs
   const currentMovementRungs = currentMovement.repScheme.length;
   const isLastRung = currentMovementRungIndex === currentMovementRungs - 1;
   const currentRungVolume =
     currentTotalWeight * currentMovement.repScheme[currentMovementRungIndex];
 
-  // Rounds
   const currentRound = completedRounds + 1;
   const shouldMirrorReps = isOneHanded || isMixedWeights;
 
-  // Sides (within the current rung)
   const totalSides = shouldMirrorReps ? 2 : 1;
   const currentSide = isMirrorSet ? 2 : 1; // 1 = first side (left), 2 = second side (right)
 
-  // Interval Timer
   const totalIntervalMilliseconds = intervalTimer * 1000;
   const intervalCompletedPercentage =
     ((totalIntervalMilliseconds - intervalRemainingMilliseconds) /
       totalIntervalMilliseconds) *
     100;
 
-  // Rest Timer
   const totalRestMilliseconds = restTimer * 1000;
   const restCompletedPercentage =
     ((totalRestMilliseconds - restRemainingMilliseconds) /
@@ -206,7 +199,6 @@ export const ActiveWorkoutPage = ({
     ? Math.max(...movements.map((m) => m.repScheme.length))
     : currentMovementRungs;
 
-  // Helper Functions
   const incrementReps = () =>
     setCompletedReps(
       (prev) => prev + currentMovement.repScheme[currentMovementRungIndex],
@@ -362,7 +354,6 @@ export const ActiveWorkoutPage = ({
     });
   };
 
-  // Event Handlers
   const handleClickContinue = () => {
     unlockAudio();
     setIsEffectActive(true);

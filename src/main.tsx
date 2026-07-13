@@ -11,12 +11,12 @@ async function enableMocking() {
 
   const { worker } = await import('./mocks/browser');
 
-  // `worker.start()` returns a Promise that resolves
-  // once the Service Worker is up and ready to intercept requests.
+  // Resolves once the mock Service Worker is intercepting requests.
   return worker.start();
 }
 
-// Clean up any existing service workers
+// Stale service workers from earlier builds 404 on sw.js; unregister them
+// and clear their caches.
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(function(registrations) {
     for(let registration of registrations) {
@@ -28,7 +28,6 @@ if ('serviceWorker' in navigator) {
     console.log('Service worker unregistration failed: ', err);
   });
 
-  // Clear all caches
   if ('caches' in window) {
     caches.keys().then(function(cacheNames) {
       cacheNames.forEach(function(cacheName) {

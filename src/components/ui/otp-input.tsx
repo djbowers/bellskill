@@ -19,7 +19,6 @@ const OtpInput = React.forwardRef<HTMLDivElement, OtpInputProps>(
     const inputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
 
     const handleChange = (index: number, inputValue: string) => {
-      // Only allow single digit
       const digit = inputValue.replace(/\D/g, '').slice(-1);
 
       const newValue = value.split('');
@@ -28,12 +27,10 @@ const OtpInput = React.forwardRef<HTMLDivElement, OtpInputProps>(
 
       onChange(updatedValue);
 
-      // Move to next input if digit was entered
       if (digit && index < length - 1) {
         inputRefs.current[index + 1]?.focus();
       }
 
-      // Call onComplete if all digits are filled
       if (updatedValue.length === length && onComplete) {
         onComplete(updatedValue);
       }
@@ -44,7 +41,6 @@ const OtpInput = React.forwardRef<HTMLDivElement, OtpInputProps>(
       e: React.KeyboardEvent<HTMLInputElement>,
     ) => {
       if (e.key === 'Backspace' && !value[index] && index > 0) {
-        // Move to previous input on backspace if current is empty
         inputRefs.current[index - 1]?.focus();
       } else if (e.key === 'ArrowLeft' && index > 0) {
         inputRefs.current[index - 1]?.focus();
@@ -59,7 +55,6 @@ const OtpInput = React.forwardRef<HTMLDivElement, OtpInputProps>(
       const newValue = pastedData.slice(0, length);
       onChange(newValue);
 
-      // Focus the last filled input or the first empty one
       const focusIndex = Math.min(newValue.length, length - 1);
       setTimeout(() => {
         inputRefs.current[focusIndex]?.focus();

@@ -6,7 +6,6 @@ import * as stories from './PWAInstallPrompt.stories';
 
 const { Default } = composeStories(stories);
 
-// Mock the beforeinstallprompt event (using Vitest for tests)
 const mockBeforeInstallPrompt = () => {
   const event = new Event('beforeinstallprompt') as any;
   event.platforms = ['web'];
@@ -15,13 +14,11 @@ const mockBeforeInstallPrompt = () => {
   return event;
 };
 
-// Mock localStorage (using Vitest for tests)
 const mockLocalStorage = {
   getItem: vi.fn((key: string) => null),
   setItem: vi.fn((key: string, value: string) => {}),
 };
 
-// Mock window.matchMedia (using Vitest for tests)
 const mockMatchMedia = (matches: boolean) => {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
@@ -38,7 +35,6 @@ const mockMatchMedia = (matches: boolean) => {
   });
 };
 
-// Mock navigator.userAgent
 const mockUserAgent = (userAgent: string) => {
   Object.defineProperty(navigator, 'userAgent', {
     value: userAgent,
@@ -46,7 +42,6 @@ const mockUserAgent = (userAgent: string) => {
   });
 };
 
-// Mock navigator.standalone
 const mockStandalone = (standalone: boolean) => {
   Object.defineProperty(navigator, 'standalone', {
     value: standalone,
@@ -54,7 +49,6 @@ const mockStandalone = (standalone: boolean) => {
   });
 };
 
-// Mock document.referrer
 const mockReferrer = (referrer: string) => {
   Object.defineProperty(document, 'referrer', {
     value: referrer,
@@ -62,12 +56,9 @@ const mockReferrer = (referrer: string) => {
   });
 };
 
-// Setup all mocks before tests run
 const setupMocks = () => {
-  // Reset mocks
   vi.clearAllMocks();
 
-  // Setup default mocks
   mockMatchMedia(false);
   mockUserAgent(
     'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15',
@@ -75,7 +66,6 @@ const setupMocks = () => {
   mockStandalone(false);
   mockReferrer('https://example.com');
 
-  // Mock localStorage
   Object.defineProperty(window, 'localStorage', {
     value: mockLocalStorage,
     writable: true,
@@ -88,7 +78,6 @@ describe('PWAInstallPrompt', () => {
   });
 
   afterEach(() => {
-    // Clean up event listeners
     window.removeEventListener('beforeinstallprompt', vi.fn());
   });
 
@@ -184,11 +173,9 @@ describe('PWAInstallPrompt', () => {
         expect(screen.getByText('Install BellSkill')).toBeTruthy();
       });
 
-      // Simulate the beforeinstallprompt event
       const event = mockBeforeInstallPrompt();
       window.dispatchEvent(event);
 
-      // The component should still be visible after the event
       expect(screen.getByText('Install BellSkill')).toBeTruthy();
     });
   });
@@ -251,7 +238,6 @@ describe('PWAInstallPrompt', () => {
         expect(screen.getByText('Install BellSkill')).toBeTruthy();
       });
 
-      // Check that the share icon is present (it should be rendered as an SVG)
       const shareIcon = document.querySelector('svg');
       expect(shareIcon).toBeTruthy();
     });
