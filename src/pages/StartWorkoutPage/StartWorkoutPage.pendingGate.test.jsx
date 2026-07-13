@@ -8,18 +8,17 @@ import { StartWorkoutPage } from './StartWorkoutPage';
 
 // Regression coverage for the browse-flash fix: `StartWorkoutPage` used to
 // commit to a mode (browse vs builder) from a still-forced `showBrowse` at
-// mount, then self-correct once the (async) program/feature-flag gates
-// settled — a visible flash in both directions. It now withholds rendering
-// entirely until both gates resolve.
-const { mockUseFeatureFlags, mockUseActiveProgram, mockUseFeatures } =
-  vi.hoisted(() => ({
-    mockUseFeatureFlags: vi.fn(),
-    mockUseActiveProgram: vi.fn(),
-    mockUseFeatures: vi.fn(),
-  }));
+// mount, then self-correct once the (async) active-program query settled — a
+// visible flash. It now withholds rendering entirely until the gate resolves.
+// (The equivalent feature-flags race is fixed by resolving flags once at app
+// init — see `~/app/FeatureFlagsGate` — so this page has no flags-pending
+// state left to gate on.)
+const { mockUseActiveProgram, mockUseFeatures } = vi.hoisted(() => ({
+  mockUseActiveProgram: vi.fn(),
+  mockUseFeatures: vi.fn(),
+}));
 vi.mock('~/api', async (importOriginal) => ({
   ...(await importOriginal()),
-  useFeatureFlags: mockUseFeatureFlags,
   useActiveProgram: mockUseActiveProgram,
 }));
 vi.mock('~/hooks', async (importOriginal) => ({
@@ -32,14 +31,8 @@ const BASE_FEATURES = {
   complexMode: false,
   explore: false,
   premium: false,
-  programs: false,
+  programs: true,
   weeklyBalance: false,
-};
-
-const SAFE_DEFAULT_FEATURES = {
-  curatedFirstWorkout: false,
-  repeatPrevious: false,
-  recommender: false,
 };
 
 const makeQueryClient = () =>
@@ -60,85 +53,48 @@ const renderPage = (routerState = null) =>
     </QueryClientProvider>,
   );
 
-describe('StartWorkoutPage pending-gate skeleton', () => {
+describe('StartWorkoutPage program-gate skeleton', () => {
   beforeEach(() => {
     mockUseFeatures.mockReturnValue(BASE_FEATURES);
-    mockUseActiveProgram.mockReturnValue({ data: undefined, isError: false });
   });
 
-  test('renders a loading state — neither browse nor builder — while flags are still resolving', () => {
-    mockUseFeatureFlags.mockReturnValue({
-      features: SAFE_DEFAULT_FEATURES,
-      isPending: true,
-    });
+  test('renders a loading state while the active-program query is still resolving', () => {
+    mockUseActiveProgram.mockReturnValue({ data: undefined, isError: false });
 
     renderPage();
 
     expect(screen.getByRole('status')).toBeInTheDocument();
     expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /build custom workout/i }),
-    ).not.toBeInTheDocument();
   });
 
-  test('lands directly on browse once flags settle to treatment — no builder flash first', () => {
-    mockUseFeatureFlags.mockReturnValue({
-      features: { ...SAFE_DEFAULT_FEATURES, curatedFirstWorkout: true },
-      isPending: false,
-    });
+  test('lands directly on the builder once the program gate clears with no active program', async () => {
+    mockUseActiveProgram.mockReturnValue({ data: null, isError: false });
 
     renderPage();
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /build custom workout/i }),
-    ).toBeInTheDocument();
+    expect(await screen.findByLabelText('Movement Input')).toBeInTheDocument();
   });
 
-  test('lands directly on the builder once flags settle to control — no browse flash first', () => {
-    mockUseFeatureFlags.mockReturnValue({
-      features: SAFE_DEFAULT_FEATURES,
-      isPending: false,
-    });
-
-    renderPage();
-
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Movement Input')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /build custom workout/i }),
-    ).not.toBeInTheDocument();
-  });
-
-  test('editWorkout (history "Repeat") bypasses the skeleton even while flags are still pending', () => {
-    mockUseFeatureFlags.mockReturnValue({
-      features: SAFE_DEFAULT_FEATURES,
-      isPending: true,
-    });
+  test('editWorkout (history "Repeat") bypasses the skeleton even while the program query is still pending', async () => {
+    mockUseActiveProgram.mockReturnValue({ data: undefined, isError: false });
 
     renderPage({ editWorkout: true });
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Movement Input')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Movement Input')).toBeInTheDocument();
   });
 
-  test('a terminally-errored active-program query releases the gate instead of stranding on the skeleton', () => {
-    // `programs` on (owner preview / rollout) + flags already settled: only the
-    // program gate is in play. The query has no `placeholderData`, so a terminal
-    // error leaves `data` undefined forever — without the `isError` escape the
-    // page would be stuck on the blocking skeleton. It must fall through to the
-    // safe default (no active program → builder).
-    mockUseFeatures.mockReturnValue({ ...BASE_FEATURES, programs: true });
-    mockUseFeatureFlags.mockReturnValue({
-      features: SAFE_DEFAULT_FEATURES,
-      isPending: false,
-    });
+  test('a terminally-errored active-program query releases the gate instead of stranding on the skeleton', async () => {
+    // The query has no `placeholderData`, so a terminal error leaves `data`
+    // undefined forever — without the `isError` escape the page would be
+    // stuck on the blocking skeleton. It must fall through to the safe
+    // default (no active program → builder).
     mockUseActiveProgram.mockReturnValue({ data: undefined, isError: true });
 
     renderPage();
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Movement Input')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Movement Input')).toBeInTheDocument();
   });
 });

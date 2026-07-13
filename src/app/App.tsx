@@ -14,6 +14,7 @@ import { SessionProvider } from '../contexts';
 import { Signup } from '../pages';
 import { supabase } from '../supabaseClient';
 import '../tailwind.css';
+import { FeatureFlagsGate } from './FeatureFlagsGate';
 import { createRoutes } from './routes';
 
 export function App() {
@@ -49,7 +50,9 @@ export function App() {
             <WorkoutOptionsProvider>
               <ProgramSessionProvider>
                 <ToastProvider>
-                  <RouterProvider router={router} />
+                  <FeatureFlagsGate>
+                    <RouterProvider router={router} />
+                  </FeatureFlagsGate>
                 </ToastProvider>
               </ProgramSessionProvider>
             </WorkoutOptionsProvider>

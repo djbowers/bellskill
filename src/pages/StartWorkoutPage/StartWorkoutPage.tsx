@@ -97,14 +97,13 @@ export const StartWorkoutPage = ({
 }: StartWorkoutPageProps = {}) => {
   const features = useFeatures();
   // Discovery surfaces (curated / repeat / recommender) migrated onto the
-  // runtime feature-flag mechanism (PROD-175). Resolved per user, defaulting to
-  // all-OFF (pure builder) while loading, on error, or until deliberately
-  // toggled — so production behavior is unchanged. `experimentFlagsPending`
-  // holds the page in browse until the (async) eval resolves, so a treatment
-  // user isn't stranded in the builder by the all-OFF placeholder (mirrors
-  // `programGatePending`).
-  const { features: experimentFeatures, isPending: experimentFlagsPending } =
-    useFeatureFlags();
+  // runtime feature-flag mechanism (PROD-175). Resolved once at app init
+  // (`FeatureFlagsGate` in `~/app/App.tsx`, gated behind its own splash)
+  // before this page ever mounts, so `useFeatureFlags()` here just reads the
+  // already-settled, cached result (`staleTime: Infinity`) — no pending state
+  // to gate on. Defaults to all-OFF (pure builder) on error or until
+  // deliberately toggled, so production behavior is unchanged.
+  const { features: experimentFeatures } = useFeatureFlags();
   const navigate = useNavigate();
   const startWorkout = useStartWorkout();
   const [workoutOptions] = useWorkoutOptions();
@@ -119,8 +118,7 @@ export const StartWorkoutPage = ({
   // `placeholderData`, so `data` stays undefined after a failed fetch — without
   // the `isError` escape a program-enabled session would be stranded on the
   // blocking skeleton forever. On error we fall through to the safe default
-  // (no active program → builder), mirroring how the flags gate releases via
-  // `isPlaceholderData` going false on error.
+  // (no active program → builder).
   const activeProgramQuery = useActiveProgram({ enabled: features.programs });
   const activeProgram = activeProgramQuery.data ?? null;
   const hasActiveProgram = Boolean(activeProgram);
@@ -142,7 +140,6 @@ export const StartWorkoutPage = ({
     !programSaveMode &&
     (hasActiveProgram ||
       programGatePending ||
-      experimentFlagsPending ||
       showCurated ||
       showRepeat ||
       experimentFeatures.recommender);
@@ -156,23 +153,19 @@ export const StartWorkoutPage = ({
   const editWorkout = Boolean(
     (location.state as { editWorkout?: boolean } | null)?.editWorkout,
   );
-  // `showBrowse` is forced true while `programGatePending`/`experimentFlagsPending`
-  // are still resolving (see above), so committing to a mode from that
-  // still-forced value at mount would strand a treatment user in the builder
-  // (or paint an empty browse view for a control user) until a correction
-  // effect fires post-paint — a visible flash in both directions. Instead we
-  // render neither surface until both gates settle (below) and derive the
-  // mode fresh each render from the now-final `showBrowse`, so there's never a
-  // stale value to correct. `builderOverride` is `null` until the user
-  // explicitly switches modes (Build custom, selecting a recommendation, Back
-  // to recommendations); once set, it wins over the derived default. Save
-  // mode has no browse surface to race against, so it's excluded from the gate.
+  // `showBrowse` is forced true while `programGatePending` is still resolving
+  // (see above), so committing to a mode from that still-forced value at
+  // mount would strand a program-enabled session in the builder until a
+  // correction effect fires post-paint — a visible flash. Instead we render
+  // neither surface until the gate settles (below) and derive the mode fresh
+  // each render from the now-final `showBrowse`, so there's never a stale
+  // value to correct. `builderOverride` is `null` until the user explicitly
+  // switches modes (Build custom, selecting a recommendation, Back to
+  // recommendations); once set, it wins over the derived default. Save mode
+  // has no browse surface to race against, so it's excluded from the gate.
   const [builderOverride, setBuilderOverride] = useState<boolean | null>(null);
   const showBuilder = builderOverride ?? (editWorkout || !showBrowse);
-  const gatesPending =
-    !programSaveMode &&
-    (programGatePending || experimentFlagsPending) &&
-    !editWorkout;
+  const gatesPending = !programSaveMode && programGatePending && !editWorkout;
   // Where the (eventual) start originated, carried through any edits the user
   // makes in the builder so `workout_started` stays attributed to the surface.
   const [startSource, setStartSource] = useState<WorkoutStartSource>('builder');
@@ -248,7 +241,7 @@ export const StartWorkoutPage = ({
 
   const detailsRef = useRef<HTMLInputElement>(null);
 
-  // Neither async gate above has settled, so the mode above is still derived
+  // The program gate above hasn't settled, so the mode above is still derived
   // from a forced `showBrowse` — withhold rendering rather than commit to it.
   if (gatesPending) return <Loading />;
 

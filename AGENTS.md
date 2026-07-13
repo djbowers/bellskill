@@ -207,7 +207,7 @@ Server-authoritative, per-user flag/assignment mechanism that replaced the
 build-time `VITE_FEATURE_*` env vars for **experiment** flags (as opposed to
 the release-toggle flags in `~/config/features`, which stay build-time). Schema
 
-- RPCs in `supabase/migrations/20260709000000_create_feature_flags.sql`; eval
+- RPCs in `supabase/migrations/20260709000001_create_feature_flags.sql`; eval
   client in `~/api/useFeatureFlags` (`useFeatureFlags()` hook); app-facing
   flag keys/types and the safe-default mapping in `~/config/experiments`.
 
@@ -236,11 +236,23 @@ the release-toggle flags in `~/config/features`, which stay build-time). Schema
   failure. `staleTime: Infinity` since assignment is server-sticky. Owners
   previewing all features (see `~/config/features`) get every experiment feature
   forced on (`ALL_EXPERIMENT_FEATURES_ON`), mirroring `getFeatures()`.
-  `isPending` is true only while the eval is still resolving for a signed-in
-  user (the safe default is a placeholder, not a settled answer);
-  `StartWorkoutPage` gates browse mode on it (`experimentFlagsPending`, mirroring
-  `programGatePending`) so a treatment user isn't stranded in the builder by the
-  all-OFF placeholder.
+* **App-init gate, not a per-screen skeleton:** `FeatureFlagsGate`
+  (`~/app/FeatureFlagsGate.tsx`) resolves flags once, inside `SessionProvider`
+  and wrapping `RouterProvider` in `App.tsx` — before any route (or its
+  flag-dependent UI) ever mounts. It blocks on the same branded `Loading`
+  splash the session-bootstrap gate already uses, cleared on `isPending ===
+false` **or** an independent hard timeout (`FLAGS_TIMEOUT_MS`, ~1.75s),
+  whichever comes first — `isPending` alone has no wall-clock cap for a
+  slow-but-succeeding request, so the timeout is what actually guarantees the
+  app never hangs on this splash. If the timeout fires first, `useFeatureFlags()`
+  already reads as the safe default until the real result lands, so there's no
+  separate fallback path to maintain. Because the underlying query is keyed
+  `[QUERIES.FEATURE_FLAGS, userId]` with `staleTime: Infinity`, any later
+  consumer (e.g. `StartWorkoutPage`) calling `useFeatureFlags()` just reads the
+  already-resolved cache instantly — flags are loaded once per session, not
+  re-awaited on navigation. `StartWorkoutPage` itself only tracks
+  `programGatePending` (the separate active-program query) for its own
+  pending-skeleton handling; it has no flags-pending state left to gate on.
 * Migrating another build-time flag onto this mechanism: add its key to
   `EXPERIMENT_FLAG_KEYS`/`KEY_TO_FEATURE` in `~/config/experiments`, add a row
   to the migration's seed `INSERT` (defaulted `enabled = false` to preserve
