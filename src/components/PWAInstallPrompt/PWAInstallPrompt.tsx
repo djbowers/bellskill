@@ -23,7 +23,6 @@ export function PWAInstallPrompt() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Check if app is already installed (running in standalone mode)
     const isStandaloneMode =
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as any).standalone ||
@@ -31,20 +30,17 @@ export function PWAInstallPrompt() {
 
     setIsStandalone(isStandaloneMode);
 
-    // Check if device is mobile
     const isMobileDevice =
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent,
       );
     setIsMobile(isMobileDevice);
 
-    // Check if user has already dismissed the prompt
     const hasBeenDismissed = localStorage.getItem('pwa-install-dismissed');
     const dismissedTime = hasBeenDismissed ? parseInt(hasBeenDismissed) : 0;
     const daysSinceDismissed =
       (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
 
-    // Show prompt if: mobile device, not standalone, not recently dismissed
     if (
       isMobileDevice &&
       !isStandaloneMode &&
@@ -53,7 +49,6 @@ export function PWAInstallPrompt() {
       setShowPrompt(true);
     }
 
-    // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -80,7 +75,7 @@ export function PWAInstallPrompt() {
 
       setDeferredPrompt(null);
     } else {
-      // Fallback for iOS Safari and other browsers
+      // iOS Safari never fires beforeinstallprompt, so there's no native prompt
       showInstallInstructions();
     }
   };
@@ -108,7 +103,6 @@ export function PWAInstallPrompt() {
     localStorage.setItem('pwa-install-dismissed', Date.now().toString());
   };
 
-  // Don't show if not mobile, already installed, or user dismissed
   if (!showPrompt || !isMobile || isStandalone) {
     return null;
   }

@@ -78,11 +78,9 @@ export const CompletedWorkoutPage = () => {
     updateWorkoutNotes(notesRef.current?.value || null);
 
   const handleClickRepeat = () => {
-    // Prefill the builder from the completed workout, then let the user review
-    // and adjust before starting (routes to the Start page, not /active).
+    // Prefill the builder (not /active) so the user can review and adjust
+    // before starting; `editWorkout` makes the Start page skip browse mode.
     updateWorkoutOptions(workoutLogToWorkoutOptions(workoutLog, movementLogs));
-    // Tell the Start page to open the builder (it now defaults to the collapsed
-    // recommendations view) so the prefilled workout is shown for editing.
     navigate('/', { state: { editWorkout: true } });
   };
 

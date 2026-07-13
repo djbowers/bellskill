@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 
 import { PWAInstallPrompt } from './PWAInstallPrompt';
 
-// Mock the beforeinstallprompt event
 const mockBeforeInstallPrompt = () => {
   const event = new Event('beforeinstallprompt') as any;
   event.platforms = ['web'];
@@ -12,13 +11,11 @@ const mockBeforeInstallPrompt = () => {
   return event;
 };
 
-// Mock localStorage
 const mockLocalStorage = {
   getItem: (key: string) => null,
   setItem: (key: string, value: string) => {},
 };
 
-// Mock window.matchMedia
 const mockMatchMedia = (matches: boolean) => {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
@@ -35,7 +32,6 @@ const mockMatchMedia = (matches: boolean) => {
   });
 };
 
-// Mock navigator.userAgent
 const mockUserAgent = (userAgent: string) => {
   Object.defineProperty(navigator, 'userAgent', {
     value: userAgent,
@@ -43,7 +39,6 @@ const mockUserAgent = (userAgent: string) => {
   });
 };
 
-// Mock navigator.standalone
 const mockStandalone = (standalone: boolean) => {
   Object.defineProperty(navigator, 'standalone', {
     value: standalone,
@@ -51,7 +46,6 @@ const mockStandalone = (standalone: boolean) => {
   });
 };
 
-// Mock document.referrer
 const mockReferrer = (referrer: string) => {
   Object.defineProperty(document, 'referrer', {
     value: referrer,
@@ -67,7 +61,6 @@ const meta = {
   decorators: [
     (Story: any) => {
       useEffect(() => {
-        // Reset mocks before each story
         mockMatchMedia(false);
         mockUserAgent(
           'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15',
@@ -75,7 +68,6 @@ const meta = {
         mockStandalone(false);
         mockReferrer('https://example.com');
 
-        // Mock localStorage
         Object.defineProperty(window, 'localStorage', {
           value: mockLocalStorage,
           writable: true,
@@ -94,7 +86,6 @@ export const Default: Story = {
   decorators: [
     (Story: any) => {
       useEffect(() => {
-        // Trigger the beforeinstallprompt event after component mounts
         setTimeout(() => {
           const event = mockBeforeInstallPrompt();
           window.dispatchEvent(event);
