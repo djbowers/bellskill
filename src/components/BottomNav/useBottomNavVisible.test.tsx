@@ -18,11 +18,8 @@ const mockedUseFeatures = useFeatures as unknown as Mock;
 const featuresWith = (overrides: Partial<Features> = {}): Features => ({
   bottomNav: true,
   complexMode: false,
-  curatedFirstWorkout: false,
   explore: false,
   premium: false,
-  recommender: false,
-  repeatPrevious: false,
   programs: false,
   weeklyBalance: false,
   ...overrides,

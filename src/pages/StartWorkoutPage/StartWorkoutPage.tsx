@@ -8,9 +8,10 @@ import {
   trackEvent,
   useActiveProgram,
   useCompleteProgramSession,
+  useFeatureFlags,
   useWorkoutLogs,
 } from '~/api';
-import { Page } from '~/components';
+import { Loading, Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
@@ -95,6 +96,14 @@ export const StartWorkoutPage = ({
   programSaveMode,
 }: StartWorkoutPageProps = {}) => {
   const features = useFeatures();
+  // Discovery surfaces (curated / repeat / recommender) migrated onto the
+  // runtime feature-flag mechanism (PROD-175). Resolved once at app init
+  // (`FeatureFlagsGate` in `~/app/App.tsx`, gated behind its own splash)
+  // before this page ever mounts, so `useFeatureFlags()` here just reads the
+  // already-settled, cached result (`staleTime: Infinity`) — no pending state
+  // to gate on. Defaults to all-OFF (pure builder) on error or until
+  // deliberately toggled, so production behavior is unchanged.
+  const { features: experimentFeatures } = useFeatureFlags();
   const navigate = useNavigate();
   const startWorkout = useStartWorkout();
   const [workoutOptions] = useWorkoutOptions();
@@ -105,13 +114,19 @@ export const StartWorkoutPage = ({
   // undefined only while the enabled query is still loading, so `programGate-
   // Pending` reliably holds the page in browse mode until we know whether to
   // surface the next-workout card — avoiding a builder→card flash on open.
+  // A terminal error also settles the gate (`!isError`): this query has no
+  // `placeholderData`, so `data` stays undefined after a failed fetch — without
+  // the `isError` escape a program-enabled session would be stranded on the
+  // blocking skeleton forever. On error we fall through to the safe default
+  // (no active program → builder).
   const activeProgramQuery = useActiveProgram({ enabled: features.programs });
   const activeProgram = activeProgramQuery.data ?? null;
   const hasActiveProgram = Boolean(activeProgram);
   const programGatePending =
     features.programs &&
     !programSaveMode &&
-    activeProgramQuery.data === undefined;
+    activeProgramQuery.data === undefined &&
+    !activeProgramQuery.isError;
   const completeProgramSession = useCompleteProgramSession();
 
   // Discovery surfaces are individually flag-gated (PROD-174). With every one
@@ -119,15 +134,15 @@ export const StartWorkoutPage = ({
   // save-session mode the page is always the builder — no browse surfaces. An
   // active program forces browse so its next-workout card is the first thing the
   // user sees on open.
-  const showCurated = features.curatedFirstWorkout;
-  const showRepeat = features.repeatPrevious;
+  const showCurated = experimentFeatures.curatedFirstWorkout;
+  const showRepeat = experimentFeatures.repeatPrevious;
   const showBrowse =
     !programSaveMode &&
     (hasActiveProgram ||
       programGatePending ||
       showCurated ||
       showRepeat ||
-      features.recommender);
+      experimentFeatures.recommender);
 
   // When a discovery surface is enabled the page opens in "browse" mode
   // (recommendations + a Build-custom button); selecting one or tapping
@@ -135,12 +150,22 @@ export const StartWorkoutPage = ({
   // history "Repeat" action navigates here with `editWorkout`, the builder
   // opens directly.
   const location = useLocation();
-  const [showBuilder, setShowBuilder] = useState<boolean>(
-    !showBrowse ||
-      Boolean(
-        (location.state as { editWorkout?: boolean } | null)?.editWorkout,
-      ),
+  const editWorkout = Boolean(
+    (location.state as { editWorkout?: boolean } | null)?.editWorkout,
   );
+  // `showBrowse` is forced true while `programGatePending` is still resolving
+  // (see above), so committing to a mode from that still-forced value at
+  // mount would strand a program-enabled session in the builder until a
+  // correction effect fires post-paint — a visible flash. Instead we render
+  // neither surface until the gate settles (below) and derive the mode fresh
+  // each render from the now-final `showBrowse`, so there's never a stale
+  // value to correct. `builderOverride` is `null` until the user explicitly
+  // switches modes (Build custom, selecting a recommendation, Back to
+  // recommendations); once set, it wins over the derived default. Save mode
+  // has no browse surface to race against, so it's excluded from the gate.
+  const [builderOverride, setBuilderOverride] = useState<boolean | null>(null);
+  const showBuilder = builderOverride ?? (editWorkout || !showBrowse);
+  const gatesPending = !programSaveMode && programGatePending && !editWorkout;
   // Where the (eventual) start originated, carried through any edits the user
   // makes in the builder so `workout_started` stays attributed to the surface.
   const [startSource, setStartSource] = useState<WorkoutStartSource>('builder');
@@ -184,19 +209,6 @@ export const StartWorkoutPage = ({
     [userId, workoutLogs],
   );
 
-  useEffect(
-    function dropIntoBuilderWhenNothingToBrowse() {
-      // The initial `showBuilder` is fixed at mount, before the (async) program
-      // gate resolves. If it resolves to "no program" and there is nothing else
-      // to browse, fall into the builder — matching the non-program default —
-      // so the page never renders blank (neither browse nor builder).
-      if (!programGatePending && !showBrowse && !showBuilder) {
-        setShowBuilder(true);
-      }
-    },
-    [programGatePending, showBrowse, showBuilder],
-  );
-
   const [workoutGoal, setWorkoutGoal] = useState<number>(
     workoutOptions.workoutGoal,
   );
@@ -228,6 +240,10 @@ export const StartWorkoutPage = ({
     useState<WeightUnit | null>(workoutOptions.sharedWeightTwoUnit);
 
   const detailsRef = useRef<HTMLInputElement>(null);
+
+  // The program gate above hasn't settled, so the mode above is still derived
+  // from a forced `showBrowse` — withhold rendering rather than commit to it.
+  if (gatesPending) return <Loading />;
 
   const handleIncrementGoalValue = () => {
     if (workoutGoalUnits === 'kilograms') {
@@ -481,7 +497,7 @@ export const StartWorkoutPage = ({
       curated_version: CURATED_WORKOUTS_VERSION,
     });
     setPendingProgramSession(null);
-    setShowBuilder(true);
+    setBuilderOverride(true);
   };
 
   const handleSelectRepeat = (repeat: RepeatableWorkout) => {
@@ -489,7 +505,7 @@ export const StartWorkoutPage = ({
     setStartSource('history_repeat');
     setStartSourceProps({ workout_log_id: repeat.workoutLogId });
     setPendingProgramSession(null);
-    setShowBuilder(true);
+    setBuilderOverride(true);
   };
 
   // Accept an AI recommendation: load it into the builder for review/edits, then
@@ -502,7 +518,7 @@ export const StartWorkoutPage = ({
     setStartSource('recommender');
     setStartSourceProps({ recommendation_id: recommendationId });
     setPendingProgramSession(null);
-    setShowBuilder(true);
+    setBuilderOverride(true);
   };
 
   const handleClickBuildCustom = () => {
@@ -510,7 +526,7 @@ export const StartWorkoutPage = ({
     setStartSource('builder');
     setStartSourceProps({});
     setPendingProgramSession(null);
-    setShowBuilder(true);
+    setBuilderOverride(true);
   };
 
   // Load the program's next session into the builder for review/edits, tagged so
@@ -528,7 +544,7 @@ export const StartWorkoutPage = ({
       userProgramId: activeProgram.enrollment.id,
       programSessionId: session.id,
     });
-    setShowBuilder(true);
+    setBuilderOverride(true);
   };
 
   // Skip the next session: writes a `skipped` completion (no workout_log), which
@@ -546,7 +562,7 @@ export const StartWorkoutPage = ({
     setStartSource('builder');
     setStartSourceProps({});
     setPendingProgramSession(null);
-    setShowBuilder(false);
+    setBuilderOverride(false);
   };
 
   const handleClickStart = () => {
@@ -668,7 +684,7 @@ export const StartWorkoutPage = ({
             onSelectRepeat={handleSelectRepeat}
           />
 
-          {features.recommender && (
+          {experimentFeatures.recommender && (
             <RecommendSessionSection
               userId={userId}
               onAccept={handleAcceptRecommendation}

@@ -3,12 +3,9 @@ import { Session } from '@supabase/supabase-js';
 export type FeatureName =
   | 'bottomNav'
   | 'complexMode'
-  | 'curatedFirstWorkout'
   | 'explore'
   | 'premium'
   | 'programs'
-  | 'recommender'
-  | 'repeatPrevious'
   | 'weeklyBalance';
 
 export type Features = Record<FeatureName, boolean>;
@@ -16,17 +13,18 @@ export type Features = Record<FeatureName, boolean>;
 /**
  * Build-time feature flags — the "real" production state of each flag, driven
  * by env vars. This is what every user sees by default.
+ *
+ * NOTE: the experiment flags (curated first workout, repeat previous, AI
+ * recommender) migrated OFF this build-time system onto the runtime
+ * feature_flags mechanism (PROD-175) — see `~/config/experiments` and the
+ * `useFeatureFlags` hook. They are resolved per user at runtime, not here.
  */
 const baseFeatures: Features = {
   bottomNav: import.meta.env.VITE_FEATURE_BOTTOMNAV === 'true',
   complexMode: import.meta.env.VITE_FEATURE_COMPLEX_MODE === 'true',
-  curatedFirstWorkout:
-    import.meta.env.VITE_FEATURE_CURATED_FIRST_WORKOUT === 'true',
   explore: import.meta.env.VITE_FEATURE_EXPLORE === 'true',
   premium: import.meta.env.VITE_FEATURE_PREMIUM === 'true',
   programs: import.meta.env.VITE_FEATURE_PROGRAMS === 'true',
-  recommender: import.meta.env.VITE_FEATURE_RECOMMENDER === 'true',
-  repeatPrevious: import.meta.env.VITE_FEATURE_REPEAT_PREVIOUS === 'true',
   weeklyBalance: import.meta.env.VITE_FEATURE_WEEKLY_BALANCE === 'true',
 };
 
@@ -84,12 +82,9 @@ export const getFeatures = (session?: Session | null): Features => {
     return {
       bottomNav: true,
       complexMode: true,
-      curatedFirstWorkout: true,
       explore: true,
       premium: true,
       programs: true,
-      recommender: true,
-      repeatPrevious: true,
       weeklyBalance: true,
     };
   }

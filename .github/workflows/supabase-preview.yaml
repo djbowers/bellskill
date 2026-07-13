@@ -41,7 +41,44 @@ jobs:
           version: latest
 
       - run: supabase link --project-ref $SUPABASE_PROJECT_ID
-      - run: supabase db push
+
+      # Staging is a single shared project (see header note), so a concurrent PR
+      # that also touches supabase/** leaves its migration versions in staging's
+      # history that this branch doesn't have. `supabase db push` then aborts
+      # with "Remote migration versions not found in local migrations directory"
+      # before applying anything -- and no timestamp on THIS branch's own
+      # migration can clear a remote-only version. Reconcile that drift by
+      # marking each remote-only version reverted (the CLI's own suggested
+      # remedy) and retrying. A run with no drift pushes on the first attempt and
+      # never repairs anything.
+      - name: Push migrations to staging (reconciling shared-project drift)
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if output=$(supabase db push 2>&1); then
+              echo "$output"
+              exit 0
+            fi
+            echo "$output"
+            if ! echo "$output" | grep -q "Remote migration versions not found"; then
+              echo "::error::db push failed for a reason other than shared-staging migration drift"
+              exit 1
+            fi
+            versions=$(echo "$output" \
+              | sed -nE 's/.*migration repair --status reverted (.*)$/\1/p' \
+              | tr -s ' ' '\n' \
+              | grep -E '^[0-9]+$')
+            if [ -z "$versions" ]; then
+              echo "::error::could not parse remote-only migration versions to reconcile"
+              exit 1
+            fi
+            for v in $versions; do
+              echo "Reconciling shared-staging drift: marking remote-only migration $v as reverted"
+              supabase migration repair --status reverted "$v"
+            done
+          done
+          echo "::error::still failing after reconciling migration drift"
+          exit 1
+
       - run: supabase functions deploy create-checkout-session --project-ref $SUPABASE_PROJECT_ID
       - run: supabase functions deploy stripe-webhook --project-ref $SUPABASE_PROJECT_ID
       - run: supabase functions deploy create-portal-session --project-ref $SUPABASE_PROJECT_ID

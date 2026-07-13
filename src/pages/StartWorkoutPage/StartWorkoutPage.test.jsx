@@ -11,6 +11,29 @@ import {
   WorkoutOptionsContext,
 } from '~/contexts';
 
+import { StartWorkoutPage } from './StartWorkoutPage';
+import * as stories from './StartWorkoutPage.stories';
+
+// These discovery surfaces (curated / repeat / recommender) migrated off the
+// build-time env flags onto the runtime feature-flag mechanism (PROD-175) —
+// force them on so this suite still opens in browse mode (enterBuildMode()
+// below) the way it did under the old always-on test-env flags.
+const { mockUseFeatureFlags } = vi.hoisted(() => ({
+  mockUseFeatureFlags: vi.fn(),
+}));
+vi.mock('~/api', async (importOriginal) => ({
+  ...(await importOriginal()),
+  useFeatureFlags: mockUseFeatureFlags,
+}));
+mockUseFeatureFlags.mockReturnValue({
+  features: {
+    curatedFirstWorkout: true,
+    repeatPrevious: true,
+    recommender: true,
+  },
+  isPending: false,
+});
+
 // The recommender surface (on in the test env) reads EntitlementContext.
 const freeEntitlement = {
   isPremium: false,
@@ -21,9 +44,6 @@ const freeEntitlement = {
   isLoading: false,
   refetch: () => {},
 };
-
-import { StartWorkoutPage } from './StartWorkoutPage';
-import * as stories from './StartWorkoutPage.stories';
 
 function makeQueryClient() {
   return new QueryClient({
@@ -688,11 +708,11 @@ describe('integration tests for previous volume retrieval', () => {
       <QueryClientProvider client={makeQueryClient()}>
         <MemoryRouter>
           <EntitlementContext.Provider value={freeEntitlement}>
-          <WorkoutOptionsContext.Provider
-            value={[customWorkoutOptions, startWorkout]}
-          >
-            <StartWorkoutPage />
-          </WorkoutOptionsContext.Provider>
+            <WorkoutOptionsContext.Provider
+              value={[customWorkoutOptions, startWorkout]}
+            >
+              <StartWorkoutPage />
+            </WorkoutOptionsContext.Provider>
           </EntitlementContext.Provider>
         </MemoryRouter>
       </QueryClientProvider>,
@@ -730,11 +750,11 @@ describe('integration tests for previous volume retrieval', () => {
       <QueryClientProvider client={makeQueryClient()}>
         <MemoryRouter>
           <EntitlementContext.Provider value={freeEntitlement}>
-          <WorkoutOptionsContext.Provider
-            value={[workoutOptionsAfterCompletion, startWorkout]}
-          >
-            <StartWorkoutPage />
-          </WorkoutOptionsContext.Provider>
+            <WorkoutOptionsContext.Provider
+              value={[workoutOptionsAfterCompletion, startWorkout]}
+            >
+              <StartWorkoutPage />
+            </WorkoutOptionsContext.Provider>
           </EntitlementContext.Provider>
         </MemoryRouter>
       </QueryClientProvider>,
@@ -775,11 +795,11 @@ describe('integration tests for previous volume retrieval', () => {
       <QueryClientProvider client={makeQueryClient()}>
         <MemoryRouter>
           <EntitlementContext.Provider value={freeEntitlement}>
-          <WorkoutOptionsContext.Provider
-            value={[workoutOptionsWithAllPrevious, startWorkout]}
-          >
-            <StartWorkoutPage />
-          </WorkoutOptionsContext.Provider>
+            <WorkoutOptionsContext.Provider
+              value={[workoutOptionsWithAllPrevious, startWorkout]}
+            >
+              <StartWorkoutPage />
+            </WorkoutOptionsContext.Provider>
           </EntitlementContext.Provider>
         </MemoryRouter>
       </QueryClientProvider>,

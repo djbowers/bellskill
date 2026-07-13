@@ -5,12 +5,9 @@ import { buildTabs } from './buildTabs';
 const allOff: Features = {
   bottomNav: true,
   complexMode: false,
-  curatedFirstWorkout: false,
   explore: false,
   premium: false,
   programs: false,
-  recommender: false,
-  repeatPrevious: false,
   weeklyBalance: false,
 };
 

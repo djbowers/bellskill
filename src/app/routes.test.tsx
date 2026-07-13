@@ -10,12 +10,9 @@ import { createRoutes } from './routes';
 const flagsOff: Features = {
   bottomNav: false,
   complexMode: false,
-  curatedFirstWorkout: false,
   explore: false,
   premium: false,
   programs: false,
-  recommender: false,
-  repeatPrevious: false,
   weeklyBalance: false,
 };
 
