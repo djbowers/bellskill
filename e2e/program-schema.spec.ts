@@ -376,10 +376,12 @@ test.describe('program schema — StrongFirst Snatch Test seed', () => {
       expect(o.complexSet).toBe(false);
       expect(o.intervalTimer).toBe(0);
       expect(o.workoutGoalUnits).toBe('rounds');
-      // Single bell: no second weight anywhere.
+      // Single bell in Single/'1h' mode: weightTwoValue is 0 (not null), which
+      // makes the runtime mirror each rung per hand. repScheme is the per-hand
+      // count [10]; each mirrored set is 10/hand x 2 = 20 reps.
       for (const m of o.movements) {
-        expect(m.weightTwoValue).toBeNull();
-        expect(m.repScheme).toEqual([20]);
+        expect(m.weightTwoValue).toBe(0);
+        expect(m.repScheme).toEqual([10]);
       }
 
       if (s.week_number <= 7) {
