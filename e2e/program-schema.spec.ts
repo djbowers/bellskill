@@ -302,7 +302,14 @@ test.describe('program schema — StrongFirst Snatch Test seed', () => {
     const user = await signUpThrowawayUser();
 
     const programs = await restJson<
-      Array<{ id: string; is_public: boolean; owner_id: string | null; num_weeks: number; days_per_week: number; author_name: string }>
+      Array<{
+        id: string;
+        is_public: boolean;
+        owner_id: string | null;
+        num_weeks: number;
+        days_per_week: number;
+        author_name: string;
+      }>
     >('GET', `programs?slug=eq.${SNATCH_SLUG}&select=*`, user.token);
 
     expect(programs).toHaveLength(1);
@@ -404,7 +411,10 @@ test.describe('program schema — StrongFirst Snatch Test seed', () => {
     const buildByDay = new Map<number, Set<number>>();
     for (const s of sessions.filter((x) => x.week_number <= 7)) {
       const w = s.workout_options.movements[0].weightOneValue!;
-      (buildByDay.get(s.day_number) ?? buildByDay.set(s.day_number, new Set()).get(s.day_number)!).add(w);
+      (
+        buildByDay.get(s.day_number) ??
+        buildByDay.set(s.day_number, new Set()).get(s.day_number)!
+      ).add(w);
     }
     expect([...buildByDay.get(1)!]).toEqual([28]);
     expect([...buildByDay.get(2)!]).toEqual([24]);
