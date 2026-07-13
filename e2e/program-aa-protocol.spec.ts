@@ -49,7 +49,8 @@ async function signUpThrowawayUser(): Promise<string> {
     headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
     body: JSON.stringify({ email, password }),
   });
-  if (!res.ok) throw new Error(`signup failed (${res.status}): ${await res.text()}`);
+  if (!res.ok)
+    throw new Error(`signup failed (${res.status}): ${await res.text()}`);
 
   const body = (await res.json()) as { access_token?: string };
   if (body.access_token) return body.access_token;
@@ -58,12 +59,17 @@ async function signUpThrowawayUser(): Promise<string> {
     `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+      },
       body: JSON.stringify({ email, password }),
     },
   );
   if (!signInRes.ok) {
-    throw new Error(`sign-in failed (${signInRes.status}): ${await signInRes.text()}`);
+    throw new Error(
+      `sign-in failed (${signInRes.status}): ${await signInRes.text()}`,
+    );
   }
   const session = (await signInRes.json()) as { access_token: string };
   return session.access_token;
@@ -73,7 +79,8 @@ async function restJson<T = unknown>(path: string, token: string): Promise<T> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error(`GET ${path} failed (${res.status}): ${await res.text()}`);
+  if (!res.ok)
+    throw new Error(`GET ${path} failed (${res.status}): ${await res.text()}`);
   return res.json() as Promise<T>;
 }
 
