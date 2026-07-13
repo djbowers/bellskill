@@ -1367,21 +1367,29 @@ describe('active workout page (Armor Building Complex seed session)', () => {
       'Front Squat With Two Kettlebells',
     ]);
     workoutOptions.movements.forEach((movement, index) => {
-      expect(screen.getByTestId(`complex-movement-name-${index}`)).toHaveTextContent(
-        movement.movementName,
-      );
-      expect(screen.getByTestId(`complex-movement-reps-${index}`)).toHaveTextContent(
-        String(movement.repScheme[0]),
-      );
+      expect(
+        screen.getByTestId(`complex-movement-name-${index}`),
+      ).toHaveTextContent(movement.movementName);
+      expect(
+        screen.getByTestId(`complex-movement-reps-${index}`),
+      ).toHaveTextContent(String(movement.repScheme[0]));
     });
-    expect(screen.getByTestId('complex-movement-reps-0')).toHaveTextContent('2');
-    expect(screen.getByTestId('complex-movement-reps-1')).toHaveTextContent('1');
-    expect(screen.getByTestId('complex-movement-reps-2')).toHaveTextContent('3');
+    expect(screen.getByTestId('complex-movement-reps-0')).toHaveTextContent(
+      '2',
+    );
+    expect(screen.getByTestId('complex-movement-reps-1')).toHaveTextContent(
+      '1',
+    );
+    expect(screen.getByTestId('complex-movement-reps-2')).toHaveTextContent(
+      '3',
+    );
   });
 
   test('shows the double-bell shared weight (24kg + 24kg)', () => {
     expect(screen.getByTestId('complex-shared-weight')).toHaveTextContent('24');
-    expect(screen.getByTestId('complex-shared-weight-two')).toHaveTextContent('24');
+    expect(screen.getByTestId('complex-shared-weight-two')).toHaveTextContent(
+      '24',
+    );
   });
 
   test('uses the complex "Complete Set" control (not DFW\'s "Continue")', () => {

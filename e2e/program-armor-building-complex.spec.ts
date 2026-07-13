@@ -74,7 +74,8 @@ async function signUpThrowawayUser(): Promise<TestUser> {
     headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
     body: JSON.stringify({ email, password }),
   });
-  if (!res.ok) throw new Error(`signup failed (${res.status}): ${await res.text()}`);
+  if (!res.ok)
+    throw new Error(`signup failed (${res.status}): ${await res.text()}`);
 
   const body = (await res.json()) as Partial<AuthSession>;
   if (body.access_token && body.user) {
@@ -85,12 +86,17 @@ async function signUpThrowawayUser(): Promise<TestUser> {
     `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+      },
       body: JSON.stringify({ email, password }),
     },
   );
   if (!signInRes.ok) {
-    throw new Error(`sign-in failed (${signInRes.status}): ${await signInRes.text()}`);
+    throw new Error(
+      `sign-in failed (${signInRes.status}): ${await signInRes.text()}`,
+    );
   }
   const session = (await signInRes.json()) as AuthSession;
   return { token: session.access_token, uid: session.user.id, email };
@@ -102,7 +108,8 @@ async function restJson<T = unknown>(path: string, token: string): Promise<T> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error(`GET ${path} failed (${res.status}): ${await res.text()}`);
+  if (!res.ok)
+    throw new Error(`GET ${path} failed (${res.status}): ${await res.text()}`);
   return res.json() as Promise<T>;
 }
 
@@ -179,7 +186,9 @@ test.describe('program schema — Armor Building Complex seed', () => {
     }
 
     // The final session is the classic 10-round ABC benchmark.
-    expect(sessions[ABC_SESSION_COUNT - 1].workout_options.workoutGoal).toBe(10);
+    expect(sessions[ABC_SESSION_COUNT - 1].workout_options.workoutGoal).toBe(
+      10,
+    );
   });
 
   test('enrolling clones the ABC into an isolated user-owned copy', async () => {
