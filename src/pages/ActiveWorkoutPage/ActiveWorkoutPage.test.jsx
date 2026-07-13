@@ -12,6 +12,8 @@ const {
   ComplexMode,
   ComplexModeDoubleBells,
   ComplexModeDifferentRepSchemes,
+  ArmorBuildingComplex,
+  ArmorBuildingComplexContinuous,
   DoubleWeights,
   MixedWeights,
   MultipleMovements,
@@ -1094,6 +1096,30 @@ describe('volume calculation for complex mode', () => {
     });
   });
 
+  test('runs a full Armor Building Complex session to its rounds goal (single-element repSchemes → one press per round)', async () => {
+    render(<ArmorBuildingComplexContinuous />);
+
+    // Each movement has a single-element repScheme ([2]/[1]/[3]), so
+    // maxMovementRungs = 1 and ONE "Complete Set" completes a whole round.
+    // Five presses reaches the 5-round goal, which auto-finishes the workout.
+    await clickCompleteSet(); // round 1
+    await clickCompleteSet(); // round 2
+    await clickCompleteSet(); // round 3
+    await clickCompleteSet(); // round 4
+    await clickCompleteSet(); // round 5 → rounds goal reached, auto-finish
+
+    // No manual "finish workout" click needed — the rounds goal ends it.
+    // Per round: (2+1+3) reps = 6; double 24kg bells = 48kg/movement.
+    // Volume/round = 48×(2+1+3) = 288kg; ×5 rounds = 1440kg.
+    expect(logWorkout).toHaveBeenCalledWith({
+      completedReps: 30, // 6 reps × 5 rounds
+      completedRounds: 5,
+      completedRungs: 5, // 1 rung per round × 5
+      completedSides: expect.any(Number),
+      completedVolume: 1440,
+    });
+  });
+
   test('calculates volume correctly for double bells in complex mode (20kg + 16kg × 5 reps, 2 movements = 360kg)', async () => {
     render(<ComplexModeDoubleBells />);
 
@@ -1323,6 +1349,63 @@ describe('active workout page (A+A Protocol interval EMOM cadence)', () => {
     expect(leftWeight).toHaveAttribute('data-active', 'true');
     expect(rightWeight).toHaveAttribute('data-active', 'false');
     expect(round).toHaveTextContent('2');
+  });
+});
+
+describe('active workout page (Armor Building Complex seed session)', () => {
+  const { workoutOptions } = ArmorBuildingComplex.parameters;
+
+  beforeEach(() => {
+    render(<ArmorBuildingComplex />);
+  });
+
+  test('flows all three movements as one chain with reps 2, 1, 3', () => {
+    // clean → press → squat shown together, each at its single rung.
+    expect(workoutOptions.movements.map((m) => m.movementName)).toEqual([
+      'Two-Arm Kettlebell Clean',
+      'Two-Arm Kettlebell Military Press',
+      'Front Squat With Two Kettlebells',
+    ]);
+    workoutOptions.movements.forEach((movement, index) => {
+      expect(screen.getByTestId(`complex-movement-name-${index}`)).toHaveTextContent(
+        movement.movementName,
+      );
+      expect(screen.getByTestId(`complex-movement-reps-${index}`)).toHaveTextContent(
+        String(movement.repScheme[0]),
+      );
+    });
+    expect(screen.getByTestId('complex-movement-reps-0')).toHaveTextContent('2');
+    expect(screen.getByTestId('complex-movement-reps-1')).toHaveTextContent('1');
+    expect(screen.getByTestId('complex-movement-reps-2')).toHaveTextContent('3');
+  });
+
+  test('shows the double-bell shared weight (24kg + 24kg)', () => {
+    expect(screen.getByTestId('complex-shared-weight')).toHaveTextContent('24');
+    expect(screen.getByTestId('complex-shared-weight-two')).toHaveTextContent('24');
+  });
+
+  test('uses the complex "Complete Set" control (not DFW\'s "Continue")', () => {
+    screen.getByRole('button', { name: 'Complete Set' });
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+  });
+
+  test('one "Complete Set" completes a whole round (longest repScheme is length 1)', async () => {
+    // currentRound = completedRounds + 1, so the header reads "1" before any round.
+    expect(screen.getByTestId('current-round')).toHaveTextContent('1');
+
+    await clickCompleteSet();
+
+    // A single press exhausts the longest (length-1) repScheme, so the round
+    // advances immediately — unlike a multi-rung complex or DFW's alternation.
+    expect(screen.getByTestId('current-round')).toHaveTextContent('2');
+  });
+
+  test('rests between rounds (restTimer > 0 replaces the button with a rest bar)', async () => {
+    await clickCompleteSet();
+
+    // The between-rounds rest is active, so the set control is gone.
+    expect(screen.getByText('rest')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Complete Set' })).toBeNull();
   });
 });
 

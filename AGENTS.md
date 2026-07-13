@@ -155,15 +155,24 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   (`owner_id NULL`, `is_public`) ship as migrations (not `seed.sql`, so they
   also reach staging/prod) — Dry Fighting Weight
   (`*_seed_dry_fighting_weight.sql`), Dan John's 10,000 Swing Challenge
-  (`*_seed_10000_swing_challenge.sql`), and StrongFirst's A+A Protocol "Plan A"
-  (`*_seed_aa_protocol_plan_a.sql`, the first EMOM/`intervalTimer` program). Each
-  is idempotent on `slug` and builds
-  every session's `WorkoutOptions` JSONB (shape `Omit<WorkoutOptions,'startedAt'>`,
-  camelCase keys) via a `pg_temp` helper; add another by mirroring one. Seed
-  shape is asserted in `e2e/program-schema.spec.ts`. `ProgramsPage` currently
-  features only a single shared program (`sharedPrograms[0]`, preferring the DFW
-  slug), so a newly seeded program lands in the shared-program data but is not
-  yet surfaced in that UI.
+  (`*_seed_10000_swing_challenge.sql`), StrongFirst's A+A Protocol "Plan A"
+  (`*_seed_aa_protocol_plan_a.sql`, the first EMOM/`intervalTimer` program), and
+  Dan John's Armor Building Complex
+  (`*_seed_armor_building_complex.sql`, the first `complexSet: true` program).
+  Each is idempotent on `slug` and builds every session's `WorkoutOptions` JSONB
+  (shape `Omit<WorkoutOptions,'startedAt'>`, camelCase keys) via a `pg_temp`
+  helper; add another by mirroring one. Seed shape is asserted in
+  `e2e/program-schema.spec.ts`. `ProgramsPage` currently features only a single
+  shared program (`sharedPrograms[0]`, preferring the DFW slug), so a newly
+  seeded program lands in the shared-program data but is not yet surfaced in that
+  UI.
+- **Seeding a `complexSet: true` program:** see
+  `*_seed_armor_building_complex.sql` (Dan John's ABC). Give each movement a
+  **single-element `repScheme`** so the complex runtime's `maxMovementRungs`
+  (longest repScheme) is 1 and one "Complete Set" completes a whole round, and
+  **populate `sharedWeightOne/Two`** because `ComplexMovementDisplay` reads the
+  shared pair (not per-movement weights) — DFW's non-complex sessions leave those
+  null.
 - **Next session** = lowest-`sequenceIndex` `program_sessions` row with no
   completion. `useActiveProgram` runs this client-side over the program's ≤~15
   sessions (a dedicated SQL function buys nothing at that size). It returns the

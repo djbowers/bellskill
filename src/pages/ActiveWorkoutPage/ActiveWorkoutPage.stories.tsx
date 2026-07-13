@@ -725,3 +725,73 @@ export const ComplexModeDifferentRepSchemes: Story = {
     },
   },
 };
+
+// Mirrors a seeded Armor Building Complex session (Dan John) exactly — the first
+// shipped program to use complexSet=true. One round = 2 cleans, 1 press, 3
+// squats flowed together with double bells never set down; each movement's
+// single-element repScheme means the longest is exhausted in ONE "Complete Set",
+// so one press completes a whole round. restTimer models the ~30s rest BETWEEN
+// rounds. Goal is 5 rounds (the W1D1 session).
+const ARMOR_BUILDING_COMPLEX_MOVEMENTS = [
+  {
+    ...DEFAULT_MOVEMENT_OPTIONS,
+    movementName: 'Two-Arm Kettlebell Clean',
+    repScheme: [2],
+    weightOneValue: 24,
+    weightOneUnit: 'kilograms',
+    weightTwoValue: 24,
+    weightTwoUnit: 'kilograms',
+  },
+  {
+    ...DEFAULT_MOVEMENT_OPTIONS,
+    movementName: 'Two-Arm Kettlebell Military Press',
+    repScheme: [1],
+    weightOneValue: 24,
+    weightOneUnit: 'kilograms',
+    weightTwoValue: 24,
+    weightTwoUnit: 'kilograms',
+  },
+  {
+    ...DEFAULT_MOVEMENT_OPTIONS,
+    movementName: 'Front Squat With Two Kettlebells',
+    repScheme: [3],
+    weightOneValue: 24,
+    weightOneUnit: 'kilograms',
+    weightTwoValue: 24,
+    weightTwoUnit: 'kilograms',
+  },
+] satisfies MovementOptions[];
+
+export const ArmorBuildingComplex: Story = {
+  parameters: {
+    workoutOptions: {
+      complexSet: true,
+      restTimer: 30,
+      workoutGoal: 5,
+      workoutGoalUnits: 'rounds',
+      sharedWeightOneValue: 24,
+      sharedWeightOneUnit: 'kilograms',
+      sharedWeightTwoValue: 24,
+      sharedWeightTwoUnit: 'kilograms',
+      movements: ARMOR_BUILDING_COMPLEX_MOVEMENTS,
+    },
+  },
+};
+
+// Same session with rest between rounds removed (a user-editable option), so a
+// full 5-round session can be run to its rounds goal in one continuous flow.
+export const ArmorBuildingComplexContinuous: Story = {
+  parameters: {
+    workoutOptions: {
+      complexSet: true,
+      restTimer: 0,
+      workoutGoal: 5,
+      workoutGoalUnits: 'rounds',
+      sharedWeightOneValue: 24,
+      sharedWeightOneUnit: 'kilograms',
+      sharedWeightTwoValue: 24,
+      sharedWeightTwoUnit: 'kilograms',
+      movements: ARMOR_BUILDING_COMPLEX_MOVEMENTS,
+    },
+  },
+};
