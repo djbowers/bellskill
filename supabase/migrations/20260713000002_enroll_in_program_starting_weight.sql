@@ -99,7 +99,8 @@ BEGIN
       v_target_program, sequence_index, week_number, day_number, title,
       CASE
         WHEN v_override
-         AND (workout_options->'movements'->0->>'weightOneValue')::NUMERIC = v_placeholder_weight
+         AND (v_placeholder_weight IS NULL
+              OR (workout_options->'movements'->0->>'weightOneValue')::NUMERIC = v_placeholder_weight)
         -- COALESCE(..., 'null'::jsonb): jsonb_set is strict and to_jsonb(NULL)
         -- is SQL NULL, so an unset slot (e.g. weight two in two-hand loading)
         -- must be coerced to a JSON null or the whole workout_options nulls out.

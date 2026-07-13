@@ -693,6 +693,72 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
     }
   });
 
+  test('a null-modal source (bodyweight-first sessions) overrides every cloned session so the chosen weight is never silently discarded', async () => {
+    const author = await signUpThrowawayUser();
+    const enrollee = await signUpThrowawayUser();
+
+    // A public program whose first movement carries no weight on any session,
+    // so the modal first-movement weightOneValue resolves to NULL.
+    const [program] = await restJson<Array<{ id: string }>>(
+      'POST',
+      'programs',
+      author.token,
+      {
+        body: {
+          owner_id: author.uid,
+          title: 'Bodyweight builder',
+          num_weeks: 1,
+          days_per_week: 2,
+          is_public: true,
+        },
+        prefer: 'return=representation',
+      },
+    );
+    const bodyweightOptions = {
+      sharedWeightOneValue: null,
+      sharedWeightOneUnit: null,
+      sharedWeightTwoValue: null,
+      sharedWeightTwoUnit: null,
+      movements: [{ movementName: 'Push-Up', weightOneValue: null }],
+    };
+    const insert = await rest('POST', 'program_sessions', author.token, {
+      body: [0, 1].map((i) => ({
+        program_id: program.id,
+        sequence_index: i,
+        week_number: 1,
+        day_number: i + 1,
+        title: `Day ${i + 1}`,
+        workout_options: bodyweightOptions,
+      })),
+    });
+    expect(insert.ok).toBe(true);
+
+    await rpc<string>('enroll_in_program', enrollee.token, {
+      p_program_id: program.id,
+      p_shared_weight_one_value: 16,
+      p_shared_weight_one_unit: 'kilograms',
+    });
+
+    const clones = await restJson<Array<{ id: string }>>(
+      'GET',
+      `programs?source_program_id=eq.${program.id}&owner_id=eq.${enrollee.uid}&select=id`,
+      enrollee.token,
+    );
+    expect(clones).toHaveLength(1);
+
+    const sessions = await restJson<
+      Array<{ workout_options: { sharedWeightOneValue: number | null } }>
+    >(
+      'GET',
+      `program_sessions?program_id=eq.${clones[0].id}&select=workout_options&order=sequence_index.asc`,
+      enrollee.token,
+    );
+    expect(sessions).toHaveLength(2);
+    for (const session of sessions) {
+      expect(session.workout_options.sharedWeightOneValue).toBe(16);
+    }
+  });
+
   test('a starting weight is ignored when enrolling in your own program (no clone, no session mutation)', async () => {
     const user = await signUpThrowawayUser();
 

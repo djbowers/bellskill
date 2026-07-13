@@ -363,8 +363,9 @@ export const ProgramsPage = () => {
           <DialogHeader>
             <DialogTitle>Starting weight</DialogTitle>
             <DialogDescription>
-              Set the weight every session in this program starts with. You can
-              still adjust it session by session once you're in the program.
+              Set the weight your working sessions in this program start with.
+              You can still adjust it session by session once you're in the
+              program.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-1">

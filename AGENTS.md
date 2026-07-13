@@ -233,8 +233,11 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   `resolveSharedWeights.ts` already prioritizes over a movement's own explicit
   weight) are overridden on every cloned session whose source weight matches the
   _modal_ weight across the program — i.e. the shared placeholder, not a
-  deliberately different session like DFW's W5D2 test day. A null weight-two
-  slot means two-hand loading; `jsonb_set` is strict, so each override value is
+  deliberately different session like DFW's W5D2 test day. If the program has
+  no numeric modal (bodyweight-first sessions or widely-varied first-movement
+  weights make `v_placeholder_weight` NULL), the override falls back to _every_
+  cloned session so the enrollee's chosen weight is never silently discarded. A
+  null weight-two slot means two-hand loading; `jsonb_set` is strict, so each override value is
   `COALESCE(to_jsonb(x), 'null'::jsonb)` (unset slots become JSON null, not a
   nulled-out column). Passing no weight params (the default) is byte-identical
   to the prior copy-verbatim behavior. `ProgramsPage` prompts for this only when
