@@ -102,7 +102,7 @@ pages/
 - Supabase client is the `supabase` named export from `~/supabaseClient`.
 - Query keys are defined in `src/constants/queries.enum.ts`.
 - `npm run gen:types` writes the **repo-root** `types/supabase.ts` — commit that file after any schema change (requires `supabase start` to be running). `src/types/supabase.ts` is just a 3-line alias (`export type Supabase = Database`) re-exporting the root file; it is not regenerated.
-- Schema changes that must reach **production** (e.g. seeded shared content) belong in a **migration**, not `supabase/seed.sql`. Production only ever applies migrations (forward-only `db push`); `seed.sql` never reaches it. Staging is rebuilt with `db reset --linked`, which replays migrations *and* runs `seed.sql`, so seed data reaches staging but stops there. See `.github/workflows/supabase-*.yaml`.
+- Schema changes that must reach **production** (e.g. seeded shared content) belong in a **migration**, not `supabase/seed.sql`. Production only ever applies migrations (forward-only `db push`); `seed.sql` never reaches it. Staging is rebuilt with `db reset --linked`, which replays migrations _and_ runs `seed.sql`, so seed data reaches staging but stops there. See `.github/workflows/supabase-*.yaml`.
 
 ## Movement Catalog (PROD-153)
 
@@ -156,7 +156,7 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   also reach staging/prod) — Dry Fighting Weight
   (`*_seed_dry_fighting_weight.sql`), Dan John's 10,000 Swing Challenge
   (`*_seed_10000_swing_challenge.sql`), StrongFirst's A+A Protocol "Plan A"
-  (`*_seed_aa_protocol_plan_a.sql`, the first EMOM/`intervalTimer` program), and
+  (`*_seed_aa_protocol_plan_a.sql`, the first EMOM/`intervalTimer` program),
   Dan John's Armor Building Complex
   (`*_seed_armor_building_complex.sql`, the first `complexSet: true` program),
   and the StrongFirst Snatch Test Training Plan
