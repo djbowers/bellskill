@@ -29,8 +29,11 @@
 -- DROP + CREATE (not CREATE OR REPLACE): the base enroll_in_program(uuid)
 -- overload must go, or PostgREST would see two candidates for a call passing
 -- only p_program_id (the new all-defaults overload also matches) and error
--- "function is not unique".
+-- "function is not unique". The new 5-param signature is dropped too so this
+-- migration is idempotent on any environment where a prior (later reverted)
+-- deploy already created it -- CREATE FUNCTION alone errors 42723 there.
 DROP FUNCTION IF EXISTS public.enroll_in_program(UUID);
+DROP FUNCTION IF EXISTS public.enroll_in_program(UUID, NUMERIC, TEXT, NUMERIC, TEXT);
 
 CREATE FUNCTION public.enroll_in_program(
   p_program_id UUID,
