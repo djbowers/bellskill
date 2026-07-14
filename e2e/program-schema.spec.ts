@@ -15,6 +15,8 @@ const DFW_SLUG = 'dry-fighting-weight';
 const DFW_SESSION_COUNT = 14;
 const SWING10K_SLUG = '10000-swing-challenge';
 const SWING10K_SESSION_COUNT = 20;
+const SNATCH_SLUG = 'strongfirst-snatch-test-plan';
+const SNATCH_SESSION_COUNT = 30; // 10 weeks x 3 days
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -272,6 +274,151 @@ test.describe('program schema — 10,000 Swing Challenge seed', () => {
       expect(swing.weightTwoUnit).toBeNull();
       expect(swing.weightTwoValue).toBeNull();
     }
+  });
+});
+
+test.describe('program schema — StrongFirst Snatch Test seed', () => {
+  interface SnatchMovement {
+    movementName: string;
+    repScheme: number[];
+    weightOneValue: number | null;
+    weightTwoValue: number | null;
+  }
+  interface SnatchSession {
+    sequence_index: number;
+    week_number: number;
+    day_number: number;
+    workout_options: {
+      complexSet: boolean;
+      intervalTimer: number;
+      restTimer: number;
+      workoutGoal: number;
+      workoutGoalUnits: string;
+      movements: SnatchMovement[];
+    };
+  }
+
+  test('the shared Snatch Test plan is present, public, system-owned, with 30 ordered sessions', async () => {
+    const user = await signUpThrowawayUser();
+
+    const programs = await restJson<
+      Array<{
+        id: string;
+        is_public: boolean;
+        owner_id: string | null;
+        num_weeks: number;
+        days_per_week: number;
+        author_name: string;
+      }>
+    >('GET', `programs?slug=eq.${SNATCH_SLUG}&select=*`, user.token);
+
+    expect(programs).toHaveLength(1);
+    const plan = programs[0];
+    expect(plan.is_public).toBe(true);
+    expect(plan.owner_id).toBeNull();
+    expect(plan.num_weeks).toBe(10);
+    expect(plan.days_per_week).toBe(3);
+    expect(plan.author_name).toBe('Dr. Michael Hartle (StrongFirst)');
+
+    const sessions = await restJson<SnatchSession[]>(
+      'GET',
+      `program_sessions?program_id=eq.${plan.id}&select=sequence_index,week_number,day_number,workout_options&order=sequence_index.asc`,
+      user.token,
+    );
+
+    expect(sessions).toHaveLength(SNATCH_SESSION_COUNT);
+    // Contiguous 0..29 order.
+    expect(sessions.map((s) => s.sequence_index)).toEqual(
+      Array.from({ length: SNATCH_SESSION_COUNT }, (_, i) => i),
+    );
+  });
+
+  // The defining feature of this plan: rest interval shrinks week over week.
+  test('restTimer strictly decreases week over week', async () => {
+    const user = await signUpThrowawayUser();
+    const [plan] = await restJson<Array<{ id: string }>>(
+      'GET',
+      `programs?slug=eq.${SNATCH_SLUG}&select=id`,
+      user.token,
+    );
+    const sessions = await restJson<SnatchSession[]>(
+      'GET',
+      `program_sessions?program_id=eq.${plan.id}&select=week_number,workout_options&order=sequence_index.asc`,
+      user.token,
+    );
+
+    // One restTimer per week (every session in a week shares it).
+    const restByWeek = new Map<number, number>();
+    for (const s of sessions) {
+      const rest = s.workout_options.restTimer;
+      const seen = restByWeek.get(s.week_number);
+      if (seen === undefined) restByWeek.set(s.week_number, rest);
+      else expect(rest).toBe(seen); // uniform within the week
+    }
+
+    const weeks = [...restByWeek.keys()].sort((a, b) => a - b);
+    expect(weeks).toEqual(Array.from({ length: 10 }, (_, i) => i + 1));
+    const rests = weeks.map((w) => restByWeek.get(w)!);
+    expect(rests).toEqual([45, 40, 35, 30, 25, 20, 15, 12, 10, 8]);
+    for (let i = 1; i < rests.length; i++) {
+      expect(rests[i]).toBeLessThan(rests[i - 1]);
+    }
+  });
+
+  test('session shape matches the plan: build weeks alternate swing/snatch, test weeks are snatch-only 100 reps', async () => {
+    const user = await signUpThrowawayUser();
+    const [plan] = await restJson<Array<{ id: string }>>(
+      'GET',
+      `programs?slug=eq.${SNATCH_SLUG}&select=id`,
+      user.token,
+    );
+    const sessions = await restJson<SnatchSession[]>(
+      'GET',
+      `program_sessions?program_id=eq.${plan.id}&select=sequence_index,week_number,day_number,workout_options&order=sequence_index.asc`,
+      user.token,
+    );
+
+    for (const s of sessions) {
+      const o = s.workout_options;
+      expect(o.complexSet).toBe(false);
+      expect(o.intervalTimer).toBe(0);
+      expect(o.workoutGoalUnits).toBe('rounds');
+      // Single bell in Single/'1h' mode: weightTwoValue is 0 (not null), which
+      // makes the runtime mirror each rung per hand. repScheme is the per-hand
+      // count [10]; each mirrored set is 10/hand x 2 = 20 reps.
+      for (const m of o.movements) {
+        expect(m.weightTwoValue).toBe(0);
+        expect(m.repScheme).toEqual([10]);
+      }
+
+      if (s.week_number <= 7) {
+        // Build weeks: 6 sets alternating one-arm swing/snatch = 3 rounds x 2 movements.
+        expect(o.workoutGoal).toBe(3);
+        expect(o.movements.map((m) => m.movementName)).toEqual([
+          'One-Arm Kettlebell Swing',
+          'One-Arm Kettlebell Snatch',
+        ]);
+      } else {
+        // Test weeks (8-10): the 100-snatch rehearsal = 5 rounds x 20 reps, snatch only.
+        expect(o.workoutGoal).toBe(5);
+        expect(o.movements.map((m) => m.movementName)).toEqual([
+          'One-Arm Kettlebell Snatch',
+        ]);
+      }
+    }
+
+    // Heavy/medium/light bell rotates by day across the build weeks (placeholder loads).
+    const buildByDay = new Map<number, Set<number>>();
+    for (const s of sessions.filter((x) => x.week_number <= 7)) {
+      const w = s.workout_options.movements[0].weightOneValue!;
+      (
+        buildByDay.get(s.day_number) ??
+        buildByDay.set(s.day_number, new Set()).get(s.day_number)!
+      ).add(w);
+    }
+    expect([...buildByDay.get(1)!]).toEqual([28]);
+    expect([...buildByDay.get(2)!]).toEqual([24]);
+    expect([...buildByDay.get(3)!]).toEqual([20]);
   });
 });
 

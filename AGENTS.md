@@ -201,8 +201,9 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   `NextProgramWorkoutCard` (`onViewProgress`).
 - **Reorder / delete (PROD-219, owner-editable programs only):** the builder
   save-mode surface (`ProgramSessionBuilderPage`) shows up/down + Delete controls
-  per session, gated on `program.ownerId === session.user.id` so the read-only
-  shared DFW is never editable. Both persist through RPCs
+  per session, gated on `program.ownerId === session.user.id` so read-only
+  shared programs (DFW, the StrongFirst Snatch Test plan — both system-owned,
+  seeded via idempotent migrations) are never editable. Both persist through RPCs
   (`useReorderProgramSessions` / `useDeleteProgramSession`) because
   `UNIQUE (program_id, sequence_index)` is **NOT deferrable** — a naive
   client-side permutation transiently duplicates an index and 409s. Each RPC
