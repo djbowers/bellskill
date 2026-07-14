@@ -41,6 +41,20 @@ const dfw = {
   createdAt: '',
 };
 
+const armor = {
+  id: 'armor-1',
+  ownerId: null,
+  sourceProgramId: null,
+  slug: 'armor-building-complex',
+  title: 'Armor Building Complex',
+  description: null,
+  authorName: 'Dan John',
+  numWeeks: 6,
+  daysPerWeek: 3,
+  isPublic: true,
+  createdAt: '',
+};
+
 const myProgram = {
   id: 'mine-1',
   ownerId: 'user-123',
@@ -115,6 +129,50 @@ describe('ProgramsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Switch program' }));
 
     expect(enrollMutate).toHaveBeenCalledWith('dfw-1', expect.anything());
+  });
+
+  it('renders one card per shared program, each with its own enroll button', () => {
+    mockUsePrograms.mockReturnValue({
+      data: [dfw, armor, myProgram],
+      isLoading: false,
+    });
+
+    renderPage();
+
+    expect(screen.getByText('Dry Fighting Weight')).toBeInTheDocument();
+    expect(screen.getByText('Armor Building Complex')).toBeInTheDocument();
+    expect(screen.getByText('Dan John · 6 weeks · 3/week')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Start Dry Fighting Weight' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Start Armor Building Complex' }),
+    ).toBeInTheDocument();
+  });
+
+  it('enrolls in a non-DFW shared program, prompting to switch when another is active', () => {
+    mockUsePrograms.mockReturnValue({
+      data: [dfw, armor, myProgram],
+      isLoading: false,
+    });
+    mockUseActiveProgram.mockReturnValue({
+      data: {
+        enrollment: { programId: 'other-program', status: 'active' },
+        program: { title: 'Other Program' },
+      },
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByText('Start Armor Building Complex'));
+
+    // The switch prompt gates the RPC until confirmed.
+    expect(enrollMutate).not.toHaveBeenCalled();
+    expect(screen.getByText('Switch program?')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith('armor-1', expect.anything());
   });
 
   it('creates a program from the inline form and navigates into the builder', () => {

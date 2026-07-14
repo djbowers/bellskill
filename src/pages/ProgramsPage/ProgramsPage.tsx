@@ -42,9 +42,6 @@ export const ProgramsPage = () => {
 
   const sharedPrograms = programs.filter((p) => p.isPublic);
   const myPrograms = programs.filter((p) => !p.isPublic);
-  const dfw =
-    sharedPrograms.find((p) => p.slug === 'dry-fighting-weight') ??
-    sharedPrograms[0];
 
   const enrollIn = (programId: string) =>
     enroll.mutate(programId, { onSuccess: () => navigate('/') });
@@ -89,26 +86,26 @@ export const ProgramsPage = () => {
 
   return (
     <Page title="Programs">
-      {dfw && (
-        <Card>
+      {sharedPrograms.map((program) => (
+        <Card key={program.id}>
           <CardHeader>
-            <CardTitle>{dfw.title}</CardTitle>
+            <CardTitle>{program.title}</CardTitle>
             <p className="text-xs text-muted-foreground">
-              {dfw.authorName ? `${dfw.authorName} · ` : ''}
-              {dfw.numWeeks} weeks · {dfw.daysPerWeek}/week
+              {program.authorName ? `${program.authorName} · ` : ''}
+              {program.numWeeks} weeks · {program.daysPerWeek}/week
             </p>
           </CardHeader>
           <CardContent>
             <Button
               className="w-full"
-              onClick={() => handleEnroll(dfw.id)}
+              onClick={() => handleEnroll(program.id)}
               disabled={enroll.isLoading}
             >
-              {`Start ${dfw.title}`}
+              {`Start ${program.title}`}
             </Button>
           </CardContent>
         </Card>
-      )}
+      ))}
 
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">My programs</h2>
