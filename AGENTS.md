@@ -172,7 +172,8 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   (longest repScheme) is 1 and one "Complete Set" completes a whole round, and
   **populate `sharedWeightOne/Two`** because `ComplexMovementDisplay` reads the
   shared pair (not per-movement weights) — DFW's non-complex sessions leave those
-  null.
+  null. See the `ArmorBuildingComplex` story + `ActiveWorkoutPage.test.jsx`
+  complex-round-completion test.
 - **Next session** = lowest-`sequenceIndex` `program_sessions` row with no
   completion. `useActiveProgram` runs this client-side over the program's ≤~20
   sessions (a dedicated SQL function buys nothing at that size). It returns the
