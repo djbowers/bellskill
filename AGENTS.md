@@ -158,7 +158,9 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   (`*_seed_10000_swing_challenge.sql`), StrongFirst's A+A Protocol "Plan A"
   (`*_seed_aa_protocol_plan_a.sql`, the first EMOM/`intervalTimer` program), and
   Dan John's Armor Building Complex
-  (`*_seed_armor_building_complex.sql`, the first `complexSet: true` program).
+  (`*_seed_armor_building_complex.sql`, the first `complexSet: true` program), and
+  Dan John's Easy Strength (`*_seed_easy_strength.sql`, the fixed 10-workout /
+  2-week "Even Easier Strength" cycle).
   Each is idempotent on `slug` and builds every session's `WorkoutOptions` JSONB
   (shape `Omit<WorkoutOptions,'startedAt'>`, camelCase keys) via a `pg_temp`
   helper; add another by mirroring one. Seed shape is asserted in
