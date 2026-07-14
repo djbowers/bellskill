@@ -162,10 +162,10 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   Each is idempotent on `slug` and builds every session's `WorkoutOptions` JSONB
   (shape `Omit<WorkoutOptions,'startedAt'>`, camelCase keys) via a `pg_temp`
   helper; add another by mirroring one. Seed shape is asserted in
-  `e2e/program-schema.spec.ts`. `ProgramsPage` currently features only a single
-  shared program (`sharedPrograms[0]`, preferring the DFW slug), so a newly
-  seeded program lands in the shared-program data but is not yet surfaced in that
-  UI.
+  `e2e/program-schema.spec.ts`. `ProgramsPage` lists **all** public shared
+  programs (`sharedPrograms.map` over the `isPublic` set), so a newly seeded
+  shared program is automatically surfaced as a live, startable card (behind the
+  `programs` flag), no `ProgramsPage` change needed.
 - **Seeding a `complexSet: true` program:** see
   `*_seed_armor_building_complex.sql` (Dan John's ABC). Give each movement a
   **single-element `repScheme`** so the complex runtime's `maxMovementRungs`
