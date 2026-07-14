@@ -1,0 +1,63 @@
+name: Validate Supabase migration order
+
+# Production applies migrations with `supabase db push`, which is forward-only: it
+# refuses to insert a migration whose version predates the newest one already
+# applied ("Found local migration files to be inserted before the last migration on
+# remote database"). A branch cut before another migration merged can easily carry
+# an older timestamp, so catch it on the PR rather than on the deploy to prod.
+#
+# Staging doesn't need this guard -- it is rebuilt with `db reset`, which replays
+# every migration in order from an empty database.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - supabase/migrations/**
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-migration-order-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-order:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fail on migrations older than main's newest
+        run: |
+          set -euo pipefail
+
+          ceiling=$(git ls-tree -r --name-only origin/main -- supabase/migrations \
+            | xargs -n1 basename 2>/dev/null \
+            | grep -oE '^[0-9]+' \
+            | sort \
+            | tail -1)
+
+          if [ -z "$ceiling" ]; then
+            echo "No migrations on main yet; nothing to order against."
+            exit 0
+          fi
+
+          added=$(git diff --name-only --diff-filter=A origin/main...HEAD -- supabase/migrations)
+
+          failed=0
+          for file in $added; do
+            version=$(basename "$file" | grep -oE '^[0-9]+' || true)
+            [ -n "$version" ] || continue
+
+            if [ "$version" -lt "$ceiling" ]; then
+              echo "::error file=$file::Migration $version predates main's newest migration ($ceiling). Production's forward-only 'db push' will refuse to insert it. Rename this file with a timestamp above $ceiling."
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -eq 0 ]; then
+            echo "All added migrations sort above main's newest ($ceiling)."
+          fi
+          exit "$failed"

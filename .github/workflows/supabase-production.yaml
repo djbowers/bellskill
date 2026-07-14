@@ -8,6 +8,13 @@ on:
       - supabase/**
   workflow_dispatch:
 
+# Production is forward-only (`db push`, never reset). Serialise so two merges in
+# quick succession can't apply migrations concurrently, and never cancel: an
+# interrupted push can leave a migration half-applied.
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -18,7 +25,7 @@ jobs:
       SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_PROJECT_ID }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: supabase/setup-cli@v1
         with:
