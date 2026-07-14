@@ -217,6 +217,26 @@ describe('PWAInstallPrompt', () => {
     });
   });
 
+  describe('Story teardown', () => {
+    // The Default story dispatches beforeinstallprompt on a timer. A timer left
+    // pending outlives the jsdom window and throws "window is not defined" once
+    // Vitest tears the environment down, failing the whole run while every test
+    // still passes. Only the sync tests are fast enough to lose the race, so it
+    // surfaces as an intermittent CI failure that never reproduces locally.
+    it('leaves no pending timer after unmount', () => {
+      vi.useFakeTimers();
+
+      try {
+        const { unmount } = render(<Default />);
+        unmount();
+
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
   describe('Component Structure', () => {
     it('should have the correct CSS classes for positioning', async () => {
       const { container } = render(<Default />);
