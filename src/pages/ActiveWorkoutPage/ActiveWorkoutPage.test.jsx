@@ -1,5 +1,5 @@
 import { composeStories } from '@storybook/react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
@@ -17,6 +17,7 @@ const {
   MultipleMovements,
   MultipleMovementsAndMixedWeights,
   OneHanded,
+  AAProtocolPlanASession,
   RepLadders,
   TwoHanded,
   WorkoutGoalRounds,
@@ -1272,6 +1273,56 @@ describe('active workout page (complex mode, different rep schemes)', () => {
     expect(screen.getByTestId('complex-movement-reps-1')).toHaveTextContent(
       '3',
     ); // Clean resets
+  });
+});
+
+// First shipped program to use intervalTimer (A+A Protocol "Plan A"). This
+// proves the runtime EMOM behavior the seed relies on: the interval timer
+// auto-fires a "continue" every 30s with NO button press, and because the
+// one-arm clean & jerk is one-handed each auto-fire alternates hands — left on
+// the minute, right 30s later.
+describe('active workout page (A+A Protocol interval EMOM cadence)', () => {
+  vi.mock('~/api', () => ({
+    useLogWorkout: vi.fn(),
+  }));
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    useLogWorkout.mockReturnValue({
+      mutate: vi.fn(),
+      data: null,
+      isLoading: false,
+    });
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  test('auto-advances one side every 30s, alternating hands and completing a round each L+R cycle', () => {
+    render(<AAProtocolPlanASession />);
+
+    const leftWeight = screen.getByTestId('left-weight');
+    const rightWeight = screen.getByTestId('right-weight');
+    const round = screen.getByTestId('current-round');
+
+    // Left hand active "on the minute", before any interval has elapsed.
+    expect(leftWeight).toHaveAttribute('data-active', 'true');
+    expect(rightWeight).toHaveAttribute('data-active', 'false');
+    expect(round).toHaveTextContent('1');
+
+    // 30s later the interval timer fires a continue on its own -> right hand.
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(leftWeight).toHaveAttribute('data-active', 'false');
+    expect(rightWeight).toHaveAttribute('data-active', 'true');
+    expect(round).toHaveTextContent('1');
+
+    // Another 30s completes the left+right cycle -> back to left, round 2.
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(leftWeight).toHaveAttribute('data-active', 'true');
+    expect(rightWeight).toHaveAttribute('data-active', 'false');
+    expect(round).toHaveTextContent('2');
   });
 });
 

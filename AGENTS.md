@@ -154,8 +154,10 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
 - **Shared programs (seeded, system-owned):** the public shared programs
   (`owner_id NULL`, `is_public`) ship as migrations (not `seed.sql`, so they
   also reach staging/prod) — Dry Fighting Weight
-  (`*_seed_dry_fighting_weight.sql`) and Dan John's 10,000 Swing Challenge
-  (`*_seed_10000_swing_challenge.sql`). Each is idempotent on `slug` and builds
+  (`*_seed_dry_fighting_weight.sql`), Dan John's 10,000 Swing Challenge
+  (`*_seed_10000_swing_challenge.sql`), and StrongFirst's A+A Protocol "Plan A"
+  (`*_seed_aa_protocol_plan_a.sql`, the first EMOM/`intervalTimer` program). Each
+  is idempotent on `slug` and builds
   every session's `WorkoutOptions` JSONB (shape `Omit<WorkoutOptions,'startedAt'>`,
   camelCase keys) via a `pg_temp` helper; add another by mirroring one. Seed
   shape is asserted in `e2e/program-schema.spec.ts`. `ProgramsPage` currently
@@ -211,6 +213,19 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   `onError`; a new program mutation reuses it by adding that `onError`. The
   behavior is scoped to programs structurally (it is wired only into program
   hooks), not via a runtime flag check.
+- **Shared program seeds:** each canonical public program is its own idempotent
+  seed **migration** (`owner_id NULL`, `is_public true`, `ON CONFLICT (slug)`), a
+  `pg_temp` helper building the per-session `WorkoutOptions` JSONB
+  (`Omit<WorkoutOptions,'startedAt'>`, camelCase). DFW
+  (`*_seed_dry_fighting_weight.sql`) is the template; add a focused
+  `e2e/program-<slug>.spec.ts` asserting the seeded shape.
+- **`intervalTimer` (EMOM programs):** DFW leaves it `0`; the A+A Protocol seed
+  (`*_seed_aa_protocol_plan_a.sql`) is the first/reference use. It is a
+  per-session seconds cadence — `ActiveWorkoutPage` auto-fires one "continue"
+  every `intervalTimer` seconds. On a **one-handed** movement (`weightTwoValue: 0`)
+  each auto-fire alternates sides, so `intervalTimer: 30` gives "left on the
+  minute, right 30s later." See the `AAProtocolPlanASession` story +
+  `ActiveWorkoutPage.test.jsx` EMOM-cadence test.
 
 ## Runtime Feature Flags (PROD-175)
 

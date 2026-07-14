@@ -243,6 +243,33 @@ export const IntervalTimer: Story = {
   },
 };
 
+// Mirrors the seeded A+A Protocol "Plan A" session (Stage 4): single-KB one-arm
+// clean & jerk, EMOM-paced at a 30s interval so consecutive auto-fires alternate
+// hands (left on the minute, right 30s later). First shipped program to use
+// intervalTimer.
+export const AAProtocolPlanASession: Story = {
+  parameters: {
+    workoutOptions: {
+      intervalTimer: 30,
+      restTimer: 0,
+      complexSet: false,
+      workoutGoal: 30,
+      workoutGoalUnits: 'minutes',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'One-Arm Kettlebell Clean and Jerk',
+          repScheme: [1],
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 0,
+          weightTwoUnit: 'kilograms',
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
 export const RestTimer: Story = {
   parameters: {
     workoutOptions: {
