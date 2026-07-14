@@ -158,7 +158,11 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   (`*_seed_10000_swing_challenge.sql`), StrongFirst's A+A Protocol "Plan A"
   (`*_seed_aa_protocol_plan_a.sql`, the first EMOM/`intervalTimer` program), and
   Dan John's Armor Building Complex
-  (`*_seed_armor_building_complex.sql`, the first `complexSet: true` program).
+  (`*_seed_armor_building_complex.sql`, the first `complexSet: true` program),
+  and the StrongFirst Snatch Test Training Plan
+  (`*_seed_strongfirst_snatch_test_plan.sql`, the first program whose `restTimer`
+  varies — it shrinks strictly week over week, which is the plan's whole point,
+  and the largest at 30 sessions / 10 weeks × 3 days).
   Each is idempotent on `slug` and builds every session's `WorkoutOptions` JSONB
   (shape `Omit<WorkoutOptions,'startedAt'>`, camelCase keys) via a `pg_temp`
   helper; add another by mirroring one. Seed shape is asserted in
@@ -174,7 +178,7 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   shared pair (not per-movement weights) — DFW's non-complex sessions leave those
   null.
 - **Next session** = lowest-`sequenceIndex` `program_sessions` row with no
-  completion. `useActiveProgram` runs this client-side over the program's ≤~20
+  completion. `useActiveProgram` runs this client-side over the program's ≤~30
   sessions (a dedicated SQL function buys nothing at that size). It returns the
   **active _or_ most-recently-completed** enrollment so the "🎉 complete" card
   still renders after the terminal status flip — consumers that must treat only
@@ -201,9 +205,9 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   `NextProgramWorkoutCard` (`onViewProgress`).
 - **Reorder / delete (PROD-219, owner-editable programs only):** the builder
   save-mode surface (`ProgramSessionBuilderPage`) shows up/down + Delete controls
-  per session, gated on `program.ownerId === session.user.id` so read-only
-  shared programs (DFW, the StrongFirst Snatch Test plan — both system-owned,
-  seeded via idempotent migrations) are never editable. Both persist through RPCs
+  per session, gated on `program.ownerId === session.user.id` so the read-only
+  seeded shared programs (all system-owned, `owner_id NULL`) are never editable —
+  only a user's own copy is. Both persist through RPCs
   (`useReorderProgramSessions` / `useDeleteProgramSession`) because
   `UNIQUE (program_id, sequence_index)` is **NOT deferrable** — a naive
   client-side permutation transiently duplicates an index and 409s. Each RPC
@@ -227,8 +231,12 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   seed **migration** (`owner_id NULL`, `is_public true`, `ON CONFLICT (slug)`), a
   `pg_temp` helper building the per-session `WorkoutOptions` JSONB
   (`Omit<WorkoutOptions,'startedAt'>`, camelCase). DFW
-  (`*_seed_dry_fighting_weight.sql`) is the template; add a focused
-  `e2e/program-<slug>.spec.ts` asserting the seeded shape.
+  (`*_seed_dry_fighting_weight.sql`) is the template; assert the seeded shape
+  either in a new `test.describe` block in `e2e/program-schema.spec.ts` (what DFW,
+  the 10k Swing Challenge, and the Snatch Test plan do) or in a focused
+  `e2e/program-<slug>.spec.ts` (what ABC and Easy Strength do). Reach for the
+  dedicated file when the program also introduces _runtime_ behavior the shape
+  test can't cover — as A+A does (`e2e/program-aa-protocol.spec.ts`, EMOM).
 - **`intervalTimer` (EMOM programs):** DFW leaves it `0`; the A+A Protocol seed
   (`*_seed_aa_protocol_plan_a.sql`) is the first/reference use. It is a
   per-session seconds cadence — `ActiveWorkoutPage` auto-fires one "continue"
