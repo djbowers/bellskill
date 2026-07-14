@@ -1,21 +1,41 @@
-name: Deploy Migrations to Staging
+name: Deploy Supabase to staging
+
+# Rebuilds the shared staging project from one ref with `db reset --linked`: drop
+# every user schema, replay that ref's migrations from scratch, re-run seed.sql.
+#
+# A PR branch already carries main's migrations plus its own, so resetting at a PR
+# head leaves staging as exactly "main + that PR". Rebuilding history rather than
+# appending to it is what makes an abandoned or renamed migration harmless -- the
+# forward-only `db push` this replaces could never clear a version that staging had
+# and the branch didn't, which wedged staging repeatedly.
+#
+# Staging is disposable: a reset truncates auth, so every login is wiped and only
+# seed.sql's test user survives. Only the PR holding the `deploy:staging` label
+# matches staging at any one time.
 
 on:
+  pull_request:
+    types: [labeled]
   push:
-    branches:
-      - develop
+    branches: [main]
     paths:
       - supabase/**
-  workflow_run:
-    workflows: ["Sync develop from main"]
-    types:
-      - completed
   workflow_dispatch:
+
+# One staging project, so every deploy serialises. Never cancel: interrupting a
+# reset leaves staging half-built.
+concurrency:
+  group: supabase-staging
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    if: ${{ github.event_name != 'pull_request' || github.event.label.name == 'deploy:staging' }}
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+
+    permissions:
+      contents: read
+      pull-requests: write
 
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -23,18 +43,51 @@ jobs:
       SUPABASE_PROJECT_ID: ${{ secrets.STAGING_PROJECT_ID }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          ref: develop
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'main' }}
 
       - uses: supabase/setup-cli@v1
         with:
           version: latest
 
       - run: supabase link --project-ref $SUPABASE_PROJECT_ID
-      - run: supabase db push
-      - run: supabase functions deploy create-checkout-session --project-ref $SUPABASE_PROJECT_ID
-      - run: supabase functions deploy stripe-webhook --project-ref $SUPABASE_PROJECT_ID
-      - run: supabase functions deploy create-portal-session --project-ref $SUPABASE_PROJECT_ID
-      - run: supabase functions deploy recommend-session --project-ref $SUPABASE_PROJECT_ID
-      - run: supabase functions deploy set-subscription --project-ref $SUPABASE_PROJECT_ID
+
+      - name: Rebuild staging from this ref
+        run: supabase db reset --linked --yes
+
+      - name: Deploy edge functions
+        run: |
+          for fn in create-checkout-session stripe-webhook create-portal-session recommend-session set-subscription; do
+            supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_ID"
+          done
+
+      # Always release the label, or a failed run leaves staging looking claimed.
+      - name: Release the staging lock
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --remove-label deploy:staging
+
+      - name: Report result on the PR
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$JOB_STATUS" = "success" ]; then
+            body=$(printf '%s\n\n%s' \
+              "✅ **Staging rebuilt from this PR** — replayed from scratch as \`main\` + this branch, then reseeded. The deploy preview points at it." \
+              "Logins were wiped, so sign in as the seeded test user. Staging holds one PR at a time; another PR taking \`deploy:staging\` rebuilds over this.")
+          else
+            body=$(printf '%s\n\n%s' \
+              "❌ **Staging deploy failed** — [see the run]($RUN_URL). Staging may be partly rebuilt." \
+              "Re-apply \`deploy:staging\` to retry, or run *Deploy Supabase to staging* manually to reset back to \`main\`.")
+          fi
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body "$body"
