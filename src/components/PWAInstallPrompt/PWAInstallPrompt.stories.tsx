@@ -86,10 +86,12 @@ export const Default: Story = {
   decorators: [
     (Story: any) => {
       useEffect(() => {
-        setTimeout(() => {
+        const timeoutId = setTimeout(() => {
           const event = mockBeforeInstallPrompt();
           window.dispatchEvent(event);
         }, 100);
+
+        return () => clearTimeout(timeoutId);
       }, []);
 
       return <Story />;
