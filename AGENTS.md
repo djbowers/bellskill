@@ -236,6 +236,27 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   each auto-fire alternates sides, so `intervalTimer: 30` gives "left on the
   minute, right 30s later." See the `AAProtocolPlanASession` story +
   `ActiveWorkoutPage.test.jsx` EMOM-cadence test.
+- **Starting weight on enroll (PROD-TBD):** `enroll_in_program` takes four
+  optional params mirroring `workout_options`' shared-weight shape —
+  `p_shared_weight_one_value`/`_unit` + `p_shared_weight_two_value`/`_unit`. When
+  weight one is set, the clone's `sharedWeightOne/Two` fields (which
+  `resolveSharedWeights.ts` already prioritizes over a movement's own explicit
+  weight) are overridden on every cloned session whose source weight matches the
+  _modal_ weight across the program — i.e. the shared placeholder, not a
+  deliberately different session like DFW's W5D2 test day. If the program has
+  no numeric modal (bodyweight-first sessions or widely-varied first-movement
+  weights make `v_placeholder_weight` NULL), the override falls back to _every_
+  cloned session so the enrollee's chosen weight is never silently discarded. A
+  null weight-two slot means two-hand loading; `jsonb_set` is strict, so each override value is
+  `COALESCE(to_jsonb(x), 'null'::jsonb)` (unset slots become JSON null, not a
+  nulled-out column). Passing no weight params (the default) is byte-identical
+  to the prior copy-verbatim behavior. `ProgramsPage` prompts for this only when
+  enrolling in a shared program you don't own (`program.isPublic && ownerId !==
+you`), reusing the live builder's shared-weight picker
+  (`WeightModeTabs` + `ModifyCountButtons`/`WeightUnitTabs`, now in
+  `~/components`) so the enrollee can pick two-hand/single/double loading,
+  independent left/right (mixed) weights, and kg or lb. Your own programs are
+  already fully weight-configured in the builder.
 
 ## Runtime Feature Flags (PROD-175)
 

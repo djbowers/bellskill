@@ -756,7 +756,16 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: undefined
       }
-      enroll_in_program: { Args: { p_program_id: string }; Returns: string }
+      enroll_in_program: {
+        Args: {
+          p_program_id: string
+          p_shared_weight_one_unit?: string
+          p_shared_weight_one_value?: number
+          p_shared_weight_two_unit?: string
+          p_shared_weight_two_value?: number
+        }
+        Returns: string
+      }
       evaluate_feature_flag: { Args: { p_flag_key: string }; Returns: string }
       evaluate_feature_flags: {
         Args: { p_flag_keys: string[] }
