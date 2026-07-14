@@ -327,7 +327,22 @@ describe('ProgramsPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Switch program' }));
 
-    expect(enrollMutate).toHaveBeenCalledWith('armor-1', expect.anything());
+    // Confirming the switch leads into the starting-weight prompt.
+    expect(enrollMutate).not.toHaveBeenCalled();
+    expect(screen.getByText('Starting weight')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      {
+        programId: 'armor-1',
+        sharedWeightOneValue: 24,
+        sharedWeightOneUnit: 'kilograms',
+        sharedWeightTwoValue: 24,
+        sharedWeightTwoUnit: 'kilograms',
+      },
+      expect.anything(),
+    );
   });
 
   it('creates a program from the inline form and navigates into the builder', () => {
