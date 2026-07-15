@@ -11,6 +11,7 @@ export * from './program-session-completion.interface';
 export * from './user-program.interface';
 export * from './recommendation.interface';
 export * from './rpe-options.type';
+export * from './swing-progression';
 export * from './weight-tab.type';
 export * from './weight-unit.type';
 export * from './workout-goal-units.type';

@@ -8,6 +8,7 @@ export enum QUERIES {
   PROGRAM = 'program',
   PROGRAM_PROGRESS = 'programProgress',
   PROGRAMS = 'programs',
+  SWING_PROGRESSION = 'swingProgression',
   USER_MOVEMENTS = 'userMovements',
   WORKOUT_LOG = 'workoutLog',
   WORKOUT_LOGS = 'workoutLogs',

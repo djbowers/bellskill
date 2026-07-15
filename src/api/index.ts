@@ -26,6 +26,7 @@ export * from './useRecentRepeatableWorkouts';
 export * from './useRecommendSession';
 export * from './useSelectRPE';
 export * from './useSetSubscription';
+export * from './useSwingProgression';
 export * from './useUpdateWorkoutNotes';
 export * from './useInfiniteWorkoutLogs';
 export * from './useWorkoutLog';
