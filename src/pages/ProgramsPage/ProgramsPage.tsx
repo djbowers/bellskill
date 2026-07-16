@@ -78,23 +78,31 @@ export const ProgramsPage = () => {
 
   // Load the pending program's sessions so the prompt can pre-fill from its own
   // modal placeholder weight/mode rather than a fixed default.
-  const { data: pendingProgram } = useProgram(
+  const { data: pendingProgram, isError: pendingProgramError } = useProgram(
     pendingWeightProgramId ?? undefined,
   );
   const startingWeightReady = seededProgramId === pendingWeightProgramId;
 
   useEffect(() => {
-    if (!pendingWeightProgramId || !pendingProgram) return;
+    if (!pendingWeightProgramId) return;
     // Seed once per open (proceedToEnroll resets seededProgramId): re-running
     // would clobber the user's own picker edits.
     if (seededProgramId === pendingWeightProgramId) return;
-    const derived = deriveStartingWeight(pendingProgram.sessions);
+    // On a fetch error, fall back to deriveStartingWeight's generic default so
+    // the picker still opens editable rather than sticking on "Loading…".
+    if (!pendingProgram && !pendingProgramError) return;
+    const derived = deriveStartingWeight(pendingProgram?.sessions ?? []);
     setSharedWeightOneValue(derived.sharedWeightOneValue);
     setSharedWeightOneUnit(derived.sharedWeightOneUnit);
     setSharedWeightTwoValue(derived.sharedWeightTwoValue);
     setSharedWeightTwoUnit(derived.sharedWeightTwoUnit);
     setSeededProgramId(pendingWeightProgramId);
-  }, [pendingWeightProgramId, pendingProgram, seededProgramId]);
+  }, [
+    pendingWeightProgramId,
+    pendingProgram,
+    pendingProgramError,
+    seededProgramId,
+  ]);
 
   const enrollIn = (
     programId: string,

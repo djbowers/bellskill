@@ -214,6 +214,39 @@ describe('ProgramsPage', () => {
     );
   });
 
+  it('degrades to the editable double-24kg default when the program fetch errors', () => {
+    mockUseProgram.mockReturnValue({ data: undefined, isError: true });
+
+    renderPage();
+
+    fireEvent.click(screen.getByText('Start Dry Fighting Weight'));
+
+    // A failed sessions fetch must not brick enrollment: the picker still opens
+    // editable on the generic double-24kg fallback rather than sticking on
+    // "Loading…" with a disabled button.
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
+    const inputs = screen.getAllByRole('spinbutton');
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0]).toHaveValue(24);
+    expect(inputs[1]).toHaveValue(24);
+
+    const startButton = screen.getByRole('button', { name: 'Start program' });
+    expect(startButton).not.toBeDisabled();
+
+    fireEvent.click(startButton);
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      {
+        programId: 'dfw-1',
+        sharedWeightOneValue: 24,
+        sharedWeightOneUnit: 'kilograms',
+        sharedWeightTwoValue: 24,
+        sharedWeightTwoUnit: 'kilograms',
+      },
+      expect.anything(),
+    );
+  });
+
   it('pre-fills single loading at the modal weight for a single-bell program', () => {
     mockUsePrograms.mockReturnValue({
       data: [snatchTest, myProgram],
