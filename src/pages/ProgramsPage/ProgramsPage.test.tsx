@@ -10,6 +10,7 @@ const {
   mockUseActiveProgram,
   mockUseCreateProgram,
   mockUseEnrollProgram,
+  mockUseProgram,
   enrollMutate,
   createMutate,
 } = vi.hoisted(() => ({
@@ -17,6 +18,7 @@ const {
   mockUseActiveProgram: vi.fn(),
   mockUseCreateProgram: vi.fn(),
   mockUseEnrollProgram: vi.fn(),
+  mockUseProgram: vi.fn(),
   enrollMutate: vi.fn(),
   createMutate: vi.fn(),
 }));
@@ -26,6 +28,7 @@ vi.mock('~/api', () => ({
   useActiveProgram: mockUseActiveProgram,
   useCreateProgram: mockUseCreateProgram,
   useEnrollProgram: mockUseEnrollProgram,
+  useProgram: mockUseProgram,
 }));
 
 vi.mock('~/contexts', async () => {
@@ -79,6 +82,72 @@ const myProgram = {
   createdAt: '',
 };
 
+const snatchTest = {
+  id: 'snatch-1',
+  ownerId: null,
+  sourceProgramId: null,
+  slug: 'strongfirst-snatch-test-plan',
+  title: 'Snatch Test Plan',
+  description: null,
+  authorName: 'StrongFirst',
+  numWeeks: 10,
+  daysPerWeek: 3,
+  isPublic: true,
+  createdAt: '',
+};
+
+// Minimal session whose first movement carries the given loading. `weightTwo`
+// null → two-hand, 0 → single, >0 → double.
+const sessionWith = (
+  weightOne: number,
+  weightTwo: number | null,
+  shared = false,
+) => ({
+  id: 's',
+  programId: 'p',
+  sequenceIndex: 0,
+  weekNumber: 1,
+  dayNumber: 1,
+  title: 't',
+  notes: null,
+  workoutOptions: {
+    complexSet: shared,
+    intervalTimer: 0,
+    restTimer: 0,
+    workoutDetails: null,
+    workoutGoal: 0,
+    workoutGoalUnits: 'minutes',
+    sharedWeightOneValue: shared ? weightOne : null,
+    sharedWeightOneUnit: shared ? 'kilograms' : null,
+    sharedWeightTwoValue: shared ? weightTwo : null,
+    sharedWeightTwoUnit: shared && weightTwo ? 'kilograms' : null,
+    movements: [
+      {
+        movementName: 'M',
+        repScheme: [1],
+        weightOneValue: weightOne,
+        weightOneUnit: 'kilograms',
+        weightTwoValue: weightTwo,
+        weightTwoUnit: weightTwo ? 'kilograms' : null,
+      },
+    ],
+  },
+});
+
+// Sessions for each seeded shared program, keyed by id, so the starting-weight
+// prompt derives its pre-fill from real per-program loading profiles.
+const SESSIONS_BY_ID: Record<string, ReturnType<typeof sessionWith>[]> = {
+  'dfw-1': Array.from({ length: 13 }, () => sessionWith(24, 24)).concat(
+    sessionWith(28, 28),
+  ),
+  'armor-1': Array.from({ length: 20 }, () => sessionWith(24, 24, true)),
+  'snatch-1': [
+    ...Array.from({ length: 9 }, () => sessionWith(28, 0)),
+    ...Array.from({ length: 11 }, () => sessionWith(24, 0)),
+    ...Array.from({ length: 10 }, () => sessionWith(20, 0)),
+  ],
+};
+
 const renderPage = () =>
   render(
     <MemoryRouter initialEntries={['/programs']}>
@@ -110,6 +179,11 @@ describe('ProgramsPage', () => {
       mutate: enrollMutate,
       isLoading: false,
     });
+    mockUseProgram.mockImplementation((id?: string) => ({
+      data: id
+        ? { program: {}, sessions: SESSIONS_BY_ID[id] ?? [] }
+        : undefined,
+    }));
   });
 
   it('prompts for a starting weight before enrolling in a shared program, defaulted to double 24kg', () => {
@@ -135,6 +209,69 @@ describe('ProgramsPage', () => {
         sharedWeightOneUnit: 'kilograms',
         sharedWeightTwoValue: 24,
         sharedWeightTwoUnit: 'kilograms',
+      },
+      expect.anything(),
+    );
+  });
+
+  it('degrades to the editable double-24kg default when the program fetch errors', () => {
+    mockUseProgram.mockReturnValue({ data: undefined, isError: true });
+
+    renderPage();
+
+    fireEvent.click(screen.getByText('Start Dry Fighting Weight'));
+
+    // A failed sessions fetch must not brick enrollment: the picker still opens
+    // editable on the generic double-24kg fallback rather than sticking on
+    // "Loading…" with a disabled button.
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
+    const inputs = screen.getAllByRole('spinbutton');
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0]).toHaveValue(24);
+    expect(inputs[1]).toHaveValue(24);
+
+    const startButton = screen.getByRole('button', { name: 'Start program' });
+    expect(startButton).not.toBeDisabled();
+
+    fireEvent.click(startButton);
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      {
+        programId: 'dfw-1',
+        sharedWeightOneValue: 24,
+        sharedWeightOneUnit: 'kilograms',
+        sharedWeightTwoValue: 24,
+        sharedWeightTwoUnit: 'kilograms',
+      },
+      expect.anything(),
+    );
+  });
+
+  it('pre-fills single loading at the modal weight for a single-bell program', () => {
+    mockUsePrograms.mockReturnValue({
+      data: [snatchTest, myProgram],
+      isLoading: false,
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByText('Start Snatch Test Plan'));
+
+    // A single-bell program (Snatch Test) collapses to one weight input at the
+    // modal 24kg — not the double-24 the fixed default used to force.
+    const inputs = screen.getAllByRole('spinbutton');
+    expect(inputs).toHaveLength(1);
+    expect(inputs[0]).toHaveValue(24);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      {
+        programId: 'snatch-1',
+        sharedWeightOneValue: 24,
+        sharedWeightOneUnit: 'kilograms',
+        sharedWeightTwoValue: 0,
+        sharedWeightTwoUnit: null,
       },
       expect.anything(),
     );

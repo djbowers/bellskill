@@ -109,7 +109,7 @@ pages/
 - Supabase client is the `supabase` named export from `~/supabaseClient`.
 - Query keys are defined in `src/constants/queries.enum.ts`.
 - `npm run gen:types` writes the **repo-root** `types/supabase.ts` — commit that file after any schema change (requires `supabase start` to be running). `src/types/supabase.ts` is just a 3-line alias (`export type Supabase = Database`) re-exporting the root file; it is not regenerated.
-- Schema changes that must reach **production** (e.g. seeded shared content) belong in a **migration**, not `supabase/seed.sql`. Production only ever applies migrations (forward-only `db push`); `seed.sql` never reaches it. Staging is rebuilt with `db reset --linked`, which replays migrations *and* runs `seed.sql`, so seed data reaches staging but stops there. See `.github/workflows/supabase-*.yaml`.
+- Schema changes that must reach **production** (e.g. seeded shared content) belong in a **migration**, not `supabase/seed.sql`. Production only ever applies migrations (forward-only `db push`); `seed.sql` never reaches it. Staging is rebuilt with `db reset --linked`, which replays migrations _and_ runs `seed.sql`, so seed data reaches staging but stops there. See `.github/workflows/supabase-*.yaml`.
 
 ## Movement Catalog (PROD-153)
 
@@ -263,7 +263,14 @@ you`), reusing the live builder's shared-weight picker
   (`WeightModeTabs` + `ModifyCountButtons`/`WeightUnitTabs`, now in
   `~/components`) so the enrollee can pick two-hand/single/double loading,
   independent left/right (mixed) weights, and kg or lb. Your own programs are
-  already fully weight-configured in the builder.
+  already fully weight-configured in the builder. The prompt's **pre-fill** is
+  derived per-program (PROD-232) — `ProgramsPage` lazily fetches the pending
+  program's sessions (`useProgram`) and seeds the picker from
+  `deriveStartingWeight` (`ProgramsPage/utils`), the modal placeholder
+  weight/mode across the program's sessions (same `resolveSharedWeights`
+  priority + modal/tie-break as the RPC). So single-bell programs (Snatch Test)
+  pre-fill single, swing-only (10K Swing) two-hand, DFW/Armor/Easy double — not
+  a fixed 24kg.
 
 ## Runtime Feature Flags (PROD-175)
 
