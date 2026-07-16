@@ -15,10 +15,10 @@ import { server } from '~/mocks/server';
 
 import { StartWorkoutPage } from './StartWorkoutPage';
 
-// These discovery surfaces (curated / repeat / recommender) migrated off the
-// build-time env flags onto the runtime feature-flag mechanism (PROD-175) —
-// force them on so this suite still exercises the browse-mode behavior it did
-// under the old always-on test-env flags.
+// The launchpad shell (PROD-171) is the master gate: with it on the page opens
+// in browse mode, and content is routed by population — curated for new users,
+// repeat-previous for returning. The content sub-flags are on too so the
+// recommender surface mounts for a returning user.
 const { mockUseFeatureFlags } = vi.hoisted(() => ({
   mockUseFeatureFlags: vi.fn(),
 }));
@@ -28,6 +28,7 @@ vi.mock('~/api', async (importOriginal) => ({
 }));
 mockUseFeatureFlags.mockReturnValue({
   features: {
+    launchpadShell: true,
     curatedFirstWorkout: true,
     repeatPrevious: true,
     recommender: true,
@@ -155,17 +156,22 @@ describe('StartWorkoutPage recommendations', () => {
   });
 
   describe('returning user (has history)', () => {
-    test('shows recent repeats alongside the curated workouts', async () => {
+    test('shows recent repeats and the build-custom entry, but not curated', async () => {
       renderPage();
 
       expect(
         await screen.findByText('Pick up where you left off'),
       ).toBeInTheDocument();
+      // Curated first-workout content is routed to new users only — a returning
+      // user's shell is repeat-previous + build custom (PROD-171).
       expect(
-        screen.getByRole('heading', { name: 'Recommended sessions' }),
-      ).toBeInTheDocument();
+        screen.queryByRole('heading', { name: 'Recommended sessions' }),
+      ).not.toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: 'Two-Hand Swing' }),
+        screen.queryByRole('button', { name: 'Two-Hand Swing' }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /build custom workout/i }),
       ).toBeInTheDocument();
     });
 

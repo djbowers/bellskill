@@ -13,6 +13,15 @@
  */
 
 export const EXPERIMENT_FLAG_KEYS = [
+  // Master gate for the launchpad "start screen" shell (PROD-171). Treatment =
+  // land on the launchpad; control = drop straight into the pure custom builder
+  // (the true baseline). Repeat-previous and curated are *content* of the shell,
+  // not their own gates — this one flag decides shell vs. builder for both the
+  // new-user activation test (PROD-172) and the returning-user retention test.
+  'launchpad_shell',
+  // Retained for optionality (PROD-171 builds all the flags now), but no longer
+  // the gate: shell content is routed by population, not these. `recommender` is
+  // still read as the Phase-2 nested content flag inside the returning-user shell.
   'curated_first_workout',
   'repeat_previous',
   'recommender',
@@ -26,6 +35,7 @@ export const TREATMENT_VARIANT = 'treatment';
 
 /** App-facing boolean record for the migrated experiment flags. */
 export interface ExperimentFeatures {
+  launchpadShell: boolean;
   curatedFirstWorkout: boolean;
   repeatPrevious: boolean;
   recommender: boolean;
@@ -33,6 +43,7 @@ export interface ExperimentFeatures {
 
 /** DB flag key → app-facing boolean field. */
 const KEY_TO_FEATURE: Record<ExperimentFlagKey, keyof ExperimentFeatures> = {
+  launchpad_shell: 'launchpadShell',
   curated_first_workout: 'curatedFirstWorkout',
   repeat_previous: 'repeatPrevious',
   recommender: 'recommender',
@@ -46,6 +57,7 @@ const KEY_TO_FEATURE: Record<ExperimentFlagKey, keyof ExperimentFeatures> = {
  * error.
  */
 export const SAFE_DEFAULT_FEATURES: ExperimentFeatures = {
+  launchpadShell: false,
   curatedFirstWorkout: false,
   repeatPrevious: false,
   recommender: false,
@@ -53,6 +65,7 @@ export const SAFE_DEFAULT_FEATURES: ExperimentFeatures = {
 
 /** Every experiment feature ON — used only for the owner preview override. */
 export const ALL_EXPERIMENT_FEATURES_ON: ExperimentFeatures = {
+  launchpadShell: true,
   curatedFirstWorkout: true,
   repeatPrevious: true,
   recommender: true,
