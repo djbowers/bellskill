@@ -121,18 +121,36 @@ export const StartWorkoutPage = ({
     !activeProgramQuery.isError;
   const completeProgramSession = useCompleteProgramSession();
 
-  // Discovery surfaces are individually flag-gated (PROD-174); with all of
-  // them off the page is the pure custom builder. Save-session mode never
-  // browses; an active program forces browse so its card is seen first.
-  const showCurated = experimentFeatures.curatedFirstWorkout;
-  const showRepeat = experimentFeatures.repeatPrevious;
+  // Population signal for the launchpad (PROD-171): a user with zero workout
+  // logs is "new". `isFirstWorkout` is tri-state — null while the logs query
+  // loads, so we never treat a genuine first-timer as returning before it
+  // resolves. The funnel effect below reuses these, so they're derived once.
+  const session = useSession();
+  const userId = session?.user?.id;
+  const { data: workoutLogs } = useWorkoutLogs();
+  const isFirstWorkout =
+    workoutLogs === undefined ? null : workoutLogs.length === 0;
+  const population: 'new' | 'returning' | null =
+    isFirstWorkout === null ? null : isFirstWorkout ? 'new' : 'returning';
+
+  // Master gate (PROD-171): the launchpad shell replaces the pure custom builder
+  // when its flag resolves to treatment; control drops straight into the builder
+  // (the true baseline). Content inside the shell is routed by population, not by
+  // standalone content flags. An active program still forces the shell — it's a
+  // separate release feature, orthogonal to the experiment. Save-session mode
+  // never browses.
+  const shellOn = experimentFeatures.launchpadShell;
   const showBrowse =
-    !programSaveMode &&
-    (hasActiveProgram ||
-      programGatePending ||
-      showCurated ||
-      showRepeat ||
-      experimentFeatures.recommender);
+    !programSaveMode && (shellOn || hasActiveProgram || programGatePending);
+
+  // Population-routed shell content: curated first workout for new users,
+  // repeat-previous for returning. The AI next-session recommender is Phase-2
+  // nested content within the shell for returning users (its own flag), not a
+  // standalone browse trigger.
+  const showCurated = shellOn && population === 'new';
+  const showRepeat = shellOn && population === 'returning';
+  const showRecommender =
+    shellOn && population === 'returning' && experimentFeatures.recommender;
 
   // Browse mode shows recommendations plus a Build-custom button; the builder
   // opens directly when there's nothing to browse or when history's "Repeat"
@@ -165,15 +183,6 @@ export const StartWorkoutPage = ({
   // Save-session mode only: the title for the program session being authored.
   const [sessionTitle, setSessionTitle] = useState<string>('');
 
-  // Activation funnel (PROD-157): a user with zero workout logs is "new".
-  // While the logs query is still loading (workoutLogs === undefined) we don't
-  // yet know, so emit null rather than a misleading `false` for a genuine
-  // first-timer who taps Start before the query resolves.
-  const session = useSession();
-  const userId = session?.user?.id;
-  const { data: workoutLogs } = useWorkoutLogs();
-  const isFirstWorkout =
-    workoutLogs === undefined ? null : workoutLogs.length === 0;
   const firstSessionTracked = useRef(false);
 
   useEffect(
@@ -191,6 +200,56 @@ export const StartWorkoutPage = ({
     // Depend on the stable user id, not the session object (which is replaced on
     // every token refresh), so this effect doesn't needlessly re-run.
     [userId, workoutLogs],
+  );
+
+  // Launchpad exposure (PROD-171): once the shell decision is settled, log which
+  // variant / population / content the user landed on, keyed by user_id so it
+  // joins to the PROD-170 funnel events. Fires once per mount; the sticky
+  // assignment itself lives server-side in feature_flag_assignments.
+  const launchpadExposureTracked = useRef(false);
+
+  useEffect(
+    function trackLaunchpadExposure() {
+      if (launchpadExposureTracked.current) return;
+      if (programSaveMode || editWorkout) return;
+      if (!userId || population === null || programGatePending) return;
+
+      launchpadExposureTracked.current = true;
+
+      const content: string[] = [];
+      if (showBrowse) {
+        if (hasActiveProgram) content.push('program');
+        if (showCurated) content.push('curated_first');
+        if (showRepeat) content.push('repeat_previous');
+        if (showRecommender) content.push('recommender');
+        content.push('build_custom');
+      } else {
+        content.push('builder');
+      }
+
+      void trackEvent({
+        event: AnalyticsEvent.LaunchpadExposed,
+        userId,
+        properties: {
+          shell_variant: shellOn ? 'on' : 'off',
+          population,
+          content,
+        },
+      });
+    },
+    [
+      userId,
+      population,
+      programGatePending,
+      programSaveMode,
+      editWorkout,
+      showBrowse,
+      hasActiveProgram,
+      showCurated,
+      showRepeat,
+      showRecommender,
+      shellOn,
+    ],
   );
 
   const [workoutGoal, setWorkoutGoal] = useState<number>(
@@ -668,7 +727,7 @@ export const StartWorkoutPage = ({
             onSelectRepeat={handleSelectRepeat}
           />
 
-          {experimentFeatures.recommender && (
+          {showRecommender && (
             <RecommendSessionSection
               userId={userId}
               onAccept={handleAcceptRecommendation}

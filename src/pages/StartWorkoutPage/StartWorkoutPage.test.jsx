@@ -14,10 +14,10 @@ import {
 import { StartWorkoutPage } from './StartWorkoutPage';
 import * as stories from './StartWorkoutPage.stories';
 
-// These discovery surfaces (curated / repeat / recommender) migrated off the
-// build-time env flags onto the runtime feature-flag mechanism (PROD-175) —
-// force them on so this suite still opens in browse mode (enterBuildMode()
-// below) the way it did under the old always-on test-env flags.
+// The launchpad shell is the master gate (PROD-171): with it on, the page opens
+// in browse mode and this suite reaches the builder via enterBuildMode() below.
+// The content sub-flags are forced on too so the recommender surface still
+// mounts under EntitlementContext for a returning user.
 const { mockUseFeatureFlags } = vi.hoisted(() => ({
   mockUseFeatureFlags: vi.fn(),
 }));
@@ -27,6 +27,7 @@ vi.mock('~/api', async (importOriginal) => ({
 }));
 mockUseFeatureFlags.mockReturnValue({
   features: {
+    launchpadShell: true,
     curatedFirstWorkout: true,
     repeatPrevious: true,
     recommender: true,

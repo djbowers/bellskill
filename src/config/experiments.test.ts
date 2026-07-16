@@ -30,6 +30,7 @@ describe('resolveExperimentFeatures', () => {
   test('every flag in treatment matches ALL_EXPERIMENT_FEATURES_ON', () => {
     expect(
       resolveExperimentFeatures({
+        launchpad_shell: 'treatment',
         curated_first_workout: 'treatment',
         repeat_previous: 'treatment',
         recommender: 'treatment',

@@ -51,6 +51,7 @@ describe('fetchExperimentFeatures', () => {
     );
 
     await expect(fetchExperimentFeatures()).resolves.toEqual({
+      launchpadShell: false,
       curatedFirstWorkout: true,
       repeatPrevious: false,
       recommender: true,
@@ -73,6 +74,7 @@ describe('fetchExperimentFeatures', () => {
 
     expect(first).toEqual(second);
     expect(first).toEqual({
+      launchpadShell: false,
       curatedFirstWorkout: true,
       repeatPrevious: true,
       recommender: false,
@@ -110,6 +112,7 @@ describe('useFeatureFlags', () => {
     expect(result.current.isPending).toBe(true);
     await waitFor(() =>
       expect(result.current.features).toEqual({
+        launchpadShell: false,
         curatedFirstWorkout: true,
         repeatPrevious: false,
         recommender: false,

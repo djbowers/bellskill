@@ -12,6 +12,10 @@ export enum AnalyticsEvent {
   FirstSessionStarted = 'first_session_started',
   WorkoutStarted = 'workout_started',
   WorkoutCompleted = 'workout_completed',
+  // Launchpad shell exposure (PROD-171): records the sticky shell variant, the
+  // user's population (new/returning), and the content shown, so the launchpad
+  // A/B is joinable to the funnel events above by `user_id`.
+  LaunchpadExposed = 'launchpad_exposed',
   // AI Next Session Recommender (PROD-89).
   RecommendationRequested = 'recommendation_requested',
   RecommendationAccepted = 'recommendation_accepted',
