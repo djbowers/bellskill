@@ -1,6 +1,20 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { getWeightTabValue } from '~/utils';
 
 import { CURATED_WORKOUTS, CURATED_WORKOUTS_VERSION } from './curatedWorkouts';
+
+// The movement catalog's source of truth (PROD-153). Reading it here — rather
+// than hardcoding the expected names — means a future catalog rename that
+// orphans a curated movement fails this test instead of drifting silently.
+const CATALOG_MOVEMENT_NAMES = new Set(
+  readFileSync(resolve(process.cwd(), 'scripts/data/movements.csv'), 'utf-8')
+    .split(/\r?\n/)
+    .slice(1) // drop the header row
+    .filter((line) => line.trim().length > 0)
+    .map((line) => line.slice(0, line.indexOf(',')).trim()),
+);
 
 describe('CURATED_WORKOUTS', () => {
   test('exports a numeric version', () => {
@@ -45,16 +59,12 @@ describe('CURATED_WORKOUTS', () => {
     },
   );
 
-  test('uses catalog movement names', () => {
-    const byId = Object.fromEntries(CURATED_WORKOUTS.map((w) => [w.id, w]));
-    const nameOf = (id: string) =>
-      byId[id].workoutOptions.movements[0].movementName;
-
-    expect(nameOf('beginner-two-hand-swing')).toBe('Kettlebell Swing');
-    expect(nameOf('beginner-overhead-press')).toBe(
-      'Single Arm Kettlebell Overhead Press',
-    );
-    expect(nameOf('beginner-goblet-squat')).toBe('Kettlebell Goblet Squat');
+  test('every movement name exists in the catalog', () => {
+    for (const workout of CURATED_WORKOUTS) {
+      for (const movement of workout.workoutOptions.movements) {
+        expect(CATALOG_MOVEMENT_NAMES).toContain(movement.movementName);
+      }
+    }
   });
 
   test('encodes weight modes the same way the builder would', () => {
