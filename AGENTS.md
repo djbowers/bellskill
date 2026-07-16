@@ -1,8 +1,15 @@
 # Claude Development Guidelines
 
-## Agent Guidelines
+## Off-Limits Paths
 
-For guidelines on automated agent behavior (Bellskill PM and Bellskill Builder), see [AGENT_GUIDELINES.md](AGENT_GUIDELINES.md).
+Stop and ask a human before changing any of these. A task whose acceptance criteria require them is a spec error, not a green light:
+
+- **Authentication and session handling** — `src/auth/`, Supabase auth client setup, anything issuing or validating tokens.
+- **Row-Level Security policies** — security boundaries are a human call.
+- **Payments and billing** — anything that charges or entitles.
+- **Secrets, env handling, and CI config** — `.env*`, `.github/workflows/`, anything handling API keys or deployment configuration.
+
+A refactor that incidentally touches these paths is equally off-limits.
 
 ## Project Overview
 
