@@ -256,7 +256,14 @@ you`), reusing the live builder's shared-weight picker
   (`WeightModeTabs` + `ModifyCountButtons`/`WeightUnitTabs`, now in
   `~/components`) so the enrollee can pick two-hand/single/double loading,
   independent left/right (mixed) weights, and kg or lb. Your own programs are
-  already fully weight-configured in the builder.
+  already fully weight-configured in the builder. The prompt's **pre-fill** is
+  derived per-program (PROD-232) — `ProgramsPage` lazily fetches the pending
+  program's sessions (`useProgram`) and seeds the picker from
+  `deriveStartingWeight` (`ProgramsPage/utils`), the modal placeholder
+  weight/mode across the program's sessions (same `resolveSharedWeights`
+  priority + modal/tie-break as the RPC). So single-bell programs (Snatch Test)
+  pre-fill single, swing-only (10K Swing) two-hand, DFW/Armor/Easy double — not
+  a fixed 24kg.
 
 ## Runtime Feature Flags (PROD-175)
 

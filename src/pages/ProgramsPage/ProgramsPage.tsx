@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import {
@@ -6,6 +6,7 @@ import {
   useActiveProgram,
   useCreateProgram,
   useEnrollProgram,
+  useProgram,
   usePrograms,
 } from '~/api';
 import { ModifyCountButtons, Page, WeightUnitTabs } from '~/components';
@@ -26,14 +27,13 @@ import { useSession } from '~/contexts';
 import { Program, WeightUnit } from '~/types';
 import { getWeightTabValue, getWeightUnitLabel } from '~/utils';
 
+import { deriveStartingWeight } from './utils/deriveStartingWeight';
+
 const DEFAULT_WEEKS = 5;
 const DEFAULT_DAYS_PER_WEEK = 3;
-// Pre-fill for the starting-weight prompt: double loading at 24kg, which is
-// DFW's placeholder and a reasonable generic starting point the user can edit.
-// TODO(PROD-TBD): derive the pre-fill from the enrolled program's own
-// placeholder weight/mode once the other shared programs (Snatch Test / Armor
-// Building Complex / Easy Strength) land — the prompt fires for any non-owned
-// public program, so a fixed 24kg won't match every one.
+// Fallback weight/unit for the mode-switch handlers (when the user adds a
+// previously-null slot). The prompt's initial pre-fill is derived per-program
+// from the enrolled program's own sessions — see deriveStartingWeight.
 const DEFAULT_STARTING_WEIGHT_VALUE = 24;
 const DEFAULT_WEIGHT_UNIT: WeightUnit = 'kilograms';
 
@@ -56,9 +56,12 @@ export const ProgramsPage = () => {
   const [pendingWeightProgramId, setPendingWeightProgramId] = useState<
     string | null
   >(null);
+  // The program the picker has been pre-filled for; the prompt waits on this so
+  // it never briefly shows a stale default before its derived pre-fill lands.
+  const [seededProgramId, setSeededProgramId] = useState<string | null>(null);
   // Starting shared weight for the prompt, mirroring the live builder's shared
-  // weight picker (mode + independent left/right value + unit). Default: double
-  // loading at the 24kg placeholder.
+  // weight picker (mode + independent left/right value + unit). Seeded per
+  // program from its own sessions once the prompt opens (see the effect below).
   const [sharedWeightOneValue, setSharedWeightOneValue] = useState<
     number | null
   >(DEFAULT_STARTING_WEIGHT_VALUE);
@@ -72,6 +75,26 @@ export const ProgramsPage = () => {
 
   const sharedPrograms = programs.filter((p) => p.isPublic);
   const myPrograms = programs.filter((p) => !p.isPublic);
+
+  // Load the pending program's sessions so the prompt can pre-fill from its own
+  // modal placeholder weight/mode rather than a fixed default.
+  const { data: pendingProgram } = useProgram(
+    pendingWeightProgramId ?? undefined,
+  );
+  const startingWeightReady = seededProgramId === pendingWeightProgramId;
+
+  useEffect(() => {
+    if (!pendingWeightProgramId || !pendingProgram) return;
+    // Seed once per open (proceedToEnroll resets seededProgramId): re-running
+    // would clobber the user's own picker edits.
+    if (seededProgramId === pendingWeightProgramId) return;
+    const derived = deriveStartingWeight(pendingProgram.sessions);
+    setSharedWeightOneValue(derived.sharedWeightOneValue);
+    setSharedWeightOneUnit(derived.sharedWeightOneUnit);
+    setSharedWeightTwoValue(derived.sharedWeightTwoValue);
+    setSharedWeightTwoUnit(derived.sharedWeightTwoUnit);
+    setSeededProgramId(pendingWeightProgramId);
+  }, [pendingWeightProgramId, pendingProgram, seededProgramId]);
 
   const enrollIn = (
     programId: string,
@@ -120,13 +143,6 @@ export const ProgramsPage = () => {
   const handleChangeSharedWeightTwoValue = (value: number) =>
     setSharedWeightTwoValue(Math.max(1, value));
 
-  const resetStartingWeight = () => {
-    setSharedWeightOneValue(DEFAULT_STARTING_WEIGHT_VALUE);
-    setSharedWeightOneUnit(DEFAULT_WEIGHT_UNIT);
-    setSharedWeightTwoValue(DEFAULT_STARTING_WEIGHT_VALUE);
-    setSharedWeightTwoUnit(DEFAULT_WEIGHT_UNIT);
-  };
-
   // Only an *active* enrollment blocks a fresh enroll — a completed program may
   // still be returned by useActiveProgram (to drive the home "complete" card),
   // but starting a new program then needs no "switch?" confirmation.
@@ -142,7 +158,7 @@ export const ProgramsPage = () => {
   const proceedToEnroll = (programId: string) => {
     const program = programs.find((p) => p.id === programId);
     if (program && isSharedNotOwned(program)) {
-      resetStartingWeight();
+      setSeededProgramId(null);
       setPendingWeightProgramId(programId);
     } else {
       enrollIn(programId);
@@ -377,12 +393,17 @@ export const ProgramsPage = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-1">
-            <WeightModeTabs
-              value={sharedWeightTabValue}
-              onValueChange={handleChangeSharedWeightTab}
-              hideNone
-            />
-            {sharedWeightOneValue !== null && (
+            {!startingWeightReady && (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            )}
+            {startingWeightReady && (
+              <WeightModeTabs
+                value={sharedWeightTabValue}
+                onValueChange={handleChangeSharedWeightTab}
+                hideNone
+              />
+            )}
+            {startingWeightReady && sharedWeightOneValue !== null && (
               <ModifyCountButtons
                 onClickMinus={() =>
                   handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
@@ -401,25 +422,27 @@ export const ProgramsPage = () => {
                 onChange={handleChangeSharedWeightOneValue}
               />
             )}
-            {sharedWeightTwoValue !== null && sharedWeightTwoValue > 0 && (
-              <ModifyCountButtons
-                onClickMinus={() =>
-                  handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
-                }
-                onClickPlus={() =>
-                  handleChangeSharedWeightTwoValue(sharedWeightTwoValue + 1)
-                }
-                unit={getWeightUnitLabel(sharedWeightTwoUnit)}
-                unitTabs={
-                  <WeightUnitTabs
-                    value={sharedWeightTwoUnit}
-                    onChange={setSharedWeightTwoUnit}
-                  />
-                }
-                value={sharedWeightTwoValue}
-                onChange={handleChangeSharedWeightTwoValue}
-              />
-            )}
+            {startingWeightReady &&
+              sharedWeightTwoValue !== null &&
+              sharedWeightTwoValue > 0 && (
+                <ModifyCountButtons
+                  onClickMinus={() =>
+                    handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
+                  }
+                  onClickPlus={() =>
+                    handleChangeSharedWeightTwoValue(sharedWeightTwoValue + 1)
+                  }
+                  unit={getWeightUnitLabel(sharedWeightTwoUnit)}
+                  unitTabs={
+                    <WeightUnitTabs
+                      value={sharedWeightTwoUnit}
+                      onChange={setSharedWeightTwoUnit}
+                    />
+                  }
+                  value={sharedWeightTwoValue}
+                  onChange={handleChangeSharedWeightTwoValue}
+                />
+              )}
           </div>
           <DialogFooter>
             <Button
@@ -428,7 +451,10 @@ export const ProgramsPage = () => {
             >
               Cancel
             </Button>
-            <Button onClick={confirmStartingWeight} disabled={enroll.isLoading}>
+            <Button
+              onClick={confirmStartingWeight}
+              disabled={enroll.isLoading || !startingWeightReady}
+            >
               Start program
             </Button>
           </DialogFooter>
