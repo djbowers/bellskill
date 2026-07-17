@@ -254,8 +254,8 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   owner-only policies (a non-owner mutation matches 0 rows, a silent no-op).
 - DB behaviors (RLS, the advance/skip/flip RPC, idempotency, the reorder/delete
   reindex + constraint-safety, and the PROD-237 cancel/delete-cascade/archive-filter
-  + owner-only guarantees in `e2e/program-crud.spec.ts`) are covered by Playwright
-  e2e against the local Supabase (`e2e/program-*.spec.ts`), not MSW.
+  - owner-only guarantees in `e2e/program-crud.spec.ts`) are covered by Playwright
+    e2e against the local Supabase (`e2e/program-*.spec.ts`), not MSW.
 - **Error feedback (PROD-220):** program mutations surface failures through one
   reusable toast — `ToastProvider`/`useToast` (`~/contexts/ToastContext`, mounted
   app-wide in `App.tsx`; presentational `Toast` in `~/components/ui/toast`). Each

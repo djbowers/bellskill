@@ -565,9 +565,7 @@ describe('ProgramsPage', () => {
     expect(deleteMutate).not.toHaveBeenCalled();
     expect(screen.getByText('Delete program?')).toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Delete permanently' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Delete permanently' }));
 
     expect(deleteMutate).toHaveBeenCalledWith({ programId: 'mine-1' });
   });

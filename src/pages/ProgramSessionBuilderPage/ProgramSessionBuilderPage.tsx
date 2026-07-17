@@ -145,8 +145,7 @@ export const ProgramSessionBuilderPage = () => {
     deleteSession.mutate({ sessionId: target.id, programId: program.id });
   };
 
-  const backToBuilder = () =>
-    navigate(`/programs/${program.id}/sessions/new`);
+  const backToBuilder = () => navigate(`/programs/${program.id}/sessions/new`);
 
   // Edit mode: seed the builder from the target session and rewrite it in place
   // (title + options), then return to the builder's session list.

@@ -446,8 +446,8 @@ export const ProgramsPage = () => {
                     {program.title}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">
-                    Archived · {program.numWeeks} weeks ·{' '}
-                    {program.daysPerWeek}/week
+                    Archived · {program.numWeeks} weeks · {program.daysPerWeek}
+                    /week
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -612,10 +612,7 @@ export const ProgramsPage = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setPendingCancel(false)}
-            >
+            <Button variant="secondary" onClick={() => setPendingCancel(false)}>
               Keep going
             </Button>
             <Button

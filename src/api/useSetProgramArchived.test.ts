@@ -56,7 +56,9 @@ describe('useSetProgramArchived', () => {
     let receivedUrl = '';
     server.use(
       http.patch(PROGRAMS_URL, async ({ request }) => {
-        receivedBody = (await request.json()) as { archived_at?: string | null };
+        receivedBody = (await request.json()) as {
+          archived_at?: string | null;
+        };
         receivedUrl = request.url;
         return new HttpResponse(null, { status: 204 });
       }),
@@ -77,7 +79,9 @@ describe('useSetProgramArchived', () => {
     let receivedBody: { archived_at?: string | null } = {};
     server.use(
       http.patch(PROGRAMS_URL, async ({ request }) => {
-        receivedBody = (await request.json()) as { archived_at?: string | null };
+        receivedBody = (await request.json()) as {
+          archived_at?: string | null;
+        };
         return new HttpResponse(null, { status: 204 });
       }),
     );

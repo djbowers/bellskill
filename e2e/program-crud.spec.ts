@@ -279,11 +279,9 @@ test.describe('program CRUD — owner-only (shared + other-user programs protect
     });
     expect(archive.status).toBeLessThan(300);
 
-    const [dfw] = await restJson<Array<{ id: string; archived_at: string | null }>>(
-      'GET',
-      `programs?id=eq.${dfwId}&select=id,archived_at`,
-      user.token,
-    );
+    const [dfw] = await restJson<
+      Array<{ id: string; archived_at: string | null }>
+    >('GET', `programs?id=eq.${dfwId}&select=id,archived_at`, user.token);
     expect(dfw.id).toBe(dfwId);
     expect(dfw.archived_at).toBeNull();
   });
@@ -295,7 +293,11 @@ test.describe('program CRUD — owner-only (shared + other-user programs protect
 
     // The other user can't even see it (RLS select is public-or-own), so the
     // delete matches nothing.
-    const del = await rest('DELETE', `programs?id=eq.${programId}`, other.token);
+    const del = await rest(
+      'DELETE',
+      `programs?id=eq.${programId}`,
+      other.token,
+    );
     expect(del.status).toBeLessThan(300);
 
     // The owner still has it.

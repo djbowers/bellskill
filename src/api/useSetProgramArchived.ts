@@ -27,7 +27,9 @@ export const useSetProgramArchived = () => {
     mutationFn: async (input: SetProgramArchivedInput): Promise<void> => {
       const { error } = await supabase
         .from('programs')
-        .update({ archived_at: input.archived ? new Date().toISOString() : null })
+        .update({
+          archived_at: input.archived ? new Date().toISOString() : null,
+        })
         .eq('id', input.programId);
       if (error) throw error;
     },
