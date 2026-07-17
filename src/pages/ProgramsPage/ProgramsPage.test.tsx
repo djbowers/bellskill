@@ -189,7 +189,9 @@ describe('ProgramsPage', () => {
   it('prompts for a starting weight before enrolling in a shared program, defaulted to double 24kg', () => {
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start Dry Fighting Weight' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start Dry Fighting Weight' }),
+    );
 
     // The RPC is not called yet — the starting-weight prompt is shown first,
     // defaulting to double loading (two weight inputs) at 24kg each.
@@ -219,7 +221,9 @@ describe('ProgramsPage', () => {
 
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start Dry Fighting Weight' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start Dry Fighting Weight' }),
+    );
 
     // A failed sessions fetch must not brick enrollment: the picker still opens
     // editable on the generic double-24kg fallback rather than sticking on
@@ -255,7 +259,9 @@ describe('ProgramsPage', () => {
 
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start Snatch Test Plan' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start Snatch Test Plan' }),
+    );
 
     // A single-bell program (Snatch Test) collapses to one weight input at the
     // modal 24kg — not the double-24 the fixed default used to force.
@@ -280,7 +286,9 @@ describe('ProgramsPage', () => {
   it('omits the Bodyweight mode from the starting-weight prompt', () => {
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start Dry Fighting Weight' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start Dry Fighting Weight' }),
+    );
 
     expect(
       screen.queryByRole('tab', { name: 'Bodyweight' }),
@@ -293,7 +301,9 @@ describe('ProgramsPage', () => {
   it('enrolls with mixed independent left/right weights', () => {
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start Dry Fighting Weight' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start Dry Fighting Weight' }),
+    );
     // Left bell stays 24kg, right bell drops to 16kg (mixed pair).
     fireEvent.change(screen.getAllByRole('spinbutton')[1], {
       target: { value: '16' },
@@ -315,7 +325,9 @@ describe('ProgramsPage', () => {
   it('enrolls with a single two-hand weight when the Two-Hand mode is selected', async () => {
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start Dry Fighting Weight' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start Dry Fighting Weight' }),
+    );
     await userEvent.click(screen.getByRole('tab', { name: 'Two-Hand' }));
 
     // Two-hand loading collapses to one weight input; weight two clears.
@@ -338,7 +350,9 @@ describe('ProgramsPage', () => {
   it('enrolls with a per-slot unit choice (kg or lb)', async () => {
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start Dry Fighting Weight' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start Dry Fighting Weight' }),
+    );
     // Switch only the left bell to pounds; the right bell stays in kg.
     await userEvent.click(screen.getAllByRole('tab', { name: 'lb' })[0]);
     fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
@@ -358,7 +372,9 @@ describe('ProgramsPage', () => {
   it('preserves the selected unit (lb) across a loading-mode switch', async () => {
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start Dry Fighting Weight' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start Dry Fighting Weight' }),
+    );
     await userEvent.click(screen.getAllByRole('tab', { name: 'lb' })[0]);
     await userEvent.click(screen.getByRole('tab', { name: 'Two-Hand' }));
     fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
@@ -397,7 +413,9 @@ describe('ProgramsPage', () => {
 
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start Dry Fighting Weight' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start Dry Fighting Weight' }),
+    );
 
     // The RPC is not called yet — the switch prompt is shown first.
     expect(enrollMutate).not.toHaveBeenCalled();
@@ -456,7 +474,9 @@ describe('ProgramsPage', () => {
 
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start Armor Building Complex' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start Armor Building Complex' }),
+    );
 
     // The switch prompt gates the RPC until confirmed.
     expect(enrollMutate).not.toHaveBeenCalled();
