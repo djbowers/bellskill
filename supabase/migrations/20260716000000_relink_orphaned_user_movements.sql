@@ -52,8 +52,7 @@ FROM (VALUES
   ('Double Kettlebell Clean to Thruster',                                'Double Kettlebell Thruster'),
   -- Pure word reorder.
   ('Double Kettlebell Overhead Carry',                                   'Kettlebell Double Overhead Carry'),
-  -- 2-bell strict overhead press = two-arm military press.
-  ('Double Kettlebell Overhead Press',                                   'Two-Arm Kettlebell Military Press'),
+  -- (Double Kettlebell Overhead Press intentionally omitted — see DELIBERATE NULLS.)
   -- 2-bell suitcase carry = farmer's carry (captain lean on low-confidence row).
   ('Double Kettlebell Suitcase Carry',                                   'Kettlebell Farmer''s Carry'),
   -- No plain front-rack split squat in catalog; nearest match is the Bulgarian (captain lean).
@@ -89,5 +88,14 @@ WHERE lower(u.canonical_name) = lower(map.orphan_name)
 --                                                  Dead Clean = a distinct floor variant; neither is
 --                                                  correct). Catalog gap tracked in PROD-235; the
 --                                                  movement is intentionally NOT added here.
+--   * Double Kettlebell Overhead Press           — a two-bell (one per hand) strict overhead press.
+--                                                  Per the catalog taxonomy `Two-Arm` = ONE bell held
+--                                                  in two hands, `Double` = TWO bells, so
+--                                                  `Two-Arm Kettlebell Military Press` is a DIFFERENT
+--                                                  (one-bell) movement — not this. The catalog has no
+--                                                  strict standing double-bell overhead/military press
+--                                                  (only bench, clean-and-press, jerks, push press, and
+--                                                  a seated Z press). Catalog gap tracked in PROD-242;
+--                                                  the movement is intentionally NOT added here.
 --
--- Expected post-migration prod count of user_movements WHERE functional_movement_id IS NULL: 6.
+-- Expected post-migration prod count of user_movements WHERE functional_movement_id IS NULL: 7.
