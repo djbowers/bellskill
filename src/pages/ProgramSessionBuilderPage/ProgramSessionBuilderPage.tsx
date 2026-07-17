@@ -7,6 +7,7 @@ import {
   useProgram,
   useReorderProgramSessions,
   useSaveProgramSession,
+  useUpdateProgramSession,
 } from '~/api';
 import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
@@ -39,19 +40,25 @@ const groupByWeek = (sessions: ProgramSession[]): WeekGroup[] => {
  * and the duplicate-session / duplicate-week helpers shown above the builder.
  */
 export const ProgramSessionBuilderPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, sessionId } = useParams<{ id: string; sessionId?: string }>();
   const navigate = useNavigate();
   const session = useSession();
   const { data, isLoading, isError } = useProgram(id);
   const saveSession = useSaveProgramSession();
+  const updateSession = useUpdateProgramSession();
   const duplicateSession = useDuplicateProgramSession();
   const duplicateWeek = useDuplicateProgramWeek();
   const reorderSessions = useReorderProgramSessions();
   const deleteSession = useDeleteProgramSession();
 
+  // Edit mode when the route carries a session id; the builder is then seeded
+  // from that session and saving rewrites it in place.
+  const isEditing = !!sessionId;
+  const pageTitle = isEditing ? 'Edit session' : 'Add session';
+
   if (isLoading) {
     return (
-      <Page title="Add session">
+      <Page title={pageTitle}>
         <p className="text-sm text-muted-foreground">Loading program…</p>
       </Page>
     );
@@ -59,7 +66,7 @@ export const ProgramSessionBuilderPage = () => {
 
   if (isError || !data) {
     return (
-      <Page title="Add session">
+      <Page title={pageTitle}>
         <p className="text-sm text-muted-foreground">Program not found.</p>
         <Button variant="secondary" onClick={() => navigate('/programs')}>
           Back to programs
@@ -138,6 +145,71 @@ export const ProgramSessionBuilderPage = () => {
     deleteSession.mutate({ sessionId: target.id, programId: program.id });
   };
 
+  const backToBuilder = () =>
+    navigate(`/programs/${program.id}/sessions/new`);
+
+  // Edit mode: seed the builder from the target session and rewrite it in place
+  // (title + options), then return to the builder's session list.
+  if (isEditing) {
+    const editingSession = sessions.find((s) => s.id === sessionId);
+
+    if (!canEdit || !editingSession) {
+      return (
+        <Page title="Edit session">
+          <p className="text-sm text-muted-foreground">
+            {editingSession
+              ? "You can't edit this program's sessions."
+              : 'Session not found.'}
+          </p>
+          <Button variant="secondary" onClick={backToBuilder}>
+            Back to sessions
+          </Button>
+        </Page>
+      );
+    }
+
+    const handleUpdate = (
+      options: Omit<WorkoutOptions, 'startedAt'>,
+      title: string,
+    ) => {
+      updateSession.mutate(
+        {
+          sessionId: editingSession.id,
+          programId: program.id,
+          title: title || editingSession.title,
+          workoutOptions: options,
+        },
+        { onSuccess: backToBuilder },
+      );
+    };
+
+    return (
+      <StartWorkoutPage
+        key={`edit-${editingSession.id}`}
+        programSaveMode={{
+          onSave: handleUpdate,
+          saving: updateSession.isLoading,
+          initialSession: {
+            workoutOptions: editingSession.workoutOptions,
+            title: editingSession.title,
+          },
+          beforeBuilder: (
+            <>
+              <button
+                type="button"
+                onClick={backToBuilder}
+                className="self-start text-xs font-medium text-muted-foreground"
+              >
+                ← Sessions
+              </button>
+              <div className="text-xl font-semibold">Edit session</div>
+            </>
+          ),
+        }}
+      />
+    );
+  }
+
   const beforeBuilder = (
     <>
       <Link
@@ -210,6 +282,21 @@ export const ProgramSessionBuilderPage = () => {
                               ↓
                             </Button>
                           </>
+                        )}
+                        {canEdit && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            aria-label={`Edit ${groupSession.title}`}
+                            onClick={() =>
+                              navigate(
+                                `/programs/${program.id}/sessions/${groupSession.id}/edit`,
+                              )
+                            }
+                            disabled={deleting || reordering}
+                          >
+                            Edit
+                          </Button>
                         )}
                         <Button
                           size="sm"

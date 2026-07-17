@@ -4,10 +4,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   EnrollProgramArgs,
   useActiveProgram,
+  useCancelProgram,
   useCreateProgram,
+  useDeleteProgram,
   useEnrollProgram,
   useProgram,
   usePrograms,
+  useSetProgramArchived,
 } from '~/api';
 import { ModifyCountButtons, Page, WeightUnitTabs } from '~/components';
 import { WeightModeTabs } from '~/components/MovementAutocomplete';
@@ -44,8 +47,16 @@ export const ProgramsPage = () => {
   const { data: activeProgram } = useActiveProgram();
   const createProgram = useCreateProgram();
   const enroll = useEnrollProgram();
+  const cancelProgram = useCancelProgram();
+  const deleteProgram = useDeleteProgram();
+  const setArchived = useSetProgramArchived();
 
   const [showCreate, setShowCreate] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  // Program pending an irreversible hard-delete confirm.
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  // Active enrollment pending a cancel confirm (discards in-progress progress).
+  const [pendingCancel, setPendingCancel] = useState<boolean>(false);
   const [title, setTitle] = useState('');
   const [numWeeks, setNumWeeks] = useState(DEFAULT_WEEKS);
   const [daysPerWeek, setDaysPerWeek] = useState(DEFAULT_DAYS_PER_WEEK);
@@ -75,6 +86,10 @@ export const ProgramsPage = () => {
 
   const sharedPrograms = programs.filter((p) => p.isPublic);
   const myPrograms = programs.filter((p) => !p.isPublic);
+  // Archived programs are hidden from the default list behind a toggle; live
+  // ones (archivedAt null) are always shown.
+  const myLivePrograms = myPrograms.filter((p) => !p.archivedAt);
+  const myArchivedPrograms = myPrograms.filter((p) => !!p.archivedAt);
 
   // Load the pending program's sessions so the prompt can pre-fill from its own
   // modal placeholder weight/mode rather than a fixed default.
@@ -217,6 +232,22 @@ export const ProgramsPage = () => {
   const isActive = (program: Program) =>
     activeEnrollment?.enrollment.programId === program.id;
 
+  const pendingDeleteProgram =
+    programs.find((p) => p.id === pendingDeleteId) ?? null;
+
+  const confirmDelete = () => {
+    if (!pendingDeleteId) return;
+    const target = pendingDeleteId;
+    setPendingDeleteId(null);
+    deleteProgram.mutate({ programId: target });
+  };
+
+  const confirmCancel = () => {
+    setPendingCancel(false);
+    if (!activeEnrollment) return;
+    cancelProgram.mutate({ userProgramId: activeEnrollment.enrollment.id });
+  };
+
   return (
     <Page title="Programs">
       {sharedPrograms.map((program) => (
@@ -311,7 +342,7 @@ export const ProgramsPage = () => {
         </p>
       )}
 
-      {myPrograms.map((program) => (
+      {myLivePrograms.map((program) => (
         <Card key={program.id}>
           <CardHeader>
             <CardTitle className="flex items-center gap-1">
@@ -352,9 +383,99 @@ export const ProgramsPage = () => {
             >
               View progress
             </Button>
+            <div className="flex gap-2">
+              {isActive(program) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-1 text-muted-foreground"
+                  onClick={() => setPendingCancel(true)}
+                  disabled={cancelProgram.isLoading}
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 text-muted-foreground"
+                onClick={() =>
+                  setArchived.mutate({ programId: program.id, archived: true })
+                }
+                disabled={setArchived.isLoading}
+              >
+                Archive
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 text-destructive"
+                onClick={() => setPendingDeleteId(program.id)}
+                disabled={deleteProgram.isLoading}
+              >
+                Delete
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ))}
+
+      {myArchivedPrograms.length > 0 && (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="self-start text-muted-foreground"
+            onClick={() => setShowArchived((v) => !v)}
+          >
+            {showArchived
+              ? 'Hide archived'
+              : `Show archived (${myArchivedPrograms.length})`}
+          </Button>
+
+          {showArchived &&
+            myArchivedPrograms.map((program) => (
+              <Card key={program.id}>
+                <CardHeader>
+                  <CardTitle className="text-muted-foreground">
+                    {program.title}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Archived · {program.numWeeks} weeks ·{' '}
+                    {program.daysPerWeek}/week
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() =>
+                        setArchived.mutate({
+                          programId: program.id,
+                          archived: false,
+                        })
+                      }
+                      disabled={setArchived.isLoading}
+                    >
+                      Restore
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1 text-destructive"
+                      onClick={() => setPendingDeleteId(program.id)}
+                      disabled={deleteProgram.isLoading}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+        </>
+      )}
 
       <Dialog
         open={pendingSwitchId !== null}
@@ -464,6 +585,74 @@ export const ProgramsPage = () => {
               disabled={enroll.isLoading || !startingWeightReady}
             >
               Start program
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={pendingCancel}
+        onOpenChange={(open) => {
+          if (!open) setPendingCancel(false);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel program?</DialogTitle>
+            <DialogDescription>
+              This stops your active program
+              {activeEnrollment ? ` (${activeEnrollment.program.title})` : ''}.
+              Your logged workouts are kept, but your place in the program is
+              cleared — restarting begins from the first session.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setPendingCancel(false)}
+            >
+              Keep going
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmCancel}
+              disabled={cancelProgram.isLoading}
+            >
+              Cancel program
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete program?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes
+              {pendingDeleteProgram ? ` "${pendingDeleteProgram.title}"` : ''},
+              its sessions, and its history. This can't be undone — archive it
+              instead if you just want it out of the way.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setPendingDeleteId(null)}
+            >
+              Keep program
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleteProgram.isLoading}
+            >
+              Delete permanently
             </Button>
           </DialogFooter>
         </DialogContent>

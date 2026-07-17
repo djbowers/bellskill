@@ -1,0 +1,18 @@
+-- Program Tracking (PROD-237, slice 3): soft-archive for owned programs.
+--
+-- "My Programs" accumulates program definitions the user owns — both
+-- hand-authored programs and the copy-on-enroll clones minted every time they
+-- start a shared program. To let users tidy that list without losing history,
+-- add a nullable soft-delete marker: archived_at IS NULL means live; a timestamp
+-- means archived (hidden from the default list, restorable).
+--
+-- This is a plain owner-owned column, so no new RLS is needed — archiving and
+-- restoring are ordinary UPDATEs already permitted by the existing
+-- "Users can update own programs" policy, and reads are unchanged. Delete stays
+-- the separate irreversible cascade (existing DELETE policy + ON DELETE CASCADE);
+-- archive is the reversible, history-preserving alternative.
+ALTER TABLE programs ADD COLUMN archived_at TIMESTAMPTZ;
+
+-- Partial index: the default list filters to live (non-archived) programs.
+CREATE INDEX idx_programs_owner_live
+  ON programs(owner_id) WHERE archived_at IS NULL;

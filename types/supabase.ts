@@ -362,6 +362,7 @@ export type Database = {
       }
       programs: {
         Row: {
+          archived_at: string | null
           author_name: string | null
           created_at: string
           days_per_week: number
@@ -375,6 +376,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          archived_at?: string | null
           author_name?: string | null
           created_at?: string
           days_per_week: number
@@ -388,6 +390,7 @@ export type Database = {
           title: string
         }
         Update: {
+          archived_at?: string | null
           author_name?: string | null
           created_at?: string
           days_per_week?: number

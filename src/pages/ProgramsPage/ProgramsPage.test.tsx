@@ -11,16 +11,28 @@ const {
   mockUseCreateProgram,
   mockUseEnrollProgram,
   mockUseProgram,
+  mockUseCancelProgram,
+  mockUseDeleteProgram,
+  mockUseSetProgramArchived,
   enrollMutate,
   createMutate,
+  cancelMutate,
+  deleteMutate,
+  setArchivedMutate,
 } = vi.hoisted(() => ({
   mockUsePrograms: vi.fn(),
   mockUseActiveProgram: vi.fn(),
   mockUseCreateProgram: vi.fn(),
   mockUseEnrollProgram: vi.fn(),
   mockUseProgram: vi.fn(),
+  mockUseCancelProgram: vi.fn(),
+  mockUseDeleteProgram: vi.fn(),
+  mockUseSetProgramArchived: vi.fn(),
   enrollMutate: vi.fn(),
   createMutate: vi.fn(),
+  cancelMutate: vi.fn(),
+  deleteMutate: vi.fn(),
+  setArchivedMutate: vi.fn(),
 }));
 
 vi.mock('~/api', () => ({
@@ -29,6 +41,9 @@ vi.mock('~/api', () => ({
   useCreateProgram: mockUseCreateProgram,
   useEnrollProgram: mockUseEnrollProgram,
   useProgram: mockUseProgram,
+  useCancelProgram: mockUseCancelProgram,
+  useDeleteProgram: mockUseDeleteProgram,
+  useSetProgramArchived: mockUseSetProgramArchived,
 }));
 
 vi.mock('~/contexts', async () => {
@@ -166,6 +181,9 @@ describe('ProgramsPage', () => {
   beforeEach(() => {
     enrollMutate.mockReset();
     createMutate.mockReset();
+    cancelMutate.mockReset();
+    deleteMutate.mockReset();
+    setArchivedMutate.mockReset();
     mockUsePrograms.mockReturnValue({
       data: [dfw, myProgram],
       isLoading: false,
@@ -184,6 +202,18 @@ describe('ProgramsPage', () => {
         ? { program: {}, sessions: SESSIONS_BY_ID[id] ?? [] }
         : undefined,
     }));
+    mockUseCancelProgram.mockReturnValue({
+      mutate: cancelMutate,
+      isLoading: false,
+    });
+    mockUseDeleteProgram.mockReturnValue({
+      mutate: deleteMutate,
+      isLoading: false,
+    });
+    mockUseSetProgramArchived.mockReturnValue({
+      mutate: setArchivedMutate,
+      isLoading: false,
+    });
   });
 
   it('prompts for a starting weight before enrolling in a shared program, defaulted to double 24kg', () => {
@@ -502,5 +532,82 @@ describe('ProgramsPage', () => {
       expect.anything(),
     );
     expect(screen.getByText('builder for program')).toBeInTheDocument();
+  });
+
+  it('cancels the active program only after confirming', () => {
+    mockUseActiveProgram.mockReturnValue({
+      data: {
+        enrollment: { id: 'up-1', programId: 'mine-1', status: 'active' },
+        program: { title: 'My Program' },
+      },
+    });
+
+    renderPage();
+
+    // The management "Cancel" surfaces only on the active card.
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    // The RPC is gated behind an explicit confirm (progress is discarded).
+    expect(cancelMutate).not.toHaveBeenCalled();
+    expect(screen.getByText('Cancel program?')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel program' }));
+
+    expect(cancelMutate).toHaveBeenCalledWith({ userProgramId: 'up-1' });
+  });
+
+  it('hard-deletes a program only after an explicit confirm', () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    // Irreversible — nothing happens until the confirm dialog is accepted.
+    expect(deleteMutate).not.toHaveBeenCalled();
+    expect(screen.getByText('Delete program?')).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Delete permanently' }),
+    );
+
+    expect(deleteMutate).toHaveBeenCalledWith({ programId: 'mine-1' });
+  });
+
+  it('archives a live program (no confirm — it is reversible)', () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Archive' }));
+
+    expect(setArchivedMutate).toHaveBeenCalledWith({
+      programId: 'mine-1',
+      archived: true,
+    });
+  });
+
+  it('hides archived programs behind a toggle and restores them', () => {
+    const archived = {
+      ...myProgram,
+      id: 'arch-1',
+      title: 'Old Program',
+      archivedAt: '2026-07-01T00:00:00Z',
+    };
+    mockUsePrograms.mockReturnValue({
+      data: [dfw, myProgram, archived],
+      isLoading: false,
+    });
+
+    renderPage();
+
+    // Archived programs are hidden from the default list.
+    expect(screen.queryByText('Old Program')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show archived (1)' }));
+    expect(screen.getByText('Old Program')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
+
+    expect(setArchivedMutate).toHaveBeenCalledWith({
+      programId: 'arch-1',
+      archived: false,
+    });
   });
 });
