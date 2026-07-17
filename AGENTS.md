@@ -136,6 +136,17 @@ Postgres enums — so `~/types` defines `Equipment` / `MuscleGroup` /
   `gen:types`. Any new field value must already be in the app vocabularies (no
   new enums); Explore's filter constants in `MovementsPage.tsx` mirror the CSV's
   value set.
+- **Renaming orphans `user_movements` FKs:** the reload relinks
+  `user_movements.functional_movement_id` on exact name match, so any row whose
+  `canonical_name` was renamed matches nothing and is stranded NULL (silently
+  excluded from `pattern_debt_window` bucketing). PROD-153 stranded 29 prod rows;
+  `*_relink_orphaned_user_movements.sql` (PROD-234) is the idempotent forward
+  data-fix that reconciles them to the current catalog, writing only where the FK
+  IS NULL. If a rename re-orphans rows, add another such follow-up rather than
+  editing the applied reload. Names with no correct catalog equivalent are left
+  deliberately NULL; two are legitimate catalog gaps tracked for a future add —
+  Double Kettlebell Clean (PROD-235) and Double Kettlebell Overhead Press
+  (PROD-242).
 
 ## Testing Setup
 
