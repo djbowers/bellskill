@@ -87,6 +87,35 @@ describe('usePrograms', () => {
     });
   });
 
+  it('prefers a program’s authored cadence columns over its sessions', async () => {
+    // A sparsely-seeded shared program: only 2 days seeded, but authored 3/week.
+    const sessions = [
+      { week_number: 1, day_number: 1 },
+      { week_number: 1, day_number: 2 },
+    ];
+    server.use(
+      http.get(PROGRAMS_URL, () =>
+        HttpResponse.json([
+          programRow(
+            { id: 'seeded', num_weeks: 4, days_per_week: 3 },
+            sessions,
+          ),
+        ]),
+      ),
+    );
+
+    const { result } = renderHook(() => usePrograms(), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.[0]).toMatchObject({
+      id: 'seeded',
+      numWeeks: 4,
+      daysPerWeek: 3,
+    });
+  });
+
   it('reports null cadence for a program with no sessions yet', async () => {
     server.use(
       http.get(PROGRAMS_URL, () =>
