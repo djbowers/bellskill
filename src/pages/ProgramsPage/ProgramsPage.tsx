@@ -395,17 +395,22 @@ export const ProgramsPage = () => {
                   Cancel
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-1 text-muted-foreground"
-                onClick={() =>
-                  setArchived.mutate({ programId: program.id, archived: true })
-                }
-                disabled={setArchived.isLoading}
-              >
-                Archive
-              </Button>
+              {!isActive(program) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-1 text-muted-foreground"
+                  onClick={() =>
+                    setArchived.mutate({
+                      programId: program.id,
+                      archived: true,
+                    })
+                  }
+                  disabled={setArchived.isLoading}
+                >
+                  Archive
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

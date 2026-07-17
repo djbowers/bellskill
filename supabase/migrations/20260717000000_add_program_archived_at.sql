@@ -12,7 +12,3 @@
 -- the separate irreversible cascade (existing DELETE policy + ON DELETE CASCADE);
 -- archive is the reversible, history-preserving alternative.
 ALTER TABLE programs ADD COLUMN archived_at TIMESTAMPTZ;
-
--- Partial index: the default list filters to live (non-archived) programs.
-CREATE INDEX idx_programs_owner_live
-  ON programs(owner_id) WHERE archived_at IS NULL;
