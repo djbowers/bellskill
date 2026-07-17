@@ -641,8 +641,10 @@ export const ProgramsPage = () => {
             <DialogDescription>
               This permanently deletes
               {pendingDeleteProgram ? ` "${pendingDeleteProgram.title}"` : ''},
-              its sessions, and its history. This can't be undone — archive it
-              instead if you just want it out of the way.
+              its sessions, and its history. This can't be undone
+              {pendingDeleteProgram?.archivedAt
+                ? '.'
+                : ' — archive it instead if you just want it out of the way.'}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
