@@ -42,7 +42,7 @@ const programRow = {
   created_at: '2026-01-01T00:00:00Z',
 };
 
-const input = { title: 'My Program', numWeeks: 4, daysPerWeek: 3 };
+const input = { title: 'My Program' };
 
 const makeWrapper = () => {
   const queryClient = new QueryClient({
@@ -67,8 +67,14 @@ const makeWrapper = () => {
 describe('useCreateProgram', () => {
   beforeEach(() => showToast.mockClear());
 
-  it('inserts the program and does not toast on success', async () => {
-    server.use(http.post(PROGRAMS_URL, () => HttpResponse.json(programRow)));
+  it('inserts the program without a cadence and does not toast on success', async () => {
+    let insertedBody: unknown;
+    server.use(
+      http.post(PROGRAMS_URL, async ({ request }) => {
+        insertedBody = await request.json();
+        return HttpResponse.json(programRow);
+      }),
+    );
 
     const { result } = renderHook(() => useCreateProgram(), {
       wrapper: makeWrapper(),
@@ -77,6 +83,12 @@ describe('useCreateProgram', () => {
     const created = await result.current.mutateAsync(input);
 
     expect(created.id).toBe('program-1');
+    // Cadence is derived from sessions later, never sent at creation (PROD-237).
+    expect(insertedBody).toEqual({
+      owner_id: 'user-123',
+      title: 'My Program',
+      is_public: false,
+    });
     expect(showToast).not.toHaveBeenCalled();
   });
 

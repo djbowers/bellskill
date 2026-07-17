@@ -155,7 +155,7 @@ const fetchProgramProgress = async (
     sessions[sessions.length - 1]?.weekNumber ??
     0;
   const totalWeeks = Math.max(
-    program.numWeeks,
+    program.numWeeks ?? 0,
     ...sessions.map((s) => s.weekNumber),
     0,
   );

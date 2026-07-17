@@ -29,13 +29,18 @@ import { getWeightTabValue, getWeightUnitLabel } from '~/utils';
 
 import { deriveStartingWeight } from './utils/deriveStartingWeight';
 
-const DEFAULT_WEEKS = 5;
-const DEFAULT_DAYS_PER_WEEK = 3;
 // Fallback weight/unit for the mode-switch handlers (when the user adds a
 // previously-null slot). The prompt's initial pre-fill is derived per-program
 // from the enrolled program's own sessions — see deriveStartingWeight.
 const DEFAULT_STARTING_WEIGHT_VALUE = 24;
 const DEFAULT_WEIGHT_UNIT: WeightUnit = 'kilograms';
+
+// "5 weeks · 3/week" from the program's derived cadence, or null before any
+// session gives it one (see Program.numWeeks — derived from the sessions).
+const cadenceLabel = (program: Program): string | null =>
+  program.numWeeks && program.daysPerWeek
+    ? `${program.numWeeks} weeks · ${program.daysPerWeek}/week`
+    : null;
 
 export const ProgramsPage = () => {
   const navigate = useNavigate();
@@ -47,8 +52,6 @@ export const ProgramsPage = () => {
 
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState('');
-  const [numWeeks, setNumWeeks] = useState(DEFAULT_WEEKS);
-  const [daysPerWeek, setDaysPerWeek] = useState(DEFAULT_DAYS_PER_WEEK);
 
   // Program the user is trying to switch to while another is already active.
   const [pendingSwitchId, setPendingSwitchId] = useState<string | null>(null);
@@ -206,7 +209,7 @@ export const ProgramsPage = () => {
   const handleCreate = () => {
     if (title.trim().length === 0) return;
     createProgram.mutate(
-      { title: title.trim(), numWeeks, daysPerWeek },
+      { title: title.trim() },
       {
         onSuccess: (program) =>
           navigate(`/programs/${program.id}/sessions/new`),
@@ -234,7 +237,7 @@ export const ProgramsPage = () => {
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {program.authorName ? `${program.authorName} · ` : ''}
-                    {program.numWeeks} weeks · {program.daysPerWeek}/week
+                    {cadenceLabel(program) ?? 'No sessions yet'}
                   </p>
                 </div>
                 <Button
@@ -274,32 +277,9 @@ export const ProgramsPage = () => {
                 placeholder="e.g. Dry Fighting Weight"
               />
             </div>
-            <div className="flex gap-2">
-              <div className="flex flex-1 flex-col gap-0.5">
-                <Label htmlFor="program-weeks">Weeks</Label>
-                <Input
-                  id="program-weeks"
-                  type="number"
-                  min={1}
-                  value={numWeeks}
-                  onChange={(e) =>
-                    setNumWeeks(Math.max(1, Number(e.target.value) || 1))
-                  }
-                />
-              </div>
-              <div className="flex flex-1 flex-col gap-0.5">
-                <Label htmlFor="program-days">Days / week</Label>
-                <Input
-                  id="program-days"
-                  type="number"
-                  min={1}
-                  value={daysPerWeek}
-                  onChange={(e) =>
-                    setDaysPerWeek(Math.max(1, Number(e.target.value) || 1))
-                  }
-                />
-              </div>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Weeks and days per week are set by the sessions you add next.
+            </p>
             <Button
               onClick={handleCreate}
               disabled={title.trim().length === 0 || createProgram.isLoading}
@@ -336,7 +316,7 @@ export const ProgramsPage = () => {
               )}
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              {program.numWeeks} weeks · {program.daysPerWeek}/week
+              {cadenceLabel(program) ?? 'No sessions yet'}
             </p>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">

@@ -10,13 +10,13 @@ import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler
 
 export interface CreateProgramInput {
   title: string;
-  numWeeks: number;
-  daysPerWeek: number;
 }
 
 /**
- * Creates a new private, user-owned program (`is_public = false`). The returned
- * {@link Program} is used to navigate straight into the save-session builder.
+ * Creates a new private, user-owned program (`is_public = false`). Cadence
+ * (`num_weeks`/`days_per_week`) is left unset — it is derived from the program's
+ * sessions once they exist (PROD-237). The returned {@link Program} is used to
+ * navigate straight into the save-session builder.
  */
 export const useCreateProgram = () => {
   const session = useSession();
@@ -25,11 +25,7 @@ export const useCreateProgram = () => {
   const userId = session?.user?.id;
 
   return useMutation({
-    mutationFn: async ({
-      title,
-      numWeeks,
-      daysPerWeek,
-    }: CreateProgramInput): Promise<Program> => {
+    mutationFn: async ({ title }: CreateProgramInput): Promise<Program> => {
       if (!userId) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -37,8 +33,6 @@ export const useCreateProgram = () => {
         .insert({
           owner_id: userId,
           title,
-          num_weeks: numWeeks,
-          days_per_week: daysPerWeek,
           is_public: false,
         })
         .select('*')

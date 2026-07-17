@@ -460,6 +460,17 @@ describe('ProgramsPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows "No sessions yet" for a program whose cadence is not derived yet', () => {
+    mockUsePrograms.mockReturnValue({
+      data: [{ ...myProgram, numWeeks: null, daysPerWeek: null }],
+      isLoading: false,
+    });
+
+    renderPage();
+
+    expect(screen.getByText('No sessions yet')).toBeInTheDocument();
+  });
+
   it('enrolls in a non-DFW shared program, prompting to switch when another is active', () => {
     mockUsePrograms.mockReturnValue({
       data: [dfw, armor, myProgram],
@@ -518,7 +529,7 @@ describe('ProgramsPage', () => {
     );
 
     expect(createMutate).toHaveBeenCalledWith(
-      { title: 'New Program', numWeeks: 5, daysPerWeek: 3 },
+      { title: 'New Program' },
       expect.anything(),
     );
     expect(screen.getByText('builder for program')).toBeInTheDocument();
