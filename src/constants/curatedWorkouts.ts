@@ -9,7 +9,7 @@ import { CuratedWorkout } from '~/types';
  * Bump CURATED_WORKOUTS_VERSION whenever the content changes so analytics can
  * attribute starts to a known revision.
  */
-export const CURATED_WORKOUTS_VERSION = 2;
+export const CURATED_WORKOUTS_VERSION = 3;
 
 export const CURATED_WORKOUTS: CuratedWorkout[] = [
   {
@@ -51,7 +51,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
       restTimer: 60,
       movements: [
         {
-          movementName: 'Single Arm Kettlebell Overhead Press',
+          movementName: 'One-Arm Kettlebell Military Press',
           repScheme: [5],
           weightOneUnit: 'kilograms',
           weightOneValue: 12,
@@ -80,7 +80,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
       restTimer: 60,
       movements: [
         {
-          movementName: 'Kettlebell Goblet Squat',
+          movementName: 'Goblet Squat',
           repScheme: [8],
           weightOneUnit: 'kilograms',
           weightOneValue: 16,
