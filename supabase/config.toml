@@ -67,8 +67,11 @@ openai_api_key = "env(OPENAI_API_KEY)"
 
 # Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
 # are monitored, and you can view the emails that would have been sent from the web interface.
+# Disabled: no test or CI path reads captured email (e2e specs authenticate via the password/signup
+# REST endpoints), and starting this container makes `supabase start` flake in CI on binding its
+# host port 54324.
 [inbucket]
-enabled = true
+enabled = false
 # Port to use for the email testing server web interface.
 port = 54324
 # Uncomment to expose additional ports for testing user applications that send emails.
