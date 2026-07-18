@@ -78,9 +78,10 @@ The production app at [app.bellskill.com](https://app.bellskill.com) is the reco
 
 3. Configure Supabase environment variables. Create a `.env.local` file in the project root with credentials for your own Supabase project.
 
-4. Fetch the latest types from the backend:
+4. Generate TypeScript types from your Supabase schema (requires the local
+   Supabase stack running — `npm run start:server`):
    ```bash
-   npm run fetch-types
+   npm run gen:types
    ```
 
 5. Start the development server:
