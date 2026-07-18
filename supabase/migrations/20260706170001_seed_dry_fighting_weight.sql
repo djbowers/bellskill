@@ -42,12 +42,12 @@ RETURNS JSONB LANGUAGE sql IMMUTABLE AS $$
     'sharedWeightTwoValue', NULL,
     'movements', jsonb_build_array(
       jsonb_build_object(
-        'movementName', 'Clean and Press',
+        'movementName', 'Double Kettlebell Clean and Press',
         'repScheme', to_jsonb(p_reps),
         'weightOneUnit', 'kilograms', 'weightOneValue', 24,
         'weightTwoUnit', 'kilograms', 'weightTwoValue', 24),
       jsonb_build_object(
-        'movementName', 'Front Squat',
+        'movementName', 'Front Squat With Two Kettlebells',
         'repScheme', to_jsonb(p_reps),
         'weightOneUnit', 'kilograms', 'weightOneValue', 24,
         'weightTwoUnit', 'kilograms', 'weightTwoValue', 24)
@@ -70,7 +70,7 @@ RETURNS JSONB LANGUAGE sql IMMUTABLE AS $$
     'sharedWeightTwoValue', NULL,
     'movements', jsonb_build_array(
       jsonb_build_object(
-        'movementName', 'Clean and Press',
+        'movementName', 'Double Kettlebell Clean and Press',
         'repScheme', to_jsonb(ARRAY[5]::INT[]),
         'weightOneUnit', 'kilograms', 'weightOneValue', 28,
         'weightTwoUnit', 'kilograms', 'weightTwoValue', 28)
