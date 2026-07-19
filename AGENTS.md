@@ -180,10 +180,13 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   Each is idempotent on `slug` and builds every session's `WorkoutOptions` JSONB
   (shape `Omit<WorkoutOptions,'startedAt'>`, camelCase keys) via a `pg_temp`
   helper; add another by mirroring one. Seed shape is asserted in
-  `e2e/program-schema.spec.ts`. `ProgramsPage` currently features only a single
-  shared program (`sharedPrograms[0]`, preferring the DFW slug), so a newly
-  seeded program lands in the shared-program data but is not yet surfaced in that
-  UI.
+  `e2e/program-schema.spec.ts`. `ProgramsPage` surfaces every public program
+  (`sharedPrograms = programs.filter(isPublic)`) in a compact "Browse programs"
+  list (PROD-237) — a single `divide-y` `Card` of rows, each with the title +
+  author/duration metadata and a `size="sm"` Start button (visible text
+  "Start", per-program accessible name via `aria-label={'Start ' + title}` so
+  `getByRole('button', { name: 'Start <title>' })` still resolves), so a newly
+  seeded program shows up automatically.
 - **Seeding a `complexSet: true` program:** see
   `*_seed_armor_building_complex.sql` (Dan John's ABC). Give each movement a
   **single-element `repScheme`** so the complex runtime's `maxMovementRungs`

@@ -219,26 +219,37 @@ export const ProgramsPage = () => {
 
   return (
     <Page title="Programs">
-      {sharedPrograms.map((program) => (
-        <Card key={program.id}>
-          <CardHeader>
-            <CardTitle>{program.title}</CardTitle>
-            <p className="text-xs text-muted-foreground">
-              {program.authorName ? `${program.authorName} · ` : ''}
-              {program.numWeeks} weeks · {program.daysPerWeek}/week
-            </p>
-          </CardHeader>
-          <CardContent>
-            <Button
-              className="w-full"
-              onClick={() => handleEnroll(program.id)}
-              disabled={enroll.isLoading}
-            >
-              {`Start ${program.title}`}
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
+      {sharedPrograms.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <h2 className="text-sm font-semibold">Browse programs</h2>
+          <Card className="divide-y">
+            {sharedPrograms.map((program) => (
+              <div
+                key={program.id}
+                className="flex items-center justify-between gap-2 p-2"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">
+                    {program.title}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {program.authorName ? `${program.authorName} · ` : ''}
+                    {program.numWeeks} weeks · {program.daysPerWeek}/week
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  aria-label={`Start ${program.title}`}
+                  onClick={() => handleEnroll(program.id)}
+                  disabled={enroll.isLoading}
+                >
+                  Start
+                </Button>
+              </div>
+            ))}
+          </Card>
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">My programs</h2>
