@@ -29,12 +29,16 @@ BEGIN
   WHERE "Movement" = 'Front Squat With Two Kettlebells';
   GET DIAGNOSTICS v_catalog_renamed = ROW_COUNT;
 
-  -- 2. Rewrite the stored movementName in program_sessions.workout_options for
-  --    the shared-program TEMPLATES that reference it (Dry Fighting Weight,
-  --    Armor Building Complex, Easy Strength) AND their copy-on-enroll CLONES
-  --    (source_program_id -> a template). enroll_in_program copies
-  --    workout_options verbatim, so every enrollee holds a clone carrying the
-  --    old name; left unfixed their future logged sessions would orphan.
+  -- 2. Rewrite the stored movementName in EVERY program_sessions row that
+  --    carries the old name. The seeded shared templates (Dry Fighting Weight,
+  --    Armor Building Complex, Easy Strength) and their copy-on-enroll clones
+  --    carry it, but so can a SELF-AUTHORED program: this is a real catalog
+  --    movement any user could have placed in a program via the PROD-237
+  --    builder. Left unfixed, that session's next logged workout spawns a fresh
+  --    user_movements row (old canonical_name, NULL FK) — the exact PROD-234
+  --    orphan class this rename exists to prevent. Scope solely by the
+  --    containment guard: it already touches only sessions holding the old name,
+  --    so broadening past the shared programs is strictly correct.
   UPDATE public.program_sessions ps
   SET workout_options = jsonb_set(
     ps.workout_options,
@@ -51,16 +55,7 @@ BEGIN
       FROM jsonb_array_elements(ps.workout_options->'movements') WITH ORDINALITY AS m(elem, ord)
     )
   )
-  FROM public.programs p
-  WHERE p.id = ps.program_id
-    AND (
-      p.slug IN ('dry-fighting-weight', 'armor-building-complex', 'easy-strength')
-      OR p.source_program_id IN (
-        SELECT id FROM public.programs
-        WHERE slug IN ('dry-fighting-weight', 'armor-building-complex', 'easy-strength')
-      )
-    )
-    AND ps.workout_options->'movements' @> '[{"movementName": "Front Squat With Two Kettlebells"}]'::jsonb;
+  WHERE ps.workout_options->'movements' @> '[{"movementName": "Front Squat With Two Kettlebells"}]'::jsonb;
   GET DIAGNOSTICS v_sessions_fixed = ROW_COUNT;
 
   -- 3. Rename the denormalized canonical_name on user_movements rows already
