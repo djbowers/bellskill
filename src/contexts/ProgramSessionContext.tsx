@@ -19,6 +19,7 @@ export interface PendingProgramSession {
 // Default to "no pending session" so consumers (and tests/stories that don't
 // wrap in the provider) degrade gracefully: reading yields null and setting is a
 // no-op. The real provider in App.tsx supplies the live state.
+// eslint-disable-next-line react-refresh/only-export-components -- context object is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const ProgramSessionContext = createContext<
   [
     PendingProgramSession | null,
@@ -38,4 +39,5 @@ export const ProgramSessionProvider = ({ ...props }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- consumer hook is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const useProgramSession = () => useContext(ProgramSessionContext);

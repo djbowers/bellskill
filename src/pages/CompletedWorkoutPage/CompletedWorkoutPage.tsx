@@ -60,7 +60,7 @@ export const CompletedWorkoutPage = () => {
 
   useEffect(() => {
     if (deletedWorkoutLogId) navigate('/history');
-  }, [deletedWorkoutLogId]);
+  }, [deletedWorkoutLogId, navigate]);
 
   if (workoutLogLoading) return <Loading />;
   if (!workoutLog) return <>Not Found</>;

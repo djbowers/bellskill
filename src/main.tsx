@@ -4,17 +4,6 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 
 import { App } from './app/App';
 
-async function enableMocking() {
-  if (process.env.NODE_ENV !== 'development') {
-    return;
-  }
-
-  const { worker } = await import('./mocks/browser');
-
-  // Resolves once the mock Service Worker is intercepting requests.
-  return worker.start();
-}
-
 // Stale service workers from earlier builds 404 on sw.js; unregister them
 // and clear their caches.
 if ('serviceWorker' in navigator) {

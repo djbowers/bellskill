@@ -88,6 +88,7 @@ export const RpeBadge = ({ rpeValue }: { rpeValue: RpeOptions }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- RPE config constant is intentionally co-located with its selector component; splitting the module is out of scope for the lint pass
 export const RPE_CONFIG: {
   [key: string]: {
     bgColor: string;

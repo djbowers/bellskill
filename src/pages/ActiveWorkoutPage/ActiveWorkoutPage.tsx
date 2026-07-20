@@ -375,6 +375,7 @@ export const ActiveWorkoutPage = ({
       if (workoutGoalUnits !== 'rounds' || logWorkoutLoading) return;
       if (completedRounds >= workoutGoal) finishWorkout();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each completedRounds tick; finishWorkout and the goal reads must stay fresh without retriggering
     [completedRounds],
   );
 
@@ -384,6 +385,7 @@ export const ActiveWorkoutPage = ({
       // small delay for all rounds to be counted from interval timer
       if (remainingMilliseconds <= -500) finishWorkout();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each remainingMilliseconds tick; finishWorkout and the goal reads must stay fresh without retriggering
     [remainingMilliseconds],
   );
 
@@ -392,6 +394,7 @@ export const ActiveWorkoutPage = ({
       if (workoutGoalUnits !== 'kilograms' || logWorkoutLoading) return;
       if (completedVolume >= workoutGoal) finishWorkout();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each completedVolume tick; finishWorkout and the goal reads must stay fresh without retriggering
     [completedVolume],
   );
 
@@ -400,6 +403,7 @@ export const ActiveWorkoutPage = ({
       if (intervalTimer === 0) return;
       if (intervalRemainingMilliseconds === 0) finishInterval();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each interval tick; finishInterval is recreated per render and must not retrigger this effect
     [intervalRemainingMilliseconds],
   );
 
@@ -408,6 +412,7 @@ export const ActiveWorkoutPage = ({
       if (restTimer === 0) return;
       if (restRemainingMilliseconds === 0) finishRest();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each rest tick; finishRest is recreated per render and must not retrigger this effect
     [restRemainingMilliseconds],
   );
 
@@ -415,7 +420,7 @@ export const ActiveWorkoutPage = ({
     function handlePageRefresh() {
       if (movements[0].movementName === '') navigate('/'); // todo: handle page refresh with local storage
     },
-    [movements],
+    [movements, navigate],
   );
 
   useEffect(
@@ -425,13 +430,14 @@ export const ActiveWorkoutPage = ({
           state: { justFinished: true },
         });
     },
-    [workoutLogId],
+    [workoutLogId, navigate],
   );
 
   useEffect(
     function handleCountdownTimer() {
       if (countdownRemainingMilliseconds === 0) finishCountdown();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each countdown tick; finishCountdown is recreated per render and must not retrigger this effect
     [countdownRemainingMilliseconds],
   );
 

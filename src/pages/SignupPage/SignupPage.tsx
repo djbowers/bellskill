@@ -93,7 +93,7 @@ export function Signup() {
         ) : (
           <div className="space-y-4">
             <div className="text-center text-sm text-muted-foreground">
-              We've sent a login link to <strong>{email}</strong>
+              We&apos;ve sent a login link to <strong>{email}</strong>
             </div>
 
             <div className="text-center text-sm text-muted-foreground">

@@ -12,8 +12,8 @@ const mockBeforeInstallPrompt = () => {
 };
 
 const mockLocalStorage = {
-  getItem: (key: string) => null,
-  setItem: (key: string, value: string) => {},
+  getItem: () => null,
+  setItem: () => {},
 };
 
 const mockMatchMedia = (matches: boolean) => {

@@ -64,6 +64,7 @@ export function PWAInstallPrompt() {
     };
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- native install-prompt handler wired to the captured beforeinstallprompt event; retained for the not-yet-surfaced Android/desktop install button
   const handleInstallClick = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
@@ -140,7 +141,7 @@ export function PWAInstallPrompt() {
             </p>
             <p className="inline text-xs text-gray-500">
               Tap the <ArrowUpTrayIcon className="inline h-2 w-2" /> share
-              button below, then select "Add to Home Screen"
+              button below, then select &quot;Add to Home Screen&quot;
             </p>
           </div>
         </div>

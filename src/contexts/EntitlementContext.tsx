@@ -20,6 +20,7 @@ const DEFAULT_ENTITLEMENT: Entitlement = {
   effectiveAccess: 'free',
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- context object is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const EntitlementContext = createContext<EntitlementContextValue>(
   undefined!,
 );
@@ -38,4 +39,5 @@ export const EntitlementProvider = ({ ...props }) => {
   return <EntitlementContext.Provider value={value} {...props} />;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- consumer hook is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const useEntitlement = () => useContext(EntitlementContext);

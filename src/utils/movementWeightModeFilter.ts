@@ -61,7 +61,6 @@ export const recentMovementMatchesWeightMode = (
   return movementMatchesWeightMode(catalogWeightFields, mode);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const applyWeightModeToCatalogQuery = (query: any, mode: WeightTabValue) => {
   switch (mode) {
     case 'none':

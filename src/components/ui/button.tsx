@@ -89,4 +89,5 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 Button.displayName = 'Button';
 
+// eslint-disable-next-line react-refresh/only-export-components -- co-locating the cva variants helper with its component is the shadcn/ui pattern; a separate module is out of scope for the lint pass
 export { Button, buttonVariants };

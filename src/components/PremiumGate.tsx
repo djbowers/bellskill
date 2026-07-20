@@ -41,7 +41,7 @@ export const PremiumGate = ({
           {featureName} is part of BellSkill Premium — the intelligence layer on
           top of your training.
         </p>
-        <Button onClick={() => navigate('/paywall')}>See what's included</Button>
+        <Button onClick={() => navigate('/paywall')}>See what&apos;s included</Button>
       </CardContent>
     </Card>
   );

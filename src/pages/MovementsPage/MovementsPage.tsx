@@ -1,4 +1,3 @@
-import { Cross1Icon, Cross2Icon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
 import {
