@@ -319,10 +319,6 @@ export const StartWorkoutPage = ({
 
   const detailsRef = useRef<HTMLInputElement>(null);
 
-  // The program gate above hasn't settled, so the mode above is still derived
-  // from a forced `showBrowse` — withhold rendering rather than commit to it.
-  if (gatesPending) return <Loading />;
-
   const handleIncrementGoalValue = () => {
     if (workoutGoalUnits === 'kilograms') {
       setWorkoutGoal((prev) => prev + INCREMENT_VOLUME);
@@ -723,6 +719,12 @@ export const StartWorkoutPage = ({
     movements.some((movement) => movement.movementName.length === 0) ||
     isDifferentRepSchemes ||
     workoutGoal <= 0;
+
+  // Held below every hook so the pending→resolved gate transition can't change
+  // the hook count between renders (Rules of Hooks / React #310). The mode above
+  // is still derived from a forced `showBrowse` until the gate settles, so
+  // withhold the real UI rather than commit to it.
+  if (gatesPending) return <Loading />;
 
   return (
     <Page
