@@ -112,7 +112,7 @@ const EXPECTED_MOVEMENTS = [
   'Two-Arm Kettlebell Military Press',
   'Pull-Up',
   'Kettlebell Swing',
-  'Front Squat With Two Kettlebells',
+  'Double Kettlebell Front Squat',
   "Kettlebell Farmer's Carry",
 ];
 
@@ -189,7 +189,7 @@ test.describe('program schema — Easy Strength seed', () => {
       expect(byName['Two-Arm Kettlebell Military Press'].weightTwoValue).toBe(
         24,
       );
-      expect(byName['Front Squat With Two Kettlebells'].weightTwoValue).toBe(
+      expect(byName['Double Kettlebell Front Squat'].weightTwoValue).toBe(
         24,
       );
       expect(byName["Kettlebell Farmer's Carry"].weightTwoValue).toBe(24);

@@ -1364,7 +1364,7 @@ describe('active workout page (Armor Building Complex seed session)', () => {
     expect(workoutOptions.movements.map((m) => m.movementName)).toEqual([
       'Two-Arm Kettlebell Clean',
       'Two-Arm Kettlebell Military Press',
-      'Front Squat With Two Kettlebells',
+      'Double Kettlebell Front Squat',
     ]);
     workoutOptions.movements.forEach((movement, index) => {
       expect(

@@ -753,7 +753,7 @@ const ARMOR_BUILDING_COMPLEX_MOVEMENTS = [
   },
   {
     ...DEFAULT_MOVEMENT_OPTIONS,
-    movementName: 'Front Squat With Two Kettlebells',
+    movementName: 'Double Kettlebell Front Squat',
     repScheme: [3],
     weightOneValue: 24,
     weightOneUnit: 'kilograms',
