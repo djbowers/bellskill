@@ -86,6 +86,15 @@ export interface ProgramSaveMode {
   saving: boolean;
   /** Program-specific UI (saved-session list + duplicate helpers) rendered above the builder. */
   beforeBuilder?: ReactNode;
+  /**
+   * When editing an existing session, its stored options + title. The builder is
+   * seeded with these once on mount (instead of starting from defaults) and the
+   * footer reads "Update session".
+   */
+  initialSession?: {
+    workoutOptions: Omit<WorkoutOptions, 'startedAt'>;
+    title: string;
+  };
 }
 
 interface StartWorkoutPageProps {
@@ -532,6 +541,21 @@ export const StartWorkoutPage = ({
     setSharedWeightTwoUnit(options.sharedWeightTwoUnit);
   };
 
+  // Edit mode (Slice 3): seed the builder from the session being edited exactly
+  // once, so the user's own subsequent edits aren't clobbered on re-render.
+  const editSeeded = useRef(false);
+  useEffect(
+    function seedBuilderForEdit() {
+      const initial = programSaveMode?.initialSession;
+      if (!initial || editSeeded.current) return;
+      editSeeded.current = true;
+      loadIntoBuilder(initial.workoutOptions);
+      setSessionTitle(initial.title);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot seed; loadIntoBuilder is stable enough and the ref guards re-runs.
+    [programSaveMode?.initialSession],
+  );
+
   const handleSelectCurated = (workout: CuratedWorkout) => {
     loadIntoBuilder(workout.workoutOptions);
     setStartSource('curated');
@@ -687,7 +711,13 @@ export const StartWorkoutPage = ({
                 programSaveMode.saving
               }
             >
-              {programSaveMode.saving ? 'Saving…' : 'Save session'}
+              {programSaveMode.saving
+                ? programSaveMode.initialSession
+                  ? 'Updating…'
+                  : 'Saving…'
+                : programSaveMode.initialSession
+                  ? 'Update session'
+                  : 'Save session'}
             </Button>
           ) : (
             <Button

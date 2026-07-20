@@ -241,9 +241,31 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   survivors to 0..N-1 (no gap) so the ADD path's `sequenceIndex = sessions.length`
   never collides. Session ids are stable across a reorder (completions keep
   pointing correctly); a deleted session's completion cascades.
+- **Session edit (PROD-237):** the builder handles both add and edit; the edit
+  route `programs/:id/sessions/:sessionId/edit` reuses `ProgramSessionBuilderPage`,
+  which branches on the `:sessionId` param. Edit mode seeds the builder from the
+  target session via `ProgramSaveMode.initialSession` (a one-shot ref-guarded
+  effect in `StartWorkoutPage` calls `loadIntoBuilder` + sets the title) and saves
+  through `useUpdateProgramSession` (plain owner-gated `UPDATE program_sessions`,
+  rewriting title + `workout_options` only — sequence/week/day and the session id
+  are untouched, so completions keep pointing at it). The add-mode session list
+  gains a per-session **Edit** button (owner-gated, alongside Reorder/Delete).
+- **Program CRUD (PROD-237, owned programs only):** `ProgramsPage`'s "My programs"
+  surface adds three actions. **Cancel** = `useCancelProgram` flips the active
+  enrollment to `abandoned` (reusing the existing status — no new value), freeing
+  the partial `one_active_program_per_user` index; confirm-gated because it
+  discards progress. **Delete** = `useDeleteProgram`, an irreversible
+  `DELETE programs` that cascades sessions/enrollments/completions — **always**
+  behind a confirm dialog. **Archive/Restore** = `useSetProgramArchived` toggles
+  the nullable `programs.archived_at` (migration `*_add_program_archived_at.sql`);
+  archived programs are filtered out of the default list behind a "Show archived"
+  toggle and are reversible, so no confirm. All three are plain RLS-gated REST
+  calls (no RPC) — shared/other-user programs are protected by the existing
+  owner-only policies (a non-owner mutation matches 0 rows, a silent no-op).
 - DB behaviors (RLS, the advance/skip/flip RPC, idempotency, the reorder/delete
-  reindex + constraint-safety) are covered by Playwright e2e against the local
-  Supabase (`e2e/program-*.spec.ts`), not MSW.
+  reindex + constraint-safety, and the PROD-237 cancel/delete-cascade/archive-filter
+  - owner-only guarantees in `e2e/program-crud.spec.ts`) are covered by Playwright
+    e2e against the local Supabase (`e2e/program-*.spec.ts`), not MSW.
 - **Error feedback (PROD-220):** program mutations surface failures through one
   reusable toast — `ToastProvider`/`useToast` (`~/contexts/ToastContext`, mounted
   app-wide in `App.tsx`; presentational `Toast` in `~/components/ui/toast`). Each

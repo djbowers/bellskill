@@ -81,6 +81,10 @@ export const createRoutes = (flags: Features = features): RouteObject[] => [
               path: 'programs/:id/sessions/new',
               element: <ProgramSessionBuilderPage />,
             },
+            {
+              path: 'programs/:id/sessions/:sessionId/edit',
+              element: <ProgramSessionBuilderPage />,
+            },
           ]
         : []),
       // Catch-all for any unmatched path — including feature-gated routes whose

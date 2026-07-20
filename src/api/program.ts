@@ -30,6 +30,7 @@ export const mapProgramRow = (row: ProgramRow): Program => ({
   daysPerWeek: row.days_per_week,
   isPublic: row.is_public,
   createdAt: row.created_at,
+  archivedAt: row.archived_at,
 });
 
 /**

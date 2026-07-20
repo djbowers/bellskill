@@ -28,4 +28,6 @@ export interface Program {
   daysPerWeek: number | null;
   isPublic: boolean;
   createdAt: string;
+  /** Soft-archive marker: NULL when live, a timestamp once archived (hidden from the default list, restorable). */
+  archivedAt: string | null;
 }
