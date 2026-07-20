@@ -1,5 +1,13 @@
 -- Program Tracking (PROD-237, slice 3): soft-archive for owned programs.
 --
+-- Forward re-add of the archived_at column. The original migration
+-- (20260717000000_add_program_archived_at.sql) collided on version with
+-- 20260717000000_relink_deployed_dfw_to_catalog.sql; prod's schema_migrations
+-- recorded only the relink at that version, so the column was silently skipped
+-- on prod and the Archive feature (src/api/useSetProgramArchived.ts) broke. The
+-- colliding file is removed to de-collide history; this idempotent forward
+-- migration is what actually reaches prod.
+--
 -- "My Programs" accumulates program definitions the user owns — both
 -- hand-authored programs and the copy-on-enroll clones minted every time they
 -- start a shared program. To let users tidy that list without losing history,
@@ -11,4 +19,4 @@
 -- "Users can update own programs" policy, and reads are unchanged. Delete stays
 -- the separate irreversible cascade (existing DELETE policy + ON DELETE CASCADE);
 -- archive is the reversible, history-preserving alternative.
-ALTER TABLE programs ADD COLUMN archived_at TIMESTAMPTZ;
+ALTER TABLE programs ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ;
