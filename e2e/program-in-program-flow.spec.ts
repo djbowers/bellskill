@@ -268,10 +268,10 @@ test.describe('program in-program flow — start-any-session + resume', () => {
       'active',
     );
 
-    // Resume DFW (its own clone) — the same enrollment comes back active, the
-    // swing enrollment is abandoned, and the earlier completion is preserved.
+    // Resume DFW by its exact enrollment id — the same enrollment comes back
+    // active, the swing enrollment is abandoned, the earlier completion survives.
     const resumedId = await rpc<string>('resume_program', user.token, {
-      p_program_id: dfwCloneId,
+      p_user_program_id: dfwEnrollment,
     });
     expect(resumedId).toBe(dfwEnrollment);
 
@@ -289,9 +289,51 @@ test.describe('program in-program flow — start-any-session + resume', () => {
     expect(next?.sequence_index).toBe(1);
   });
 
-  test('resuming a program with no prior enrollment is rejected', async () => {
+  test('resumes the exact enrollment passed, not the most recent one', async () => {
     const user = await signUpThrowawayUser();
     const dfwId = await programIdBySlug(user.token, DFW_SLUG);
+
+    // First enrollment on a DFW clone, with one logged session.
+    const older = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: dfwId,
+    });
+    const cloneId = await cloneProgramId(user.token, older);
+    const first = await nextSession(user.token, older, cloneId);
+    const logId = await insertWorkoutLog(user);
+    await rpc('complete_program_session', user.token, {
+      p_user_program_id: older,
+      p_program_session_id: first!.id,
+      p_workout_log_id: logId,
+    });
+
+    // Start that same clone over → a second, newer enrollment on the SAME
+    // program (0 completions), then switch away so both are non-active with a
+    // NULL completed_at.
+    const newer = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: cloneId,
+    });
+    const swingId = await programIdBySlug(user.token, SWING_SLUG);
+    await rpc('enroll_in_program', user.token, { p_program_id: swingId });
+
+    // Resuming the OLDER enrollment explicitly must reactivate exactly it — the
+    // one whose progress the prompt showed — not the newer (empty) one a
+    // program-id-keyed heuristic would have picked.
+    const resumed = await rpc<string>('resume_program', user.token, {
+      p_user_program_id: older,
+    });
+    expect(resumed).toBe(older);
+    expect((await getEnrollment(user.token, older)).status).toBe('active');
+    expect((await getEnrollment(user.token, newer)).status).toBe('abandoned');
+    expect(await completionCount(user.token, older)).toBe(1);
+    expect(await completionCount(user.token, newer)).toBe(0);
+  });
+
+  test('resuming an already-active enrollment is rejected', async () => {
+    const user = await signUpThrowawayUser();
+    const dfwId = await programIdBySlug(user.token, DFW_SLUG);
+    const active = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: dfwId,
+    });
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/resume_program`, {
       method: 'POST',
       headers: {
@@ -299,9 +341,9 @@ test.describe('program in-program flow — start-any-session + resume', () => {
         Authorization: `Bearer ${user.token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ p_program_id: dfwId }),
+      body: JSON.stringify({ p_user_program_id: active }),
     });
-    // No non-active enrollment exists for this program → the RPC raises.
+    // The enrollment is already active → nothing to resume, the RPC raises.
     expect(res.ok).toBe(false);
   });
 });

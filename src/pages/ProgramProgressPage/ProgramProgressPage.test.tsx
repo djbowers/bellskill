@@ -147,6 +147,48 @@ describe('ProgramProgressPage', () => {
     expect(screen.getByTestId('started')).toHaveTextContent('up-1:ps-2');
   });
 
+  it('starts a later gap while an earlier upcoming session stays an untouched start button', async () => {
+    const user = userEvent.setup();
+    // Two upcoming sessions in the same week: starting the later one must leave
+    // the earlier gap upcoming and actionable, never skipped.
+    const twoUpcoming = {
+      ...progressData,
+      weeks: [
+        {
+          weekNumber: 2,
+          sessions: [
+            {
+              session: session(2, 2, 1, 'W2D1'),
+              state: 'upcoming',
+              workoutLogId: null,
+            },
+            {
+              session: session(3, 2, 2, 'W2D2'),
+              state: 'upcoming',
+              workoutLogId: null,
+            },
+          ],
+        },
+      ],
+    };
+    mockUseProgramProgress.mockReturnValue({
+      data: twoUpcoming,
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage();
+
+    // The earlier gap is a start button before the click...
+    const earlier = screen.getByText('W2D1').closest('button');
+    expect(earlier).not.toBeNull();
+
+    // ...and clicking the LATER one hands off that session, not the earlier one.
+    await user.click(screen.getByText('W2D2').closest('button')!);
+
+    expect(screen.getByTestId('started')).toHaveTextContent('up-1:ps-3');
+  });
+
   it('leaves upcoming sessions static when the enrollment is not active', () => {
     mockUseProgramProgress.mockReturnValue({
       data: {

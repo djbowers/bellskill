@@ -76,8 +76,13 @@ export const ProgramsPage = () => {
   // to decide between the resume/start-over prompt, the switch prompt, or a
   // direct enroll.
   const [pendingEnrollId, setPendingEnrollId] = useState<string | null>(null);
-  // Own program with prior progress, awaiting a resume-vs-start-over choice.
-  const [resumeDialogId, setResumeDialogId] = useState<string | null>(null);
+  // Own program with prior progress, awaiting a resume-vs-start-over choice. We
+  // hold the exact enrollment id (not just the program) so resume reactivates
+  // the same enrollment whose progress the prompt is showing.
+  const [resumeTarget, setResumeTarget] = useState<{
+    programId: string;
+    userProgramId: string;
+  } | null>(null);
   // Shared program awaiting a starting-weight confirmation before enrolling.
   const [pendingWeightProgramId, setPendingWeightProgramId] = useState<
     string | null
@@ -220,7 +225,7 @@ export const ProgramsPage = () => {
       (candidateProgress?.completedCount ?? 0) > 0;
 
     if (hasPriorProgress) {
-      setResumeDialogId(programId);
+      setResumeTarget({ programId, userProgramId: enr!.id });
     } else if (
       activeEnrollment &&
       activeEnrollment.enrollment.programId !== programId
@@ -235,7 +240,9 @@ export const ProgramsPage = () => {
     const program = programs.find((p) => p.id === programId);
     // Only your own program copies can carry prior progress on this same id
     // (shared programs always clone fresh), so only they need the progress read.
-    if (program && !program.isPublic && !isActive(program)) {
+    // Key on ownership, not visibility, so routing stays correct even if an own
+    // program is ever made public.
+    if (program && program.ownerId === userId && !isActive(program)) {
       setPendingEnrollId(programId);
       return;
     }
@@ -270,21 +277,21 @@ export const ProgramsPage = () => {
   };
 
   const resumeDialogProgram =
-    programs.find((p) => p.id === resumeDialogId) ?? null;
+    programs.find((p) => p.id === resumeTarget?.programId) ?? null;
 
   const confirmResume = () => {
-    if (!resumeDialogId) return;
-    const target = resumeDialogId;
-    setResumeDialogId(null);
+    if (!resumeTarget) return;
+    const { programId, userProgramId } = resumeTarget;
+    setResumeTarget(null);
     resume.mutate(
-      { programId: target },
+      { userProgramId },
       {
         onSuccess: () => {
           if (userId) {
             void trackEvent({
               event: AnalyticsEvent.ProgramResumed,
               userId,
-              properties: { program_id: target },
+              properties: { program_id: programId },
             });
           }
           navigate('/');
@@ -294,10 +301,10 @@ export const ProgramsPage = () => {
   };
 
   const startOverFromResume = () => {
-    if (!resumeDialogId) return;
-    const target = resumeDialogId;
-    setResumeDialogId(null);
-    proceedToEnroll(target);
+    if (!resumeTarget) return;
+    const { programId } = resumeTarget;
+    setResumeTarget(null);
+    proceedToEnroll(programId);
   };
 
   const confirmStartingWeight = () => {
@@ -599,9 +606,9 @@ export const ProgramsPage = () => {
       </Dialog>
 
       <Dialog
-        open={resumeDialogId !== null}
+        open={resumeTarget !== null}
         onOpenChange={(open) => {
-          if (!open) setResumeDialogId(null);
+          if (!open) setResumeTarget(null);
         }}
       >
         <DialogContent>
@@ -612,8 +619,8 @@ export const ProgramsPage = () => {
               {resumeDialogProgram ? ` "${resumeDialogProgram.title}"` : ''}.
               Pick up where you left off, or start over from the first session.
               {activeEnrollment &&
-              resumeDialogId &&
-              activeEnrollment.enrollment.programId !== resumeDialogId
+              resumeTarget &&
+              activeEnrollment.enrollment.programId !== resumeTarget.programId
                 ? ` Either way, this replaces your active program (${activeEnrollment.program.title}).`
                 : ''}
             </DialogDescription>

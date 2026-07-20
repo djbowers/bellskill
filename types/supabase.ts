@@ -793,7 +793,7 @@ export type Database = {
         Args: { p_ordered_ids: string[]; p_program_id: string }
         Returns: undefined
       }
-      resume_program: { Args: { p_program_id: string }; Returns: string }
+      resume_program: { Args: { p_user_program_id: string }; Returns: string }
     }
     Enums: {
       RPE: "noEffort" | "easy" | "ideal" | "hard" | "maxEffort"

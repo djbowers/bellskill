@@ -485,8 +485,9 @@ describe('ProgramsPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
 
+    // Resumes by the exact enrollment id the prompt is showing, not the program.
     expect(resumeMutate).toHaveBeenCalledWith(
-      { programId: 'mine-1' },
+      { userProgramId: 'up-9' },
       expect.anything(),
     );
     expect(mockTrackEvent).toHaveBeenCalledWith(
