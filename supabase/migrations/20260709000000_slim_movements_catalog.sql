@@ -137,7 +137,7 @@ INSERT INTO public.movements ("Movement", "Primary Equipment", "# Primary Items"
   ('Kettlebell Staggered Deadlift', 'Kettlebell', 1, 'Single Arm', 'Hamstrings', 'Intermediate', 'Hip Hinge'),
   ('Kettlebell Good Morning', 'Kettlebell', 1, 'Double Arm', 'Hamstrings', 'Intermediate', 'Hip Hinge'),
   ('Goblet Squat', 'Kettlebell', 1, 'Double Arm', 'Quadriceps', 'Beginner', 'Knee Dominant'),
-  ('Front Squat With Two Kettlebells', 'Kettlebell', 2, 'Double Arm', 'Quadriceps', 'Intermediate', 'Knee Dominant'),
+  ('Double Kettlebell Front Squat', 'Kettlebell', 2, 'Double Arm', 'Quadriceps', 'Intermediate', 'Knee Dominant'),
   ('Kettlebell Pistol Squat', 'Kettlebell', 1, 'Double Arm', 'Quadriceps', 'Expert', 'Knee Dominant'),
   ('One-Arm Overhead Kettlebell Squat', 'Kettlebell', 1, 'Single Arm', 'Quadriceps', 'Expert', 'Knee Dominant'),
   ('Kettlebell Front Rack Squat', 'Kettlebell', 1, 'Single Arm', 'Quadriceps', 'Intermediate', 'Knee Dominant'),

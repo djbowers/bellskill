@@ -20,7 +20,7 @@ const ABC_SESSION_COUNT = 20;
 const EXPECTED_MOVEMENTS = [
   { movementName: 'Two-Arm Kettlebell Clean', repScheme: [2] },
   { movementName: 'Two-Arm Kettlebell Military Press', repScheme: [1] },
-  { movementName: 'Front Squat With Two Kettlebells', repScheme: [3] },
+  { movementName: 'Double Kettlebell Front Squat', repScheme: [3] },
 ];
 
 // Round-progression ramp (progression = add rounds, not weight), by sequence.
