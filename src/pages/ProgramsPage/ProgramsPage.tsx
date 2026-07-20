@@ -2,14 +2,18 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import {
+  AnalyticsEvent,
   EnrollProgramArgs,
+  trackEvent,
   useActiveProgram,
   useCancelProgram,
   useCreateProgram,
   useDeleteProgram,
   useEnrollProgram,
   useProgram,
+  useProgramProgress,
   usePrograms,
+  useResumeProgram,
   useSetProgramArchived,
 } from '~/api';
 import { ModifyCountButtons, Page, WeightUnitTabs } from '~/components';
@@ -50,8 +54,10 @@ export const ProgramsPage = () => {
   const session = useSession();
   const { data: programs = [], isLoading } = usePrograms();
   const { data: activeProgram } = useActiveProgram();
+  const userId = session?.user?.id;
   const createProgram = useCreateProgram();
   const enroll = useEnrollProgram();
+  const resume = useResumeProgram();
   const cancelProgram = useCancelProgram();
   const deleteProgram = useDeleteProgram();
   const setArchived = useSetProgramArchived();
@@ -66,6 +72,17 @@ export const ProgramsPage = () => {
 
   // Program the user is trying to switch to while another is already active.
   const [pendingSwitchId, setPendingSwitchId] = useState<string | null>(null);
+  // Own program a "Start" click is being routed for: we read its progress first
+  // to decide between the resume/start-over prompt, the switch prompt, or a
+  // direct enroll.
+  const [pendingEnrollId, setPendingEnrollId] = useState<string | null>(null);
+  // Own program with prior progress, awaiting a resume-vs-start-over choice. We
+  // hold the exact enrollment id (not just the program) so resume reactivates
+  // the same enrollment whose progress the prompt is showing.
+  const [resumeTarget, setResumeTarget] = useState<{
+    programId: string;
+    userProgramId: string;
+  } | null>(null);
   // Shared program awaiting a starting-weight confirmation before enrolling.
   const [pendingWeightProgramId, setPendingWeightProgramId] = useState<
     string | null
@@ -100,6 +117,11 @@ export const ProgramsPage = () => {
     pendingWeightProgramId ?? undefined,
   );
   const startingWeightReady = seededProgramId === pendingWeightProgramId;
+
+  // Prior progress for the program a "Start" click is being routed for. Drives
+  // the resume-vs-start-over branch below.
+  const { data: candidateProgress, isError: candidateProgressError } =
+    useProgramProgress(pendingEnrollId ?? undefined);
 
   useEffect(() => {
     if (!pendingWeightProgramId) return;
@@ -191,7 +213,39 @@ export const ProgramsPage = () => {
     }
   };
 
+  // Routes a "Start" click once its prior progress is known: prior progress →
+  // resume-vs-start-over prompt; else an active program on a different program →
+  // switch prompt; else a direct enroll.
+  const routeEnroll = (programId: string) => {
+    const enr = candidateProgress?.enrollment;
+    const hasPriorProgress =
+      !candidateProgressError &&
+      !!enr &&
+      enr.status !== 'active' &&
+      (candidateProgress?.completedCount ?? 0) > 0;
+
+    if (hasPriorProgress) {
+      setResumeTarget({ programId, userProgramId: enr!.id });
+    } else if (
+      activeEnrollment &&
+      activeEnrollment.enrollment.programId !== programId
+    ) {
+      setPendingSwitchId(programId);
+    } else {
+      proceedToEnroll(programId);
+    }
+  };
+
   const handleEnroll = (programId: string) => {
+    const program = programs.find((p) => p.id === programId);
+    // Only your own program copies can carry prior progress on this same id
+    // (shared programs always clone fresh), so only they need the progress read.
+    // Key on ownership, not visibility, so routing stays correct even if an own
+    // program is ever made public.
+    if (program && program.ownerId === userId && !isActive(program)) {
+      setPendingEnrollId(programId);
+      return;
+    }
     if (
       activeEnrollment &&
       activeEnrollment.enrollment.programId !== programId
@@ -202,11 +256,55 @@ export const ProgramsPage = () => {
     }
   };
 
+  // Once the routed program's progress resolves (or errors), dispatch it.
+  useEffect(() => {
+    if (!pendingEnrollId) return;
+    const ready =
+      candidateProgressError ||
+      (candidateProgress && candidateProgress.program.id === pendingEnrollId);
+    if (!ready) return;
+    const target = pendingEnrollId;
+    setPendingEnrollId(null);
+    routeEnroll(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dispatch once the candidate's progress settles; the routing helpers are derived each render.
+  }, [pendingEnrollId, candidateProgress, candidateProgressError]);
+
   const confirmSwitch = () => {
     if (!pendingSwitchId) return;
     const target = pendingSwitchId;
     setPendingSwitchId(null);
     proceedToEnroll(target);
+  };
+
+  const resumeDialogProgram =
+    programs.find((p) => p.id === resumeTarget?.programId) ?? null;
+
+  const confirmResume = () => {
+    if (!resumeTarget) return;
+    const { programId, userProgramId } = resumeTarget;
+    setResumeTarget(null);
+    resume.mutate(
+      { userProgramId },
+      {
+        onSuccess: () => {
+          if (userId) {
+            void trackEvent({
+              event: AnalyticsEvent.ProgramResumed,
+              userId,
+              properties: { program_id: programId },
+            });
+          }
+          navigate('/');
+        },
+      },
+    );
+  };
+
+  const startOverFromResume = () => {
+    if (!resumeTarget) return;
+    const { programId } = resumeTarget;
+    setResumeTarget(null);
+    proceedToEnroll(programId);
   };
 
   const confirmStartingWeight = () => {
@@ -275,7 +373,7 @@ export const ProgramsPage = () => {
                   size="sm"
                   aria-label={`Start ${program.title}`}
                   onClick={() => handleEnroll(program.id)}
-                  disabled={enroll.isLoading}
+                  disabled={enroll.isLoading || resume.isLoading}
                 >
                   Start
                 </Button>
@@ -362,7 +460,12 @@ export const ProgramsPage = () => {
               <Button
                 className="flex-1"
                 onClick={() => handleEnroll(program.id)}
-                disabled={enroll.isLoading || isActive(program)}
+                disabled={
+                  enroll.isLoading ||
+                  resume.isLoading ||
+                  isActive(program) ||
+                  pendingEnrollId === program.id
+                }
               >
                 {isActive(program) ? 'Enrolled' : 'Start program'}
               </Button>
@@ -497,6 +600,44 @@ export const ProgramsPage = () => {
             </Button>
             <Button onClick={confirmSwitch} disabled={enroll.isLoading}>
               Switch program
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={resumeTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setResumeTarget(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resume this program?</DialogTitle>
+            <DialogDescription>
+              You already have progress in
+              {resumeDialogProgram ? ` "${resumeDialogProgram.title}"` : ''}.
+              Pick up where you left off, or start over from the first session.
+              {activeEnrollment &&
+              resumeTarget &&
+              activeEnrollment.enrollment.programId !== resumeTarget.programId
+                ? ` Either way, this replaces your active program (${activeEnrollment.program.title}).`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={startOverFromResume}
+              disabled={enroll.isLoading || resume.isLoading}
+            >
+              Start over
+            </Button>
+            <Button
+              onClick={confirmResume}
+              disabled={enroll.isLoading || resume.isLoading}
+            >
+              Resume
             </Button>
           </DialogFooter>
         </DialogContent>

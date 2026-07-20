@@ -10,6 +10,7 @@ import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { cn } from '~/lib/utils';
+import { ProgramSession } from '~/types';
 
 /** Glyph + label + chip styling for each session state. */
 const STATE_META: Record<SessionState, { icon: string; className: string }> = {
@@ -54,6 +55,7 @@ export const ProgramProgressPage = () => {
 
   const {
     program,
+    enrollment,
     weeks,
     completedCount,
     totalCount,
@@ -64,6 +66,23 @@ export const ProgramProgressPage = () => {
 
   const percent =
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  // An upcoming session is startable only while the enrollment is active — any
+  // session, not just the next one. Starting a later session leaves the earlier
+  // ones upcoming (gaps); the home card still surfaces the lowest incomplete.
+  const canStartSessions = enrollment?.status === 'active';
+
+  // Hand the chosen session off to the launchpad builder via nav state; the home
+  // page loads it, tags the start `program`, and advances this enrollment on
+  // completion.
+  const handleStartSession = (session: ProgramSession) => {
+    if (!enrollment) return;
+    navigate('/', {
+      state: {
+        startProgramSession: { session, userProgramId: enrollment.id },
+      },
+    });
+  };
 
   return (
     <Page title={program.title}>
@@ -102,26 +121,48 @@ export const ProgramProgressPage = () => {
       </Card>
 
       {weeks.map((week) => (
-        <WeekRow key={week.weekNumber} week={week} />
+        <WeekRow
+          key={week.weekNumber}
+          week={week}
+          canStartSessions={canStartSessions}
+          onStartSession={handleStartSession}
+        />
       ))}
     </Page>
   );
 };
 
-const WeekRow = ({ week }: { week: WeekProgress }) => (
+interface WeekRowProps {
+  week: WeekProgress;
+  canStartSessions: boolean;
+  onStartSession: (session: ProgramSession) => void;
+}
+
+const WeekRow = ({ week, canStartSessions, onStartSession }: WeekRowProps) => (
   <div className="flex flex-col gap-0.5">
     <span className="text-xs font-medium text-muted-foreground">
       Week {week.weekNumber}
     </span>
     <div className="flex flex-wrap gap-1">
       {week.sessions.map((item) => (
-        <SessionChip key={item.session.id} item={item} />
+        <SessionChip
+          key={item.session.id}
+          item={item}
+          canStart={canStartSessions}
+          onStart={onStartSession}
+        />
       ))}
     </div>
   </div>
 );
 
-const SessionChip = ({ item }: { item: SessionProgress }) => {
+interface SessionChipProps {
+  item: SessionProgress;
+  canStart: boolean;
+  onStart: (session: ProgramSession) => void;
+}
+
+const SessionChip = ({ item, canStart, onStart }: SessionChipProps) => {
   const { session, state, workoutLogId } = item;
   const meta = STATE_META[state];
 
@@ -138,7 +179,7 @@ const SessionChip = ({ item }: { item: SessionProgress }) => {
     meta.className,
   );
 
-  // Completed sessions link to their logged workout; skipped/upcoming are static.
+  // Completed sessions link to their logged workout.
   if (state === 'done' && workoutLogId !== null) {
     return (
       <Link
@@ -150,5 +191,20 @@ const SessionChip = ({ item }: { item: SessionProgress }) => {
     );
   }
 
+  // Upcoming sessions are startable while enrolled — tap any one to start it.
+  if (state === 'upcoming' && canStart) {
+    return (
+      <button
+        type="button"
+        aria-label={`Start Day ${session.dayNumber} ${session.title}`}
+        onClick={() => onStart(session)}
+        className={cn(baseClassName, 'hover:cursor-pointer hover:bg-secondary')}
+      >
+        {label}
+      </button>
+    );
+  }
+
+  // Skipped sessions (and upcoming ones with no active enrollment) are static.
   return <div className={baseClassName}>{label}</div>;
 };

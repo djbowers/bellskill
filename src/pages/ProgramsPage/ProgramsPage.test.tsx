@@ -10,11 +10,15 @@ const {
   mockUseActiveProgram,
   mockUseCreateProgram,
   mockUseEnrollProgram,
+  mockUseResumeProgram,
   mockUseProgram,
+  mockUseProgramProgress,
   mockUseCancelProgram,
   mockUseDeleteProgram,
   mockUseSetProgramArchived,
+  mockTrackEvent,
   enrollMutate,
+  resumeMutate,
   createMutate,
   cancelMutate,
   deleteMutate,
@@ -24,11 +28,15 @@ const {
   mockUseActiveProgram: vi.fn(),
   mockUseCreateProgram: vi.fn(),
   mockUseEnrollProgram: vi.fn(),
+  mockUseResumeProgram: vi.fn(),
   mockUseProgram: vi.fn(),
+  mockUseProgramProgress: vi.fn(),
   mockUseCancelProgram: vi.fn(),
   mockUseDeleteProgram: vi.fn(),
   mockUseSetProgramArchived: vi.fn(),
+  mockTrackEvent: vi.fn(),
   enrollMutate: vi.fn(),
+  resumeMutate: vi.fn(),
   createMutate: vi.fn(),
   cancelMutate: vi.fn(),
   deleteMutate: vi.fn(),
@@ -40,10 +48,14 @@ vi.mock('~/api', () => ({
   useActiveProgram: mockUseActiveProgram,
   useCreateProgram: mockUseCreateProgram,
   useEnrollProgram: mockUseEnrollProgram,
+  useResumeProgram: mockUseResumeProgram,
   useProgram: mockUseProgram,
+  useProgramProgress: mockUseProgramProgress,
   useCancelProgram: mockUseCancelProgram,
   useDeleteProgram: mockUseDeleteProgram,
   useSetProgramArchived: mockUseSetProgramArchived,
+  trackEvent: mockTrackEvent,
+  AnalyticsEvent: { ProgramResumed: 'program_resumed' },
 }));
 
 vi.mock('~/contexts', async () => {
@@ -180,10 +192,12 @@ const renderPage = () =>
 describe('ProgramsPage', () => {
   beforeEach(() => {
     enrollMutate.mockReset();
+    resumeMutate.mockReset();
     createMutate.mockReset();
     cancelMutate.mockReset();
     deleteMutate.mockReset();
     setArchivedMutate.mockReset();
+    mockTrackEvent.mockReset();
     mockUsePrograms.mockReturnValue({
       data: [dfw, myProgram],
       isLoading: false,
@@ -197,10 +211,22 @@ describe('ProgramsPage', () => {
       mutate: enrollMutate,
       isLoading: false,
     });
+    mockUseResumeProgram.mockReturnValue({
+      mutate: resumeMutate,
+      isLoading: false,
+    });
     mockUseProgram.mockImplementation((id?: string) => ({
       data: id
         ? { program: {}, sessions: SESSIONS_BY_ID[id] ?? [] }
         : undefined,
+    }));
+    // Default: no prior progress for any candidate, so an own-program "Start"
+    // routes straight to a fresh enroll. Individual tests override this.
+    mockUseProgramProgress.mockImplementation((id?: string) => ({
+      data: id
+        ? { program: { id }, enrollment: null, completedCount: 0 }
+        : undefined,
+      isError: false,
     }));
     mockUseCancelProgram.mockReturnValue({
       mutate: cancelMutate,
@@ -427,6 +453,72 @@ describe('ProgramsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
 
     expect(screen.queryByText('Starting weight')).not.toBeInTheDocument();
+    expect(enrollMutate).toHaveBeenCalledWith(
+      { programId: 'mine-1' },
+      expect.anything(),
+    );
+  });
+
+  it('offers resume vs start-over for a program with prior progress, and resumes on confirm', () => {
+    mockUseProgramProgress.mockImplementation((id?: string) => ({
+      data:
+        id === 'mine-1'
+          ? {
+              program: { id: 'mine-1' },
+              enrollment: { id: 'up-9', status: 'completed' },
+              completedCount: 3,
+            }
+          : id
+            ? { program: { id }, enrollment: null, completedCount: 0 }
+            : undefined,
+      isError: false,
+    }));
+    resumeMutate.mockImplementation((_input, { onSuccess }) => onSuccess());
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    // Prior progress gates the fresh enroll behind a resume-vs-start-over choice.
+    expect(enrollMutate).not.toHaveBeenCalled();
+    expect(screen.getByText('Resume this program?')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
+
+    // Resumes by the exact enrollment id the prompt is showing, not the program.
+    expect(resumeMutate).toHaveBeenCalledWith(
+      { userProgramId: 'up-9' },
+      expect.anything(),
+    );
+    expect(mockTrackEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'program_resumed' }),
+    );
+    expect(screen.getByText('home')).toBeInTheDocument();
+  });
+
+  it('starts a prior-progress program over on the start-over choice', () => {
+    mockUseProgramProgress.mockImplementation((id?: string) => ({
+      data:
+        id === 'mine-1'
+          ? {
+              program: { id: 'mine-1' },
+              enrollment: { id: 'up-9', status: 'abandoned' },
+              completedCount: 2,
+            }
+          : id
+            ? { program: { id }, enrollment: null, completedCount: 0 }
+            : undefined,
+      isError: false,
+    }));
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+    expect(screen.getByText('Resume this program?')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start over' }));
+
+    expect(resumeMutate).not.toHaveBeenCalled();
     expect(enrollMutate).toHaveBeenCalledWith(
       { programId: 'mine-1' },
       expect.anything(),

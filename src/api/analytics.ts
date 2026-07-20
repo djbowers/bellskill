@@ -16,6 +16,9 @@ export enum AnalyticsEvent {
   // user's population (new/returning), and the content shown, so the launchpad
   // A/B is joinable to the funnel events above by `user_id`.
   LaunchpadExposed = 'launchpad_exposed',
+  // Program in-program flow (PROD-237): resuming a prior enrollment where the
+  // lifter left off, as opposed to starting the program over.
+  ProgramResumed = 'program_resumed',
   // AI Next Session Recommender (PROD-89).
   RecommendationRequested = 'recommendation_requested',
   RecommendationAccepted = 'recommendation_accepted',
