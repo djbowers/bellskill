@@ -157,5 +157,5 @@ export const LinkMovementDialog = ({
   );
 };
 
-// Re-export for tests that may need weight mode helper
+// eslint-disable-next-line react-refresh/only-export-components -- re-export for tests that may need weight mode helper; kept alongside the component intentionally
 export { getMovementWeightMode };

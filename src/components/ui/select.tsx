@@ -17,7 +17,7 @@ const Select = React.forwardRef<
     showReset?: boolean;
     onReset?: () => void;
   }
->(({ showReset, onReset, children, ...props }, _) => {
+>(({ showReset, onReset, children, ...props }) => {
   return (
     <div className="flex w-full items-center gap-0.5">
       <SelectPrimitive.Root {...props}>{children}</SelectPrimitive.Root>

@@ -33,11 +33,11 @@ export const useCountdownTimer = (
       setMilliseconds((s) => s - 100);
     }, 100);
     return () => clearInterval(timer);
-  }, [paused, options?.disabled]);
+  }, [paused, options?.disabled, initialTimer]);
 
   const reset = useCallback(
     (timer: number = initialTimer) => setMilliseconds(timer * 60000),
-    [],
+    [initialTimer],
   );
   const pause = useCallback(() => setPaused(true), []);
   const play = useCallback(() => setPaused(false), []);

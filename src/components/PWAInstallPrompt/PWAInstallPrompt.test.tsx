@@ -15,8 +15,8 @@ const mockBeforeInstallPrompt = () => {
 };
 
 const mockLocalStorage = {
-  getItem: vi.fn((key: string) => null),
-  setItem: vi.fn((key: string, value: string) => {}),
+  getItem: vi.fn(() => null),
+  setItem: vi.fn(() => {}),
 };
 
 const mockMatchMedia = (matches: boolean) => {
@@ -121,7 +121,7 @@ describe('PWAInstallPrompt', () => {
           }
           return null;
         }),
-        setItem: vi.fn((key: string, value: string) => {}),
+        setItem: vi.fn(() => {}),
       };
 
       Object.defineProperty(window, 'localStorage', {
@@ -145,8 +145,8 @@ describe('PWAInstallPrompt', () => {
 
       // Override after render, before interaction
       const testLocalStorage = {
-        getItem: vi.fn((key: string) => null),
-        setItem: vi.fn((key: string, value: string) => {}),
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(() => {}),
       };
       Object.defineProperty(window, 'localStorage', {
         value: testLocalStorage,

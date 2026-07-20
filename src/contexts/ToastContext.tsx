@@ -31,6 +31,7 @@ interface ToastContextValue {
 // Default to a no-op so consumers outside the provider (Storybook, isolated
 // component tests) degrade gracefully instead of throwing — mirrors the
 // pattern in ProgramSessionContext.
+// eslint-disable-next-line react-refresh/only-export-components -- context object is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const ToastContext = createContext<ToastContextValue>({
   showToast: () => {},
 });
@@ -84,4 +85,5 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- consumer hook is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const useToast = () => useContext(ToastContext);

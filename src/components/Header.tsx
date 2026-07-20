@@ -1,11 +1,10 @@
-import { ButtonIcon, SunIcon } from '@radix-ui/react-icons';
+import { SunIcon } from '@radix-ui/react-icons';
 import { NavLink } from 'react-router-dom';
 
 import { useFeatures } from '~/hooks';
 import { handleClickLightDarkMode, handleSignOut } from '~/lib/nav-actions';
 
 import './Header.styles.css';
-import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import {
   NavigationMenu,

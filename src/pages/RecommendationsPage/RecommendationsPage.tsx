@@ -11,7 +11,8 @@ export const RecommendationsPage = () => {
       <Page title="AI Recommendations">
         <p className="text-sm text-muted-foreground">
           Personalized session recommendations are coming soon. As a Premium
-          member you'll get AI-tuned workouts based on your training history.
+          member you&apos;ll get AI-tuned workouts based on your training
+          history.
         </p>
       </Page>
     </PremiumGate>

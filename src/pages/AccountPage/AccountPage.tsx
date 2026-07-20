@@ -144,7 +144,7 @@ export const AccountPage = () => {
         <Label>Sound</Label>
         <p className="text-xs text-muted-foreground">
           Play a sound and vibrate when a rest or interval timer ends, so you
-          know it's time for the next set without looking at your screen.
+          know it&apos;s time for the next set without looking at your screen.
         </p>
         <Button variant="outline" onClick={handleToggleSound}>
           {soundEnabled ? 'Disable timer sounds' : 'Enable timer sounds'}

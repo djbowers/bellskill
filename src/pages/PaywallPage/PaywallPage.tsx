@@ -196,7 +196,7 @@ export const PaywallPage = () => {
         ) : /* Premium not launched yet — record interest instead of charging. */
         notified ? (
           <Button variant="secondary" disabled className="w-full">
-            We'll let you know — thanks!
+            We&apos;ll let you know — thanks!
           </Button>
         ) : (
           <Button onClick={handleNotify} className="w-full">

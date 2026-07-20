@@ -2,6 +2,7 @@ import { createContext, useContext, useState } from 'react';
 
 import { MovementOptions, WorkoutOptions } from '~/types';
 
+// eslint-disable-next-line react-refresh/only-export-components -- default-options constant is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const DEFAULT_MOVEMENT_OPTIONS: MovementOptions = {
   movementName: '',
   repScheme: [5],
@@ -11,6 +12,7 @@ export const DEFAULT_MOVEMENT_OPTIONS: MovementOptions = {
   weightTwoValue: null,
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- default-options constant is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const DEFAULT_WORKOUT_OPTIONS: WorkoutOptions = {
   complexSet: false,
   intervalTimer: 0,
@@ -28,6 +30,7 @@ export const DEFAULT_WORKOUT_OPTIONS: WorkoutOptions = {
   previousRounds: 10,
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- context object is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const WorkoutOptionsContext = createContext<
   [WorkoutOptions, (workoutOptions: WorkoutOptions) => void]
 >(undefined!);
@@ -45,4 +48,5 @@ export const WorkoutOptionsProvider = ({ ...props }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- consumer hook is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const useWorkoutOptions = () => useContext(WorkoutOptionsContext);

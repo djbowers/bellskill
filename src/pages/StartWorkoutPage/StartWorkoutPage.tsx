@@ -574,7 +574,6 @@ export const StartWorkoutPage = ({
       loadIntoBuilder(initial.workoutOptions);
       setSessionTitle(initial.title);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot seed; loadIntoBuilder is stable enough and the ref guards re-runs.
     [programSaveMode?.initialSession],
   );
 

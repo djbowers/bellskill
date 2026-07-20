@@ -34,7 +34,7 @@ export const CheckoutSuccessPage = () => {
     return (
       <Page title={null}>
         <div className="flex flex-col items-center gap-2 py-3 text-center">
-          <h1 className="text-xl font-semibold">You're Premium 🎉</h1>
+          <h1 className="text-xl font-semibold">You&apos;re Premium 🎉</h1>
           <p className="text-sm text-muted-foreground">
             Your subscription is active. The intelligence layer is unlocked.
           </p>

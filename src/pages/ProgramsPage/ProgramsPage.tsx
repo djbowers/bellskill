@@ -329,7 +329,7 @@ export const ProgramsPage = () => {
 
       {!isLoading && myPrograms.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          You haven't created any programs yet.
+          You haven&apos;t created any programs yet.
         </p>
       )}
 
@@ -513,7 +513,7 @@ export const ProgramsPage = () => {
             <DialogTitle>Starting weight</DialogTitle>
             <DialogDescription>
               Set the weight your working sessions in this program start with.
-              You can still adjust it session by session once you're in the
+              You can still adjust it session by session once you&apos;re in the
               program.
             </DialogDescription>
           </DialogHeader>
@@ -629,7 +629,7 @@ export const ProgramsPage = () => {
             <DialogDescription>
               This permanently deletes
               {pendingDeleteProgram ? ` "${pendingDeleteProgram.title}"` : ''},
-              its sessions, and its history. This can't be undone
+              its sessions, and its history. This can&apos;t be undone
               {pendingDeleteProgram?.archivedAt
                 ? '.'
                 : ' — archive it instead if you just want it out of the way.'}
