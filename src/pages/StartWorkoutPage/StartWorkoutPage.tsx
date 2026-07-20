@@ -31,6 +31,7 @@ import { getWeightsDisplayValue } from '~/pages/CompletedWorkoutPage/utils/displ
 import {
   CuratedWorkout,
   MovementOptions,
+  ProgramSession,
   Recommendation,
   WeightTabValue,
   WeightUnit,
@@ -319,6 +320,61 @@ export const StartWorkoutPage = ({
 
   const detailsRef = useRef<HTMLInputElement>(null);
 
+  // Fan a set of workout options out to the builder's local state so the user
+  // can review/edit before starting. Defined ahead of the gate so the nav-start
+  // effect below can reuse it without a temporal-dead-zone hazard.
+  const loadIntoBuilder = (options: Omit<WorkoutOptions, 'startedAt'>) => {
+    setMovements(options.movements);
+    setWorkoutGoal(options.workoutGoal);
+    setWorkoutGoalUnits(options.workoutGoalUnits);
+    setWorkoutDetails(options.workoutDetails);
+    setIntervalTimer(options.intervalTimer);
+    setRestTimer(options.restTimer);
+    setComplexSet(options.complexSet);
+    setSharedWeightOneValue(options.sharedWeightOneValue);
+    setSharedWeightOneUnit(options.sharedWeightOneUnit);
+    setSharedWeightTwoValue(options.sharedWeightTwoValue);
+    setSharedWeightTwoUnit(options.sharedWeightTwoUnit);
+  };
+
+  // Load a chosen program session into the builder for review/edits, tagged so
+  // the eventual start attributes to `program` and the log step advances that
+  // enrollment on completion. Shared by the home "next" card and the progress
+  // page's per-session picker (which routes through nav state below).
+  const applyProgramStart = (session: ProgramSession, userProgramId: string) => {
+    loadIntoBuilder(session.workoutOptions);
+    setStartSource('program');
+    setStartSourceProps({
+      user_program_id: userProgramId,
+      program_session_id: session.id,
+    });
+    setPendingProgramSession({
+      userProgramId,
+      programSessionId: session.id,
+    });
+    setBuilderOverride(true);
+  };
+
+  // The progress page starts an arbitrary session by navigating home with the
+  // chosen session in nav state; consume it once, then clear it so a refresh or
+  // back-nav doesn't restart the same session.
+  useEffect(
+    function startProgramSessionFromNav() {
+      const navState = location.state as {
+        startProgramSession?: {
+          session: ProgramSession;
+          userProgramId: string;
+        };
+      } | null;
+      const chosen = navState?.startProgramSession;
+      if (!chosen) return;
+      navigate(location.pathname, { replace: true, state: null });
+      applyProgramStart(chosen.session, chosen.userProgramId);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot per navigation; the handlers close over stable setters only.
+    [location.key],
+  );
+
   const handleIncrementGoalValue = () => {
     if (workoutGoalUnits === 'kilograms') {
       setWorkoutGoal((prev) => prev + INCREMENT_VOLUME);
@@ -547,22 +603,6 @@ export const StartWorkoutPage = ({
       ),
     );
 
-  // Fan a set of workout options out to the builder's local state so the user
-  // can review/edit before starting.
-  const loadIntoBuilder = (options: Omit<WorkoutOptions, 'startedAt'>) => {
-    setMovements(options.movements);
-    setWorkoutGoal(options.workoutGoal);
-    setWorkoutGoalUnits(options.workoutGoalUnits);
-    setWorkoutDetails(options.workoutDetails);
-    setIntervalTimer(options.intervalTimer);
-    setRestTimer(options.restTimer);
-    setComplexSet(options.complexSet);
-    setSharedWeightOneValue(options.sharedWeightOneValue);
-    setSharedWeightOneUnit(options.sharedWeightOneUnit);
-    setSharedWeightTwoValue(options.sharedWeightTwoValue);
-    setSharedWeightTwoUnit(options.sharedWeightTwoUnit);
-  };
-
   // Edit mode (Slice 3): seed the builder from the session being edited exactly
   // once, so the user's own subsequent edits aren't clobbered on re-render.
   const editSeeded = useRef(false);
@@ -619,22 +659,13 @@ export const StartWorkoutPage = ({
     setBuilderOverride(true);
   };
 
-  // Load the program's next session into the builder for review/edits, tagged so
-  // the eventual start attributes to `program` and the log step advances it.
+  // Start the program's next session from the home card.
   const handleStartProgram = () => {
     if (!activeProgram?.nextSession) return;
-    const { session } = activeProgram.nextSession;
-    loadIntoBuilder(activeProgram.nextSession.workoutOptions);
-    setStartSource('program');
-    setStartSourceProps({
-      user_program_id: activeProgram.enrollment.id,
-      program_session_id: session.id,
-    });
-    setPendingProgramSession({
-      userProgramId: activeProgram.enrollment.id,
-      programSessionId: session.id,
-    });
-    setBuilderOverride(true);
+    applyProgramStart(
+      activeProgram.nextSession.session,
+      activeProgram.enrollment.id,
+    );
   };
 
   // Skip the next session: writes a `skipped` completion (no workout_log), which
