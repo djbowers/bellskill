@@ -1,13 +1,26 @@
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import type { Recommendation } from '~/types';
+import type { Movement, Recommendation } from '~/types';
 import { type MovementWeightModeFields, getWeightTabValue } from '~/utils';
 
 import {
   RecommendationCatalog,
+  buildRecommendationCatalog,
   recommendationToMovements,
   recommendationToWorkoutOptions,
 } from './recommendationToMovements';
+
+const catalogRow = (fields: Partial<Movement>): Movement => ({
+  id: fields.movementName ?? 'id',
+  movementName: null,
+  primaryEquipment: 'Kettlebell',
+  primaryItemCount: 2,
+  singleOrDoubleArm: 'Double Arm',
+  targetMuscleGroup: null,
+  difficultyLevel: null,
+  movementPattern1: null,
+  ...fields,
+});
 
 const DOUBLE_KB_FRONT_SQUAT = 'Front Squat With Two Kettlebells';
 const TWO_HAND_SWING = 'Kettlebell Swing';
@@ -136,5 +149,48 @@ describe('recommendationToWorkoutOptions', () => {
     expect(getWeightTabValue(options.movements[0])).toBe('double');
     expect(options.workoutGoal).toBe(20);
     expect(options.workoutGoalUnits).toBe('minutes');
+  });
+});
+
+describe('buildRecommendationCatalog', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('keys catalog rows by name and skips null-named rows', () => {
+    const built = buildRecommendationCatalog([
+      catalogRow({ movementName: DOUBLE_KB_FRONT_SQUAT }),
+      catalogRow({ movementName: null }),
+    ]);
+
+    expect(built.get(DOUBLE_KB_FRONT_SQUAT)).toMatchObject({
+      primaryItemCount: 2,
+      singleOrDoubleArm: 'Double Arm',
+    });
+    expect(built.size).toBe(1);
+  });
+
+  test('warns loudly when the catalog paginated past one page', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    buildRecommendationCatalog(
+      [catalogRow({ movementName: DOUBLE_KB_FRONT_SQUAT })],
+      true,
+    );
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('movement catalog exceeded'),
+    );
+  });
+
+  test('stays silent when a single page holds the whole catalog', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    buildRecommendationCatalog(
+      [catalogRow({ movementName: DOUBLE_KB_FRONT_SQUAT })],
+      false,
+    );
+
+    expect(warn).not.toHaveBeenCalled();
   });
 });

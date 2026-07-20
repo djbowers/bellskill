@@ -30,7 +30,6 @@ import type { WorkoutStartSource } from '~/hooks';
 import { getWeightsDisplayValue } from '~/pages/CompletedWorkoutPage/utils/displayValues';
 import {
   CuratedWorkout,
-  Movement,
   MovementOptions,
   Recommendation,
   WeightTabValue,
@@ -60,6 +59,7 @@ import {
 import { useRecommendedWorkouts } from './hooks';
 import {
   RecommendationCatalog,
+  buildRecommendationCatalog,
   recommendationToWorkoutOptions,
 } from './utils/recommendationToMovements';
 
@@ -178,14 +178,14 @@ export const StartWorkoutPage = ({
     { limit: MOVEMENT_CATALOG_PAGE_SIZE },
     { enabled: showRecommender },
   );
-  const recommendationCatalog = useMemo<RecommendationCatalog>(() => {
-    const entries: [string, Movement][] = [];
-    for (const movement of movementCatalogQuery.data?.movements ?? []) {
-      if (movement.movementName)
-        entries.push([movement.movementName, movement]);
-    }
-    return new Map(entries);
-  }, [movementCatalogQuery.data]);
+  const recommendationCatalog = useMemo<RecommendationCatalog>(
+    () =>
+      buildRecommendationCatalog(
+        movementCatalogQuery.data?.movements ?? [],
+        movementCatalogQuery.data?.hasNextPage,
+      ),
+    [movementCatalogQuery.data],
+  );
 
   // Browse mode shows recommendations plus a Build-custom button; the builder
   // opens directly when there's nothing to browse or when history's "Repeat"

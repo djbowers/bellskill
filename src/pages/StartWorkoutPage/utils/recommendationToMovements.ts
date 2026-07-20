@@ -1,4 +1,9 @@
-import type { MovementOptions, Recommendation, WorkoutOptions } from '~/types';
+import type {
+  Movement,
+  MovementOptions,
+  Recommendation,
+  WorkoutOptions,
+} from '~/types';
 import {
   type MovementWeightModeFields,
   movementMatchesWeightMode,
@@ -9,6 +14,28 @@ export type RecommendationCatalog = ReadonlyMap<
   string,
   MovementWeightModeFields
 >;
+
+/**
+ * Builds the name→metadata lookup the recommender maps against. A single catalog
+ * page is meant to hold every movement; if the source query reports another page
+ * (`hasNextPage`), movements past page one are absent from the map and silently
+ * fall back to 2H — the exact silent-revert PROD-238 killed — so warn loudly.
+ */
+export const buildRecommendationCatalog = (
+  movements: Movement[],
+  hasNextPage = false,
+): RecommendationCatalog => {
+  if (hasNextPage) {
+    console.warn(
+      'movement catalog exceeded MOVEMENT_CATALOG_PAGE_SIZE; recommended weight-mode inference may be incomplete',
+    );
+  }
+  const entries: [string, Movement][] = [];
+  for (const movement of movements) {
+    if (movement.movementName) entries.push([movement.movementName, movement]);
+  }
+  return new Map(entries);
+};
 
 // Fills the second weight slot from catalog metadata so the builder opens in the
 // loading mode the movement implies (getWeightTabValue): a genuine two-bell
