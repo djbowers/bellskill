@@ -1,5 +1,5 @@
 import { ArrowLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import {
@@ -9,6 +9,7 @@ import {
   useActiveProgram,
   useCompleteProgramSession,
   useFeatureFlags,
+  useMovements,
   useWorkoutLogs,
 } from '~/api';
 import { Loading, Page } from '~/components';
@@ -56,7 +57,15 @@ import {
   WeightUnitTabs,
 } from './components';
 import { useRecommendedWorkouts } from './hooks';
-import { recommendationToWorkoutOptions } from './utils/recommendationToMovements';
+import {
+  RecommendationCatalog,
+  buildRecommendationCatalog,
+  recommendationToWorkoutOptions,
+} from './utils/recommendationToMovements';
+
+// One page comfortably covers the whole ~250-row catalog, so the recommender
+// can infer each movement's loading mode without paginating.
+const MOVEMENT_CATALOG_PAGE_SIZE: number = 500;
 
 const DEFAULT_INTERVAL_TIMER: number = 30; // seconds
 const DEFAULT_REST_TIMER: number = 30; // seconds
@@ -160,6 +169,23 @@ export const StartWorkoutPage = ({
   const showRepeat = shellOn && population === 'returning';
   const showRecommender =
     shellOn && population === 'returning' && experimentFeatures.recommender;
+
+  // The recommender prescribes a single weight per movement; the catalog's
+  // primary-item count + arm split tell us whether that load means two-hand,
+  // single, or two-bell so an accepted recommendation opens in the right mode
+  // (PROD-238). Only fetched when the recommender surface is actually shown.
+  const movementCatalogQuery = useMovements(
+    { limit: MOVEMENT_CATALOG_PAGE_SIZE },
+    { enabled: showRecommender },
+  );
+  const recommendationCatalog = useMemo<RecommendationCatalog>(
+    () =>
+      buildRecommendationCatalog(
+        movementCatalogQuery.data?.movements ?? [],
+        movementCatalogQuery.data?.hasNextPage,
+      ),
+    [movementCatalogQuery.data],
+  );
 
   // Browse mode shows recommendations plus a Build-custom button; the builder
   // opens directly when there's nothing to browse or when history's "Repeat"
@@ -581,7 +607,9 @@ export const StartWorkoutPage = ({
     recommendation: Recommendation,
     recommendationId: string,
   ) => {
-    loadIntoBuilder(recommendationToWorkoutOptions(recommendation));
+    loadIntoBuilder(
+      recommendationToWorkoutOptions(recommendation, recommendationCatalog),
+    );
     setStartSource('recommender');
     setStartSourceProps({ recommendation_id: recommendationId });
     setPendingProgramSession(null);
