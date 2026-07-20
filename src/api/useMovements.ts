@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { UseQueryOptions, useQuery } from 'react-query';
 
 import { QUERIES } from '~/constants';
 import { DifficultyLevel, Equipment, Movement, MuscleGroup } from '~/types';
@@ -27,8 +27,18 @@ interface MovementsResponse {
   hasPreviousPage: boolean;
 }
 
-export const useMovements = (options: UseMovementsOptions = {}) =>
-  useQuery([QUERIES.MOVEMENTS, options], () => fetchMovements(options));
+export const useMovements = (
+  options: UseMovementsOptions = {},
+  queryOptions?: Omit<
+    UseQueryOptions<MovementsResponse>,
+    'queryKey' | 'queryFn'
+  >,
+) =>
+  useQuery(
+    [QUERIES.MOVEMENTS, options],
+    () => fetchMovements(options),
+    queryOptions,
+  );
 
 const fetchMovements = async ({
   page = 1,

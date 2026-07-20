@@ -1,21 +1,48 @@
 import type { MovementOptions, Recommendation, WorkoutOptions } from '~/types';
+import {
+  type MovementWeightModeFields,
+  movementMatchesWeightMode,
+} from '~/utils';
+
+/** Catalog weight-mode metadata keyed by canonical movement name. */
+export type RecommendationCatalog = ReadonlyMap<
+  string,
+  MovementWeightModeFields
+>;
+
+// Fills the second weight slot from catalog metadata so the builder opens in the
+// loading mode the movement implies (getWeightTabValue): a genuine two-bell
+// movement carries the prescribed load (Double), a single-arm movement pins it
+// to 0 (1H), and everything else stays unset (2H, the pre-catalog default).
+const inferSecondWeight = (
+  fields: MovementWeightModeFields | undefined,
+  weightKg: number,
+): Pick<MovementOptions, 'weightTwoUnit' | 'weightTwoValue'> => {
+  if (fields && movementMatchesWeightMode(fields, 'double')) {
+    return { weightTwoUnit: 'kilograms', weightTwoValue: weightKg };
+  }
+  if (fields && movementMatchesWeightMode(fields, '1h')) {
+    return { weightTwoUnit: null, weightTwoValue: 0 };
+  }
+  return { weightTwoUnit: null, weightTwoValue: null };
+};
 
 /**
  * Maps a recommendation's blocks onto the app's MovementOptions. The recommender
  * prescribes a single weight in kilograms per movement, which becomes weight one;
- * the second weight slot is left unset for the user to fill if they want offset
- * or double-bell loading.
+ * the second weight slot is inferred from the movement's catalog metadata so
+ * two-bell movements open as Double rather than defaulting to two-hand.
  */
 export const recommendationToMovements = (
   recommendation: Recommendation,
+  catalog?: RecommendationCatalog,
 ): MovementOptions[] =>
   recommendation.blocks.map((block) => ({
     movementName: block.movement_name,
     repScheme: block.rep_scheme,
     weightOneUnit: 'kilograms',
     weightOneValue: block.weight_kg,
-    weightTwoUnit: null,
-    weightTwoValue: null,
+    ...inferSecondWeight(catalog?.get(block.movement_name), block.weight_kg),
   }));
 
 /**
@@ -25,10 +52,11 @@ export const recommendationToMovements = (
  */
 export const recommendationToWorkoutOptions = (
   recommendation: Recommendation,
+  catalog?: RecommendationCatalog,
 ): Omit<WorkoutOptions, 'startedAt'> => ({
   complexSet: false,
   intervalTimer: 0,
-  movements: recommendationToMovements(recommendation),
+  movements: recommendationToMovements(recommendation, catalog),
   restTimer: 0,
   sharedWeightOneUnit: null,
   sharedWeightOneValue: null,
