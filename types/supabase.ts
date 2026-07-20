@@ -364,11 +364,11 @@ export type Database = {
         Row: {
           author_name: string | null
           created_at: string
-          days_per_week: number
+          days_per_week: number | null
           description: string | null
           id: string
           is_public: boolean
-          num_weeks: number
+          num_weeks: number | null
           owner_id: string | null
           slug: string | null
           source_program_id: string | null
@@ -377,11 +377,11 @@ export type Database = {
         Insert: {
           author_name?: string | null
           created_at?: string
-          days_per_week: number
+          days_per_week?: number | null
           description?: string | null
           id?: string
           is_public?: boolean
-          num_weeks: number
+          num_weeks?: number | null
           owner_id?: string | null
           slug?: string | null
           source_program_id?: string | null
@@ -390,11 +390,11 @@ export type Database = {
         Update: {
           author_name?: string | null
           created_at?: string
-          days_per_week?: number
+          days_per_week?: number | null
           description?: string | null
           id?: string
           is_public?: boolean
-          num_weeks?: number
+          num_weeks?: number | null
           owner_id?: string | null
           slug?: string | null
           source_program_id?: string | null

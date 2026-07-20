@@ -18,8 +18,14 @@ export interface Program {
   title: string;
   description: string | null;
   authorName: string | null;
-  numWeeks: number;
-  daysPerWeek: number;
+  /**
+   * Program cadence, **derived from the program's own sessions** rather than
+   * declared at creation (PROD-237): `numWeeks` is the highest session week,
+   * `daysPerWeek` the widest week. Both are `null` for a program with no
+   * sessions yet. Seeded shared programs still carry authored values.
+   */
+  numWeeks: number | null;
+  daysPerWeek: number | null;
   isPublic: boolean;
   createdAt: string;
 }

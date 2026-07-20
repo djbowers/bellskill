@@ -201,6 +201,13 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   still renders after the terminal status flip — consumers that must treat only
   active enrollments specially (e.g. `ProgramsPage`) guard on
   `enrollment.status === 'active'`.
+- **Derived cadence (PROD-237):** `programs.num_weeks`/`days_per_week` are
+  **nullable** and no longer asked at creation. `usePrograms` prefers the stored
+  columns when a program authored them (the seeded shared programs) and
+  otherwise **derives** cadence from the program's own embedded sessions —
+  `numWeeks` (highest week) / `daysPerWeek` (widest week), null when it has no
+  sessions yet. The builder and reorder/delete RPCs treat an unset
+  `days_per_week` as 1 (`|| 1` / `COALESCE(...,1)` → one session per week).
 - **Home surfacing:** an active program forces browse mode
   (`StartWorkoutPage`), rendering `NextProgramWorkoutCard` above the recommended
   sections. A `programGatePending` flag holds the page in browse until the
