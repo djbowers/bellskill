@@ -47,6 +47,16 @@ export const isOwner = (session?: Session | null): boolean => {
   return !!email && OWNER_EMAILS.includes(email);
 };
 
+/**
+ * Whether this build is a Netlify deploy preview. Set to 'true' only in the
+ * deploy-preview Netlify context (see netlify.toml) — never in production or
+ * local builds. Deploy previews force every feature flag on (and auto-sign-in,
+ * see App.tsx) so a PR preview is immediately usable, independent of the
+ * owner/localStorage preview override below.
+ */
+export const isDeployPreview = (): boolean =>
+  import.meta.env.VITE_DEPLOY_PREVIEW === 'true';
+
 export const isPreviewOverrideEnabled = (): boolean => {
   try {
     return localStorage.getItem(PREVIEW_STORAGE_KEY) === 'true';
@@ -73,12 +83,12 @@ export const isPreviewingAllFeatures = (session?: Session | null): boolean =>
 
 /**
  * Effective feature flags for the current session. Returns the base (env)
- * flags for everyone, except owners who have enabled the preview override —
- * they get every flag forced on so they can view in-progress features in
- * production even when those flags are disabled.
+ * flags for everyone, except (a) deploy previews and (b) owners who have enabled
+ * the preview override — both get every flag forced on so in-progress features
+ * are visible even when those flags are disabled.
  */
 export const getFeatures = (session?: Session | null): Features => {
-  if (isPreviewingAllFeatures(session)) {
+  if (isDeployPreview() || isPreviewingAllFeatures(session)) {
     return {
       bottomNav: true,
       complexMode: true,

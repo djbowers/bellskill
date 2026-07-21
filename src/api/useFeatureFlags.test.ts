@@ -3,7 +3,10 @@ import { HttpResponse, http } from 'msw';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
-import { SAFE_DEFAULT_FEATURES } from '~/config/experiments';
+import {
+  ALL_EXPERIMENT_FEATURES_ON,
+  SAFE_DEFAULT_FEATURES,
+} from '~/config/experiments';
 import { SessionProvider } from '~/contexts';
 import { server } from '~/mocks/server';
 
@@ -138,6 +141,28 @@ describe('useFeatureFlags', () => {
     expect(result.current.features).toEqual(SAFE_DEFAULT_FEATURES);
     await waitFor(() => expect(result.current.isPending).toBe(false));
     expect(result.current.features).toEqual(SAFE_DEFAULT_FEATURES);
+  });
+
+  test('forces every experiment feature on for a deploy preview without calling the RPC', async () => {
+    vi.stubEnv('VITE_DEPLOY_PREVIEW', 'true');
+    let called = false;
+    server.use(
+      http.post(RPC_URL, () => {
+        called = true;
+        return HttpResponse.json([]);
+      }),
+    );
+
+    const { result } = renderHook(() => useFeatureFlags(), {
+      wrapper: makeWrapper(),
+    });
+
+    // Deploy previews short-circuit to all-on immediately, bypassing the RPC.
+    expect(result.current.features).toEqual(ALL_EXPERIMENT_FEATURES_ON);
+    expect(result.current.isPending).toBe(false);
+    expect(called).toBe(false);
+
+    vi.unstubAllEnvs();
   });
 
   test('resolves to the safe default without calling the RPC when unauthenticated', async () => {
