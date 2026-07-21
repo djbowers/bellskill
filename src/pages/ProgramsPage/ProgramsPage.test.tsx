@@ -123,6 +123,20 @@ const snatchTest = {
   createdAt: '',
 };
 
+const swingChallenge = {
+  id: 'swing-1',
+  ownerId: null,
+  sourceProgramId: null,
+  slug: '10000-swing-challenge',
+  title: '10,000 Swing Challenge',
+  description: null,
+  authorName: 'Dan John',
+  numWeeks: 4,
+  daysPerWeek: 5,
+  isPublic: true,
+  createdAt: '',
+};
+
 // Minimal session whose first movement carries the given loading. `weightTwo`
 // null → two-hand, 0 → single, >0 → double.
 const sessionWith = (
@@ -173,6 +187,7 @@ const SESSIONS_BY_ID: Record<string, ReturnType<typeof sessionWith>[]> = {
     ...Array.from({ length: 11 }, () => sessionWith(24, 0)),
     ...Array.from({ length: 10 }, () => sessionWith(20, 0)),
   ],
+  'swing-1': Array.from({ length: 20 }, () => sessionWith(24, null)),
 };
 
 const renderPage = () =>
@@ -339,19 +354,16 @@ describe('ProgramsPage', () => {
     );
   });
 
-  it('omits the Bodyweight mode from the starting-weight prompt', () => {
+  it('offers no loading-mode tabs — the program fixes the mode', () => {
     renderPage();
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Start Dry Fighting Weight' }),
     );
 
-    expect(
-      screen.queryByRole('tab', { name: 'Bodyweight' }),
-    ).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Two-Hand' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Single' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Double' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Two-Hand' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Single' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Double' })).not.toBeInTheDocument();
   });
 
   it('enrolls with mixed independent left/right weights', () => {
@@ -378,22 +390,26 @@ describe('ProgramsPage', () => {
     );
   });
 
-  it('enrolls with a single two-hand weight when the Two-Hand mode is selected', async () => {
+  it('enrolls with a single two-hand weight for a two-hand program', () => {
+    mockUsePrograms.mockReturnValue({
+      data: [swingChallenge, myProgram],
+      isLoading: false,
+    });
+
     renderPage();
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Start Dry Fighting Weight' }),
+      screen.getByRole('button', { name: 'Start 10,000 Swing Challenge' }),
     );
-    await userEvent.click(screen.getByRole('tab', { name: 'Two-Hand' }));
 
-    // Two-hand loading collapses to one weight input; weight two clears.
+    // A two-hand program collapses to one weight input; weight two stays null.
     expect(screen.getAllByRole('spinbutton')).toHaveLength(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
 
     expect(enrollMutate).toHaveBeenCalledWith(
       {
-        programId: 'dfw-1',
+        programId: 'swing-1',
         sharedWeightOneValue: 24,
         sharedWeightOneUnit: 'kilograms',
         sharedWeightTwoValue: null,
@@ -420,28 +436,6 @@ describe('ProgramsPage', () => {
         sharedWeightOneUnit: 'pounds',
         sharedWeightTwoValue: 24,
         sharedWeightTwoUnit: 'kilograms',
-      },
-      expect.anything(),
-    );
-  });
-
-  it('preserves the selected unit (lb) across a loading-mode switch', async () => {
-    renderPage();
-
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Start Dry Fighting Weight' }),
-    );
-    await userEvent.click(screen.getAllByRole('tab', { name: 'lb' })[0]);
-    await userEvent.click(screen.getByRole('tab', { name: 'Two-Hand' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
-
-    expect(enrollMutate).toHaveBeenCalledWith(
-      {
-        programId: 'dfw-1',
-        sharedWeightOneValue: 24,
-        sharedWeightOneUnit: 'pounds',
-        sharedWeightTwoValue: null,
-        sharedWeightTwoUnit: null,
       },
       expect.anything(),
     );
