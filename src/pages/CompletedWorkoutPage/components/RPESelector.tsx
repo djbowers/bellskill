@@ -1,4 +1,4 @@
-import { RadioGroup } from '@headlessui/react';
+import { Description, Label, Radio, RadioGroup } from '@headlessui/react';
 import clsx from 'clsx';
 
 import { Badge } from '~/components/ui/badge';
@@ -16,11 +16,11 @@ export const RPESelector = ({ onSelectRPE, rpeValue }: RPESelectorProps) => {
       onChange={onSelectRPE}
       className="flex flex-col gap-2 rounded-md bg-accent p-2 text-accent-foreground"
     >
-      <RadioGroup.Label className="text-sm font-medium text-muted-foreground">
+      <Label className="text-sm font-medium text-muted-foreground">
         Exertion Rating
-      </RadioGroup.Label>
+      </Label>
 
-      <RadioGroup.Description as="div" className="flex flex-col gap-1">
+      <Description as="div" className="flex flex-col gap-1">
         <div className="text-center text-sm font-medium text-foreground">
           How difficult was your workout?
         </div>
@@ -30,7 +30,7 @@ export const RPESelector = ({ onSelectRPE, rpeValue }: RPESelectorProps) => {
             {RPE_CONFIG[rpeValue].description} <RpeBadge rpeValue={rpeValue} />
           </div>
         )}
-      </RadioGroup.Description>
+      </Description>
 
       <div className="grid grid-cols-5 gap-2 px-3">
         <Option rpeValue="noEffort" />
@@ -45,10 +45,7 @@ export const RPESelector = ({ onSelectRPE, rpeValue }: RPESelectorProps) => {
 
 const Option = ({ rpeValue }: { rpeValue: string }) => {
   return (
-    <RadioGroup.Option
-      value={rpeValue}
-      className="flex flex-col items-center gap-0.5"
-    >
+    <Radio value={rpeValue} className="flex flex-col items-center gap-0.5">
       {({ checked }) => (
         <div className="flex flex-col items-center justify-center gap-1">
           <div
@@ -70,7 +67,7 @@ const Option = ({ rpeValue }: { rpeValue: string }) => {
           </div>
         </div>
       )}
-    </RadioGroup.Option>
+    </Radio>
   );
 };
 
