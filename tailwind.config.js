@@ -86,11 +86,16 @@ export default {
           '0%, 100%': { transform: 'rotate(-2deg)' },
           '50%': { transform: 'rotate(2deg)' },
         },
+        swing: {
+          '0%': { transform: 'rotate(-19deg)' },
+          '100%': { transform: 'rotate(19deg)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         wiggle: 'wiggle 200ms ease-in-out',
+        swing: 'swing 1.15s ease-in-out infinite alternate',
       },
     },
   },

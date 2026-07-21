@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 
 import { useFeatureFlags } from '~/api';
-import { Loading } from '~/components';
+import { LoadingScreen } from '~/components';
 
 // Bounds the app-init flags splash to a fixed wall-clock cap, independent of
 // `isPending` (react-query's `isPlaceholderData`), which has no timeout of
@@ -30,7 +30,7 @@ export const FeatureFlagsGate = ({ children }: FeatureFlagsGateProps) => {
     return () => clearTimeout(timer);
   }, []);
 
-  if (isPending && !timedOut) return <Loading />;
+  if (isPending && !timedOut) return <LoadingScreen />;
 
   return <>{children}</>;
 };
