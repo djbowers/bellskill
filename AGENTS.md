@@ -289,11 +289,20 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
 - **Starting weight on enroll (PROD-TBD):** `enroll_in_program` takes four
   optional params mirroring `workout_options`' shared-weight shape —
   `p_shared_weight_one_value`/`_unit` + `p_shared_weight_two_value`/`_unit`. When
-  weight one is set, the clone's `sharedWeightOne/Two` fields (which
-  `resolveSharedWeights.ts` already prioritizes over a movement's own explicit
-  weight) are overridden on every cloned session whose source weight matches the
-  _modal_ weight across the program — i.e. the shared placeholder, not a
-  deliberately different session like DFW's W5D2 test day. If the program has
+  weight one is set, the clone is overridden on every cloned session whose source
+  weight matches the _modal_ weight across the program — i.e. the shared
+  placeholder, not a deliberately different session like DFW's W5D2 test day. The
+  override writes the chosen weight into **both** the session's
+  `sharedWeightOne/Two` fields (the `complexSet` runtime path —
+  `ComplexMovementDisplay` reads them) **and folds it onto every movement's own
+  `weightOne/Two` fields** (`*_enroll_in_program_fold_movement_weights.sql`,
+  PROD-TBD). The movement fold is what actually makes the choice take effect for
+  the common `complexSet: false` programs (DFW etc.): `sharedWeightOne/Two` is a
+  `complexSet`-only concept — the builder review screen and `ActiveWorkoutPage`
+  (`ActiveWorkoutPage.tsx`) read `movement.weightOneValue` directly and never run
+  `resolveSharedWeights` on the start path (that only runs on the log→repeat/history
+  path via `workoutLogToWorkoutOptions.ts`), so writing `sharedWeightOne/Two`
+  alone was inert and the workout ran at the seed placeholder. If the program has
   no numeric modal (bodyweight-first sessions or widely-varied first-movement
   weights make `v_placeholder_weight` NULL), the override falls back to _every_
   cloned session so the enrollee's chosen weight is never silently discarded. A
