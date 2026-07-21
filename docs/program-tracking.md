@@ -1,0 +1,165 @@
+# Program Tracking (behind the `programs` flag)
+
+A sequencing/progress layer over the existing `workout_logs` pipeline. Four
+tables (`programs`, `program_sessions`, `user_programs`,
+`program_session_completions`) plus four SQL functions: `enroll_in_program`
+(copy-on-enroll clone + activate), `complete_program_session` (record a
+completion/skip, advance, and flip the enrollment to `completed` on the final
+session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
+`delete_program_session`. All are `SECURITY INVOKER` RPCs; progress is fully
+**derived from the completions set**, never a stored cursor.
+
+- **Shared programs (seeded, system-owned):** the public shared programs
+  (`owner_id NULL`, `is_public`) ship as migrations (not `seed.sql`, so they
+  also reach staging/prod) — Dry Fighting Weight
+  (`*_seed_dry_fighting_weight.sql`), Dan John's 10,000 Swing Challenge
+  (`*_seed_10000_swing_challenge.sql`), StrongFirst's A+A Protocol "Plan A"
+  (`*_seed_aa_protocol_plan_a.sql`, the first EMOM/`intervalTimer` program), and
+  Dan John's Armor Building Complex
+  (`*_seed_armor_building_complex.sql`, the first `complexSet: true` program).
+  Each is idempotent on `slug` and builds every session's `WorkoutOptions` JSONB
+  (shape `Omit<WorkoutOptions,'startedAt'>`, camelCase keys) via a `pg_temp`
+  helper; add another by mirroring one. Seed shape is asserted in
+  `e2e/program-schema.spec.ts`. `ProgramsPage` surfaces every public program
+  (`sharedPrograms = programs.filter(isPublic)`) in a compact "Browse programs"
+  list (PROD-237) — a single `divide-y` `Card` of rows, each with the title +
+  author/duration metadata and a `size="sm"` Start button (visible text
+  "Start", per-program accessible name via `aria-label={'Start ' + title}` so
+  `getByRole('button', { name: 'Start <title>' })` still resolves), so a newly
+  seeded program shows up automatically.
+- **Seeding a `complexSet: true` program:** see
+  `*_seed_armor_building_complex.sql` (Dan John's ABC). Give each movement a
+  **single-element `repScheme`** so the complex runtime's `maxMovementRungs`
+  (longest repScheme) is 1 and one "Complete Set" completes a whole round, and
+  **populate `sharedWeightOne/Two`** because `ComplexMovementDisplay` reads the
+  shared pair (not per-movement weights) — DFW's non-complex sessions leave those
+  null.
+- **Next session** = lowest-`sequenceIndex` `program_sessions` row with no
+  completion. `useActiveProgram` runs this client-side over the program's ≤~20
+  sessions (a dedicated SQL function buys nothing at that size). It returns the
+  **active _or_ most-recently-completed** enrollment so the "🎉 complete" card
+  still renders after the terminal status flip — consumers that must treat only
+  active enrollments specially (e.g. `ProgramsPage`) guard on
+  `enrollment.status === 'active'`.
+- **Derived cadence (PROD-237):** `programs.num_weeks`/`days_per_week` are
+  **nullable** and no longer asked at creation. `usePrograms` prefers the stored
+  columns when a program authored them (the seeded shared programs) and
+  otherwise **derives** cadence from the program's own embedded sessions —
+  `numWeeks` (highest week) / `daysPerWeek` (widest week), null when it has no
+  sessions yet. The builder and reorder/delete RPCs treat an unset
+  `days_per_week` as 1 (`|| 1` / `COALESCE(...,1)` → one session per week).
+- **Home surfacing:** an active program forces browse mode
+  (`StartWorkoutPage`), rendering `NextProgramWorkoutCard` above the recommended
+  sections. A `programGatePending` flag holds the page in browse until the
+  (async) program query resolves, avoiding a builder→card flash.
+- **Card → start → log seam:** starting a program session threads
+  `{ userProgramId, programSessionId }` through **`ProgramSessionContext`** (a
+  sibling of `WorkoutOptionsProvider` in `App.tsx`), set by `useStartWorkout`
+  and read in `useLogWorkout.onSuccess` to write the completion linked to the new
+  `workout_logs.id`. The linkage is deliberately **NOT** a `workout_logs` column
+  — the completion row is the only new write; the existing log path is untouched.
+- **Progress view (Slice 4):** `ProgramProgressPage` at `programs/:id` renders
+  the program's sessions grouped by week as done ✓ / skipped ⊘ / upcoming chips,
+  plus an "N of M sessions" / "Week X of Y" summary. State is derived by
+  `useProgramProgress(programId)` **entirely** from the enrollment's
+  `program_session_completions` joined to `program_sessions` — nothing from
+  `workout_logs`. Completed chips link to `/history/<workout_log_id>` (the
+  completion row carries the log id), reusing `CompletedWorkoutPage` verbatim.
+  Entry points: each `ProgramsPage` "My programs" card and the home
+  `NextProgramWorkoutCard` (`onViewProgress`).
+- **Reorder / delete (PROD-219, owner-editable programs only):** the builder
+  save-mode surface (`ProgramSessionBuilderPage`) shows up/down + Delete controls
+  per session, gated on `program.ownerId === session.user.id` so read-only
+  shared programs (DFW, the StrongFirst Snatch Test plan — both system-owned,
+  seeded via idempotent migrations) are never editable. Both persist through RPCs
+  (`useReorderProgramSessions` / `useDeleteProgramSession`) because
+  `UNIQUE (program_id, sequence_index)` is **NOT deferrable** — a naive
+  client-side permutation transiently duplicates an index and 409s. Each RPC
+  reindexes atomically with a temp offset (bump every affected row past the
+  current MAX index, then assign 0..N-1) and **relabels week/day** from
+  `days_per_week`, keeping the hand-built order coherent. Delete compacts the
+  survivors to 0..N-1 (no gap) so the ADD path's `sequenceIndex = sessions.length`
+  never collides. Session ids are stable across a reorder (completions keep
+  pointing correctly); a deleted session's completion cascades.
+- **Session edit (PROD-237):** the builder handles both add and edit; the edit
+  route `programs/:id/sessions/:sessionId/edit` reuses `ProgramSessionBuilderPage`,
+  which branches on the `:sessionId` param. Edit mode seeds the builder from the
+  target session via `ProgramSaveMode.initialSession` (a one-shot ref-guarded
+  effect in `StartWorkoutPage` calls `loadIntoBuilder` + sets the title) and saves
+  through `useUpdateProgramSession` (plain owner-gated `UPDATE program_sessions`,
+  rewriting title + `workout_options` only — sequence/week/day and the session id
+  are untouched, so completions keep pointing at it). The add-mode session list
+  gains a per-session **Edit** button (owner-gated, alongside Reorder/Delete).
+- **Program CRUD (PROD-237, owned programs only):** `ProgramsPage`'s "My programs"
+  surface adds three actions. **Cancel** = `useCancelProgram` flips the active
+  enrollment to `abandoned` (reusing the existing status — no new value), freeing
+  the partial `one_active_program_per_user` index; confirm-gated because it
+  discards progress. **Delete** = `useDeleteProgram`, an irreversible
+  `DELETE programs` that cascades sessions/enrollments/completions — **always**
+  behind a confirm dialog. **Archive/Restore** = `useSetProgramArchived` toggles
+  the nullable `programs.archived_at` (migration `*_add_program_archived_at.sql`);
+  archived programs are filtered out of the default list behind a "Show archived"
+  toggle and are reversible, so no confirm. All three are plain RLS-gated REST
+  calls (no RPC) — shared/other-user programs are protected by the existing
+  owner-only policies (a non-owner mutation matches 0 rows, a silent no-op).
+- DB behaviors (RLS, the advance/skip/flip RPC, idempotency, the reorder/delete
+  reindex + constraint-safety, and the PROD-237 cancel/delete-cascade/archive-filter
+  - owner-only guarantees in `e2e/program-crud.spec.ts`) are covered by Playwright
+    e2e against the local Supabase (`e2e/program-*.spec.ts`), not MSW.
+- **Error feedback (PROD-220):** program mutations surface failures through one
+  reusable toast — `ToastProvider`/`useToast` (`~/contexts/ToastContext`, mounted
+  app-wide in `App.tsx`; presentational `Toast` in `~/components/ui/toast`). Each
+  program `useMutation` wires the shared `useProgramMutationErrorHandler` as its
+  `onError`; a new program mutation reuses it by adding that `onError`. The
+  behavior is scoped to programs structurally (it is wired only into program
+  hooks), not via a runtime flag check.
+- **Shared program seeds:** each canonical public program is its own idempotent
+  seed **migration** (`owner_id NULL`, `is_public true`, `ON CONFLICT (slug)`), a
+  `pg_temp` helper building the per-session `WorkoutOptions` JSONB
+  (`Omit<WorkoutOptions,'startedAt'>`, camelCase). DFW
+  (`*_seed_dry_fighting_weight.sql`) is the template; add a focused
+  `e2e/program-<slug>.spec.ts` asserting the seeded shape.
+- **`intervalTimer` (EMOM programs):** DFW leaves it `0`; the A+A Protocol seed
+  (`*_seed_aa_protocol_plan_a.sql`) is the first/reference use. It is a
+  per-session seconds cadence — `ActiveWorkoutPage` auto-fires one "continue"
+  every `intervalTimer` seconds. On a **one-handed** movement (`weightTwoValue: 0`)
+  each auto-fire alternates sides, so `intervalTimer: 30` gives "left on the
+  minute, right 30s later." See the `AAProtocolPlanASession` story +
+  `ActiveWorkoutPage.test.jsx` EMOM-cadence test.
+- **Starting weight on enroll (PROD-TBD):** `enroll_in_program` takes four
+  optional params mirroring `workout_options`' shared-weight shape —
+  `p_shared_weight_one_value`/`_unit` + `p_shared_weight_two_value`/`_unit`. When
+  weight one is set, the clone is overridden on every cloned session whose source
+  weight matches the _modal_ weight across the program — i.e. the shared
+  placeholder, not a deliberately different session like DFW's W5D2 test day. The
+  override writes the chosen weight into **both** the session's
+  `sharedWeightOne/Two` fields (the `complexSet` runtime path —
+  `ComplexMovementDisplay` reads them) **and folds it onto every movement's own
+  `weightOne/Two` fields** (`*_enroll_in_program_fold_movement_weights.sql`,
+  PROD-TBD). The movement fold is what actually makes the choice take effect for
+  the common `complexSet: false` programs (DFW etc.): `sharedWeightOne/Two` is a
+  `complexSet`-only concept — the builder review screen and `ActiveWorkoutPage`
+  (`ActiveWorkoutPage.tsx`) read `movement.weightOneValue` directly and never run
+  `resolveSharedWeights` on the start path (that only runs on the log→repeat/history
+  path via `workoutLogToWorkoutOptions.ts`), so writing `sharedWeightOne/Two`
+  alone was inert and the workout ran at the seed placeholder. If the program has
+  no numeric modal (bodyweight-first sessions or widely-varied first-movement
+  weights make `v_placeholder_weight` NULL), the override falls back to _every_
+  cloned session so the enrollee's chosen weight is never silently discarded. A
+  null weight-two slot means two-hand loading; `jsonb_set` is strict, so each override value is
+  `COALESCE(to_jsonb(x), 'null'::jsonb)` (unset slots become JSON null, not a
+  nulled-out column). Passing no weight params (the default) is byte-identical
+  to the prior copy-verbatim behavior. `ProgramsPage` prompts for this only when
+  enrolling in a shared program you don't own (`program.isPublic && ownerId !==
+you`), reusing the live builder's shared-weight picker
+  (`WeightModeTabs` + `ModifyCountButtons`/`WeightUnitTabs`, now in
+  `~/components`) so the enrollee can pick two-hand/single/double loading,
+  independent left/right (mixed) weights, and kg or lb. Your own programs are
+  already fully weight-configured in the builder. The prompt's **pre-fill** is
+  derived per-program (PROD-232) — `ProgramsPage` lazily fetches the pending
+  program's sessions (`useProgram`) and seeds the picker from
+  `deriveStartingWeight` (`ProgramsPage/utils`), the modal placeholder
+  weight/mode across the program's sessions (same `resolveSharedWeights`
+  priority + modal/tie-break as the RPC). So single-bell programs (Snatch Test)
+  pre-fill single, swing-only (10K Swing) two-hand, DFW/Armor/Easy double — not
+  a fixed 24kg.
