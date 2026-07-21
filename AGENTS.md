@@ -30,7 +30,7 @@ One folder per route under `src/pages/` (`Page.tsx`, `.test.tsx`, `.stories.tsx`
 - Testing: Vitest + React Testing Library, MSW mocking (`src/mocks/`), tests collocated as `*.test.tsx`.
 
 ## Commands
-`npm run dev` · `npm test` / `test-watch` · `compile:ts` · `lint` · `storybook` · `start:server` (local Supabase, before `gen:types`) · `diff-db`. Full list in `package.json`.
+`npm run dev` · `npm test` / `test-watch` · `compile:ts` · `lint` · `storybook` · `start:server` (local Supabase, before `gen:types`) · `diff-db`. Full list in `package.json`. `npm run dev` reads local Supabase defaults (`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`) from `.env.development`, so run `start:server` first; override via a gitignored `.env.local`.
 
 ## Deeper docs (read when working in these areas)
 - Movement catalog (CSV source, ingest, migration reload): `docs/movement-catalog.md`
