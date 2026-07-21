@@ -37,3 +37,13 @@
   NODE_VERSION = "24"
   VITE_SUPABASE_URL = "https://obtrxswejclgxjfyddow.supabase.co"
   VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9idHJ4c3dlamNsZ3hqZnlkZG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTk0Nzk2ODQsImV4cCI6MjAxNTA1NTY4NH0.insdjysFDW8dfU-IhgvN-Q3T2fNmeSL2FcejeM2KaGo"
+
+  # Deploy previews auto-sign-in as the seeded staging test user and force every
+  # feature flag on, so a PR preview is immediately usable with no email/OTP dance
+  # and no manual preview toggle. Scoped to this context ONLY — production never
+  # sets these, and the test user exists only in the staging project, so the
+  # auto-login path cannot activate on prod. The password is the same throwaway
+  # staging credential already committed in supabase/seed.sql.
+  VITE_DEPLOY_PREVIEW = "true"
+  VITE_PREVIEW_USER_EMAIL = "test@example.com"
+  VITE_PREVIEW_USER_PASSWORD = "testpassword123"

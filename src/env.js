@@ -1,1 +1,7 @@
-export const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY } = import.meta.env;
+export const {
+  VITE_SUPABASE_URL,
+  VITE_SUPABASE_ANON_KEY,
+  VITE_DEPLOY_PREVIEW,
+  VITE_PREVIEW_USER_EMAIL,
+  VITE_PREVIEW_USER_PASSWORD,
+} = import.meta.env;

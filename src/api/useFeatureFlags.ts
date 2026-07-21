@@ -8,7 +8,7 @@ import {
   SAFE_DEFAULT_FEATURES,
   resolveExperimentFeatures,
 } from '~/config/experiments';
-import { isPreviewingAllFeatures } from '~/config/features';
+import { isDeployPreview, isPreviewingAllFeatures } from '~/config/features';
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
 
@@ -87,9 +87,10 @@ export const useFeatureFlags = (): FeatureFlagsResult => {
     retryDelay: 750,
   });
 
-  // Owner preview override: force every experiment feature on so owners can
-  // preview in-progress surfaces in production, matching getFeatures().
-  if (isPreviewingAllFeatures(session)) {
+  // Force every experiment feature on for deploy previews and for owners who
+  // enabled the preview override, so in-progress surfaces are visible — matching
+  // getFeatures().
+  if (isDeployPreview() || isPreviewingAllFeatures(session)) {
     return { features: ALL_EXPERIMENT_FEATURES_ON, isPending: false };
   }
 
