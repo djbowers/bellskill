@@ -717,7 +717,12 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
       sharedWeightOneUnit: string | null;
       sharedWeightTwoValue: number | null;
       sharedWeightTwoUnit: string | null;
-      movements: Array<{ weightOneValue: number }>;
+      movements: Array<{
+        weightOneValue: number | null;
+        weightOneUnit: string | null;
+        weightTwoValue: number | null;
+        weightTwoUnit: string | null;
+      }>;
     };
   }
 
@@ -766,8 +771,9 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
     expect(active[0].program_id).toBe(cloneId);
 
     // Every regular session (seq 0-12): sharedWeight overridden to the chosen
-    // per-slot value + unit (resolveSharedWeights then overrides every
-    // movement's own weight from these four fields).
+    // per-slot value + unit, AND the chosen weight folded onto every movement's
+    // own weight (the shape ActiveWorkoutPage / the builder read for non-complex
+    // sessions).
     const regularSessions = sessions.filter((s) => s.sequence_index < 13);
     expect(regularSessions).toHaveLength(13);
     for (const session of regularSessions) {
@@ -775,6 +781,12 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
       expect(session.workout_options.sharedWeightOneUnit).toBe('pounds');
       expect(session.workout_options.sharedWeightTwoValue).toBe(16);
       expect(session.workout_options.sharedWeightTwoUnit).toBe('kilograms');
+      for (const movement of session.workout_options.movements) {
+        expect(movement.weightOneValue).toBe(20);
+        expect(movement.weightOneUnit).toBe('pounds');
+        expect(movement.weightTwoValue).toBe(16);
+        expect(movement.weightTwoUnit).toBe('kilograms');
+      }
     }
 
     // The W5D2 test day (seq 13) is left exactly as authored in the source:
@@ -807,6 +819,13 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
       expect(session.workout_options.sharedWeightOneUnit).toBe('kilograms');
       expect(session.workout_options.sharedWeightTwoValue).toBeNull();
       expect(session.workout_options.sharedWeightTwoUnit).toBeNull();
+      // Folded onto every movement: double (seed 24/24) becomes two-hand 28.
+      for (const movement of session.workout_options.movements) {
+        expect(movement.weightOneValue).toBe(28);
+        expect(movement.weightOneUnit).toBe('kilograms');
+        expect(movement.weightTwoValue).toBeNull();
+        expect(movement.weightTwoUnit).toBeNull();
+      }
     }
 
     // The W5D2 test day is still untouched.
@@ -894,7 +913,12 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
     expect(clones).toHaveLength(1);
 
     const sessions = await restJson<
-      Array<{ workout_options: { sharedWeightOneValue: number | null } }>
+      Array<{
+        workout_options: {
+          sharedWeightOneValue: number | null;
+          movements: Array<{ weightOneValue: number | null }>;
+        };
+      }>
     >(
       'GET',
       `program_sessions?program_id=eq.${clones[0].id}&select=workout_options&order=sequence_index.asc`,
@@ -903,6 +927,8 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
     expect(sessions).toHaveLength(2);
     for (const session of sessions) {
       expect(session.workout_options.sharedWeightOneValue).toBe(16);
+      // Folded onto the bodyweight movement too (null -> chosen 16).
+      expect(session.workout_options.movements[0].weightOneValue).toBe(16);
     }
   });
 
