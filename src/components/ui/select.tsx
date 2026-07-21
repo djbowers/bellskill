@@ -11,13 +11,15 @@ import { cn } from '~/lib/utils';
 
 import { Button } from './button';
 
-const Select = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root> & {
-    showReset?: boolean;
-    onReset?: () => void;
-  }
->(({ showReset, onReset, children, ...props }) => {
+const Select = ({
+  showReset,
+  onReset,
+  children,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root> & {
+  showReset?: boolean;
+  onReset?: () => void;
+}) => {
   return (
     <div className="flex w-full items-center gap-0.5">
       <SelectPrimitive.Root {...props}>{children}</SelectPrimitive.Root>
@@ -28,7 +30,7 @@ const Select = React.forwardRef<
       )}
     </div>
   );
-});
+};
 Select.displayName = SelectPrimitive.Root.displayName;
 
 const SelectGroup = SelectPrimitive.Group;

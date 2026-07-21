@@ -1,4 +1,5 @@
 import { Session } from '@supabase/supabase-js';
+import type React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
 import { setPreviewOverrideEnabled } from '~/config/features';
@@ -22,7 +23,7 @@ export default {
     viewport: { defaultViewport: 'mobile1' },
   },
   decorators: [
-    (Story: () => JSX.Element) => (
+    (Story: () => React.JSX.Element) => (
       <SessionProvider value={ownerSession}>
         <Story />
       </SessionProvider>
@@ -32,7 +33,7 @@ export default {
 
 export const Default = {
   decorators: [
-    (Story: () => JSX.Element) => (
+    (Story: () => React.JSX.Element) => (
       <MemoryRouter initialEntries={['/']}>
         <Story />
       </MemoryRouter>
@@ -42,7 +43,7 @@ export const Default = {
 
 export const OnHistory = {
   decorators: [
-    (Story: () => JSX.Element) => (
+    (Story: () => React.JSX.Element) => (
       <MemoryRouter initialEntries={['/history']}>
         <Story />
       </MemoryRouter>
