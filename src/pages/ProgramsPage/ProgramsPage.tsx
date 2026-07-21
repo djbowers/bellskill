@@ -17,7 +17,6 @@ import {
   useSetProgramArchived,
 } from '~/api';
 import { ModifyCountButtons, Page, WeightUnitTabs } from '~/components';
-import { WeightModeTabs } from '~/components/MovementAutocomplete';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import {
@@ -32,7 +31,7 @@ import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { useSession } from '~/contexts';
 import { Program, WeightUnit } from '~/types';
-import { getWeightTabValue, getWeightUnitLabel } from '~/utils';
+import { getWeightUnitLabel } from '~/utils';
 
 import { deriveStartingWeight } from './utils/deriveStartingWeight';
 
@@ -158,32 +157,6 @@ export const ProgramsPage = () => {
       { programId, ...weights },
       { onSuccess: () => navigate('/') },
     );
-
-  const sharedWeightTabValue = getWeightTabValue({
-    weightOneValue: sharedWeightOneValue,
-    weightTwoValue: sharedWeightTwoValue,
-  });
-
-  const handleChangeSharedWeightTab = (value: string) => {
-    setSharedWeightOneValue(
-      value === 'none'
-        ? null
-        : sharedWeightOneValue || DEFAULT_STARTING_WEIGHT_VALUE,
-    );
-    setSharedWeightOneUnit(
-      value === 'none' ? null : sharedWeightOneUnit || DEFAULT_WEIGHT_UNIT,
-    );
-    setSharedWeightTwoValue(
-      value === 'double'
-        ? sharedWeightTwoValue || DEFAULT_STARTING_WEIGHT_VALUE
-        : value === '1h'
-          ? 0
-          : null,
-    );
-    setSharedWeightTwoUnit(
-      value === 'double' ? sharedWeightTwoUnit || DEFAULT_WEIGHT_UNIT : null,
-    );
-  };
 
   const handleChangeSharedWeightOneValue = (value: number) =>
     setSharedWeightOneValue(Math.max(1, value));
@@ -661,13 +634,6 @@ export const ProgramsPage = () => {
           <div className="flex flex-col gap-1">
             {!startingWeightReady && (
               <p className="text-sm text-muted-foreground">Loading…</p>
-            )}
-            {startingWeightReady && (
-              <WeightModeTabs
-                value={sharedWeightTabValue}
-                onValueChange={handleChangeSharedWeightTab}
-                hideNone
-              />
             )}
             {startingWeightReady && sharedWeightOneValue !== null && (
               <ModifyCountButtons
