@@ -2,7 +2,7 @@ import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 
-import { Loading, PWAInstallPrompt, SafeAreaWrapper } from '~/components';
+import { LoadingScreen, PWAInstallPrompt, SafeAreaWrapper } from '~/components';
 import { EntitlementProvider } from '~/contexts/EntitlementContext';
 import { ProgramSessionProvider } from '~/contexts/ProgramSessionContext';
 import { ToastProvider } from '~/contexts/ToastContext';
@@ -69,7 +69,7 @@ export function App() {
 
   return (
     <SafeAreaWrapper>
-      {session === undefined && <Loading />}
+      {session === undefined && <LoadingScreen />}
 
       {session === null && <Signup />}
 
