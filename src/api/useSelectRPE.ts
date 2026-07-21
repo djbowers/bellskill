@@ -12,7 +12,7 @@ export const useSelectRPE = (workoutLogId: string) => {
       return updateWorkoutLog(selectedRpe, workoutLogId);
     },
     onSuccess: () => {
-      queryClient.refetchQueries({ queryKey: [QUERIES.WORKOUT_LOG] });
+      queryClient.invalidateQueries({ queryKey: [QUERIES.WORKOUT_LOG] });
     },
   });
 };

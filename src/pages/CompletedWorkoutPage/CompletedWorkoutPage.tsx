@@ -1,5 +1,5 @@
 import { ArrowRightIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { useEffect, useRef } from 'react';
+import { startTransition, useEffect, useOptimistic, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import {
@@ -53,8 +53,12 @@ export const CompletedWorkoutPage = () => {
     data: deletedWorkoutLogId,
     isPending: isDeletingWorkoutLog,
   } = useDeleteWorkoutLog(id);
-  const { mutate: selectRPE } = useSelectRPE(id);
+  const { mutateAsync: selectRPE } = useSelectRPE(id);
   const { mutate: updateWorkoutNotes } = useUpdateWorkoutNotes(id);
+
+  const [optimisticRpe, setOptimisticRpe] = useOptimistic(
+    workoutLog?.rpe ?? null,
+  );
 
   const notesRef = useRef<HTMLTextAreaElement>(null);
 
@@ -70,7 +74,10 @@ export const CompletedWorkoutPage = () => {
   const handleClickDelete = () => deleteWorkoutLog();
 
   const handleSelectRPE = (selectedRPE: WorkoutLog['rpe']) =>
-    selectRPE(selectedRPE);
+    startTransition(async () => {
+      setOptimisticRpe(selectedRPE);
+      await selectRPE(selectedRPE);
+    });
 
   const handleAddNotes = () => updateWorkoutNotes('');
   const handleClearNotes = () => updateWorkoutNotes(null);
@@ -122,7 +129,7 @@ export const CompletedWorkoutPage = () => {
       >
         <HeadlineStats workoutLog={workoutLog} />
 
-        <RPESelector onSelectRPE={handleSelectRPE} rpeValue={workoutLog.rpe} />
+        <RPESelector onSelectRPE={handleSelectRPE} rpeValue={optimisticRpe} />
 
         <WorkoutHistoryItem
           completedAt={workoutLog.completedAt}

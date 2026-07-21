@@ -36,7 +36,7 @@ export const EntitlementProvider = ({ ...props }) => {
     },
   };
 
-  return <EntitlementContext.Provider value={value} {...props} />;
+  return <EntitlementContext value={value} {...props} />;
 };
 
 // eslint-disable-next-line react-refresh/only-export-components -- consumer hook is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
