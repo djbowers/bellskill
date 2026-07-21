@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { useActiveProgram, useEnrollProgram, useProgram } from '~/api';
 import { ModifyCountButtons, Page, WeightUnitTabs } from '~/components';
-import { WeightModeTabs } from '~/components/MovementAutocomplete';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import {
@@ -22,13 +21,13 @@ import {
   WeightUnit,
   WorkoutGoalUnits,
 } from '~/types';
-import { getWeightTabValue, getWeightUnitLabel } from '~/utils';
+import { getWeightUnitLabel } from '~/utils';
 
 import { deriveStartingWeight } from './utils/deriveStartingWeight';
 
-// Fallback weight/unit for the mode-switch handlers (when the user adds a
-// previously-null slot). The picker's initial pre-fill is derived per-program
-// from the program's own sessions — see deriveStartingWeight.
+// Fallback weight/unit for the picker's initial state before the per-program
+// pre-fill from deriveStartingWeight lands. The loading mode is fixed by the
+// program's own sessions — only the weights are editable here.
 const DEFAULT_STARTING_WEIGHT_VALUE = 24;
 const DEFAULT_WEIGHT_UNIT: WeightUnit = 'kilograms';
 
@@ -111,32 +110,6 @@ export const ProgramDetailsPage = () => {
   useEffect(() => {
     if (isOwnProgram && id) navigate(`/programs/${id}`, { replace: true });
   }, [isOwnProgram, id, navigate]);
-
-  const sharedWeightTabValue = getWeightTabValue({
-    weightOneValue: sharedWeightOneValue,
-    weightTwoValue: sharedWeightTwoValue,
-  });
-
-  const handleChangeSharedWeightTab = (value: string) => {
-    setSharedWeightOneValue(
-      value === 'none'
-        ? null
-        : sharedWeightOneValue || DEFAULT_STARTING_WEIGHT_VALUE,
-    );
-    setSharedWeightOneUnit(
-      value === 'none' ? null : sharedWeightOneUnit || DEFAULT_WEIGHT_UNIT,
-    );
-    setSharedWeightTwoValue(
-      value === 'double'
-        ? sharedWeightTwoValue || DEFAULT_STARTING_WEIGHT_VALUE
-        : value === '1h'
-          ? 0
-          : null,
-    );
-    setSharedWeightTwoUnit(
-      value === 'double' ? sharedWeightTwoUnit || DEFAULT_WEIGHT_UNIT : null,
-    );
-  };
 
   const handleChangeSharedWeightOneValue = (value: number) =>
     setSharedWeightOneValue(Math.max(1, value));
@@ -271,13 +244,6 @@ export const ProgramDetailsPage = () => {
           it session by session once you&apos;re in the program.
         </p>
         {!seeded && <p className="text-sm text-muted-foreground">Loading…</p>}
-        {seeded && (
-          <WeightModeTabs
-            value={sharedWeightTabValue}
-            onValueChange={handleChangeSharedWeightTab}
-            hideNone
-          />
-        )}
         {seeded && sharedWeightOneValue !== null && (
           <ModifyCountButtons
             onClickMinus={() =>

@@ -159,6 +159,12 @@ describe('ProgramDetailsPage', () => {
     expect(inputs[0]).toHaveValue(24);
     expect(inputs[1]).toHaveValue(24);
 
+    // The loading mode is fixed by the program's sessions — no mode tabs to
+    // switch a two-hand program into double bells (mirrors #150).
+    expect(
+      screen.queryByRole('tab', { name: 'Two-Hand' }),
+    ).not.toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
 
     expect(enrollMutate).toHaveBeenCalledWith(
