@@ -11,6 +11,7 @@ import {
   MovementsPage,
   NotFoundPage,
   PaywallPage,
+  ProgramDetailsPage,
   ProgramProgressPage,
   ProgramSessionBuilderPage,
   ProgramsPage,
@@ -77,6 +78,10 @@ export const createRoutes = (flags: Features = features): RouteObject[] => [
         ? [
             { path: 'programs', element: <ProgramsPage /> },
             { path: 'programs/:id', element: <ProgramProgressPage /> },
+            {
+              path: 'programs/:id/details',
+              element: <ProgramDetailsPage />,
+            },
             {
               path: 'programs/:id/sessions/new',
               element: <ProgramSessionBuilderPage />,
