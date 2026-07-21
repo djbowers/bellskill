@@ -7,6 +7,7 @@ export * from './HistoryPage';
 export * from './MovementsPage';
 export * from './NotFoundPage';
 export * from './PaywallPage';
+export * from './ProgramDetailsPage';
 export * from './ProgramProgressPage';
 export * from './ProgramSessionBuilderPage';
 export * from './ProgramsPage';

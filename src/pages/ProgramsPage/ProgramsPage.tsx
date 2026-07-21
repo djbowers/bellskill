@@ -1,22 +1,21 @@
+import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import {
   AnalyticsEvent,
-  EnrollProgramArgs,
   trackEvent,
   useActiveProgram,
   useCancelProgram,
   useCreateProgram,
   useDeleteProgram,
   useEnrollProgram,
-  useProgram,
   useProgramProgress,
   usePrograms,
   useResumeProgram,
   useSetProgramArchived,
 } from '~/api';
-import { ModifyCountButtons, Page, WeightUnitTabs } from '~/components';
+import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import {
@@ -30,16 +29,7 @@ import {
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { useSession } from '~/contexts';
-import { Program, WeightUnit } from '~/types';
-import { getWeightUnitLabel } from '~/utils';
-
-import { deriveStartingWeight } from './utils/deriveStartingWeight';
-
-// Fallback weight/unit for the mode-switch handlers (when the user adds a
-// previously-null slot). The prompt's initial pre-fill is derived per-program
-// from the enrolled program's own sessions — see deriveStartingWeight.
-const DEFAULT_STARTING_WEIGHT_VALUE = 24;
-const DEFAULT_WEIGHT_UNIT: WeightUnit = 'kilograms';
+import { Program } from '~/types';
 
 // "5 weeks · 3/week" from the program's derived cadence, or null before any
 // session gives it one (see Program.numWeeks — derived from the sessions).
@@ -82,26 +72,6 @@ export const ProgramsPage = () => {
     programId: string;
     userProgramId: string;
   } | null>(null);
-  // Shared program awaiting a starting-weight confirmation before enrolling.
-  const [pendingWeightProgramId, setPendingWeightProgramId] = useState<
-    string | null
-  >(null);
-  // The program the picker has been pre-filled for; the prompt waits on this so
-  // it never briefly shows a stale default before its derived pre-fill lands.
-  const [seededProgramId, setSeededProgramId] = useState<string | null>(null);
-  // Starting shared weight for the prompt, mirroring the live builder's shared
-  // weight picker (mode + independent left/right value + unit). Seeded per
-  // program from its own sessions once the prompt opens (see the effect below).
-  const [sharedWeightOneValue, setSharedWeightOneValue] = useState<
-    number | null
-  >(DEFAULT_STARTING_WEIGHT_VALUE);
-  const [sharedWeightOneUnit, setSharedWeightOneUnit] =
-    useState<WeightUnit | null>(DEFAULT_WEIGHT_UNIT);
-  const [sharedWeightTwoValue, setSharedWeightTwoValue] = useState<
-    number | null
-  >(DEFAULT_STARTING_WEIGHT_VALUE);
-  const [sharedWeightTwoUnit, setSharedWeightTwoUnit] =
-    useState<WeightUnit | null>(DEFAULT_WEIGHT_UNIT);
 
   const sharedPrograms = programs.filter((p) => p.isPublic);
   const myPrograms = programs.filter((p) => !p.isPublic);
@@ -110,81 +80,19 @@ export const ProgramsPage = () => {
   const myLivePrograms = myPrograms.filter((p) => !p.archivedAt);
   const myArchivedPrograms = myPrograms.filter((p) => !!p.archivedAt);
 
-  // Load the pending program's sessions so the prompt can pre-fill from its own
-  // modal placeholder weight/mode rather than a fixed default.
-  const { data: pendingProgram, isError: pendingProgramError } = useProgram(
-    pendingWeightProgramId ?? undefined,
-  );
-  const startingWeightReady = seededProgramId === pendingWeightProgramId;
-
   // Prior progress for the program a "Start" click is being routed for. Drives
   // the resume-vs-start-over branch below.
   const { data: candidateProgress, isError: candidateProgressError } =
     useProgramProgress(pendingEnrollId ?? undefined);
 
-  useEffect(() => {
-    if (!pendingWeightProgramId) return;
-    // Seed once per open (proceedToEnroll resets seededProgramId): re-running
-    // would clobber the user's own picker edits.
-    if (seededProgramId === pendingWeightProgramId) return;
-    // On a fetch error, fall back to deriveStartingWeight's generic default so
-    // the picker still opens editable rather than sticking on "Loading…".
-    if (!pendingProgram && !pendingProgramError) return;
-    const derived = deriveStartingWeight(pendingProgram?.sessions ?? []);
-    setSharedWeightOneValue(derived.sharedWeightOneValue);
-    setSharedWeightOneUnit(derived.sharedWeightOneUnit);
-    setSharedWeightTwoValue(derived.sharedWeightTwoValue);
-    setSharedWeightTwoUnit(derived.sharedWeightTwoUnit);
-    setSeededProgramId(pendingWeightProgramId);
-  }, [
-    pendingWeightProgramId,
-    pendingProgram,
-    pendingProgramError,
-    seededProgramId,
-  ]);
-
-  const enrollIn = (
-    programId: string,
-    weights?: Pick<
-      EnrollProgramArgs,
-      | 'sharedWeightOneValue'
-      | 'sharedWeightOneUnit'
-      | 'sharedWeightTwoValue'
-      | 'sharedWeightTwoUnit'
-    >,
-  ) =>
-    enroll.mutate(
-      { programId, ...weights },
-      { onSuccess: () => navigate('/') },
-    );
-
-  const handleChangeSharedWeightOneValue = (value: number) =>
-    setSharedWeightOneValue(Math.max(1, value));
-
-  const handleChangeSharedWeightTwoValue = (value: number) =>
-    setSharedWeightTwoValue(Math.max(1, value));
+  const enrollIn = (programId: string) =>
+    enroll.mutate({ programId }, { onSuccess: () => navigate('/') });
 
   // Only an *active* enrollment blocks a fresh enroll — a completed program may
   // still be returned by useActiveProgram (to drive the home "complete" card),
   // but starting a new program then needs no "switch?" confirmation.
   const activeEnrollment =
     activeProgram?.enrollment.status === 'active' ? activeProgram : null;
-
-  // A shared program you don't own gets a starting-weight prompt (every
-  // session ships with the same placeholder load); your own programs are
-  // already fully weight-configured in the builder, so they skip it.
-  const isSharedNotOwned = (program: Program) =>
-    program.isPublic && program.ownerId !== session?.user?.id;
-
-  const proceedToEnroll = (programId: string) => {
-    const program = programs.find((p) => p.id === programId);
-    if (program && isSharedNotOwned(program)) {
-      setSeededProgramId(null);
-      setPendingWeightProgramId(programId);
-    } else {
-      enrollIn(programId);
-    }
-  };
 
   // Routes a "Start" click once its prior progress is known: prior progress →
   // resume-vs-start-over prompt; else an active program on a different program →
@@ -205,7 +113,7 @@ export const ProgramsPage = () => {
     ) {
       setPendingSwitchId(programId);
     } else {
-      proceedToEnroll(programId);
+      enrollIn(programId);
     }
   };
 
@@ -225,7 +133,7 @@ export const ProgramsPage = () => {
     ) {
       setPendingSwitchId(programId);
     } else {
-      proceedToEnroll(programId);
+      enrollIn(programId);
     }
   };
 
@@ -246,7 +154,7 @@ export const ProgramsPage = () => {
     if (!pendingSwitchId) return;
     const target = pendingSwitchId;
     setPendingSwitchId(null);
-    proceedToEnroll(target);
+    enrollIn(target);
   };
 
   const resumeDialogProgram =
@@ -277,19 +185,7 @@ export const ProgramsPage = () => {
     if (!resumeTarget) return;
     const { programId } = resumeTarget;
     setResumeTarget(null);
-    proceedToEnroll(programId);
-  };
-
-  const confirmStartingWeight = () => {
-    if (!pendingWeightProgramId) return;
-    const target = pendingWeightProgramId;
-    setPendingWeightProgramId(null);
-    enrollIn(target, {
-      sharedWeightOneValue,
-      sharedWeightOneUnit,
-      sharedWeightTwoValue,
-      sharedWeightTwoUnit,
-    });
+    enrollIn(programId);
   };
 
   const handleCreate = () => {
@@ -329,9 +225,11 @@ export const ProgramsPage = () => {
           <h2 className="text-sm font-semibold">Browse programs</h2>
           <Card className="divide-y">
             {sharedPrograms.map((program) => (
-              <div
+              <Link
                 key={program.id}
-                className="flex items-center justify-between gap-2 p-2"
+                to={`/programs/${program.id}/details`}
+                aria-label={`View ${program.title}`}
+                className="flex items-center justify-between gap-2 p-2 hover:bg-secondary"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">
@@ -342,15 +240,11 @@ export const ProgramsPage = () => {
                     {cadenceLabel(program) ?? 'No sessions yet'}
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  aria-label={`Start ${program.title}`}
-                  onClick={() => handleEnroll(program.id)}
-                  disabled={enroll.isLoading || resume.isLoading}
-                >
-                  Start
-                </Button>
-              </div>
+                <ChevronRightIcon
+                  aria-hidden
+                  className="h-2 w-2 shrink-0 text-muted-foreground"
+                />
+              </Link>
             ))}
           </Card>
         </div>
@@ -611,83 +505,6 @@ export const ProgramsPage = () => {
               disabled={enroll.isLoading || resume.isLoading}
             >
               Resume
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={pendingWeightProgramId !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingWeightProgramId(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Starting weight</DialogTitle>
-            <DialogDescription>
-              Set the weight your working sessions in this program start with.
-              You can still adjust it session by session once you&apos;re in the
-              program.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-1">
-            {!startingWeightReady && (
-              <p className="text-sm text-muted-foreground">Loading…</p>
-            )}
-            {startingWeightReady && sharedWeightOneValue !== null && (
-              <ModifyCountButtons
-                onClickMinus={() =>
-                  handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
-                }
-                onClickPlus={() =>
-                  handleChangeSharedWeightOneValue(sharedWeightOneValue + 1)
-                }
-                unit={getWeightUnitLabel(sharedWeightOneUnit)}
-                unitTabs={
-                  <WeightUnitTabs
-                    value={sharedWeightOneUnit}
-                    onChange={setSharedWeightOneUnit}
-                  />
-                }
-                value={sharedWeightOneValue}
-                onChange={handleChangeSharedWeightOneValue}
-              />
-            )}
-            {startingWeightReady &&
-              sharedWeightTwoValue !== null &&
-              sharedWeightTwoValue > 0 && (
-                <ModifyCountButtons
-                  onClickMinus={() =>
-                    handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
-                  }
-                  onClickPlus={() =>
-                    handleChangeSharedWeightTwoValue(sharedWeightTwoValue + 1)
-                  }
-                  unit={getWeightUnitLabel(sharedWeightTwoUnit)}
-                  unitTabs={
-                    <WeightUnitTabs
-                      value={sharedWeightTwoUnit}
-                      onChange={setSharedWeightTwoUnit}
-                    />
-                  }
-                  value={sharedWeightTwoValue}
-                  onChange={handleChangeSharedWeightTwoValue}
-                />
-              )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setPendingWeightProgramId(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={confirmStartingWeight}
-              disabled={enroll.isLoading || !startingWeightReady}
-            >
-              Start program
             </Button>
           </DialogFooter>
         </DialogContent>
