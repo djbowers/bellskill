@@ -16,8 +16,6 @@ export const LoadingScreen = () => (
       />
     </svg>
 
-    <span className="text-xl font-semibold tracking-tight">BellSkill</span>
-
     <span className="sr-only">Loading BellSkill…</span>
   </div>
 );
