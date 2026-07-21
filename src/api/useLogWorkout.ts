@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { useProgramSession, useSession, useWorkoutOptions } from '~/contexts';
@@ -57,7 +57,7 @@ export const useLogWorkout = () => {
           status: 'completed',
         })
           .then(() => {
-            void queryClient.invalidateQueries([QUERIES.ACTIVE_PROGRAM]);
+            void queryClient.invalidateQueries({ queryKey: [QUERIES.ACTIVE_PROGRAM] });
           })
           .catch((error) => {
             console.error('Failed to advance program session', error);
@@ -70,9 +70,9 @@ export const useLogWorkout = () => {
       // from workout_logs (see the user_activation view). On a cold cache (e.g.
       // a deep link straight to /active) the value is unknown, so emit null
       // rather than a misleading `false`.
-      const cachedLogs = queryClient.getQueryData<WorkoutLog[]>(
+      const cachedLogs = queryClient.getQueryData<WorkoutLog[]>([
         QUERIES.WORKOUT_LOGS,
-      );
+      ]);
       const completedAt = Date.now();
       const startedAtMs = workoutOptions.startedAt?.getTime();
       const signupAtMs = user.created_at ? Date.parse(user.created_at) : NaN;

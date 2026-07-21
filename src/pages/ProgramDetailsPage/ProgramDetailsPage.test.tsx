@@ -118,7 +118,7 @@ describe('ProgramDetailsPage', () => {
     mockUseActiveProgram.mockReturnValue({ data: null });
     mockUseEnrollProgram.mockReturnValue({
       mutate: enrollMutate,
-      isLoading: false,
+      isPending: false,
     });
     mockUseProgram.mockReturnValue({
       data: { program: dfw, sessions: dfwSessions },

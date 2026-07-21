@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
@@ -28,7 +28,7 @@ export const useCreateUserMovement = () => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries([QUERIES.USER_MOVEMENTS]);
+      queryClient.invalidateQueries({ queryKey: [QUERIES.USER_MOVEMENTS] });
     },
   });
 };

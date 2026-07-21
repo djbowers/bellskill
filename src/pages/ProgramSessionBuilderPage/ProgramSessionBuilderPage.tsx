@@ -88,8 +88,8 @@ export const ProgramSessionBuilderPage = () => {
   // read-only DFW is never editable here). `sessions` is already ordered by
   // `sequenceIndex`, so its array position is the flat move index.
   const canEdit = !!session?.user?.id && program.ownerId === session.user.id;
-  const reordering = reorderSessions.isLoading;
-  const deleting = deleteSession.isLoading;
+  const reordering = reorderSessions.isPending;
+  const deleting = deleteSession.isPending;
 
   const handleSave = (
     options: Omit<WorkoutOptions, 'startedAt'>,
@@ -187,7 +187,7 @@ export const ProgramSessionBuilderPage = () => {
         key={`edit-${editingSession.id}`}
         programSaveMode={{
           onSave: handleUpdate,
-          saving: updateSession.isLoading,
+          saving: updateSession.isPending,
           initialSession: {
             workoutOptions: editingSession.workoutOptions,
             title: editingSession.title,
@@ -236,7 +236,7 @@ export const ProgramSessionBuilderPage = () => {
                     size="sm"
                     variant="ghost"
                     onClick={() => handleDuplicateWeek(group)}
-                    disabled={duplicateWeek.isLoading}
+                    disabled={duplicateWeek.isPending}
                   >
                     Duplicate week
                   </Button>
@@ -301,7 +301,7 @@ export const ProgramSessionBuilderPage = () => {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleDuplicateSession(groupSession)}
-                          disabled={duplicateSession.isLoading}
+                          disabled={duplicateSession.isPending}
                         >
                           Duplicate
                         </Button>
@@ -335,7 +335,7 @@ export const ProgramSessionBuilderPage = () => {
       key={`session-${sessions.length}`}
       programSaveMode={{
         onSave: handleSave,
-        saving: saveSession.isLoading,
+        saving: saveSession.isPending,
         beforeBuilder,
       }}
     />

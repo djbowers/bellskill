@@ -1,5 +1,5 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 
 import { supabase } from '../supabaseClient';
 import type { RecommendSessionResponse } from '~/types';
@@ -61,4 +61,5 @@ const recommendSession = async (): Promise<RecommendSessionResponse> => {
  * recommendation. Premium gating is enforced server-side; the client only
  * invokes this for premium users (free users see a preview modal instead).
  */
-export const useRecommendSession = () => useMutation(recommendSession);
+export const useRecommendSession = () =>
+  useMutation({ mutationFn: recommendSession });

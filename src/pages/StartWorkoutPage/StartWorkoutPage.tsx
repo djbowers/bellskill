@@ -671,7 +671,7 @@ export const StartWorkoutPage = ({
   // Skip the next session: writes a `skipped` completion (no workout_log), which
   // advances the cursor to the following session without leaving the home card.
   const handleSkipProgram = () => {
-    if (!activeProgram?.nextSession || completeProgramSession.isLoading) return;
+    if (!activeProgram?.nextSession || completeProgramSession.isPending) return;
     completeProgramSession.mutate({
       userProgramId: activeProgram.enrollment.id,
       programSessionId: activeProgram.nextSession.session.id,
@@ -802,7 +802,7 @@ export const StartWorkoutPage = ({
               isComplete={activeProgram.isComplete}
               onStart={handleStartProgram}
               onSkip={handleSkipProgram}
-              skipping={completeProgramSession.isLoading}
+              skipping={completeProgramSession.isPending}
               onViewProgress={() =>
                 navigate(`/programs/${activeProgram.program.id}`)
               }

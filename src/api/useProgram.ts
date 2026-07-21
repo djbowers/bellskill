@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { Program, ProgramSession } from '~/types';
@@ -18,11 +18,11 @@ export interface ProgramWithSessions {
  * duplicate helpers.
  */
 export const useProgram = (programId?: string) => {
-  return useQuery(
-    [QUERIES.PROGRAM, programId],
-    () => fetchProgram(programId!),
-    { enabled: !!programId },
-  );
+  return useQuery({
+    queryKey: [QUERIES.PROGRAM, programId],
+    queryFn: () => fetchProgram(programId!),
+    enabled: !!programId,
+  });
 };
 
 const fetchProgram = async (

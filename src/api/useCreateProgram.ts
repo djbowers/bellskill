@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
@@ -42,7 +42,7 @@ export const useCreateProgram = () => {
       return mapProgramRow(data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries([QUERIES.PROGRAMS]);
+      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAMS] });
     },
     onError,
   });

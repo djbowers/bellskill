@@ -1,4 +1,4 @@
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 
 import { supabase } from '../supabaseClient';
 
@@ -19,4 +19,6 @@ const setSubscription = async (state: SubscriptionState): Promise<void> => {
  * the owner check server-side; non-owners get a 403.
  */
 export const useSetSubscription = () =>
-  useMutation((state: SubscriptionState) => setSubscription(state));
+  useMutation({
+    mutationFn: (state: SubscriptionState) => setSubscription(state),
+  });

@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
@@ -90,9 +90,10 @@ export const useEntitlementQuery = () => {
   const session = useSession();
   const userId = session?.user?.id;
 
-  return useQuery(
-    [QUERIES.ENTITLEMENT, userId],
-    () => fetchSubscriptionRow(userId),
-    { enabled: !!userId, select: (row) => deriveEntitlement(row) },
-  );
+  return useQuery({
+    queryKey: [QUERIES.ENTITLEMENT, userId],
+    queryFn: () => fetchSubscriptionRow(userId),
+    enabled: !!userId,
+    select: (row) => deriveEntitlement(row),
+  });
 };

@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 
@@ -38,9 +38,9 @@ export const useReorderProgramSessions = () => {
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries([QUERIES.PROGRAM, variables.programId]);
-      queryClient.invalidateQueries([QUERIES.ACTIVE_PROGRAM]);
-      queryClient.invalidateQueries([QUERIES.PROGRAM_PROGRESS]);
+      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAM, variables.programId] });
+      queryClient.invalidateQueries({ queryKey: [QUERIES.ACTIVE_PROGRAM] });
+      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAM_PROGRESS] });
     },
     onError,
   });

@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { ProgramSessionCompletionStatus } from '~/types';
@@ -48,7 +48,7 @@ export const useCompleteProgramSession = () => {
   return useMutation({
     mutationFn: completeProgramSession,
     onSuccess: () => {
-      queryClient.invalidateQueries([QUERIES.ACTIVE_PROGRAM]);
+      queryClient.invalidateQueries({ queryKey: [QUERIES.ACTIVE_PROGRAM] });
     },
   });
 };

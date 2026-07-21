@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { ProgramSession, WorkoutOptions } from '~/types';
@@ -50,8 +50,8 @@ export const useSaveProgramSession = () => {
       return mapProgramSessionRow(data);
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries([QUERIES.PROGRAM, variables.programId]);
-      queryClient.invalidateQueries([QUERIES.PROGRAMS]);
+      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAM, variables.programId] });
+      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAMS] });
     },
     onError,
   });

@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import {
   ALL_EXPERIMENT_FEATURES_ON,
@@ -68,26 +68,24 @@ export const useFeatureFlags = (): FeatureFlagsResult => {
   const session = useSession();
   const userId = session?.user?.id;
 
-  const query = useQuery(
-    [QUERIES.FEATURE_FLAGS, userId],
-    fetchExperimentFeatures,
-    {
-      // Only evaluate for a signed-in user; unauthenticated resolves to the
-      // safe default below (the RPC would return control anyway).
-      enabled: !!userId,
-      // Show the safe default (all OFF) on first render so the page opens in
-      // control with no builder→browse flash; a real fetch still runs.
-      placeholderData: SAFE_DEFAULT_FEATURES,
-      // Assignment is server-sticky, so there's nothing to gain from refetching.
-      staleTime: Infinity,
-      // StartWorkoutPage holds a blocking skeleton until this settles, so bound
-      // the worst case: one quick retry (~1s) instead of react-query's default
-      // 3 retries with exponential backoff (~7s) degrading the core flow on a
-      // flags-backend hiccup. Failure still resolves to the safe default.
-      retry: 1,
-      retryDelay: 750,
-    },
-  );
+  const query = useQuery({
+    queryKey: [QUERIES.FEATURE_FLAGS, userId],
+    queryFn: fetchExperimentFeatures,
+    // Only evaluate for a signed-in user; unauthenticated resolves to the
+    // safe default below (the RPC would return control anyway).
+    enabled: !!userId,
+    // Show the safe default (all OFF) on first render so the page opens in
+    // control with no builder→browse flash; a real fetch still runs.
+    placeholderData: SAFE_DEFAULT_FEATURES,
+    // Assignment is server-sticky, so there's nothing to gain from refetching.
+    staleTime: Infinity,
+    // StartWorkoutPage holds a blocking skeleton until this settles, so bound
+    // the worst case: one quick retry (~1s) instead of react-query's default
+    // 3 retries with exponential backoff (~7s) degrading the core flow on a
+    // flags-backend hiccup. Failure still resolves to the safe default.
+    retry: 1,
+    retryDelay: 750,
+  });
 
   // Owner preview override: force every experiment feature on so owners can
   // preview in-progress surfaces in production, matching getFeatures().

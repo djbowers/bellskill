@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 
@@ -30,9 +30,9 @@ export const useDeleteProgram = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries([QUERIES.PROGRAMS]);
-      queryClient.invalidateQueries([QUERIES.ACTIVE_PROGRAM]);
-      queryClient.invalidateQueries([QUERIES.PROGRAM_PROGRESS]);
+      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAMS] });
+      queryClient.invalidateQueries({ queryKey: [QUERIES.ACTIVE_PROGRAM] });
+      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAM_PROGRESS] });
     },
     onError,
   });

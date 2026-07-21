@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { WeightTabValue } from '~/types';
@@ -18,11 +18,12 @@ export interface MovementSearchResult {
 const CATALOG_SEARCH_LIMIT = 100;
 
 export const useMovementSearch = (query: string, weightMode: WeightTabValue) =>
-  useQuery(
-    [QUERIES.MOVEMENTS, 'search', query, weightMode],
-    () => searchMovements(query, weightMode),
-    { enabled: query.length >= 2, keepPreviousData: true },
-  );
+  useQuery({
+    queryKey: [QUERIES.MOVEMENTS, 'search', query, weightMode],
+    queryFn: () => searchMovements(query, weightMode),
+    enabled: query.length >= 2,
+    placeholderData: keepPreviousData,
+  });
 
 const searchMovements = async (
   query: string,

@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
@@ -79,11 +79,11 @@ export const useProgramProgress = (
   const session = useSession();
   const userId = session?.user?.id;
 
-  return useQuery(
-    [QUERIES.PROGRAM_PROGRESS, programId, userId],
-    () => fetchProgramProgress(programId!, userId!),
-    { enabled: !!programId && !!userId && (options?.enabled ?? true) },
-  );
+  return useQuery({
+    queryKey: [QUERIES.PROGRAM_PROGRESS, programId, userId],
+    queryFn: () => fetchProgramProgress(programId!, userId!),
+    enabled: !!programId && !!userId && (options?.enabled ?? true),
+  });
 };
 
 const fetchProgramProgress = async (

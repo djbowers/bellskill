@@ -278,9 +278,9 @@ export const ProgramsPage = () => {
             </p>
             <Button
               onClick={handleCreate}
-              disabled={title.trim().length === 0 || createProgram.isLoading}
+              disabled={title.trim().length === 0 || createProgram.isPending}
             >
-              {createProgram.isLoading
+              {createProgram.isPending
                 ? 'Creating…'
                 : 'Create and add sessions'}
             </Button>
@@ -328,8 +328,8 @@ export const ProgramsPage = () => {
                 className="flex-1"
                 onClick={() => handleEnroll(program.id)}
                 disabled={
-                  enroll.isLoading ||
-                  resume.isLoading ||
+                  enroll.isPending ||
+                  resume.isPending ||
                   isActive(program) ||
                   pendingEnrollId === program.id
                 }
@@ -351,7 +351,7 @@ export const ProgramsPage = () => {
                   size="sm"
                   className="flex-1 text-muted-foreground"
                   onClick={() => setPendingCancel(true)}
-                  disabled={cancelProgram.isLoading}
+                  disabled={cancelProgram.isPending}
                 >
                   Cancel
                 </Button>
@@ -367,7 +367,7 @@ export const ProgramsPage = () => {
                       archived: true,
                     })
                   }
-                  disabled={setArchived.isLoading}
+                  disabled={setArchived.isPending}
                 >
                   Archive
                 </Button>
@@ -377,7 +377,7 @@ export const ProgramsPage = () => {
                 size="sm"
                 className="flex-1 text-destructive"
                 onClick={() => setPendingDeleteId(program.id)}
-                disabled={deleteProgram.isLoading}
+                disabled={deleteProgram.isPending}
               >
                 Delete
               </Button>
@@ -423,7 +423,7 @@ export const ProgramsPage = () => {
                           archived: false,
                         })
                       }
-                      disabled={setArchived.isLoading}
+                      disabled={setArchived.isPending}
                     >
                       Restore
                     </Button>
@@ -432,7 +432,7 @@ export const ProgramsPage = () => {
                       size="sm"
                       className="flex-1 text-destructive"
                       onClick={() => setPendingDeleteId(program.id)}
-                      disabled={deleteProgram.isLoading}
+                      disabled={deleteProgram.isPending}
                     >
                       Delete
                     </Button>
@@ -465,7 +465,7 @@ export const ProgramsPage = () => {
             >
               Cancel
             </Button>
-            <Button onClick={confirmSwitch} disabled={enroll.isLoading}>
+            <Button onClick={confirmSwitch} disabled={enroll.isPending}>
               Switch program
             </Button>
           </DialogFooter>
@@ -496,13 +496,13 @@ export const ProgramsPage = () => {
             <Button
               variant="secondary"
               onClick={startOverFromResume}
-              disabled={enroll.isLoading || resume.isLoading}
+              disabled={enroll.isPending || resume.isPending}
             >
               Start over
             </Button>
             <Button
               onClick={confirmResume}
-              disabled={enroll.isLoading || resume.isLoading}
+              disabled={enroll.isPending || resume.isPending}
             >
               Resume
             </Button>
@@ -533,7 +533,7 @@ export const ProgramsPage = () => {
             <Button
               variant="destructive"
               onClick={confirmCancel}
-              disabled={cancelProgram.isLoading}
+              disabled={cancelProgram.isPending}
             >
               Cancel program
             </Button>
@@ -569,7 +569,7 @@ export const ProgramsPage = () => {
             <Button
               variant="destructive"
               onClick={confirmDelete}
-              disabled={deleteProgram.isLoading}
+              disabled={deleteProgram.isPending}
             >
               Delete permanently
             </Button>

@@ -1,4 +1,4 @@
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 
 import { supabase } from '../supabaseClient';
 
@@ -22,4 +22,6 @@ const createCheckoutSession = async (plan: CheckoutPlan): Promise<string> => {
  * redirect → return flow lands in PROD-106.
  */
 export const useCreateCheckoutSession = () =>
-  useMutation((plan: CheckoutPlan) => createCheckoutSession(plan));
+  useMutation({
+    mutationFn: (plan: CheckoutPlan) => createCheckoutSession(plan),
+  });

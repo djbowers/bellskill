@@ -99,7 +99,7 @@ export const PaywallPage = () => {
   const [plan, setPlan] = useState<CheckoutPlan>('yearly');
   const {
     mutate: startCheckout,
-    isLoading: checkoutLoading,
+    isPending: checkoutLoading,
     isError: checkoutError,
   } = useCreateCheckoutSession();
 

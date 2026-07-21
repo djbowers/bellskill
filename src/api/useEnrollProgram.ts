@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { WeightUnit } from '~/types';
@@ -53,8 +53,8 @@ export const useEnrollProgram = () => {
       return data as string;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries([QUERIES.ACTIVE_PROGRAM]);
-      queryClient.invalidateQueries([QUERIES.PROGRAMS]);
+      queryClient.invalidateQueries({ queryKey: [QUERIES.ACTIVE_PROGRAM] });
+      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAMS] });
     },
     onError,
   });

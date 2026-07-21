@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { WorkoutLog } from '~/types';
@@ -6,7 +6,10 @@ import { WorkoutLog } from '~/types';
 import { supabase } from '../supabaseClient';
 
 export const useWorkoutLog = (id: string) => {
-  return useQuery([QUERIES.WORKOUT_LOG, id], () => fetchWorkoutLog(id));
+  return useQuery({
+    queryKey: [QUERIES.WORKOUT_LOG, id],
+    queryFn: () => fetchWorkoutLog(id),
+  });
 };
 
 const fetchWorkoutLog = async (id: string): Promise<WorkoutLog> => {

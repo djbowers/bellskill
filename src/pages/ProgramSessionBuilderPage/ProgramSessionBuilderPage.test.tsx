@@ -108,7 +108,7 @@ const ownedProgram = {
   archivedAt: null,
 };
 
-const idleMutation = () => ({ mutate: vi.fn(), isLoading: false });
+const idleMutation = () => ({ mutate: vi.fn(), isPending: false });
 
 const renderAt = (path: string) =>
   render(
@@ -137,7 +137,7 @@ describe('ProgramSessionBuilderPage', () => {
     mockUseSaveProgramSession.mockReturnValue(idleMutation());
     mockUseUpdateProgramSession.mockReturnValue({
       mutate: updateMutate,
-      isLoading: false,
+      isPending: false,
     });
     mockUseDeleteProgramSession.mockReturnValue(idleMutation());
     mockUseDuplicateProgramSession.mockReturnValue(idleMutation());

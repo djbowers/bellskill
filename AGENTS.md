@@ -105,7 +105,11 @@ pages/
 ## API Layer
 
 - All data-fetching hooks live in `src/api/`.
-- Queries use `useQuery`, mutations use `useMutation` (react-query v3).
+- Queries use `useQuery`, mutations use `useMutation` (`@tanstack/react-query`
+  v5 — single object-form signature: `useQuery({ queryKey, queryFn, ... })`,
+  `useMutation({ mutationFn, ... })`; `queryClient` filters take a filter object,
+  e.g. `invalidateQueries({ queryKey })`; mutation pending state is `isPending`
+  (not `isLoading`)).
 - Supabase client is the `supabase` named export from `~/supabaseClient`.
 - Query keys are defined in `src/constants/queries.enum.ts`.
 - `npm run gen:types` writes the **repo-root** `types/supabase.ts` — commit that file after any schema change (requires `supabase start` to be running). `src/types/supabase.ts` is just a 3-line alias (`export type Supabase = Database`) re-exporting the root file; it is not regenerated.
@@ -436,7 +440,7 @@ of per-content flags. It lives entirely in `StartWorkoutPage.tsx`:
 - Supabase for backend and auth
 - Tailwind CSS with custom spacing
 - Radix UI primitives (via shadcn/ui)
-- React Query v3 for data fetching
+- React Query v5 (`@tanstack/react-query`) for data fetching
 - MSW for API mocking in tests
 - Vitest + React Testing Library for testing
 - Storybook for component development
