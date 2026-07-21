@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
@@ -67,11 +67,11 @@ export const useActiveProgram = (options?: UseActiveProgramOptions) => {
   const session = useSession();
   const userId = session?.user?.id;
 
-  return useQuery(
-    [QUERIES.ACTIVE_PROGRAM, userId],
-    () => fetchActiveProgram(userId!),
-    { enabled: !!userId && (options?.enabled ?? true) },
-  );
+  return useQuery({
+    queryKey: [QUERIES.ACTIVE_PROGRAM, userId],
+    queryFn: () => fetchActiveProgram(userId!),
+    enabled: !!userId && (options?.enabled ?? true),
+  });
 };
 
 const fetchActiveProgram = async (

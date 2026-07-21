@@ -1,4 +1,4 @@
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 
 import { supabase } from '../supabaseClient';
 
@@ -18,4 +18,4 @@ const createPortalSession = async (): Promise<string> => {
  * Customer Portal URL. The caller redirects to it.
  */
 export const useCreatePortalSession = () =>
-  useMutation(() => createPortalSession());
+  useMutation({ mutationFn: () => createPortalSession() });

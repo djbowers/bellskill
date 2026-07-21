@@ -107,7 +107,7 @@ export const RecommendSessionSection = ({
               <Button
                 className="flex-1"
                 variant="outline"
-                loading={mutation.isLoading}
+                loading={mutation.isPending}
                 onClick={() =>
                   fetchRecommendation(AnalyticsEvent.RecommendationRegenerated)
                 }
@@ -120,7 +120,7 @@ export const RecommendSessionSection = ({
       ) : (
         <Button
           className="w-full"
-          loading={mutation.isLoading}
+          loading={mutation.isPending}
           onClick={handleRecommend}
         >
           <SparklesIcon className="mr-1 h-2.5 w-2.5" />

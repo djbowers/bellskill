@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { signOutIfStaleAuthUser } from '~/utils';
@@ -31,13 +31,12 @@ export const useUnlinkMovementLog = (workoutLogId: number) => {
   return useMutation({
     mutationFn: unlinkMovementLog,
     onSuccess: () => {
-      queryClient.invalidateQueries([QUERIES.MOVEMENT_LOGS]);
-      queryClient.invalidateQueries([
-        QUERIES.WORKOUT_LOG,
-        String(workoutLogId),
-      ]);
-      queryClient.invalidateQueries([QUERIES.WORKOUT_LOGS]);
-      queryClient.invalidateQueries([QUERIES.USER_MOVEMENTS]);
+      queryClient.invalidateQueries({ queryKey: [QUERIES.MOVEMENT_LOGS] });
+      queryClient.invalidateQueries({
+        queryKey: [QUERIES.WORKOUT_LOG, String(workoutLogId)],
+      });
+      queryClient.invalidateQueries({ queryKey: [QUERIES.WORKOUT_LOGS] });
+      queryClient.invalidateQueries({ queryKey: [QUERIES.USER_MOVEMENTS] });
     },
   });
 };

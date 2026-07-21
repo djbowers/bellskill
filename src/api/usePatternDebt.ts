@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
@@ -29,11 +29,11 @@ export const usePatternDebt = ({
   const session = useSession();
   const userId = session?.user?.id;
 
-  return useQuery<PatternBalance>(
-    [QUERIES.PATTERN_DEBT, userId, windowDays, baselineDays],
-    () => fetchPatternDebt(windowDays, baselineDays),
-    { enabled: !!userId },
-  );
+  return useQuery<PatternBalance>({
+    queryKey: [QUERIES.PATTERN_DEBT, userId, windowDays, baselineDays],
+    queryFn: () => fetchPatternDebt(windowDays, baselineDays),
+    enabled: !!userId,
+  });
 };
 
 const fetchPatternDebt = async (

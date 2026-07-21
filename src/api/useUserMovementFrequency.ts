@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
@@ -18,11 +18,11 @@ export const useUserMovementFrequency = () => {
   const session = useSession();
   const userId = session?.user?.id;
 
-  return useQuery(
-    [QUERIES.USER_MOVEMENTS, 'frequency', userId],
-    () => fetchUserMovementFrequency(userId!),
-    { enabled: !!userId },
-  );
+  return useQuery({
+    queryKey: [QUERIES.USER_MOVEMENTS, 'frequency', userId],
+    queryFn: () => fetchUserMovementFrequency(userId!),
+    enabled: !!userId,
+  });
 };
 
 const toCatalogWeightFields = (

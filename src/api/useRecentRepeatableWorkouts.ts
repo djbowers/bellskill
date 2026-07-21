@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { supabase } from '~/supabaseClient';
@@ -71,11 +71,11 @@ export const useRecentRepeatableWorkouts = (
 
   const workoutLogIds = recentLogs.map((log) => log.id);
 
-  const { data: grouped, isLoading } = useQuery(
-    [QUERIES.MOVEMENT_LOGS, 'recent', workoutLogIds],
-    () => fetchMovementLogsByWorkoutIds(workoutLogIds),
-    { enabled: workoutLogIds.length > 0 },
-  );
+  const { data: grouped, isLoading } = useQuery({
+    queryKey: [QUERIES.MOVEMENT_LOGS, 'recent', workoutLogIds],
+    queryFn: () => fetchMovementLogsByWorkoutIds(workoutLogIds),
+    enabled: workoutLogIds.length > 0,
+  });
 
   const recentRepeats = useMemo(() => {
     if (!grouped) return [];

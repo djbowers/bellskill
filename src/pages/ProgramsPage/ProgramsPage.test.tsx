@@ -135,15 +135,15 @@ describe('ProgramsPage', () => {
     mockUseActiveProgram.mockReturnValue({ data: null });
     mockUseCreateProgram.mockReturnValue({
       mutate: createMutate,
-      isLoading: false,
+      isPending: false,
     });
     mockUseEnrollProgram.mockReturnValue({
       mutate: enrollMutate,
-      isLoading: false,
+      isPending: false,
     });
     mockUseResumeProgram.mockReturnValue({
       mutate: resumeMutate,
-      isLoading: false,
+      isPending: false,
     });
     // Default: no prior progress for any candidate, so an own-program "Start"
     // routes straight to a fresh enroll. Individual tests override this.
@@ -155,15 +155,15 @@ describe('ProgramsPage', () => {
     }));
     mockUseCancelProgram.mockReturnValue({
       mutate: cancelMutate,
-      isLoading: false,
+      isPending: false,
     });
     mockUseDeleteProgram.mockReturnValue({
       mutate: deleteMutate,
-      isLoading: false,
+      isPending: false,
     });
     mockUseSetProgramArchived.mockReturnValue({
       mutate: setArchivedMutate,
-      isLoading: false,
+      isPending: false,
     });
   });
 

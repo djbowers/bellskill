@@ -12,7 +12,7 @@ export const CatalogedBadge = ({
   movementLogId,
   workoutLogId,
 }: CatalogedBadgeProps) => {
-  const { mutate: unlinkMovementLog, isLoading } =
+  const { mutate: unlinkMovementLog, isPending } =
     useUnlinkMovementLog(workoutLogId);
 
   return (
@@ -25,7 +25,7 @@ export const CatalogedBadge = ({
         type="button"
         aria-label="Unlink from catalog"
         className="inline-flex shrink-0 items-center justify-center rounded-full p-0.5 hover:bg-secondary-foreground/10 disabled:opacity-50"
-        disabled={isLoading}
+        disabled={isPending}
         onClick={() => unlinkMovementLog({ movementLogId })}
       >
         <XMarkIcon className="h-1.5 w-1.5" />

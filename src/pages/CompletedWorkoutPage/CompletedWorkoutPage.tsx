@@ -51,7 +51,7 @@ export const CompletedWorkoutPage = () => {
   const {
     mutate: deleteWorkoutLog,
     data: deletedWorkoutLogId,
-    isLoading: isDeletingWorkoutLog,
+    isPending: isDeletingWorkoutLog,
   } = useDeleteWorkoutLog(id);
   const { mutate: selectRPE } = useSelectRPE(id);
   const { mutate: updateWorkoutNotes } = useUpdateWorkoutNotes(id);

@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { ProgramSession } from '~/types';
@@ -68,10 +68,9 @@ export const useDuplicateProgramSession = () => {
       return mapProgramSessionRow(data);
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries([
-        QUERIES.PROGRAM,
-        variables.session.programId,
-      ]);
+      queryClient.invalidateQueries({
+        queryKey: [QUERIES.PROGRAM, variables.session.programId],
+      });
     },
     onError,
   });
@@ -108,7 +107,7 @@ export const useDuplicateProgramWeek = () => {
       return (data ?? []).map(mapProgramSessionRow);
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries([QUERIES.PROGRAM, variables.programId]);
+      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAM, variables.programId] });
     },
     onError,
   });

@@ -1,7 +1,7 @@
 import { Meta, StoryObj } from '@storybook/react';
 import { HttpResponse, http } from 'msw';
 import { useState } from 'react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { VITE_SUPABASE_URL } from '~/env';
 import { WeightTabValue } from '~/types';

@@ -61,7 +61,7 @@ export const LinkMovementDialog = ({
     null,
   );
 
-  const { mutate: linkMovementLog, isLoading } =
+  const { mutate: linkMovementLog, isPending } =
     useLinkMovementLog(workoutLogId);
 
   const isLinkedToCatalog = movementLog.functionalMovementId !== null;
@@ -111,7 +111,7 @@ export const LinkMovementDialog = ({
   };
 
   const canConfirm =
-    (pendingPick !== null || inputValue.trim().length > 0) && !isLoading;
+    (pendingPick !== null || inputValue.trim().length > 0) && !isPending;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -147,7 +147,7 @@ export const LinkMovementDialog = ({
           <Button
             onClick={handleConfirm}
             disabled={!canConfirm}
-            loading={isLoading}
+            loading={isPending}
           >
             Confirm
           </Button>

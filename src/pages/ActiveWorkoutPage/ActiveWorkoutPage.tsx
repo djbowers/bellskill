@@ -45,7 +45,7 @@ export const ActiveWorkoutPage = ({
   const {
     mutate: logWorkout,
     data: workoutLogId,
-    isLoading: logWorkoutLoading,
+    isPending: logWorkoutLoading,
   } = useLogWorkout();
 
   const navigate = useNavigate();

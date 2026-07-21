@@ -1,4 +1,4 @@
-import { UseQueryOptions, useQuery } from 'react-query';
+import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { DifficultyLevel, Equipment, Movement, MuscleGroup } from '~/types';
@@ -34,11 +34,11 @@ export const useMovements = (
     'queryKey' | 'queryFn'
   >,
 ) =>
-  useQuery(
-    [QUERIES.MOVEMENTS, options],
-    () => fetchMovements(options),
-    queryOptions,
-  );
+  useQuery({
+    queryKey: [QUERIES.MOVEMENTS, options],
+    queryFn: () => fetchMovements(options),
+    ...queryOptions,
+  });
 
 const fetchMovements = async ({
   page = 1,

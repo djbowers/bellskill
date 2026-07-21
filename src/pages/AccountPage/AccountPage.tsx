@@ -27,9 +27,9 @@ export const AccountPage = () => {
   const session = useSession();
   const { isPremium, isTrialing, refetch: refetchEntitlement } =
     useEntitlement();
-  const { mutate: openPortal, isLoading: portalLoading } =
+  const { mutate: openPortal, isPending: portalLoading } =
     useCreatePortalSession();
-  const { mutate: setSubscription, isLoading: settingSubscription } =
+  const { mutate: setSubscription, isPending: settingSubscription } =
     useSetSubscription();
 
   const [loading, setLoading] = useState<boolean>(true);

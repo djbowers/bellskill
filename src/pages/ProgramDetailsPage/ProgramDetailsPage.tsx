@@ -286,7 +286,7 @@ export const ProgramDetailsPage = () => {
           )}
       </div>
 
-      <Button onClick={handleStart} disabled={enroll.isLoading || !seeded}>
+      <Button onClick={handleStart} disabled={enroll.isPending || !seeded}>
         Start program
       </Button>
 
@@ -309,7 +309,7 @@ export const ProgramDetailsPage = () => {
             <Button variant="secondary" onClick={() => setPendingSwitch(false)}>
               Cancel
             </Button>
-            <Button onClick={doEnroll} disabled={enroll.isLoading}>
+            <Button onClick={doEnroll} disabled={enroll.isPending}>
               Switch program
             </Button>
           </DialogFooter>

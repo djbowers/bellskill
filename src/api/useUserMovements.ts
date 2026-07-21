@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
@@ -16,11 +16,11 @@ export const useUserMovements = () => {
   const session = useSession();
   const userId = session?.user?.id;
 
-  return useQuery(
-    [QUERIES.USER_MOVEMENTS, userId],
-    () => fetchUserMovements(userId!),
-    { enabled: !!userId },
-  );
+  return useQuery({
+    queryKey: [QUERIES.USER_MOVEMENTS, userId],
+    queryFn: () => fetchUserMovements(userId!),
+    enabled: !!userId,
+  });
 };
 
 const fetchUserMovements = async (userId: string): Promise<UserMovement[]> => {

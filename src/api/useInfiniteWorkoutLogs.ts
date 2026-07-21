@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from 'react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { WorkoutLog } from '~/types';
@@ -13,12 +13,17 @@ interface WorkoutLogsPage {
 }
 
 export const useInfiniteWorkoutLogs = () =>
-  useInfiniteQuery(QUERIES.WORKOUT_LOGS_INFINITE, fetchWorkoutLogsPage, {
+  useInfiniteQuery({
+    queryKey: [QUERIES.WORKOUT_LOGS_INFINITE],
+    queryFn: fetchWorkoutLogsPage,
+    initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 
 const fetchWorkoutLogsPage = async ({
-  pageParam = 1,
+  pageParam,
+}: {
+  pageParam: number;
 }): Promise<WorkoutLogsPage> => {
   const from = (pageParam - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
