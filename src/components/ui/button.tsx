@@ -41,52 +41,44 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   loading?: boolean;
+  ref?: React.Ref<HTMLButtonElement>;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      children,
-      className,
-      variant,
-      size,
-      loading = false,
-      asChild = false,
-      ...props
-    },
-    ref,
-  ) => {
-    const Comp = asChild ? Slot : 'button';
-    const loadingColor = () => {
-      switch (variant) {
-        case 'default':
-          return 'fill-primary/80';
-        case 'destructive':
-          return 'fill-destructive/80';
-        case 'outline':
-          return 'fill-accent-foreground/80';
-        case 'secondary':
-          return 'fill-secondary-foreground/80';
-        case 'ghost':
-          return 'fill-muted-foreground/80';
-        case 'link':
-          return 'fill-primary/80';
-        default:
-          return 'fill-primary-foreground/80';
-      }
-    };
+const Button = ({
+  children,
+  className,
+  variant,
+  size,
+  loading = false,
+  asChild = false,
+  ...props
+}: ButtonProps) => {
+  const Comp = asChild ? Slot : 'button';
+  const loadingColor = () => {
+    switch (variant) {
+      case 'default':
+        return 'fill-primary/80';
+      case 'destructive':
+        return 'fill-destructive/80';
+      case 'outline':
+        return 'fill-accent-foreground/80';
+      case 'secondary':
+        return 'fill-secondary-foreground/80';
+      case 'ghost':
+        return 'fill-muted-foreground/80';
+      case 'link':
+        return 'fill-primary/80';
+      default:
+        return 'fill-primary-foreground/80';
+    }
+  };
 
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      >
-        {loading ? <Loading color={loadingColor()} /> : children}
-      </Comp>
-    );
-  },
-);
+  return (
+    <Comp className={cn(buttonVariants({ variant, size, className }))} {...props}>
+      {loading ? <Loading color={loadingColor()} /> : children}
+    </Comp>
+  );
+};
 Button.displayName = 'Button';
 
 // eslint-disable-next-line react-refresh/only-export-components -- co-locating the cva variants helper with its component is the shadcn/ui pattern; a separate module is out of scope for the lint pass

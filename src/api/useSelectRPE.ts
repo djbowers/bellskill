@@ -11,9 +11,8 @@ export const useSelectRPE = (workoutLogId: string) => {
     mutationFn: (selectedRpe: WorkoutLog['rpe']) => {
       return updateWorkoutLog(selectedRpe, workoutLogId);
     },
-    onSuccess: () => {
-      queryClient.refetchQueries({ queryKey: [QUERIES.WORKOUT_LOG] });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [QUERIES.WORKOUT_LOG] }),
   });
 };
 

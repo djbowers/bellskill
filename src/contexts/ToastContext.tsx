@@ -65,7 +65,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   );
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext value={{ showToast }}>
       {children}
       {createPortal(
         <ToastViewport>
@@ -81,7 +81,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
         </ToastViewport>,
         document.body,
       )}
-    </ToastContext.Provider>
+    </ToastContext>
   );
 };
 

@@ -32,7 +32,7 @@ export const ProgramSessionProvider = ({ ...props }) => {
     useState<PendingProgramSession | null>(null);
 
   return (
-    <ProgramSessionContext.Provider
+    <ProgramSessionContext
       value={[programSession, setProgramSession]}
       {...props}
     />

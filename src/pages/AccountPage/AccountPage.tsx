@@ -1,9 +1,5 @@
-import {
-  ChangeEventHandler,
-  FormEventHandler,
-  useEffect,
-  useState,
-} from 'react';
+import { ChangeEventHandler, useActionState, useEffect, useState } from 'react';
+import { useFormStatus } from 'react-dom';
 
 import {
   SubscriptionState,
@@ -25,21 +21,22 @@ import { isSoundEnabled, setSoundEnabled } from '~/utils';
 
 export const AccountPage = () => {
   const session = useSession();
-  const { isPremium, isTrialing, refetch: refetchEntitlement } =
-    useEntitlement();
+  const {
+    isPremium,
+    isTrialing,
+    refetch: refetchEntitlement,
+  } = useEntitlement();
   const { mutate: openPortal, isPending: portalLoading } =
     useCreatePortalSession();
   const { mutate: setSubscription, isPending: settingSubscription } =
     useSetSubscription();
 
-  const [loading, setLoading] = useState<boolean>(true);
   const [username, setUsername] = useState<string>('');
   const [previewEnabled, setPreviewEnabled] = useState<boolean>(
     isPreviewOverrideEnabled(),
   );
-  const [soundEnabled, setSoundEnabledState] = useState<boolean>(
-    isSoundEnabled(),
-  );
+  const [soundEnabled, setSoundEnabledState] =
+    useState<boolean>(isSoundEnabled());
 
   const handleToggleSound = () => {
     const next = !soundEnabled;
@@ -77,10 +74,9 @@ export const AccountPage = () => {
 
   useEffect(() => {
     async function getProfile() {
-      setLoading(true);
       const { user } = session;
 
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('username')
         .eq('id', user.id)
@@ -91,32 +87,23 @@ export const AccountPage = () => {
       } else if (data) {
         setUsername(data.username || '');
       }
-
-      setLoading(false);
     }
 
     getProfile();
   }, [session]);
 
-  const updateProfile: FormEventHandler<HTMLFormElement> = async (e) => {
-    e.preventDefault();
+  const [updateError, updateProfile] = useActionState<string | null>(
+    async () => {
+      const { error } = await supabase.from('profiles').upsert({
+        id: session.user.id,
+        username,
+        updated_at: new Date().toISOString(),
+      });
 
-    setLoading(true);
-    const { user } = session;
-
-    const updates = {
-      id: user.id,
-      username,
-      updated_at: new Date().toISOString(),
-    };
-
-    let { error } = await supabase.from('profiles').upsert(updates);
-
-    if (error) {
-      alert(error.message);
-    }
-    setLoading(false);
-  };
+      return error ? error.message : null;
+    },
+    null,
+  );
 
   const handleChangeUsername: ChangeEventHandler<HTMLInputElement> = (e) => {
     setUsername(e.target.value);
@@ -126,17 +113,19 @@ export const AccountPage = () => {
     <Page title="Account">
       <TrialStatusPill />
 
-      <form onSubmit={updateProfile} className="flex flex-col space-y-2">
+      <form action={updateProfile} className="flex flex-col space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input id="email" value={session.user.email} disabled={true} />
 
         <Label htmlFor="name">Name</Label>
         <Input id="name" value={username} onChange={handleChangeUsername} />
 
+        {updateError && (
+          <p className="text-sm text-destructive">{updateError}</p>
+        )}
+
         <div className="flex justify-end">
-          <Button type="submit" loading={loading}>
-            Update
-          </Button>
+          <SubmitButton />
         </div>
       </form>
 
@@ -204,5 +193,15 @@ export const AccountPage = () => {
         </div>
       )}
     </Page>
+  );
+};
+
+const SubmitButton = () => {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" loading={pending}>
+      Update
+    </Button>
   );
 };

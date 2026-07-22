@@ -41,7 +41,7 @@ export const WorkoutOptionsProvider = ({ ...props }) => {
   );
 
   return (
-    <WorkoutOptionsContext.Provider
+    <WorkoutOptionsContext
       value={[workoutOptions, setWorkoutOptions]}
       {...props}
     />
