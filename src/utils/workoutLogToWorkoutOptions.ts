@@ -39,6 +39,7 @@ export const workoutLogToWorkoutOptions = (
     movements: movementLogs.map((movementLog) => ({
       movementName: movementLog.movementName,
       repScheme: movementLog.repScheme,
+      timedRungs: movementLog.timedRungs ?? false,
       weightOneUnit: isComplexSet
         ? sharedWeights.weightOneUnit
         : movementLog.weightOneUnit,

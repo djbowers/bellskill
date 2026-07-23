@@ -70,6 +70,10 @@ const MOVEMENT_CATALOG_PAGE_SIZE: number = 500;
 
 const DEFAULT_INTERVAL_TIMER: number = 30; // seconds
 const DEFAULT_REST_TIMER: number = 30; // seconds
+const DEFAULT_RUNG_REPS: number = 10;
+const DEFAULT_RUNG_SECONDS: number = 30;
+// Stepping a 2-minute carry one second at a time is unusable.
+const RUNG_SECONDS_STEP: number = 5;
 const DEFAULT_WEIGHT_UNIT: WeightUnit =
   DEFAULT_MOVEMENT_OPTIONS.weightOneUnit ?? 'kilograms';
 const DEFAULT_WEIGHT_VALUE: number =
@@ -556,6 +560,24 @@ export const StartWorkoutPage = ({
       ),
     );
 
+  // Reps and seconds are not interchangeable magnitudes — a [5,4,3,2,1] ladder
+  // reads as 5-second carries, and a 30-second plank reads as 30 reps. Flipping
+  // the unit reseeds every rung to a usable default for the new one.
+  const handleToggleTimedRungs = (index: number, timed: boolean) =>
+    setMovements((prev) =>
+      prev.map((movement, i) =>
+        i === index
+          ? {
+              ...movement,
+              timedRungs: timed,
+              repScheme: movement.repScheme.map(() =>
+                timed ? DEFAULT_RUNG_SECONDS : DEFAULT_RUNG_REPS,
+              ),
+            }
+          : movement,
+      ),
+    );
+
   const handleChangeRepScheme = (
     movementIndex: number,
     rungIndex: number,
@@ -900,6 +922,7 @@ export const StartWorkoutPage = ({
             hasNotes={workoutDetails !== null}
             hasInterval={intervalTimer > 0}
             hasRest={restTimer > 0}
+            hasTimedMovements={movements.some((m) => m.timedRungs)}
             showComplex={features.complexMode}
             onToggleComplex={handleToggleComplex}
             onToggleInterval={handleToggleInterval}
@@ -1117,7 +1140,7 @@ export const StartWorkoutPage = ({
                   </Section>
                 )}
                 <Section
-                  title="Rep Scheme"
+                  title={movement.timedRungs ? 'Duration' : 'Rep Scheme'}
                   actions={
                     <ModifyWorkoutButtons
                       count={movement.repScheme.length}
@@ -1127,30 +1150,58 @@ export const StartWorkoutPage = ({
                     />
                   }
                 >
-                  {movement.repScheme.map((_, rungIndex) => (
-                    <ModifyCountButtons
-                      key={rungIndex}
-                      value={movement.repScheme[rungIndex]}
-                      onChange={(value) =>
-                        handleChangeRepScheme(index, rungIndex, value)
-                      }
-                      onClickMinus={() =>
-                        handleChangeRepScheme(
-                          index,
-                          rungIndex,
-                          movement.repScheme[rungIndex] - 1,
-                        )
-                      }
-                      onClickPlus={() =>
-                        handleChangeRepScheme(
-                          index,
-                          rungIndex,
-                          movement.repScheme[rungIndex] + 1,
-                        )
-                      }
-                      unit="reps"
-                    />
-                  ))}
+                  <Tabs
+                    value={movement.timedRungs ? 'time' : 'reps'}
+                    onValueChange={(value) =>
+                      handleToggleTimedRungs(index, value === 'time')
+                    }
+                  >
+                    <TabsList>
+                      <TabsTrigger size="sm" value="reps">
+                        Reps
+                      </TabsTrigger>
+                      <TabsTrigger
+                        size="sm"
+                        value="time"
+                        disabled={intervalTimer > 0}
+                        title={
+                          intervalTimer > 0
+                            ? 'Turn off the interval timer first — both drive the set clock.'
+                            : undefined
+                        }
+                      >
+                        Time
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+
+                  {movement.repScheme.map((_, rungIndex) => {
+                    const step = movement.timedRungs ? RUNG_SECONDS_STEP : 1;
+                    return (
+                      <ModifyCountButtons
+                        key={rungIndex}
+                        value={movement.repScheme[rungIndex]}
+                        onChange={(value) =>
+                          handleChangeRepScheme(index, rungIndex, value)
+                        }
+                        onClickMinus={() =>
+                          handleChangeRepScheme(
+                            index,
+                            rungIndex,
+                            movement.repScheme[rungIndex] - step,
+                          )
+                        }
+                        onClickPlus={() =>
+                          handleChangeRepScheme(
+                            index,
+                            rungIndex,
+                            movement.repScheme[rungIndex] + step,
+                          )
+                        }
+                        unit={movement.timedRungs ? 'sec' : 'reps'}
+                      />
+                    );
+                  })}
                 </Section>
               </Card>
             );

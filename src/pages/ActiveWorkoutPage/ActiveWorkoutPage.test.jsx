@@ -20,6 +20,9 @@ const {
   MultipleMovementsAndMixedWeights,
   OneHanded,
   AAProtocolPlanASession,
+  KettlebellMileSession,
+  TimedRungsVaryingDurations,
+  TimedRungsVolumeGoal,
   RepLadders,
   TwoHanded,
   WorkoutGoalRounds,
@@ -1349,6 +1352,117 @@ describe('active workout page (A+A Protocol interval EMOM cadence)', () => {
     expect(leftWeight).toHaveAttribute('data-active', 'true');
     expect(rightWeight).toHaveAttribute('data-active', 'false');
     expect(round).toHaveTextContent('2');
+  });
+});
+
+// Timed movements (PROD-200). Carries are prescribed in seconds, so a timed
+// movement's repScheme holds SECONDS per rung and the rung runs on its own
+// countdown that auto-fires "continue" — no button press, like intervalTimer.
+describe('active workout page (timed rungs)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    useLogWorkout.mockReturnValue({
+      mutate: vi.fn(),
+      data: null,
+      isLoading: false,
+    });
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  test('renders the rung as a duration under a "Time" label, not a rep count', () => {
+    render(<KettlebellMileSession />);
+
+    expect(screen.getByTestId('current-reps')).toHaveTextContent('2:00');
+    // The movement card's magnitude column is labelled Time, not Reps. (The
+    // workout summary further down has its own "Reps" tally, so this assertion
+    // is deliberately scoped to the card.)
+    expect(screen.getByTestId('current-movement-card')).toHaveTextContent(
+      'Time',
+    );
+    expect(screen.getByTestId('current-movement-card')).not.toHaveTextContent(
+      'Reps',
+    );
+  });
+
+  test('auto-advances on rung expiry, alternating hands for a one-handed carry', () => {
+    render(<KettlebellMileSession />);
+
+    const leftWeight = screen.getByTestId('left-weight');
+    const rightWeight = screen.getByTestId('right-weight');
+    const round = screen.getByTestId('current-round');
+
+    expect(leftWeight).toHaveAttribute('data-active', 'true');
+    expect(rightWeight).toHaveAttribute('data-active', 'false');
+
+    // 2 minutes later the rung timer fires a continue on its own -> other hand.
+    act(() => vi.advanceTimersByTime(120_000));
+    expect(leftWeight).toHaveAttribute('data-active', 'false');
+    expect(rightWeight).toHaveAttribute('data-active', 'true');
+    expect(round).toHaveTextContent('1');
+  });
+
+  test('re-arms the countdown per rung when rung durations differ', () => {
+    render(<TimedRungsVaryingDurations />);
+
+    const currentReps = screen.getByTestId('current-reps');
+    const round = screen.getByTestId('current-round');
+    expect(currentReps).toHaveTextContent('0:30');
+
+    // First rung is 30s. Advancing 30s must move to the 60s rung...
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(currentReps).toHaveTextContent('1:00');
+    expect(round).toHaveTextContent('1');
+
+    // ...and that rung must NOT expire at 30s, which is what would happen if the
+    // countdown were still armed with the first rung's duration.
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(currentReps).toHaveTextContent('1:00');
+    expect(round).toHaveTextContent('1');
+
+    // The full 60s completes the ladder and the round.
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(currentReps).toHaveTextContent('0:30');
+    expect(round).toHaveTextContent('2');
+  });
+
+  // Regression: the workout timer's paused state doubles as the START GATE, and
+  // only finishCountdown starts the rung clock. A rounds-goal timed workout has
+  // no workout countdown of its own, so unless timed movements also raise the
+  // gate the page opens showing a rung clock that never ticks — the lifter
+  // stares at a frozen 0:05 while elapsed climbs. (The stories pass
+  // defaultPaused: false, so the other tests here cannot catch this.)
+  test('raises the start gate so the rung clock never runs before the lifter starts', () => {
+    render(<KettlebellMileSession defaultPaused />);
+
+    const leftWeight = screen.getByTestId('left-weight');
+    expect(leftWeight).toHaveAttribute('data-active', 'true');
+
+    // Nothing should move while the workout is still gated.
+    act(() => vi.advanceTimersByTime(240_000));
+    expect(leftWeight).toHaveAttribute('data-active', 'true');
+    expect(screen.getByTestId('current-round')).toHaveTextContent('1');
+
+    // Start it: 3s lead-in countdown, then the first 2:00 rung runs and hands swap.
+    act(() => screen.getAllByRole('button')[0].click());
+    act(() => vi.advanceTimersByTime(3_000));
+    act(() => vi.advanceTimersByTime(120_000));
+    expect(leftWeight).toHaveAttribute('data-active', 'false');
+  });
+
+  test('counts neither seconds-as-reps nor seconds-as-volume', () => {
+    render(<TimedRungsVolumeGoal />);
+
+    act(() => vi.advanceTimersByTime(120_000));
+
+    // A 120s rung at 24kg would otherwise log 120 reps and 2,880kg — blowing
+    // past this story's 1,000kg goal before the first carry even finished.
+    const completedSection = screen.getByTestId('completed-section');
+    expect(completedSection).toHaveTextContent('Reps0');
+    expect(completedSection).toHaveTextContent('Volume0');
   });
 });
 

@@ -1,3 +1,4 @@
+export * from './formatRungDuration';
 export * from './movementSearch';
 export * from './movementWeightModeFilter';
 export * from './ordinalSuffixOf';

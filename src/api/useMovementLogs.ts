@@ -35,6 +35,7 @@ const fetchMovementLogs = async (
       id: movementLog.id,
       movementName: movementLog.movement_name,
       repScheme: movementLog.rep_scheme,
+      timedRungs: movementLog.timed_rungs,
       userMovementId: movementLog.user_movement_id,
       functionalMovementId: userMovement?.functional_movement_id ?? null,
       weightOneUnit: movementLog.weight_one_unit,

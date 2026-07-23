@@ -172,7 +172,7 @@ export const WorkoutHistoryItem = ({
                     id="rep-scheme"
                     className="whitespace-nowrap"
                   >
-                    Rep Scheme
+                    {movement.timedRungs ? 'Duration' : 'Rep Scheme'}
                   </CardDescription>
                   <div aria-labelledby="rep-scheme">
                     {getRepSchemeDisplayValue(
@@ -183,6 +183,7 @@ export const WorkoutHistoryItem = ({
                             sharedWeights.weightTwoValue,
                           ]
                         : [movement.weightOneValue, movement.weightTwoValue],
+                      movement.timedRungs,
                     )}
                   </div>
                 </div>

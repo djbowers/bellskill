@@ -1,5 +1,5 @@
 import { WeightUnit } from '~/types';
-import { getWeightUnitLabel } from '~/utils';
+import { formatRungDuration, getWeightUnitLabel } from '~/utils';
 
 export const getWeightsDisplayValue = (
   weightOneValue: number | null,
@@ -21,13 +21,22 @@ export const getWeightsDisplayValue = (
   }${hands}`;
 };
 
+/**
+ * Render a movement's rungs for the history/completed view. A timed movement's
+ * rungs are SECONDS, so they format as durations — "0:05 / 0:05" rather than a
+ * bare "5 / 5", which would otherwise read as five reps.
+ */
 export const getRepSchemeDisplayValue = (
   repScheme: number[],
   weights: [number | null, number | null],
+  timedRungs = false,
 ) =>
   repScheme.reduce((reps, rung) => {
     const unilateral = (weights[0] ?? 0) > 0 && weights[1] === 0;
-    const rungDisplayValue = unilateral ? `${rung} / ${rung}` : rung.toString();
+    const rungValue = timedRungs ? formatRungDuration(rung) : rung.toString();
+    const rungDisplayValue = unilateral
+      ? `${rungValue} / ${rungValue}`
+      : rungValue;
     if (reps === '') return rungDisplayValue;
     return reps + ', ' + rungDisplayValue;
   }, '');

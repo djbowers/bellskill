@@ -113,6 +113,7 @@ export type Database = {
           id: number
           movement_name: string
           rep_scheme: number[]
+          timed_rungs: boolean
           user_id: string
           user_movement_id: string | null
           weight_one_unit: Database["public"]["Enums"]["weight_unit"] | null
@@ -126,6 +127,7 @@ export type Database = {
           id?: number
           movement_name: string
           rep_scheme?: number[]
+          timed_rungs?: boolean
           user_id: string
           user_movement_id?: string | null
           weight_one_unit?: Database["public"]["Enums"]["weight_unit"] | null
@@ -139,6 +141,7 @@ export type Database = {
           id?: number
           movement_name?: string
           rep_scheme?: number[]
+          timed_rungs?: boolean
           user_id?: string
           user_movement_id?: string | null
           weight_one_unit?: Database["public"]["Enums"]["weight_unit"] | null

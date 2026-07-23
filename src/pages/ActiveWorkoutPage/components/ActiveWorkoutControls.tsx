@@ -9,6 +9,7 @@ interface ActiveWorkoutControlsProps {
   formattedCountdownRemaining: string;
   formattedIntervalRemaining: string;
   formattedRestRemaining: string;
+  formattedRungRemaining?: string;
   handleClickContinue: () => void;
   handleClickStart: () => void;
   intervalCompletedPercentage: number;
@@ -17,7 +18,9 @@ interface ActiveWorkoutControlsProps {
   isCountdownActive: boolean;
   isEffectActive: boolean;
   isRestActive: boolean;
+  isTimedRung?: boolean;
   restCompletedPercentage: number;
+  rungCompletedPercentage?: number;
   setIsEffectActive: (isActive: boolean) => void;
   workoutTimerPaused: boolean;
 }
@@ -26,6 +29,7 @@ export const ActiveWorkoutControls = ({
   formattedCountdownRemaining,
   formattedIntervalRemaining,
   formattedRestRemaining,
+  formattedRungRemaining = '0.0',
   handleClickContinue,
   handleClickStart,
   intervalCompletedPercentage,
@@ -34,7 +38,9 @@ export const ActiveWorkoutControls = ({
   isCountdownActive,
   isEffectActive,
   isRestActive,
+  isTimedRung = false,
   restCompletedPercentage,
+  rungCompletedPercentage = 0,
   setIsEffectActive,
   workoutTimerPaused,
 }: ActiveWorkoutControlsProps) => {
@@ -76,6 +82,18 @@ export const ActiveWorkoutControls = ({
         size="large"
         description="interval"
         value={parseFloat(formattedIntervalRemaining).toFixed(1)}
+      />
+    );
+  }
+
+  if (isTimedRung) {
+    return (
+      <ProgressBar
+        color="success"
+        completedPercentage={rungCompletedPercentage}
+        size="large"
+        description="time"
+        value={parseFloat(formattedRungRemaining).toFixed(1)}
       />
     );
   }
