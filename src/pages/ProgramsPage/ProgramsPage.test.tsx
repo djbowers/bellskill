@@ -6,7 +6,7 @@ import { ProgramsPage } from './ProgramsPage';
 
 const {
   mockUsePrograms,
-  mockUseActiveProgram,
+  mockUseActivePrograms,
   mockUseCreateProgram,
   mockUseEnrollProgram,
   mockUseResumeProgram,
@@ -23,7 +23,7 @@ const {
   setArchivedMutate,
 } = vi.hoisted(() => ({
   mockUsePrograms: vi.fn(),
-  mockUseActiveProgram: vi.fn(),
+  mockUseActivePrograms: vi.fn(),
   mockUseCreateProgram: vi.fn(),
   mockUseEnrollProgram: vi.fn(),
   mockUseResumeProgram: vi.fn(),
@@ -42,7 +42,7 @@ const {
 
 vi.mock('~/api', () => ({
   usePrograms: mockUsePrograms,
-  useActiveProgram: mockUseActiveProgram,
+  useActivePrograms: mockUseActivePrograms,
   useCreateProgram: mockUseCreateProgram,
   useEnrollProgram: mockUseEnrollProgram,
   useResumeProgram: mockUseResumeProgram,
@@ -52,6 +52,7 @@ vi.mock('~/api', () => ({
   useSetProgramArchived: mockUseSetProgramArchived,
   trackEvent: mockTrackEvent,
   AnalyticsEvent: { ProgramResumed: 'program_resumed' },
+  MAX_ACTIVE_PROGRAMS: 3,
 }));
 
 vi.mock('~/contexts', async () => {
@@ -132,7 +133,7 @@ describe('ProgramsPage', () => {
       data: [dfw, myProgram],
       isLoading: false,
     });
-    mockUseActiveProgram.mockReturnValue({ data: null });
+    mockUseActivePrograms.mockReturnValue({ data: [] });
     mockUseCreateProgram.mockReturnValue({
       mutate: createMutate,
       isPending: false,
@@ -306,11 +307,14 @@ describe('ProgramsPage', () => {
   });
 
   it('cancels the active program only after confirming', () => {
-    mockUseActiveProgram.mockReturnValue({
-      data: {
-        enrollment: { id: 'up-1', programId: 'mine-1', status: 'active' },
-        program: { title: 'My Program' },
-      },
+    mockUseActivePrograms.mockReturnValue({
+      data: [
+        {
+          enrollment: { id: 'up-1', programId: 'mine-1', status: 'active' },
+          program: { title: 'My Program' },
+          progress: { completed: 0, total: 3 },
+        },
+      ],
     });
 
     renderPage();

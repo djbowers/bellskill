@@ -238,7 +238,7 @@ test.describe('program in-program flow — start-any-session + resume', () => {
     );
   });
 
-  test('switching away then resuming reactivates the enrollment with completions intact', async () => {
+  test('cancelling then resuming reactivates the enrollment with completions intact, beside a program started meanwhile', async () => {
     const user = await signUpThrowawayUser();
     const dfwId = await programIdBySlug(user.token, DFW_SLUG);
 
@@ -256,7 +256,13 @@ test.describe('program in-program flow — start-any-session + resume', () => {
     });
     expect(await completionCount(user.token, dfwEnrollment)).toBe(1);
 
-    // Switch to a different program — the DFW enrollment is abandoned.
+    // Cancel DFW, then start a different program.
+    await rest(
+      'PATCH',
+      `user_programs?id=eq.${dfwEnrollment}&status=eq.active`,
+      user.token,
+      { body: { status: 'abandoned' } },
+    );
     const swingId = await programIdBySlug(user.token, SWING_SLUG);
     const swingEnrollment = await rpc<string>('enroll_in_program', user.token, {
       p_program_id: swingId,
@@ -268,8 +274,9 @@ test.describe('program in-program flow — start-any-session + resume', () => {
       'active',
     );
 
-    // Resume DFW by its exact enrollment id — the same enrollment comes back
-    // active, the swing enrollment is abandoned, the earlier completion survives.
+    // Resume DFW by its exact enrollment id — it claims a free slot and comes
+    // back active with its completion, and the swing program keeps running
+    // alongside it rather than being displaced.
     const resumedId = await rpc<string>('resume_program', user.token, {
       p_user_program_id: dfwEnrollment,
     });
@@ -279,7 +286,7 @@ test.describe('program in-program flow — start-any-session + resume', () => {
     expect(resumed.status).toBe('active');
     expect(resumed.completed_at).toBeNull();
     expect((await getEnrollment(user.token, swingEnrollment)).status).toBe(
-      'abandoned',
+      'active',
     );
 
     // Completion survived, so the cursor picks up at the second session, not the
@@ -307,23 +314,29 @@ test.describe('program in-program flow — start-any-session + resume', () => {
     });
 
     // Start that same clone over → a second, newer enrollment on the SAME
-    // program (0 completions), then switch away so both are non-active with a
-    // NULL completed_at.
+    // program (0 completions). One program may hold only one live cursor, so
+    // the start-over names the enrollment it replaces.
     const newer = await rpc<string>('enroll_in_program', user.token, {
       p_program_id: cloneId,
+      p_replace_user_program_id: older,
     });
+    // A second, unrelated program runs in parallel throughout.
     const swingId = await programIdBySlug(user.token, SWING_SLUG);
-    await rpc('enroll_in_program', user.token, { p_program_id: swingId });
+    const swing = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: swingId,
+    });
 
     // Resuming the OLDER enrollment explicitly must reactivate exactly it — the
     // one whose progress the prompt showed — not the newer (empty) one a
     // program-id-keyed heuristic would have picked.
     const resumed = await rpc<string>('resume_program', user.token, {
       p_user_program_id: older,
+      p_replace_user_program_id: newer,
     });
     expect(resumed).toBe(older);
     expect((await getEnrollment(user.token, older)).status).toBe('active');
     expect((await getEnrollment(user.token, newer)).status).toBe('abandoned');
+    expect((await getEnrollment(user.token, swing)).status).toBe('active');
     expect(await completionCount(user.token, older)).toBe(1);
     expect(await completionCount(user.token, newer)).toBe(0);
   });

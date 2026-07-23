@@ -6,7 +6,7 @@ import {
   AnalyticsEvent,
   RepeatableWorkout,
   trackEvent,
-  useActiveProgram,
+  useActivePrograms,
   useCompleteProgramSession,
   useFeatureFlags,
   useMovements,
@@ -51,6 +51,7 @@ import {
   MovementAutocomplete,
   MovementsHeader,
   NextProgramWorkoutCard,
+  ProgramSwitcherTabs,
   RecommendSessionSection,
   RecommendedWorkoutsSection,
   Section,
@@ -130,15 +131,27 @@ export const StartWorkoutPage = ({
   // `!isError` escape matters: `data` stays undefined after a failed fetch (no
   // `placeholderData`), so without it an error would strand the page on the
   // blocking skeleton instead of falling through to the builder.
-  const activeProgramQuery = useActiveProgram({ enabled: features.programs });
-  const activeProgram = activeProgramQuery.data ?? null;
-  const hasActiveProgram = Boolean(activeProgram);
+  const activeProgramsQuery = useActivePrograms({ enabled: features.programs });
+  const activePrograms = activeProgramsQuery.data ?? [];
+  const hasActiveProgram = activePrograms.length > 0;
   const programGatePending =
     features.programs &&
     !programSaveMode &&
-    activeProgramQuery.data === undefined &&
-    !activeProgramQuery.isError;
+    activeProgramsQuery.data === undefined &&
+    !activeProgramsQuery.isError;
   const completeProgramSession = useCompleteProgramSession();
+
+  // Which of the parallel programs the card below offers. Null until the user
+  // picks one in the switcher, then that wins; the default is index 0, which
+  // `useActivePrograms` has already sorted to least-recently-worked. A stale id
+  // (its program was just completed away) falls back to the default.
+  const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<
+    string | null
+  >(null);
+  const primaryProgram =
+    activePrograms.find((p) => p.enrollment.id === selectedEnrollmentId) ??
+    activePrograms[0] ??
+    null;
 
   // Population signal for the launchpad (PROD-171): a user with zero workout
   // logs is "new". `isFirstWorkout` is tri-state — null while the logs query
@@ -270,6 +283,7 @@ export const StartWorkoutPage = ({
           shell_variant: shellOn ? 'on' : 'off',
           population,
           content,
+          active_program_count: activePrograms.length,
         },
       });
     },
@@ -281,6 +295,7 @@ export const StartWorkoutPage = ({
       editWorkout,
       showBrowse,
       hasActiveProgram,
+      activePrograms.length,
       showCurated,
       showRepeat,
       showRecommender,
@@ -659,22 +674,22 @@ export const StartWorkoutPage = ({
     setBuilderOverride(true);
   };
 
-  // Start the program's next session from the home card.
+  // Start the selected program's next session from the home card.
   const handleStartProgram = () => {
-    if (!activeProgram?.nextSession) return;
+    if (!primaryProgram?.nextSession) return;
     applyProgramStart(
-      activeProgram.nextSession.session,
-      activeProgram.enrollment.id,
+      primaryProgram.nextSession.session,
+      primaryProgram.enrollment.id,
     );
   };
 
   // Skip the next session: writes a `skipped` completion (no workout_log), which
   // advances the cursor to the following session without leaving the home card.
   const handleSkipProgram = () => {
-    if (!activeProgram?.nextSession || completeProgramSession.isPending) return;
+    if (!primaryProgram?.nextSession || completeProgramSession.isPending) return;
     completeProgramSession.mutate({
-      userProgramId: activeProgram.enrollment.id,
-      programSessionId: activeProgram.nextSession.session.id,
+      userProgramId: primaryProgram.enrollment.id,
+      programSessionId: primaryProgram.nextSession.session.id,
       status: 'skipped',
     });
   };
@@ -794,19 +809,26 @@ export const StartWorkoutPage = ({
     >
       {!showBuilder && showBrowse && (
         <>
-          {activeProgram && (
-            <NextProgramWorkoutCard
-              programTitle={activeProgram.program.title}
-              nextSession={activeProgram.nextSession}
-              progress={activeProgram.progress}
-              isComplete={activeProgram.isComplete}
-              onStart={handleStartProgram}
-              onSkip={handleSkipProgram}
-              skipping={completeProgramSession.isPending}
-              onViewProgress={() =>
-                navigate(`/programs/${activeProgram.program.id}`)
-              }
-            />
+          {primaryProgram && (
+            <>
+              <ProgramSwitcherTabs
+                programs={activePrograms}
+                selectedEnrollmentId={primaryProgram.enrollment.id}
+                onSelect={setSelectedEnrollmentId}
+              />
+              <NextProgramWorkoutCard
+                programTitle={primaryProgram.program.title}
+                nextSession={primaryProgram.nextSession}
+                progress={primaryProgram.progress}
+                isComplete={primaryProgram.isComplete}
+                onStart={handleStartProgram}
+                onSkip={handleSkipProgram}
+                skipping={completeProgramSession.isPending}
+                onViewProgress={() =>
+                  navigate(`/programs/${primaryProgram.program.id}`)
+                }
+              />
+            </>
           )}
 
           <RecommendedWorkoutsSection

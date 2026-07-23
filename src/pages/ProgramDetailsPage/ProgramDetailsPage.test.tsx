@@ -6,20 +6,21 @@ import { ProgramDetailsPage } from './ProgramDetailsPage';
 
 const {
   mockUseProgram,
-  mockUseActiveProgram,
+  mockUseActivePrograms,
   mockUseEnrollProgram,
   enrollMutate,
 } = vi.hoisted(() => ({
   mockUseProgram: vi.fn(),
-  mockUseActiveProgram: vi.fn(),
+  mockUseActivePrograms: vi.fn(),
   mockUseEnrollProgram: vi.fn(),
   enrollMutate: vi.fn(),
 }));
 
 vi.mock('~/api', () => ({
   useProgram: mockUseProgram,
-  useActiveProgram: mockUseActiveProgram,
+  useActivePrograms: mockUseActivePrograms,
   useEnrollProgram: mockUseEnrollProgram,
+  MAX_ACTIVE_PROGRAMS: 3,
 }));
 
 vi.mock('~/contexts', async () => {
@@ -115,7 +116,7 @@ const renderPage = (id = 'dfw-1') =>
 describe('ProgramDetailsPage', () => {
   beforeEach(() => {
     enrollMutate.mockReset();
-    mockUseActiveProgram.mockReturnValue({ data: null });
+    mockUseActivePrograms.mockReturnValue({ data: [] });
     mockUseEnrollProgram.mockReturnValue({
       mutate: enrollMutate,
       isPending: false,
@@ -215,23 +216,55 @@ describe('ProgramDetailsPage', () => {
     );
   });
 
-  it('prompts to switch when a different program is already active, then enrolls on confirm', () => {
-    mockUseActiveProgram.mockReturnValue({
-      data: {
-        enrollment: { programId: 'other-program', status: 'active' },
-        program: { title: 'Other Program' },
-      },
+  const activeProgram = (id: string, title: string) => ({
+    enrollment: { id, programId: `${id}-program`, status: 'active' },
+    program: { title },
+    progress: { completed: 0, total: 3 },
+  });
+
+  it('starts alongside an existing program with no prompt while a slot is free', () => {
+    mockUseActivePrograms.mockReturnValue({
+      data: [activeProgram('up-1', 'Other Program')],
     });
 
     renderPage();
 
     fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
 
-    // The switch prompt gates the RPC until confirmed.
-    expect(enrollMutate).not.toHaveBeenCalled();
-    expect(screen.getByText('Switch program?')).toBeInTheDocument();
+    expect(screen.queryByText('Replace a program?')).not.toBeInTheDocument();
+    expect(enrollMutate).toHaveBeenCalledWith(
+      {
+        programId: 'dfw-1',
+        sharedWeightOneValue: 24,
+        sharedWeightOneUnit: 'kilograms',
+        sharedWeightTwoValue: 24,
+        sharedWeightTwoUnit: 'kilograms',
+        replaceUserProgramId: undefined,
+      },
+      expect.anything(),
+    );
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Switch program' }));
+  it('prompts to replace once every slot is taken, then enrolls displacing the first', () => {
+    mockUseActivePrograms.mockReturnValue({
+      data: [
+        activeProgram('up-1', 'Least Recent'),
+        activeProgram('up-2', 'Middle'),
+        activeProgram('up-3', 'Most Recent'),
+      ],
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    // The replace prompt gates the RPC until confirmed.
+    expect(enrollMutate).not.toHaveBeenCalled();
+    expect(screen.getByText('Replace a program?')).toBeInTheDocument();
+    // The displaced program is named, never silently dropped.
+    expect(screen.getByText(/Least Recent/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Replace program' }));
 
     expect(enrollMutate).toHaveBeenCalledWith(
       {
@@ -240,6 +273,7 @@ describe('ProgramDetailsPage', () => {
         sharedWeightOneUnit: 'kilograms',
         sharedWeightTwoValue: 24,
         sharedWeightTwoUnit: 'kilograms',
+        replaceUserProgramId: 'up-1',
       },
       expect.anything(),
     );

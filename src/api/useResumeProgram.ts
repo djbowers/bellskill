@@ -12,14 +12,20 @@ export interface ResumeProgramArgs {
    * back can't disagree when a program has several non-active enrollments.
    */
   userProgramId: string;
+  /**
+   * The active enrollment to drop so the resumed one can take its slot.
+   * Required only when all `MAX_ACTIVE_PROGRAMS` slots are taken.
+   */
+  replaceUserProgramId?: string | null;
 }
 
 /**
  * Reactivates a specific non-active enrollment via the `resume_program` RPC,
  * bringing its `program_session_completions` back with it so progress picks up
- * where it left off. Any other active enrollment is abandoned atomically inside
- * the function, so the one-active-program constraint holds. Contrast
- * {@link useEnrollProgram}, which starts a fresh enrollment.
+ * where it left off. It claims the lowest free parallel slot and runs alongside
+ * whatever else is active; at the cap the RPC raises `PROGRAM_SLOTS_FULL` unless
+ * `replaceUserProgramId` names one to drop. Contrast {@link useEnrollProgram},
+ * which starts a fresh enrollment.
  *
  * Returns the reactivated `user_programs.id`.
  */
@@ -30,9 +36,11 @@ export const useResumeProgram = () => {
   return useMutation({
     mutationFn: async ({
       userProgramId,
+      replaceUserProgramId,
     }: ResumeProgramArgs): Promise<string> => {
       const { data, error } = await supabase.rpc('resume_program', {
         p_user_program_id: userProgramId,
+        p_replace_user_program_id: replaceUserProgramId ?? undefined,
       });
 
       if (error) throw error;

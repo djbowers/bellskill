@@ -10,7 +10,7 @@ export * from './useLogWorkout';
 export * from './useMovementLogs';
 export * from './useMovements';
 export * from './usePatternDebt';
-export * from './useActiveProgram';
+export * from './useActivePrograms';
 export * from './useCancelProgram';
 export * from './useCompleteProgramSession';
 export * from './useCreateProgram';

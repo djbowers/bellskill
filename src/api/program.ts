@@ -76,4 +76,5 @@ export const mapUserProgramRow = (row: UserProgramRow): UserProgram => ({
   config: (row.config ?? {}) as Record<string, unknown>,
   startedAt: row.started_at,
   completedAt: row.completed_at,
+  activeSlot: row.active_slot,
 });

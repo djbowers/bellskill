@@ -160,7 +160,12 @@ async function enroll(user: TestUser, programId: string): Promise<string> {
     'user_programs',
     user.token,
     {
-      body: { user_id: user.uid, program_id: programId, status: 'active' },
+      body: {
+        user_id: user.uid,
+        program_id: programId,
+        status: 'active',
+        active_slot: 1,
+      },
       prefer: 'return=representation',
     },
   );
