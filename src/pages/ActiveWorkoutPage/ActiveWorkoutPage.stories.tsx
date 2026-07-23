@@ -816,7 +816,7 @@ export const ComplexModeDifferentRepSchemes: Story = {
 const ARMOR_BUILDING_COMPLEX_MOVEMENTS = [
   {
     ...DEFAULT_MOVEMENT_OPTIONS,
-    movementName: 'Two-Arm Kettlebell Clean',
+    movementName: 'Double Kettlebell Clean',
     repScheme: [2],
     weightOneValue: 24,
     weightOneUnit: 'kilograms',
@@ -825,7 +825,7 @@ const ARMOR_BUILDING_COMPLEX_MOVEMENTS = [
   },
   {
     ...DEFAULT_MOVEMENT_OPTIONS,
-    movementName: 'Two-Arm Kettlebell Military Press',
+    movementName: 'Double Kettlebell Military Press',
     repScheme: [1],
     weightOneValue: 24,
     weightOneUnit: 'kilograms',

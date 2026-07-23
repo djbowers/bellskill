@@ -29,6 +29,11 @@ One folder per route under `src/pages/` (`Page.tsx`, `.test.tsx`, `.stories.tsx`
 - Custom Tailwind spacing is **larger** than defaults — check `tailwind.config.js` and existing `src/components/ui/` before sizing new components.
 - Testing: Vitest + React Testing Library, MSW mocking (`src/mocks/`), tests collocated as `*.test.tsx`.
 
+## PR screenshots
+Any PR with visible UI work needs screenshots in the template's **Gallery** section: before *and* after for changed UI, after alone for new UI.
+- **Capture:** `preview_start` the `bellskill-dev` config in `.claude/launch.json` (port 5173; run `start:server` first), drive to the affected screen, and use the browser `computer {action: "screenshot"}` tool, saving to the session scratchpad. For a "before", capture on `main` or stash the change first. `bellskill-storybook` (port 6006) is the cheaper surface for isolated components.
+- **Embed:** run the `uploading-attachments` skill on the saved files for GitHub CDN URLs, then put those in Gallery — don't commit screenshots. If browser login for that skill isn't set up, save to the scratchpad and ask DJ to drag-drop instead. Flag that CDN uploads are permanent; GitHub can't delete them.
+
 ## Commands
 `npm run dev` · `npm test` / `test-watch` · `compile:ts` · `lint` · `storybook` · `start:server` (local Supabase, before `gen:types`) · `diff-db`. Full list in `package.json`. `npm run dev` reads local Supabase defaults (`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`) from `.env.development`, so run `start:server` first; override via a gitignored `.env.local`.
 
