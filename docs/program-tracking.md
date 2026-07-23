@@ -204,17 +204,32 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   null weight-two slot means two-hand loading; `jsonb_set` is strict, so each override value is
   `COALESCE(to_jsonb(x), 'null'::jsonb)` (unset slots become JSON null, not a
   nulled-out column). Passing no weight params (the default) is byte-identical
-  to the prior copy-verbatim behavior. `ProgramsPage` prompts for this only when
-  enrolling in a shared program you don't own (`program.isPublic && ownerId !==
-you`), reusing the live builder's shared-weight picker
-  (`WeightModeTabs` + `ModifyCountButtons`/`WeightUnitTabs`, now in
-  `~/components`) so the enrollee can pick two-hand/single/double loading,
-  independent left/right (mixed) weights, and kg or lb. Your own programs are
-  already fully weight-configured in the builder. The prompt's **pre-fill** is
-  derived per-program (PROD-232) — `ProgramsPage` lazily fetches the pending
-  program's sessions (`useProgram`) and seeds the picker from
-  `deriveStartingWeight` (`ProgramsPage/utils`), the modal placeholder
-  weight/mode across the program's sessions (same `resolveSharedWeights`
-  priority + modal/tie-break as the RPC). So single-bell programs (Snatch Test)
-  pre-fill single, swing-only (10K Swing) two-hand, DFW/Armor/Easy double — not
-  a fixed 24kg.
+  to the prior copy-verbatim behavior. `ProgramDetailsPage` (the pre-enroll
+  route `programs/:id/details`) hosts the picker inline, reusing
+  `ModifyCountButtons`/`WeightUnitTabs` from `~/components`; your own programs
+  are already fully weight-configured in the builder and redirect away from it.
+  The **pre-fill** is derived per-program (PROD-232) from `deriveStartingWeight`
+  (`ProgramDetailsPage/utils`), the modal placeholder weight/mode across the
+  program's sessions (same `resolveSharedWeights` priority + modal/tie-break as
+  the RPC). So single-bell programs (Snatch Test) pre-fill single, swing-only
+  (10K Swing) two-hand, DFW/Armor/Easy double — not a fixed 24kg.
+- **Weight groups (per-group override):** a program's distinct authored
+  `(weightOne, weightTwo)` pairs are its **weight groups** — the modal one is
+  the working weight, the rest are the offsets above. `deriveWeightGroups`
+  (`ProgramDetailsPage/utils`, which `deriveStartingWeight` now delegates to)
+  returns them, and the picker renders **one control per group**: A+A's deload
+  weeks, DFW's test day, the Snatch Test's light/heavy rungs; the four
+  single-weight programs get nothing extra. An untouched group tracks the
+  working weight through `applyGroupOffset` (a mirror of the RPC's math, so the
+  number shown is the number that clones) and pins the moment it is edited.
+  Groups are named by the authored `program_sessions.weight_label`
+  (`*_program_sessions_weight_label.sql` — set in seed migrations only, nothing
+  in the builder writes it yet); a null label falls back to a derived
+  description like `8 kg lighter · weeks 4, 8`. The chosen weights ride to the
+  RPC as `p_weight_overrides`
+  (`*_enroll_in_program_weight_overrides.sql`), an array keyed by each group's
+  **authored** pair, which makes the resolution order per cloned session:
+  (1) no starting weight at all → verbatim; (2) a matching override entry → its
+  values/units verbatim, no offset math and no unit-match check; (3) otherwise
+  the offset math. Omitting `p_weight_overrides` is byte-identical to the
+  offset-only behavior, and an entry matching no session is a silent no-op.

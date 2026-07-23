@@ -20,4 +20,11 @@ export interface ProgramSession {
   title: string;
   workoutOptions: Omit<WorkoutOptions, 'startedAt'>;
   notes: string | null;
+  /**
+   * Name for this session's weight group ("Deload weeks", "Test day"), shared by
+   * every session at the same authored weight. Authored in the seed migrations
+   * and read by the enrollment picker; NULL means the picker describes the group
+   * by its offset instead.
+   */
+  weightLabel: string | null;
 }

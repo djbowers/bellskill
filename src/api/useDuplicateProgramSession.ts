@@ -40,6 +40,8 @@ const sessionInsert = (
   title: session.title,
   workout_options: session.workoutOptions as unknown as Json,
   notes: session.notes,
+  // A duplicate runs at the same weight, so it belongs to the same weight group.
+  weight_label: session.weightLabel,
 });
 
 /** Copies a single session, appending it to the end of the program. */

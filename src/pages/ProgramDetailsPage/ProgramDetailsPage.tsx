@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import {
@@ -7,6 +7,7 @@ import {
   useEnrollProgram,
   useProgram,
 } from '~/api';
+import type { ProgramWeightOverride } from '~/api';
 import { ModifyCountButtons, Page, WeightUnitTabs } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
@@ -28,10 +29,16 @@ import {
 } from '~/types';
 import { getWeightRange, getWeightUnitLabel } from '~/utils';
 
-import { deriveStartingWeight } from './utils/deriveStartingWeight';
+import {
+  applyGroupOffset,
+  deriveStartingWeight,
+  deriveWeightGroups,
+  StartingWeight,
+  WeightGroup,
+} from './utils/deriveWeightGroups';
 
 // Fallback weight/unit for the picker's initial state before the per-program
-// pre-fill from deriveStartingWeight lands. The loading mode is fixed by the
+// pre-fill from deriveWeightGroups lands. The loading mode is fixed by the
 // program's own sessions — only the weights are editable here.
 const DEFAULT_STARTING_WEIGHT_VALUE = 24;
 const DEFAULT_WEIGHT_UNIT: WeightUnit = 'kilograms';
@@ -67,6 +74,63 @@ const groupByWeek = (
 };
 
 /**
+ * One or two bell inputs for a single weight group. The second slot appears
+ * only for double loading — a two-hand program carries `null` there and a
+ * single-bell one carries `0`, neither of which is user-editable.
+ */
+const WeightSlots = ({
+  weight,
+  onChange,
+  namePrefix,
+}: {
+  weight: StartingWeight;
+  onChange: (weight: StartingWeight) => void;
+  namePrefix: string;
+}) => {
+  const setSlot = (slot: 'One' | 'Two', value: number) =>
+    onChange({ ...weight, [`sharedWeight${slot}Value`]: Math.max(1, value) });
+
+  const slots = (['One', 'Two'] as const).filter((slot) => {
+    const value = weight[`sharedWeight${slot}Value`];
+    return slot === 'One' ? value !== null : value !== null && value > 0;
+  });
+
+  return (
+    <>
+      {slots.map((slot) => {
+        const value = weight[`sharedWeight${slot}Value`] as number;
+        const unit = weight[`sharedWeight${slot}Unit`];
+        return (
+          <ModifyCountButtons
+            key={slot}
+            {...getWeightRange(unit)}
+            bellUnit={unit}
+            label={
+              slots.length > 1
+                ? `${namePrefix} bell ${slot === 'One' ? 1 : 2}`
+                : namePrefix
+            }
+            onClickMinus={() => setSlot(slot, value - 1)}
+            onClickPlus={() => setSlot(slot, value + 1)}
+            unit={getWeightUnitLabel(unit)}
+            unitTabs={
+              <WeightUnitTabs
+                value={unit}
+                onChange={(nextUnit) =>
+                  onChange({ ...weight, [`sharedWeight${slot}Unit`]: nextUnit })
+                }
+              />
+            }
+            value={value}
+            onChange={(next) => setSlot(slot, next)}
+          />
+        );
+      })}
+    </>
+  );
+};
+
+/**
  * Pre-enroll details view for a shared program (route `programs/:id/details`).
  * Shows the program's description, cadence, and week-by-week session breakdown,
  * hosts the starting-weight picker inline, and starts the program from here —
@@ -93,6 +157,14 @@ export const ProgramDetailsPage = () => {
   >(DEFAULT_STARTING_WEIGHT_VALUE);
   const [sharedWeightTwoUnit, setSharedWeightTwoUnit] =
     useState<WeightUnit | null>(DEFAULT_WEIGHT_UNIT);
+  // Chosen weight per non-modal group, and the groups the user has touched.
+  // An untouched group tracks the working weight by its authored offset; once
+  // pinned it stops following, so picking a 14kg deload survives a later change
+  // to the working weight.
+  const [groupWeights, setGroupWeights] = useState<
+    Record<string, StartingWeight>
+  >({});
+  const [pinnedGroups, setPinnedGroups] = useState<string[]>([]);
 
   const program = data?.program;
   const sessions = data?.sessions;
@@ -101,6 +173,20 @@ export const ProgramDetailsPage = () => {
   // deep link to its progress page instead of showing a starting-weight picker
   // for a program you already configured in the builder.
   const isOwnProgram = !!program && program.ownerId === userId;
+
+  const groups = useMemo(
+    () => (sessions ? deriveWeightGroups(sessions) : []),
+    [sessions],
+  );
+  const modalGroup = groups.find((group) => group.isModal);
+  const offsetGroups = groups.filter((group) => !group.isModal);
+
+  const workingWeight: StartingWeight = {
+    sharedWeightOneValue,
+    sharedWeightOneUnit,
+    sharedWeightTwoValue,
+    sharedWeightTwoUnit,
+  };
 
   useEffect(() => {
     if (!sessions || seeded) return;
@@ -112,15 +198,70 @@ export const ProgramDetailsPage = () => {
     setSeeded(true);
   }, [sessions, seeded]);
 
+  // Re-derive every un-pinned group whenever the working weight moves, so
+  // dropping the working bell 24 → 20 carries the deload 16 → 12 along with it.
+  useEffect(() => {
+    if (!seeded || !modalGroup) return;
+    setGroupWeights((current) => {
+      const next = { ...current };
+      for (const group of offsetGroups) {
+        if (pinnedGroups.includes(group.key)) continue;
+        next[group.key] = applyGroupOffset(
+          group.sourceWeight,
+          modalGroup.sourceWeight,
+          workingWeight,
+        );
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    seeded,
+    groups,
+    pinnedGroups,
+    sharedWeightOneValue,
+    sharedWeightOneUnit,
+    sharedWeightTwoValue,
+    sharedWeightTwoUnit,
+  ]);
+
   useEffect(() => {
     if (isOwnProgram && id) navigate(`/programs/${id}`, { replace: true });
   }, [isOwnProgram, id, navigate]);
 
-  const handleChangeSharedWeightOneValue = (value: number) =>
-    setSharedWeightOneValue(Math.max(1, value));
+  const handleChangeWorkingWeight = (weight: StartingWeight) => {
+    setSharedWeightOneValue(weight.sharedWeightOneValue);
+    setSharedWeightOneUnit(weight.sharedWeightOneUnit);
+    setSharedWeightTwoValue(weight.sharedWeightTwoValue);
+    setSharedWeightTwoUnit(weight.sharedWeightTwoUnit);
+  };
 
-  const handleChangeSharedWeightTwoValue = (value: number) =>
-    setSharedWeightTwoValue(Math.max(1, value));
+  const handleChangeGroupWeight = (
+    group: WeightGroup,
+    weight: StartingWeight,
+  ) => {
+    setGroupWeights((current) => ({ ...current, [group.key]: weight }));
+    setPinnedGroups((current) =>
+      current.includes(group.key) ? current : [...current, group.key],
+    );
+  };
+
+  // Sent for every offset group, edited or not, so the weight shown on this
+  // screen is exactly the weight that clones — the RPC's own offset math stays
+  // the fallback for callers that send nothing.
+  const weightOverrides: ProgramWeightOverride[] = offsetGroups
+    .filter((group) => groupWeights[group.key])
+    .map((group) => {
+      const chosen = groupWeights[group.key];
+      return {
+        sourceWeightOneValue: group.sourceWeight.sharedWeightOneValue,
+        sourceWeightTwoValue: group.sourceWeight.sharedWeightTwoValue,
+        weightOneValue: chosen.sharedWeightOneValue,
+        weightOneUnit: chosen.sharedWeightOneUnit,
+        weightTwoValue: chosen.sharedWeightTwoValue,
+        weightTwoUnit: chosen.sharedWeightTwoUnit,
+      };
+    });
 
   // Only *active* enrollments consume a parallel slot — a completed program may
   // still be returned by useActivePrograms (to drive the home "complete" card).
@@ -143,6 +284,7 @@ export const ProgramDetailsPage = () => {
         sharedWeightTwoValue,
         sharedWeightTwoUnit,
         replaceUserProgramId: displaced?.enrollment.id,
+        ...(weightOverrides.length ? { weightOverrides } : {}),
       },
       { onSuccess: () => navigate('/') },
     );
@@ -255,51 +397,40 @@ export const ProgramDetailsPage = () => {
           it session by session once you&apos;re in the program.
         </p>
         {!seeded && <p className="text-sm text-muted-foreground">Loading…</p>}
-        {seeded && sharedWeightOneValue !== null && (
-          <ModifyCountButtons
-            {...getWeightRange(sharedWeightOneUnit)}
-            bellUnit={sharedWeightOneUnit}
-            onClickMinus={() =>
-              handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
-            }
-            onClickPlus={() =>
-              handleChangeSharedWeightOneValue(sharedWeightOneValue + 1)
-            }
-            unit={getWeightUnitLabel(sharedWeightOneUnit)}
-            unitTabs={
-              <WeightUnitTabs
-                value={sharedWeightOneUnit}
-                onChange={setSharedWeightOneUnit}
-              />
-            }
-            value={sharedWeightOneValue}
-            onChange={handleChangeSharedWeightOneValue}
+        {seeded && modalGroup?.label && (
+          <p className="text-xs text-muted-foreground">{modalGroup.label}</p>
+        )}
+        {seeded && (
+          <WeightSlots
+            weight={workingWeight}
+            onChange={handleChangeWorkingWeight}
+            namePrefix="Starting weight"
           />
         )}
-        {seeded &&
-          sharedWeightTwoValue !== null &&
-          sharedWeightTwoValue > 0 && (
-            <ModifyCountButtons
-              {...getWeightRange(sharedWeightTwoUnit)}
-              bellUnit={sharedWeightTwoUnit}
-              onClickMinus={() =>
-                handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
-              }
-              onClickPlus={() =>
-                handleChangeSharedWeightTwoValue(sharedWeightTwoValue + 1)
-              }
-              unit={getWeightUnitLabel(sharedWeightTwoUnit)}
-              unitTabs={
-                <WeightUnitTabs
-                  value={sharedWeightTwoUnit}
-                  onChange={setSharedWeightTwoUnit}
-                />
-              }
-              value={sharedWeightTwoValue}
-              onChange={handleChangeSharedWeightTwoValue}
-            />
-          )}
       </div>
+
+      {/* One control per weight this program runs at beyond the working one —
+          A+A's deload weeks, DFW's test day, the Snatch Test's light/heavy
+          rungs. Each follows the working weight until it's edited. */}
+      {seeded &&
+        offsetGroups.map((group) => {
+          const weight = groupWeights[group.key];
+          if (!weight) return null;
+          const heading = group.label ?? group.description;
+          return (
+            <div key={group.key} className="flex flex-col gap-1">
+              <h2 className="text-sm font-semibold">{heading}</h2>
+              <p className="text-xs text-muted-foreground">
+                {group.label ? group.description : `${group.sessionCount} sessions`}
+              </p>
+              <WeightSlots
+                weight={weight}
+                onChange={(next) => handleChangeGroupWeight(group, next)}
+                namePrefix={heading}
+              />
+            </div>
+          );
+        })}
 
       <Button onClick={handleStart} disabled={enroll.isPending || !seeded}>
         Start program

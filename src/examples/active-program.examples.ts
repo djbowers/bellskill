@@ -88,6 +88,7 @@ export const exampleActiveProgram = ({
             dayNumber,
             title: sessionTitle,
             notes: null,
+            weightLabel: null,
             workoutOptions: {
               ...BARE_SESSION_OPTIONS,
               workoutGoal,

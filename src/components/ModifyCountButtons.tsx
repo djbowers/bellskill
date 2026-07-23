@@ -11,6 +11,12 @@ import { getBellColor } from '~/utils';
 interface ModifyCountButtonsProps {
   /** Color the strip with the competition bell code for this unit. */
   bellUnit?: WeightUnit | null;
+  /**
+   * Names what this control counts, e.g. "Deload weeks bell 1". Required when a
+   * page shows more than one — without it every instance shares the `- ${unit}` /
+   * `+ ${unit}` button names and an unnamed input.
+   */
+  label?: string;
   max?: number;
   min?: number;
   onChange: (value: number) => void;
@@ -24,6 +30,7 @@ interface ModifyCountButtonsProps {
 
 export const ModifyCountButtons = ({
   bellUnit,
+  label,
   max = 100,
   min = 0,
   onChange,
@@ -46,6 +53,8 @@ export const ModifyCountButtons = ({
     setDisplayValue(value);
   }
 
+  const qualify = (action: string) =>
+    label ? `${action} ${unit} — ${label}` : `${action} ${unit}`;
   const handleChangeValue = (e: React.ChangeEvent<HTMLInputElement>) =>
     onChange(Number(e.target.value));
 
@@ -63,7 +72,7 @@ export const ModifyCountButtons = ({
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-1">
-        <Button size="icon" onClick={onClickMinus} aria-label={`- ${unit}`}>
+        <Button size="icon" onClick={onClickMinus} aria-label={qualify('-')}>
           <MinusIcon className="h-2.5 w-2.5" />
         </Button>
 
@@ -82,6 +91,7 @@ export const ModifyCountButtons = ({
             <Input
               ref={inputRef}
               type="number"
+              aria-label={label}
               value={displayValue}
               onChange={handleChangeValue}
               onBlur={() => setEditing(false)}
@@ -95,7 +105,7 @@ export const ModifyCountButtons = ({
           </div>
         </div>
 
-        <Button size="icon" onClick={onClickPlus} aria-label={`+ ${unit}`}>
+        <Button size="icon" onClick={onClickPlus} aria-label={qualify('+')}>
           <PlusIcon className="h-2.5 w-2.5" />
         </Button>
       </div>
