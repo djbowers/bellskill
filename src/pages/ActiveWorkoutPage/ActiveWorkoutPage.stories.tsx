@@ -271,22 +271,24 @@ export const AAProtocolPlanASession: Story = {
 };
 
 // Timed movements (PROD-200) — the Kettlebell Mile seed's shape: a single
-// one-handed suitcase carry whose rungs are 2-minute carry segments. One-handed
-// loading (weightTwoValue 0) makes the runtime mirror each rung per hand, which
-// is exactly the source's "switch hands as often as you want."
+// one-handed suitcase carry on ONE 60-second rung, with rounds as the
+// progression lever (week 1 is 3 rounds = 6 min under load). One-handed loading
+// (weightTwoValue 0) makes the runtime mirror the rung per hand, which is
+// exactly the source's "switch hands as often as you want," so one round is
+// 1:00 left + 1:00 right.
 export const KettlebellMileSession: Story = {
   parameters: {
     workoutOptions: {
       intervalTimer: 0,
       restTimer: 0,
       complexSet: false,
-      workoutGoal: 1,
+      workoutGoal: 3,
       workoutGoalUnits: 'rounds',
       movements: [
         {
           ...DEFAULT_MOVEMENT_OPTIONS,
           movementName: 'Kettlebell Suitcase Carry',
-          repScheme: [120, 120],
+          repScheme: [60],
           timedRungs: true,
           weightOneValue: 24,
           weightOneUnit: 'kilograms',

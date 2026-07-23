@@ -1376,7 +1376,7 @@ describe('active workout page (timed rungs)', () => {
   test('renders the rung as a duration under a "Time" label, not a rep count', () => {
     render(<KettlebellMileSession />);
 
-    expect(screen.getByTestId('current-reps')).toHaveTextContent('2:00');
+    expect(screen.getByTestId('current-reps')).toHaveTextContent('1:00');
     // The movement card's magnitude column is labelled Time, not Reps. (The
     // workout summary further down has its own "Reps" tally, so this assertion
     // is deliberately scoped to the card.)
@@ -1398,11 +1398,18 @@ describe('active workout page (timed rungs)', () => {
     expect(leftWeight).toHaveAttribute('data-active', 'true');
     expect(rightWeight).toHaveAttribute('data-active', 'false');
 
-    // 2 minutes later the rung timer fires a continue on its own -> other hand.
-    act(() => vi.advanceTimersByTime(120_000));
+    // A minute later the rung timer fires a continue on its own -> other hand,
+    // still inside round 1.
+    act(() => vi.advanceTimersByTime(60_000));
     expect(leftWeight).toHaveAttribute('data-active', 'false');
     expect(rightWeight).toHaveAttribute('data-active', 'true');
     expect(round).toHaveTextContent('1');
+
+    // The second hand closes the round: one rung x both hands = one round, so
+    // "rounds remaining" actually ticks down across the session.
+    act(() => vi.advanceTimersByTime(60_000));
+    expect(leftWeight).toHaveAttribute('data-active', 'true');
+    expect(round).toHaveTextContent('2');
   });
 
   test('re-arms the countdown per rung when rung durations differ', () => {
@@ -1446,10 +1453,10 @@ describe('active workout page (timed rungs)', () => {
     expect(leftWeight).toHaveAttribute('data-active', 'true');
     expect(screen.getByTestId('current-round')).toHaveTextContent('1');
 
-    // Start it: 3s lead-in countdown, then the first 2:00 rung runs and hands swap.
+    // Start it: 3s lead-in countdown, then the 1:00 rung runs and hands swap.
     act(() => screen.getAllByRole('button')[0].click());
     act(() => vi.advanceTimersByTime(3_000));
-    act(() => vi.advanceTimersByTime(120_000));
+    act(() => vi.advanceTimersByTime(60_000));
     expect(leftWeight).toHaveAttribute('data-active', 'false');
   });
 

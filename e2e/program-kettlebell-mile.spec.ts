@@ -99,21 +99,13 @@ interface SessionRow {
   workout_options: WorkoutOpts;
 }
 
-// Per-hand carry segments in seconds. Each rung is mirrored left/right, so the
-// session's total time under load is sum(segments) x 2: 6, 8, 10, 12, 14, 16
-// minutes, a 12-minute taper, then the 15-minute test.
-const EXPECTED_SEGMENTS: number[][] = [
-  [60, 60, 60],
-  [80, 80, 80],
-  [100, 100, 100],
-  [120, 120, 120],
-  [140, 140, 140],
-  [160, 160, 160],
-  [120, 120, 120],
-  [150, 150, 150],
-];
-
-const EXPECTED_TOTAL_MINUTES = [6, 8, 10, 12, 14, 16, 12, 15];
+// Every session is a single 60-second rung; rounds are the progression lever.
+// One rung mirrored left/right means one round = two minutes of carrying, so a
+// session's total time under load is rounds x 2: build 6 -> 16 min, a 12-minute
+// taper, then the test's 20-minute ceiling.
+const RUNG_SECONDS = 60;
+const EXPECTED_ROUNDS = [3, 4, 5, 6, 7, 8, 6, 10];
+const EXPECTED_TOTAL_MINUTES = [6, 8, 10, 12, 14, 16, 12, 20];
 
 test.describe('program schema — Kettlebell Mile seed', () => {
   test('is present, public, system-owned, with the right metadata', async () => {
@@ -167,13 +159,15 @@ test.describe('program schema — Kettlebell Mile seed', () => {
       expect(movements).toHaveLength(1);
       expect(movements[0].movementName).toBe('Kettlebell Suitcase Carry');
 
-      // Timed rungs: repScheme entries are SECONDS, not reps.
+      // Timed rungs: the single repScheme entry is SECONDS, not reps. Keeping
+      // it to ONE rung is what makes rounds the progression lever — several
+      // rungs inside one round would pin "rounds remaining" at 1 all session.
       expect(movements[0].timedRungs).toBe(true);
-      expect(movements[0].repScheme).toEqual(EXPECTED_SEGMENTS[i]);
+      expect(movements[0].repScheme).toEqual([RUNG_SECONDS]);
 
-      // Total time under load is double the sum — every rung is carried per hand.
-      const totalMinutes =
-        (EXPECTED_SEGMENTS[i].reduce((a, b) => a + b, 0) * 2) / 60;
+      // Total time under load is rounds x 2 min — one rung carried per hand.
+      expect(s.workout_options.workoutGoal).toBe(EXPECTED_ROUNDS[i]);
+      const totalMinutes = (EXPECTED_ROUNDS[i] * RUNG_SECONDS * 2) / 60;
       expect(totalMinutes).toBe(EXPECTED_TOTAL_MINUTES[i]);
 
       // Single bell: weightTwoValue 0 (not null) is the Single/'1h' mode the
@@ -187,13 +181,10 @@ test.describe('program schema — Kettlebell Mile seed', () => {
 
       expect(s.workout_options.complexSet).toBe(false);
       expect(s.workout_options.workoutGoalUnits).toBe('rounds');
-      expect(s.workout_options.workoutGoal).toBe(1);
     });
 
     // Volume peaks in week 6 and the taper is genuinely lighter than it.
-    const totalFor = (i: number) =>
-      EXPECTED_SEGMENTS[i].reduce((a, b) => a + b, 0);
-    expect(totalFor(5)).toBeGreaterThan(totalFor(6));
+    expect(EXPECTED_ROUNDS[5]).toBeGreaterThan(EXPECTED_ROUNDS[6]);
   });
 
   test('the test session flags the distance→time approximation in workoutDetails', async () => {
