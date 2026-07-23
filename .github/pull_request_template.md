@@ -1,14 +1,27 @@
-## Description
+## Why
 
-<!-- What changed and why. Link context. -->
+<!-- The problem or motivation — the section a reviewer six months from now needs. Closes # -->
 
-## How tested
+## What
 
-<!-- Commands run, cases covered, screenshots if UI. -->
+<!-- One or two sentences. The elevator version of the diff. -->
 
-## Related issue
+## How to test
 
-<!-- Closes # -->
+<!-- Concrete: commands run, cases covered. "Ran the ladder against a 5-rung scheme" beats "tested thoroughly." -->
+
+## Gallery
+
+<!--
+Required for any change with visible UI.
+- Changed UI: before and after.
+- New UI: after is enough.
+Delete this section for backend-only changes.
+-->
+
+## Deploy notes
+
+<!-- Migrations, feature flags to flip, env vars, `npm run gen:types`. Delete if none. -->
 
 ## Tradeoffs
 
