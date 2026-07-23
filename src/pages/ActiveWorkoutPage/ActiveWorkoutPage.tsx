@@ -36,7 +36,8 @@ export const ActiveWorkoutPage = ({
       sharedWeightTwoUnit,
       sharedWeightTwoValue,
       startedAt,
-      workoutDetails,
+      title,
+      preWorkoutNotes,
       workoutGoal,
       workoutGoalUnits,
     },
@@ -123,6 +124,11 @@ export const ActiveWorkoutPage = ({
   const [isEffectActive, setIsEffectActive] = useState<boolean>(false);
   const [isRestActive, setIsRestActive] = useState<boolean>(false);
   const [isCountdownActive, setIsCountdownActive] = useState<boolean>(false);
+
+  // Latches true on the first real start (post-countdown). Drives the pre-workout
+  // notes: fully shown on the ready screen, collapsed once lifting begins so a
+  // later pause never re-expands them.
+  const [hasStarted, setHasStarted] = useState<boolean>(false);
 
   const lastMovementIndex = movements.length - 1;
   const isLastMovement = currentMovementIndex === lastMovementIndex;
@@ -381,6 +387,7 @@ export const ActiveWorkoutPage = ({
     setIsCountdownActive(false);
     resetCountdownTimer();
     startWorkoutTimer();
+    setHasStarted(true);
     if (intervalTimer > 0 && !isRestActive) startIntervalTimer();
     if (hasTimedMovements && !isRestActive) startRungTimer();
     if (isRestActive) startRestTimer();
@@ -554,7 +561,9 @@ export const ActiveWorkoutPage = ({
           rightWeightValue={rightWeightValue}
           rungIndex={currentMovementRungIndex}
           totalSides={totalSides}
-          workoutDetails={workoutDetails}
+          title={title}
+          preWorkoutNotes={preWorkoutNotes}
+          hasStarted={hasStarted}
         />
       )}
 

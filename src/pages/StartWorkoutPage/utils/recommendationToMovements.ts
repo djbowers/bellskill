@@ -89,7 +89,8 @@ export const recommendationToWorkoutOptions = (
   sharedWeightOneValue: null,
   sharedWeightTwoUnit: null,
   sharedWeightTwoValue: null,
-  workoutDetails: null,
+  title: null,
+  preWorkoutNotes: null,
   workoutGoal: recommendation.duration_minutes,
   workoutGoalUnits: 'minutes',
 });

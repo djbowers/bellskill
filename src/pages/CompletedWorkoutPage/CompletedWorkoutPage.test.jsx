@@ -142,7 +142,7 @@ describe('completed workout page', () => {
     );
 
     const notesInput = await screen.findByRole('textbox', {
-      name: 'Workout Notes',
+      name: 'Post-workout notes',
     });
 
     await userEvent.type(notesInput, 'These are my notes');

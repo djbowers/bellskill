@@ -529,7 +529,7 @@ describe('Notes', () => {
   test('clicking Notes toggle on shows the notes section', async () => {
     await userEvent.click(screen.getByRole('button', { name: 'Notes, off' }));
 
-    expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Pre-workout notes' })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Notes, on' }),
     ).toBeInTheDocument();
@@ -540,7 +540,7 @@ describe('Notes', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Notes, on' }));
 
     expect(
-      screen.queryByRole('heading', { name: 'Notes' }),
+      screen.queryByRole('heading', { name: 'Pre-workout notes' }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Notes, off' }),
@@ -553,7 +553,7 @@ describe('Notes', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Notes, on' }));
 
     expect(
-      screen.queryByRole('heading', { name: 'Notes' }),
+      screen.queryByRole('heading', { name: 'Pre-workout notes' }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Notes, off' }),
@@ -564,7 +564,7 @@ describe('Notes', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Notes, off' }));
     await userEvent.click(screen.getByLabelText('Movement Input'));
 
-    expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Pre-workout notes' })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Notes, on' }),
     ).toBeInTheDocument();
@@ -577,7 +577,7 @@ describe('Notes', () => {
 
     expect(startWorkout).toHaveBeenCalledWith(
       expect.objectContaining({
-        workoutDetails: null,
+        preWorkoutNotes: null,
         startedAt,
       }),
     );

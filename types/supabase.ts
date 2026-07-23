@@ -588,6 +588,8 @@ export type Database = {
           interval_timer: number
           is_one_handed: boolean | null
           movements: string[]
+          post_workout_notes: string | null
+          pre_workout_notes: string | null
           rep_scheme: number[]
           rest_timer: number
           rpe: Database["public"]["Enums"]["RPE"] | null
@@ -600,12 +602,11 @@ export type Database = {
             | null
           shared_weight_two_value: number | null
           started_at: string
+          title: string | null
           unit: string | null
           user_id: string
-          workout_details: string | null
           workout_goal: number
           workout_goal_units: Database["public"]["Enums"]["workout_goal_units"]
-          workout_notes: string | null
         }
         Insert: {
           bells?: number[]
@@ -620,6 +621,8 @@ export type Database = {
           interval_timer?: number
           is_one_handed?: boolean | null
           movements: string[]
+          post_workout_notes?: string | null
+          pre_workout_notes?: string | null
           rep_scheme?: number[]
           rest_timer?: number
           rpe?: Database["public"]["Enums"]["RPE"] | null
@@ -632,12 +635,11 @@ export type Database = {
             | null
           shared_weight_two_value?: number | null
           started_at: string
+          title?: string | null
           unit?: string | null
           user_id: string
-          workout_details?: string | null
           workout_goal: number
           workout_goal_units?: Database["public"]["Enums"]["workout_goal_units"]
-          workout_notes?: string | null
         }
         Update: {
           bells?: number[]
@@ -652,6 +654,8 @@ export type Database = {
           interval_timer?: number
           is_one_handed?: boolean | null
           movements?: string[]
+          post_workout_notes?: string | null
+          pre_workout_notes?: string | null
           rep_scheme?: number[]
           rest_timer?: number
           rpe?: Database["public"]["Enums"]["RPE"] | null
@@ -664,12 +668,11 @@ export type Database = {
             | null
           shared_weight_two_value?: number | null
           started_at?: string
+          title?: string | null
           unit?: string | null
           user_id?: string
-          workout_details?: string | null
           workout_goal?: number
           workout_goal_units?: Database["public"]["Enums"]["workout_goal_units"]
-          workout_notes?: string | null
         }
         Relationships: [
           {

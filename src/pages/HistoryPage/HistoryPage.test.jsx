@@ -57,7 +57,7 @@ describe('workout history pagination', () => {
       new ExampleWorkoutLog({
         movements: ['Kettlebell Swing'],
         started_at: new Date(2025, 0, 25 - i).toISOString(),
-        workout_details: `Session ${i + 1}`,
+        title: `Session ${i + 1}`,
       }),
   );
 

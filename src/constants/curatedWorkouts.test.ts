@@ -51,9 +51,9 @@ describe('CURATED_WORKOUTS', () => {
       expect(workout.subtitle.length).toBeGreaterThan(0);
       expect(workout.estimatedMinutes).toBeGreaterThan(0);
 
-      // Notes should be a distinct session label, not the movement name.
-      expect(workoutOptions.workoutDetails?.length ?? 0).toBeGreaterThan(0);
-      expect(workoutOptions.workoutDetails).not.toBe(
+      // Title should be a distinct session label, not the movement name.
+      expect(workoutOptions.title?.length ?? 0).toBeGreaterThan(0);
+      expect(workoutOptions.title).not.toBe(
         workoutOptions.movements[0].movementName,
       );
     },
@@ -110,7 +110,8 @@ describe('CURATED_WORKOUTS', () => {
       sharedWeightOneValue: null,
       sharedWeightTwoUnit: null,
       sharedWeightTwoValue: null,
-      workoutDetails: 'Beginner: Hinge Foundation',
+      title: 'Beginner: Hinge Foundation',
+      preWorkoutNotes: null,
       workoutGoal: 5,
       workoutGoalUnits: 'rounds',
     });

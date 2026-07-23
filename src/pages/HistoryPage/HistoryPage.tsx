@@ -75,7 +75,7 @@ const WorkoutLogItem = ({ workoutLog }: { workoutLog: WorkoutLog }) => {
 
   // The lifter's own name for the session is the most scannable line; fall
   // back to the movement list when the workout wasn't named.
-  const title = workoutLog.workoutDetails?.trim() || '';
+  const title = workoutLog.title?.trim() || '';
   const movementsLine = workoutLog.movements.join(' · ');
 
   return (

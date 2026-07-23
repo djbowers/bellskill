@@ -5,11 +5,11 @@ import { WorkoutLog } from '~/types';
 
 import { supabase } from '../supabaseClient';
 
-export const useUpdateWorkoutNotes = (workoutLogId: string) => {
+export const useUpdatePostWorkoutNotes = (workoutLogId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (workoutNotes: WorkoutLog['workoutNotes']) => {
-      return updateWorkoutLog(workoutNotes, workoutLogId);
+    mutationFn: (postWorkoutNotes: WorkoutLog['postWorkoutNotes']) => {
+      return updateWorkoutLog(postWorkoutNotes, workoutLogId);
     },
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: [QUERIES.WORKOUT_LOG] });
@@ -18,12 +18,12 @@ export const useUpdateWorkoutNotes = (workoutLogId: string) => {
 };
 
 const updateWorkoutLog = async (
-  workoutNotes: WorkoutLog['workoutNotes'],
+  postWorkoutNotes: WorkoutLog['postWorkoutNotes'],
   workoutLogId: string,
 ) => {
   const { error } = await supabase
     .from('workout_logs')
-    .update({ workout_notes: workoutNotes })
+    .update({ post_workout_notes: postWorkoutNotes })
     .eq('id', parseInt(workoutLogId));
 
   if (error) {

@@ -25,10 +25,11 @@ export class ExampleWorkoutLog implements WorkoutLog {
   shared_weight_two_value: number | null;
   started_at: string;
   user_id: string;
-  workout_details: string | null;
+  title: string | null;
+  pre_workout_notes: string | null;
   workout_goal: number;
   workout_goal_units: WorkoutGoalUnits;
-  workout_notes: string | null;
+  post_workout_notes: string | null;
 
   bells: number[];
   is_one_handed: boolean | null;
@@ -58,10 +59,11 @@ export class ExampleWorkoutLog implements WorkoutLog {
     shared_weight_two_value = null,
     started_at = new Date().toISOString(),
     user_id = '1',
-    workout_details = '',
+    title = '',
+    pre_workout_notes = null,
     workout_goal = 20,
     workout_goal_units = 'minutes',
-    workout_notes = null,
+    post_workout_notes = null,
   }: Partial<WorkoutLog>) {
     this.bells = bells;
     this.is_one_handed = is_one_handed;
@@ -86,10 +88,11 @@ export class ExampleWorkoutLog implements WorkoutLog {
     this.shared_weight_two_value = shared_weight_two_value;
     this.started_at = started_at;
     this.user_id = user_id;
-    this.workout_details = workout_details;
+    this.title = title;
+    this.pre_workout_notes = pre_workout_notes;
     this.workout_goal = workout_goal;
     this.workout_goal_units = workout_goal_units;
-    this.workout_notes = workout_notes;
+    this.post_workout_notes = post_workout_notes;
     id++;
   }
 }

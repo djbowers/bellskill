@@ -79,7 +79,11 @@ export const ProgramProgressPage = () => {
     if (!enrollment) return;
     navigate('/', {
       state: {
-        startProgramSession: { session, userProgramId: enrollment.id },
+        startProgramSession: {
+          session,
+          userProgramId: enrollment.id,
+          programTitle: program.title,
+        },
       },
     });
   };
