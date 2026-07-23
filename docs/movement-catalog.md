@@ -31,6 +31,9 @@ Postgres enums — so `~/types` defines `Equipment` / `MuscleGroup` /
   data-fix that reconciles them to the current catalog, writing only where the FK
   IS NULL. If a rename re-orphans rows, add another such follow-up rather than
   editing the applied reload. Names with no correct catalog equivalent are left
-  deliberately NULL; two are legitimate catalog gaps tracked for a future add —
-  Double Kettlebell Clean (PROD-235) and Double Kettlebell Overhead Press
-  (PROD-242).
+  deliberately NULL. The two catalog gaps PROD-234 tracked — Double Kettlebell
+  Clean (PROD-235) and Double Kettlebell Overhead Press (PROD-242) — were closed
+  by `*_rename_two_arm_to_double.sql`, which renamed the mislabeled `Two-Arm`
+  double-bell movements to `Double` (Clean exactly; Overhead Press relinked to
+  Double Kettlebell Military Press) and folded the duplicate `Two-Arm Kettlebell
+  Jerk` into the existing `Double Kettlebell Jerk`.

@@ -1483,8 +1483,8 @@ describe('active workout page (Armor Building Complex seed session)', () => {
   test('flows all three movements as one chain with reps 2, 1, 3', () => {
     // clean → press → squat shown together, each at its single rung.
     expect(workoutOptions.movements.map((m) => m.movementName)).toEqual([
-      'Two-Arm Kettlebell Clean',
-      'Two-Arm Kettlebell Military Press',
+      'Double Kettlebell Clean',
+      'Double Kettlebell Military Press',
       'Double Kettlebell Front Squat',
     ]);
     workoutOptions.movements.forEach((movement, index) => {
