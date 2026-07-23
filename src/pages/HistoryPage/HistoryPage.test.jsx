@@ -25,25 +25,43 @@ describe('workout history page', () => {
   });
 
   test('renders workout volume', async () => {
-    await screen.findByText('1000 kg');
+    await screen.findByText('1,000 kg');
   });
 
   test('renders workout date', async () => {
-    await screen.findByText('Thu Nov 09 2023');
+    // Two sessions share Nov 9; each row carries its own date.
+    expect(await screen.findAllByText('Thu 9')).toHaveLength(2);
   });
 
   test('renders rep count for bodyweight workouts', async () => {
     await screen.findByText('50 reps');
   });
 
-  test('renders Complex badge for workouts with complex_set true', async () => {
-    await screen.findByText('Complex');
+  test('marks complex sets on the session row', async () => {
+    await screen.findByText(/Complex/);
   });
 
-  test('does not render Complex badge for workouts without complex_set', async () => {
+  test('does not mark workouts without complex_set', async () => {
     await screen.findByText('50 reps');
-    const badges = screen.getAllByText('Complex');
-    expect(badges).toHaveLength(1);
+    expect(screen.getAllByText(/Complex/)).toHaveLength(1);
+  });
+
+  test('summarizes each week by session count and volume', async () => {
+    await screen.findByText('3 sessions · 1,000 kg');
+  });
+
+  test('omits volume from the summary of a bodyweight-only week', async () => {
+    // Weeks of Oct 16 and Oct 23 log reps only, so volume is left off.
+    expect(await screen.findAllByText('3 sessions')).toHaveLength(2);
+  });
+
+  test('describes the week strip for screen readers', async () => {
+    const strips = await screen.findAllByRole('img');
+    expect(
+      strips.some((strip) =>
+        strip.getAttribute('aria-label')?.includes('not trained'),
+      ),
+    ).toBe(true);
   });
 });
 

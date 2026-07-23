@@ -41,6 +41,15 @@
     /* custom add-ons */
     --status-warning: 27 96% 61%;
     --status-positive: 142 69.2% 58%;
+
+    /* Exertion ramp, no-effort through max-effort. Desaturated from the
+       RPE selector's swatches so it can carry a whole page of history
+       without turning it into a stoplight. */
+    --intensity-0: 210 8% 62%;
+    --intensity-1: 160 32% 45%;
+    --intensity-2: 45 55% 47%;
+    --intensity-3: 24 62% 50%;
+    --intensity-4: 4 60% 50%;
   }
 
   .dark {
@@ -80,6 +89,12 @@
     /* custom add-ons */
     --status-warning: 31 97.2% 72.4%;
     --status-positive: 142 76.6% 73.1%;
+
+    --intensity-0: 210 8% 48%;
+    --intensity-1: 160 30% 52%;
+    --intensity-2: 45 52% 58%;
+    --intensity-3: 24 58% 58%;
+    --intensity-4: 4 58% 58%;
   }
 }
 

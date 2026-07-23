@@ -1,5 +1,6 @@
 export * from './bellColors';
 export * from './formatRungDuration';
+export * from './formatVolume';
 export * from './movementSearch';
 export * from './movementWeightModeFilter';
 export * from './ordinalSuffixOf';
