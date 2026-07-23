@@ -109,7 +109,7 @@ const EXPECTED_REP_SCHEMES: number[][] = [
 ];
 
 const EXPECTED_MOVEMENTS = [
-  'Two-Arm Kettlebell Military Press',
+  'Double Kettlebell Military Press',
   'Pull-Up',
   'Kettlebell Swing',
   'Double Kettlebell Front Squat',
@@ -186,7 +186,7 @@ test.describe('program schema — Easy Strength seed', () => {
       expect(byName['Pull-Up'].weightTwoValue).toBeNull();
       expect(byName['Kettlebell Swing'].weightOneValue).toBe(24);
       expect(byName['Kettlebell Swing'].weightTwoValue).toBeNull();
-      expect(byName['Two-Arm Kettlebell Military Press'].weightTwoValue).toBe(
+      expect(byName['Double Kettlebell Military Press'].weightTwoValue).toBe(
         24,
       );
       expect(byName['Double Kettlebell Front Squat'].weightTwoValue).toBe(

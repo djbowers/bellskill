@@ -18,8 +18,8 @@ const ABC_SESSION_COUNT = 20;
 // SINGLE-element repScheme, so maxMovementRungs = 1 and a single "continue"
 // press in the complex runtime completes a whole round.
 const EXPECTED_MOVEMENTS = [
-  { movementName: 'Two-Arm Kettlebell Clean', repScheme: [2] },
-  { movementName: 'Two-Arm Kettlebell Military Press', repScheme: [1] },
+  { movementName: 'Double Kettlebell Clean', repScheme: [2] },
+  { movementName: 'Double Kettlebell Military Press', repScheme: [1] },
   { movementName: 'Double Kettlebell Front Squat', repScheme: [3] },
 ];
 
