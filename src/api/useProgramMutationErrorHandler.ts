@@ -8,6 +8,17 @@ export const PROGRAM_MUTATION_ERROR_MESSAGE =
   'Something went wrong. Please try again.';
 
 /**
+ * Sentinels raised by `enroll_in_program` / `resume_program` for the two states
+ * a user can actually reach and act on. Anything else falls through to the
+ * generic message above.
+ */
+const RPC_ERROR_MESSAGES: Record<string, string> = {
+  PROGRAM_SLOTS_FULL:
+    'You already have 3 programs going. Finish or cancel one first.',
+  PROGRAM_ALREADY_ACTIVE: "You're already running that program.",
+};
+
+/**
  * Shared react-query `onError` handler for program mutations. Wiring this into
  * each program `useMutation` — rather than a bespoke handler per hook — gives
  * every program edit the same error toast, so a failure (most reachably a
@@ -21,6 +32,13 @@ export const PROGRAM_MUTATION_ERROR_MESSAGE =
  */
 export const useProgramMutationErrorHandler = () => {
   const { showToast } = useToast();
-  return () =>
-    showToast(PROGRAM_MUTATION_ERROR_MESSAGE, { variant: 'destructive' });
+  return (error: unknown) => {
+    const raised = (error as { message?: string } | null)?.message ?? '';
+    const known = Object.keys(RPC_ERROR_MESSAGES).find((sentinel) =>
+      raised.includes(sentinel),
+    );
+    showToast(known ? RPC_ERROR_MESSAGES[known] : PROGRAM_MUTATION_ERROR_MESSAGE, {
+      variant: 'destructive',
+    });
+  };
 };

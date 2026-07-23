@@ -37,12 +37,31 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   shared pair (not per-movement weights) — DFW's non-complex sessions leave those
   null.
 - **Next session** = lowest-`sequenceIndex` `program_sessions` row with no
-  completion. `useActiveProgram` runs this client-side over the program's ≤~20
-  sessions (a dedicated SQL function buys nothing at that size). It returns the
-  **active _or_ most-recently-completed** enrollment so the "🎉 complete" card
+  completion. `useActivePrograms` runs this client-side per program over its
+  ≤~20 sessions (a dedicated SQL function buys nothing at that size). It returns
+  **every active enrollment**, sorted least-recently-worked first (`lastWorkedAt`,
+  the max `completed_at` over that enrollment's completions; nulls first so a
+  brand-new program surfaces immediately). When _nothing_ is active it falls back
+  to the single most-recently-completed enrollment so the "🎉 complete" card
   still renders after the terminal status flip — consumers that must treat only
-  active enrollments specially (e.g. `ProgramsPage`) guard on
+  active enrollments specially (e.g. `ProgramsPage`) filter on
   `enrollment.status === 'active'`.
+- **Parallel programs:** a user may run up to **3** programs at once
+  (`MAX_ACTIVE_PROGRAMS`), each with an independent cursor. Enforced at the
+  schema level by `user_programs.active_slot` (1–3) + the partial unique index
+  `one_program_per_active_slot ON user_programs(user_id, active_slot) WHERE
+  status = 'active'` — a slot index, not a count-checking trigger, which two
+  concurrent inserts would both pass. `enroll_in_program` / `resume_program`
+  claim the lowest free slot, or take the slot of the enrollment named in
+  `p_replace_user_program_id`; at the cap they raise `PROGRAM_SLOTS_FULL`, and
+  enrolling twice in one program raises `PROGRAM_ALREADY_ACTIVE` (both mapped to
+  copy by `useProgramMutationErrorHandler`). The status↔slot `CHECK` is
+  **one-directional** (`status <> 'active' OR active_slot IS NOT NULL`): active
+  rows must hold a slot, so the cap can't be dodged by omitting the column (a
+  unique index treats NULLs as distinct), but a deactivated row may keep a stale
+  slot — which is what lets `complete_program_session`'s terminal flip and the
+  cancel PATCH stay one-column updates. The write path was already
+  enrollment-scoped and needed no change. See `e2e/program-parallel.spec.ts`.
 - **Derived cadence (PROD-237):** `programs.num_weeks`/`days_per_week` are
   **nullable** and no longer asked at creation. `usePrograms` prefers the stored
   columns when a program authored them (the seeded shared programs) and
@@ -52,8 +71,12 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   `days_per_week` as 1 (`|| 1` / `COALESCE(...,1)` → one session per week).
 - **Home surfacing:** an active program forces browse mode
   (`StartWorkoutPage`), rendering `NextProgramWorkoutCard` above the recommended
-  sections. A `programGatePending` flag holds the page in browse until the
-  (async) program query resolves, avoiding a builder→card flash.
+  sections. With several running, the card shows **one** program — index 0
+  (least-recently-worked) unless the user picks another in `ProgramSwitcherTabs`,
+  a pill row that renders `null` below two programs so the one-program surface is
+  unchanged. Start/Skip act on the selected program, never the default. A
+  `programGatePending` flag holds the page in browse until the (async) program
+  query resolves, avoiding a builder→card flash.
 - **Card → start → log seam:** starting a program session threads
   `{ userProgramId, programSessionId }` through **`ProgramSessionContext`** (a
   sibling of `WorkoutOptionsProvider` in `App.tsx`), set by `useStartWorkout`
@@ -95,8 +118,7 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
 - **Program CRUD (PROD-237, owned programs only):** `ProgramsPage`'s "My programs"
   surface adds three actions. **Cancel** = `useCancelProgram` flips the active
   enrollment to `abandoned` (reusing the existing status — no new value), freeing
-  the partial `one_active_program_per_user` index; confirm-gated because it
-  discards progress. **Delete** = `useDeleteProgram`, an irreversible
+  its parallel slot; confirm-gated because it discards progress. **Delete** = `useDeleteProgram`, an irreversible
   `DELETE programs` that cascades sessions/enrollments/completions — **always**
   behind a confirm dialog. **Archive/Restore** = `useSetProgramArchived` toggles
   the nullable `programs.archived_at` (migration `*_add_program_archived_at.sql`);

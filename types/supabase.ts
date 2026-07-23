@@ -528,6 +528,7 @@ export type Database = {
       }
       user_programs: {
         Row: {
+          active_slot: number | null
           completed_at: string | null
           config: Json
           id: string
@@ -537,6 +538,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          active_slot?: number | null
           completed_at?: string | null
           config?: Json
           id?: string
@@ -546,6 +548,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          active_slot?: number | null
           completed_at?: string | null
           config?: Json
           id?: string
@@ -765,6 +768,7 @@ export type Database = {
       enroll_in_program: {
         Args: {
           p_program_id: string
+          p_replace_user_program_id?: string
           p_shared_weight_one_unit?: string
           p_shared_weight_one_value?: number
           p_shared_weight_two_unit?: string
@@ -796,7 +800,10 @@ export type Database = {
         Args: { p_ordered_ids: string[]; p_program_id: string }
         Returns: undefined
       }
-      resume_program: { Args: { p_user_program_id: string }; Returns: string }
+      resume_program: {
+        Args: { p_replace_user_program_id?: string; p_user_program_id: string }
+        Returns: string
+      }
     }
     Enums: {
       RPE: "noEffort" | "easy" | "ideal" | "hard" | "maxEffort"

@@ -18,14 +18,21 @@ export interface EnrollProgramArgs {
   sharedWeightOneUnit?: WeightUnit | null;
   sharedWeightTwoValue?: number | null;
   sharedWeightTwoUnit?: WeightUnit | null;
+  /**
+   * The active enrollment to drop so this one can take its slot. Required only
+   * when all `MAX_ACTIVE_PROGRAMS` slots are taken — otherwise the RPC claims
+   * the lowest free slot and raises `PROGRAM_SLOTS_FULL`.
+   */
+  replaceUserProgramId?: string | null;
 }
 
 /**
  * Enrolls the user in a program via the Slice-1 `enroll_in_program` RPC
  * (copy-on-enroll). Enrolling in a shared program (e.g. DFW) clones it into a
  * user-owned editable copy; enrolling in your own program activates it directly.
- * Any currently-active enrollment is abandoned atomically inside the function,
- * so the one-active-program constraint is never violated.
+ * The new enrollment claims the lowest free parallel slot, so it runs alongside
+ * any programs already going. At the cap the RPC raises `PROGRAM_SLOTS_FULL`
+ * unless `replaceUserProgramId` names one to drop.
  *
  * Returns the new `user_programs.id`.
  */
@@ -40,6 +47,7 @@ export const useEnrollProgram = () => {
       sharedWeightOneUnit,
       sharedWeightTwoValue,
       sharedWeightTwoUnit,
+      replaceUserProgramId,
     }: EnrollProgramArgs): Promise<string> => {
       const { data, error } = await supabase.rpc('enroll_in_program', {
         p_program_id: programId,
@@ -47,6 +55,7 @@ export const useEnrollProgram = () => {
         p_shared_weight_one_unit: sharedWeightOneUnit ?? undefined,
         p_shared_weight_two_value: sharedWeightTwoValue ?? undefined,
         p_shared_weight_two_unit: sharedWeightTwoUnit ?? undefined,
+        p_replace_user_program_id: replaceUserProgramId ?? undefined,
       });
 
       if (error) throw error;

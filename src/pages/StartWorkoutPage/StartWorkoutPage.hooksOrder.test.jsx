@@ -16,13 +16,13 @@ import { StartWorkoutPage } from './StartWorkoutPage';
 // The fix moves the guard below every hook; this test drives the same
 // pending→resolved transition on one component instance and asserts it never
 // throws.
-const { mockUseActiveProgram, mockUseFeatures } = vi.hoisted(() => ({
-  mockUseActiveProgram: vi.fn(),
+const { mockUseActivePrograms, mockUseFeatures } = vi.hoisted(() => ({
+  mockUseActivePrograms: vi.fn(),
   mockUseFeatures: vi.fn(),
 }));
 vi.mock('~/api', async (importOriginal) => ({
   ...(await importOriginal()),
-  useActiveProgram: mockUseActiveProgram,
+  useActivePrograms: mockUseActivePrograms,
 }));
 vi.mock('~/hooks', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -62,14 +62,14 @@ describe('StartWorkoutPage hooks-order stability', () => {
   });
 
   test('renders through the active-program pending→resolved transition without a hooks-order crash', () => {
-    mockUseActiveProgram.mockReturnValue({ data: undefined, isError: false });
+    mockUseActivePrograms.mockReturnValue({ data: undefined, isError: false });
 
     const { rerender } = renderPage();
 
     expect(screen.getByRole('status')).toBeInTheDocument();
     expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
 
-    mockUseActiveProgram.mockReturnValue({ data: null, isError: false });
+    mockUseActivePrograms.mockReturnValue({ data: [], isError: false });
 
     expect(() =>
       rerender(

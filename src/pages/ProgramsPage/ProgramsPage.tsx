@@ -4,8 +4,9 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import {
   AnalyticsEvent,
+  MAX_ACTIVE_PROGRAMS,
   trackEvent,
-  useActiveProgram,
+  useActivePrograms,
   useCancelProgram,
   useCreateProgram,
   useDeleteProgram,
@@ -42,7 +43,7 @@ export const ProgramsPage = () => {
   const navigate = useNavigate();
   const session = useSession();
   const { data: programs = [], isLoading } = usePrograms();
-  const { data: activeProgram } = useActiveProgram();
+  const { data: activePrograms = [] } = useActivePrograms();
   const userId = session?.user?.id;
   const createProgram = useCreateProgram();
   const enroll = useEnrollProgram();
@@ -56,11 +57,16 @@ export const ProgramsPage = () => {
   // Program pending an irreversible hard-delete confirm.
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   // Active enrollment pending a cancel confirm (discards in-progress progress).
-  const [pendingCancel, setPendingCancel] = useState<boolean>(false);
+  // Several programs can be active at once, so this holds which one.
+  const [pendingCancelId, setPendingCancelId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
 
-  // Program the user is trying to switch to while another is already active.
+  // Program the user is trying to start with every parallel slot taken, plus
+  // the active enrollment they picked to drop for it.
   const [pendingSwitchId, setPendingSwitchId] = useState<string | null>(null);
+  const [replaceEnrollmentId, setReplaceEnrollmentId] = useState<string | null>(
+    null,
+  );
   // Own program a "Start" click is being routed for: we read its progress first
   // to decide between the resume/start-over prompt, the switch prompt, or a
   // direct enroll.
@@ -85,18 +91,23 @@ export const ProgramsPage = () => {
   const { data: candidateProgress, isError: candidateProgressError } =
     useProgramProgress(pendingEnrollId ?? undefined);
 
-  const enrollIn = (programId: string) =>
-    enroll.mutate({ programId }, { onSuccess: () => navigate('/') });
+  const enrollIn = (programId: string, replaceUserProgramId?: string | null) =>
+    enroll.mutate(
+      { programId, replaceUserProgramId },
+      { onSuccess: () => navigate('/') },
+    );
 
-  // Only an *active* enrollment blocks a fresh enroll — a completed program may
-  // still be returned by useActiveProgram (to drive the home "complete" card),
-  // but starting a new program then needs no "switch?" confirmation.
-  const activeEnrollment =
-    activeProgram?.enrollment.status === 'active' ? activeProgram : null;
+  // Only *active* enrollments consume a parallel slot — a completed program may
+  // still be returned by useActivePrograms (to drive the home "complete" card),
+  // but it no longer holds a slot.
+  const activeEnrollments = activePrograms.filter(
+    (p) => p.enrollment.status === 'active',
+  );
+  const slotsFull = activeEnrollments.length >= MAX_ACTIVE_PROGRAMS;
 
   // Routes a "Start" click once its prior progress is known: prior progress →
-  // resume-vs-start-over prompt; else an active program on a different program →
-  // switch prompt; else a direct enroll.
+  // resume-vs-start-over prompt; else every slot taken → pick-one-to-replace
+  // prompt; else a direct enroll that just claims a free slot.
   const routeEnroll = (programId: string) => {
     const enr = candidateProgress?.enrollment;
     const hasPriorProgress =
@@ -107,10 +118,8 @@ export const ProgramsPage = () => {
 
     if (hasPriorProgress) {
       setResumeTarget({ programId, userProgramId: enr!.id });
-    } else if (
-      activeEnrollment &&
-      activeEnrollment.enrollment.programId !== programId
-    ) {
+    } else if (slotsFull) {
+      setReplaceEnrollmentId(activeEnrollments[0].enrollment.id);
       setPendingSwitchId(programId);
     } else {
       enrollIn(programId);
@@ -127,10 +136,8 @@ export const ProgramsPage = () => {
       setPendingEnrollId(programId);
       return;
     }
-    if (
-      activeEnrollment &&
-      activeEnrollment.enrollment.programId !== programId
-    ) {
+    if (slotsFull) {
+      setReplaceEnrollmentId(activeEnrollments[0].enrollment.id);
       setPendingSwitchId(programId);
     } else {
       enrollIn(programId);
@@ -151,21 +158,31 @@ export const ProgramsPage = () => {
   }, [pendingEnrollId, candidateProgress, candidateProgressError]);
 
   const confirmSwitch = () => {
-    if (!pendingSwitchId) return;
+    if (!pendingSwitchId || !replaceEnrollmentId) return;
     const target = pendingSwitchId;
+    const replaced = replaceEnrollmentId;
     setPendingSwitchId(null);
-    enrollIn(target);
+    setReplaceEnrollmentId(null);
+    enrollIn(target, replaced);
   };
 
   const resumeDialogProgram =
     programs.find((p) => p.id === resumeTarget?.programId) ?? null;
+
+  // A resume needs a free slot too. At the cap the least-recently-worked
+  // program is the one it displaces — named in the dialog so the choice is
+  // never silent.
+  const displacedByResume = slotsFull ? activeEnrollments[0] : null;
 
   const confirmResume = () => {
     if (!resumeTarget) return;
     const { programId, userProgramId } = resumeTarget;
     setResumeTarget(null);
     resume.mutate(
-      { userProgramId },
+      {
+        userProgramId,
+        replaceUserProgramId: displacedByResume?.enrollment.id,
+      },
       {
         onSuccess: () => {
           if (userId) {
@@ -185,7 +202,7 @@ export const ProgramsPage = () => {
     if (!resumeTarget) return;
     const { programId } = resumeTarget;
     setResumeTarget(null);
-    enrollIn(programId);
+    enrollIn(programId, displacedByResume?.enrollment.id);
   };
 
   const handleCreate = () => {
@@ -200,7 +217,10 @@ export const ProgramsPage = () => {
   };
 
   const isActive = (program: Program) =>
-    activeEnrollment?.enrollment.programId === program.id;
+    activeEnrollments.some((p) => p.enrollment.programId === program.id);
+
+  const enrollmentFor = (program: Program) =>
+    activeEnrollments.find((p) => p.enrollment.programId === program.id) ?? null;
 
   const pendingDeleteProgram =
     programs.find((p) => p.id === pendingDeleteId) ?? null;
@@ -212,10 +232,14 @@ export const ProgramsPage = () => {
     deleteProgram.mutate({ programId: target });
   };
 
+  const pendingCancelProgram =
+    activeEnrollments.find((p) => p.enrollment.id === pendingCancelId) ?? null;
+
   const confirmCancel = () => {
-    setPendingCancel(false);
-    if (!activeEnrollment) return;
-    cancelProgram.mutate({ userProgramId: activeEnrollment.enrollment.id });
+    const target = pendingCancelId;
+    setPendingCancelId(null);
+    if (!target) return;
+    cancelProgram.mutate({ userProgramId: target });
   };
 
   return (
@@ -350,7 +374,11 @@ export const ProgramsPage = () => {
                   variant="ghost"
                   size="sm"
                   className="flex-1 text-muted-foreground"
-                  onClick={() => setPendingCancel(true)}
+                  onClick={() =>
+                    setPendingCancelId(
+                      enrollmentFor(program)?.enrollment.id ?? null,
+                    )
+                  }
                   disabled={cancelProgram.isPending}
                 >
                   Cancel
@@ -446,27 +474,63 @@ export const ProgramsPage = () => {
       <Dialog
         open={pendingSwitchId !== null}
         onOpenChange={(open) => {
-          if (!open) setPendingSwitchId(null);
+          if (!open) {
+            setPendingSwitchId(null);
+            setReplaceEnrollmentId(null);
+          }
         }}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Switch program?</DialogTitle>
+            <DialogTitle>Replace a program?</DialogTitle>
             <DialogDescription>
-              You already have an active program
-              {activeEnrollment ? ` (${activeEnrollment.program.title})` : ''}.
-              Starting a new one abandons your current progress.
+              You&apos;re already running {MAX_ACTIVE_PROGRAMS} programs — the
+              most you can have at once. Pick one to stop so this new one can
+              take its place. Its logged workouts are kept, but its place in the
+              program is cleared.
             </DialogDescription>
           </DialogHeader>
+          <div
+            role="radiogroup"
+            aria-label="Program to replace"
+            className="flex flex-col gap-0.5"
+          >
+            {activeEnrollments.map(({ enrollment, program, progress }) => (
+              <label
+                key={enrollment.id}
+                className="flex items-center gap-1 rounded p-1 hover:bg-secondary"
+              >
+                <input
+                  type="radio"
+                  name="replace-enrollment"
+                  value={enrollment.id}
+                  checked={replaceEnrollmentId === enrollment.id}
+                  onChange={() => setReplaceEnrollmentId(enrollment.id)}
+                />
+                <span className="min-w-0 flex-1 truncate text-sm">
+                  {program.title}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {progress.completed}/{progress.total}
+                </span>
+              </label>
+            ))}
+          </div>
           <DialogFooter>
             <Button
               variant="secondary"
-              onClick={() => setPendingSwitchId(null)}
+              onClick={() => {
+                setPendingSwitchId(null);
+                setReplaceEnrollmentId(null);
+              }}
             >
               Cancel
             </Button>
-            <Button onClick={confirmSwitch} disabled={enroll.isPending}>
-              Switch program
+            <Button
+              onClick={confirmSwitch}
+              disabled={enroll.isPending || !replaceEnrollmentId}
+            >
+              Replace program
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -485,10 +549,8 @@ export const ProgramsPage = () => {
               You already have progress in
               {resumeDialogProgram ? ` "${resumeDialogProgram.title}"` : ''}.
               Pick up where you left off, or start over from the first session.
-              {activeEnrollment &&
-              resumeTarget &&
-              activeEnrollment.enrollment.programId !== resumeTarget.programId
-                ? ` Either way, this replaces your active program (${activeEnrollment.program.title}).`
+              {displacedByResume
+                ? ` You're at ${MAX_ACTIVE_PROGRAMS} programs, so either way this replaces ${displacedByResume.program.title}.`
                 : ''}
             </DialogDescription>
           </DialogHeader>
@@ -511,23 +573,28 @@ export const ProgramsPage = () => {
       </Dialog>
 
       <Dialog
-        open={pendingCancel}
+        open={pendingCancelId !== null}
         onOpenChange={(open) => {
-          if (!open) setPendingCancel(false);
+          if (!open) setPendingCancelId(null);
         }}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancel program?</DialogTitle>
             <DialogDescription>
-              This stops your active program
-              {activeEnrollment ? ` (${activeEnrollment.program.title})` : ''}.
-              Your logged workouts are kept, but your place in the program is
+              This stops
+              {pendingCancelProgram
+                ? ` ${pendingCancelProgram.program.title}`
+                : ' this program'}
+              . Your logged workouts are kept, but your place in the program is
               cleared — restarting begins from the first session.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setPendingCancel(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => setPendingCancelId(null)}
+            >
               Keep going
             </Button>
             <Button

@@ -70,7 +70,7 @@ interface UseProgramProgressOptions {
  *
  * `programId` is a program row id (the user's own clone, as listed in
  * `ProgramsPage`). The matching enrollment is resolved as the active one, or —
- * failing that — the most recent, mirroring {@link useActiveProgram}.
+ * failing that — the most recent, mirroring {@link useActivePrograms}.
  */
 export const useProgramProgress = (
   programId?: string,

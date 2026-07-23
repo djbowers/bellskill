@@ -517,35 +517,66 @@ test.describe('program schema — RLS', () => {
 });
 
 test.describe('program schema — constraints', () => {
-  test('a user may have at most one active enrollment', async () => {
+  test('a user may hold three active enrollments, one per slot', async () => {
     const user = await signUpThrowawayUser();
     const dfwId = await getDfwProgramId(user.token);
 
-    // First active enrollment succeeds.
-    const [first] = await restJson<Array<{ id: string }>>(
-      'POST',
-      'user_programs',
-      user.token,
-      {
-        body: { user_id: user.uid, program_id: dfwId, status: 'active' },
-        prefer: 'return=representation',
+    // one_program_per_active_slot is unique on (user_id, active_slot), so each
+    // of the three slots takes exactly one active enrollment.
+    for (const slot of [1, 2, 3]) {
+      const [row] = await restJson<Array<{ id: string }>>(
+        'POST',
+        'user_programs',
+        user.token,
+        {
+          body: {
+            user_id: user.uid,
+            program_id: dfwId,
+            status: 'active',
+            active_slot: slot,
+          },
+          prefer: 'return=representation',
+        },
+      );
+      expect(row.id).toBeTruthy();
+    }
+
+    // Reusing a taken slot violates the unique index.
+    const duplicate = await rest('POST', 'user_programs', user.token, {
+      body: {
+        user_id: user.uid,
+        program_id: dfwId,
+        status: 'active',
+        active_slot: 2,
       },
-    );
-    expect(first.id).toBeTruthy();
-
-    // A second active enrollment violates one_active_program_per_user.
-    const second = await rest('POST', 'user_programs', user.token, {
-      body: { user_id: user.uid, program_id: dfwId, status: 'active' },
     });
-    expect(second.status).toBe(409);
+    expect(duplicate.status).toBe(409);
 
-    // But a non-active enrollment for the same user is fine.
+    // A fourth slot is outside the CHECK range, so the cap cannot be exceeded
+    // by widening the slot space either.
+    const outOfRange = await rest('POST', 'user_programs', user.token, {
+      body: {
+        user_id: user.uid,
+        program_id: dfwId,
+        status: 'active',
+        active_slot: 4,
+      },
+    });
+    expect(outOfRange.status).toBe(400);
+
+    // Non-active enrollments are unconstrained — a stale slot is ignored by the
+    // partial index, which is what lets cancel stay a one-column update.
     const [abandoned] = await restJson<Array<{ id: string }>>(
       'POST',
       'user_programs',
       user.token,
       {
-        body: { user_id: user.uid, program_id: dfwId, status: 'abandoned' },
+        body: {
+          user_id: user.uid,
+          program_id: dfwId,
+          status: 'abandoned',
+          active_slot: 2,
+        },
         prefer: 'return=representation',
       },
     );
@@ -561,7 +592,12 @@ test.describe('program schema — constraints', () => {
       'user_programs',
       user.token,
       {
-        body: { user_id: user.uid, program_id: dfwId, status: 'active' },
+        body: {
+          user_id: user.uid,
+          program_id: dfwId,
+          status: 'active',
+          active_slot: 1,
+        },
         prefer: 'return=representation',
       },
     );
@@ -680,18 +716,35 @@ test.describe('program schema — enroll_in_program (copy-on-enroll)', () => {
     expect(dfwFirst[0].title).not.toBe('Edited by owner');
   });
 
-  test('re-enrolling atomically switches the active program', async () => {
+  test('restarting the same program requires an explicit replace, then swaps atomically', async () => {
     const user = await signUpThrowawayUser();
     const dfwId = await getDfwProgramId(user.token);
 
     const firstEnrollment = await rpc<string>('enroll_in_program', user.token, {
       p_program_id: dfwId,
     });
+
+    // A bare re-enroll would give one program two live cursors. Under parallel
+    // programs that is refused rather than silently abandoning the first.
+    const bare = await fetch(`${SUPABASE_URL}/rest/v1/rpc/enroll_in_program`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${user.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ p_program_id: dfwId }),
+    });
+    expect(bare.ok).toBe(false);
+    expect(await bare.text()).toContain('PROGRAM_ALREADY_ACTIVE');
+
+    // Naming the enrollment to replace performs the start-over in one txn.
     const secondEnrollment = await rpc<string>(
       'enroll_in_program',
       user.token,
       {
         p_program_id: dfwId,
+        p_replace_user_program_id: firstEnrollment,
       },
     );
     expect(secondEnrollment).not.toBe(firstEnrollment);

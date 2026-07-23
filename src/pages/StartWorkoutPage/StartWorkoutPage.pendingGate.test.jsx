@@ -13,13 +13,13 @@ import { StartWorkoutPage } from './StartWorkoutPage';
 // (The equivalent feature-flags race is fixed by resolving flags once at app
 // init — see `~/app/FeatureFlagsGate` — so this page has no flags-pending
 // state left to gate on.)
-const { mockUseActiveProgram, mockUseFeatures } = vi.hoisted(() => ({
-  mockUseActiveProgram: vi.fn(),
+const { mockUseActivePrograms, mockUseFeatures } = vi.hoisted(() => ({
+  mockUseActivePrograms: vi.fn(),
   mockUseFeatures: vi.fn(),
 }));
 vi.mock('~/api', async (importOriginal) => ({
   ...(await importOriginal()),
-  useActiveProgram: mockUseActiveProgram,
+  useActivePrograms: mockUseActivePrograms,
 }));
 vi.mock('~/hooks', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -59,7 +59,7 @@ describe('StartWorkoutPage program-gate skeleton', () => {
   });
 
   test('renders a loading state while the active-program query is still resolving', () => {
-    mockUseActiveProgram.mockReturnValue({ data: undefined, isError: false });
+    mockUseActivePrograms.mockReturnValue({ data: undefined, isError: false });
 
     renderPage();
 
@@ -68,7 +68,7 @@ describe('StartWorkoutPage program-gate skeleton', () => {
   });
 
   test('lands directly on the builder once the program gate clears with no active program', async () => {
-    mockUseActiveProgram.mockReturnValue({ data: null, isError: false });
+    mockUseActivePrograms.mockReturnValue({ data: [], isError: false });
 
     renderPage();
 
@@ -77,7 +77,7 @@ describe('StartWorkoutPage program-gate skeleton', () => {
   });
 
   test('editWorkout (history "Repeat") bypasses the skeleton even while the program query is still pending', async () => {
-    mockUseActiveProgram.mockReturnValue({ data: undefined, isError: false });
+    mockUseActivePrograms.mockReturnValue({ data: undefined, isError: false });
 
     renderPage({ editWorkout: true });
 
@@ -90,7 +90,7 @@ describe('StartWorkoutPage program-gate skeleton', () => {
     // undefined forever — without the `isError` escape the page would be
     // stuck on the blocking skeleton. It must fall through to the safe
     // default (no active program → builder).
-    mockUseActiveProgram.mockReturnValue({ data: undefined, isError: true });
+    mockUseActivePrograms.mockReturnValue({ data: undefined, isError: true });
 
     renderPage();
 

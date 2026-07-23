@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { useActiveProgram, useEnrollProgram, useProgram } from '~/api';
+import {
+  MAX_ACTIVE_PROGRAMS,
+  useActivePrograms,
+  useEnrollProgram,
+  useProgram,
+} from '~/api';
 import { ModifyCountButtons, Page, WeightUnitTabs } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
@@ -73,7 +78,7 @@ export const ProgramDetailsPage = () => {
   const navigate = useNavigate();
   const session = useSession();
   const { data, isLoading, isError } = useProgram(id);
-  const { data: activeProgram } = useActiveProgram();
+  const { data: activePrograms = [] } = useActivePrograms();
   const enroll = useEnrollProgram();
 
   const [seeded, setSeeded] = useState(false);
@@ -117,10 +122,15 @@ export const ProgramDetailsPage = () => {
   const handleChangeSharedWeightTwoValue = (value: number) =>
     setSharedWeightTwoValue(Math.max(1, value));
 
-  // Only an *active* enrollment blocks a fresh enroll — a completed program may
-  // still be returned by useActiveProgram (to drive the home "complete" card).
-  const activeEnrollment =
-    activeProgram?.enrollment.status === 'active' ? activeProgram : null;
+  // Only *active* enrollments consume a parallel slot — a completed program may
+  // still be returned by useActivePrograms (to drive the home "complete" card).
+  const activeEnrollments = activePrograms.filter(
+    (p) => p.enrollment.status === 'active',
+  );
+  const slotsFull = activeEnrollments.length >= MAX_ACTIVE_PROGRAMS;
+  // At the cap this program displaces the least-recently-worked one, which the
+  // confirm dialog names. Below it, enrolling just claims a free slot.
+  const displaced = slotsFull ? activeEnrollments[0] : null;
 
   const doEnroll = () => {
     if (!id) return;
@@ -132,13 +142,14 @@ export const ProgramDetailsPage = () => {
         sharedWeightOneUnit,
         sharedWeightTwoValue,
         sharedWeightTwoUnit,
+        replaceUserProgramId: displaced?.enrollment.id,
       },
       { onSuccess: () => navigate('/') },
     );
   };
 
   const handleStart = () => {
-    if (activeEnrollment && activeEnrollment.enrollment.programId !== id) {
+    if (displaced) {
       setPendingSwitch(true);
     } else {
       doEnroll();
@@ -298,11 +309,13 @@ export const ProgramDetailsPage = () => {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Switch program?</DialogTitle>
+            <DialogTitle>Replace a program?</DialogTitle>
             <DialogDescription>
-              You already have an active program
-              {activeEnrollment ? ` (${activeEnrollment.program.title})` : ''}.
-              Starting a new one abandons your current progress.
+              You&apos;re already running {MAX_ACTIVE_PROGRAMS} programs — the
+              most you can have at once. Starting this one stops
+              {displaced ? ` ${displaced.program.title}` : ' your oldest one'},
+              the program you&apos;ve worked least recently. Its logged workouts
+              are kept, but its place in the program is cleared.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -310,7 +323,7 @@ export const ProgramDetailsPage = () => {
               Cancel
             </Button>
             <Button onClick={doEnroll} disabled={enroll.isPending}>
-              Switch program
+              Replace program
             </Button>
           </DialogFooter>
         </DialogContent>

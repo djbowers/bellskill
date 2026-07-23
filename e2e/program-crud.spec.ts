@@ -115,13 +115,22 @@ async function createOwnedProgram(
   return { programId: program.id, sessionIds: sessions.map((s) => s.id) };
 }
 
-async function enroll(user: TestUser, programId: string): Promise<string> {
+async function enroll(
+  user: TestUser,
+  programId: string,
+  activeSlot = 1,
+): Promise<string> {
   const [row] = await restJson<Array<{ id: string }>>(
     'POST',
     'user_programs',
     user.token,
     {
-      body: { user_id: user.uid, program_id: programId, status: 'active' },
+      body: {
+        user_id: user.uid,
+        program_id: programId,
+        status: 'active',
+        active_slot: activeSlot,
+      },
       prefer: 'return=representation',
     },
   );
@@ -129,17 +138,29 @@ async function enroll(user: TestUser, programId: string): Promise<string> {
 }
 
 test.describe('program CRUD — cancel (abandon enrollment)', () => {
-  test('abandoning frees the one-active-program unique index for a fresh enroll', async () => {
+  test('abandoning frees the enrollment slot for a fresh enroll', async () => {
     const user = await signUpThrowawayUser('cancel');
     const { programId } = await createOwnedProgram(user, 2);
     const userProgramId = await enroll(user, programId);
 
-    // A second active enrollment while one is active violates the partial unique
-    // index one_active_program_per_user.
+    // Slot 1 is taken, so a second active enrollment claiming it violates the
+    // partial unique index one_program_per_active_slot.
     const blocked = await rest('POST', 'user_programs', user.token, {
-      body: { user_id: user.uid, program_id: programId, status: 'active' },
+      body: {
+        user_id: user.uid,
+        program_id: programId,
+        status: 'active',
+        active_slot: 1,
+      },
     });
     expect(blocked.status).toBe(409);
+
+    // A slot-less active row is rejected too, so the cap cannot be sidestepped
+    // by omitting the column (NULLs are distinct to a unique index).
+    const slotless = await rest('POST', 'user_programs', user.token, {
+      body: { user_id: user.uid, program_id: programId, status: 'active' },
+    });
+    expect(slotless.status).toBe(400);
 
     // Cancel = flip to 'abandoned', scoped to the active row.
     const cancelRes = await rest(
@@ -157,9 +178,14 @@ test.describe('program CRUD — cancel (abandon enrollment)', () => {
     );
     expect(row.status).toBe('abandoned');
 
-    // With the active slot freed, enrolling again now succeeds.
+    // With slot 1 freed, enrolling again now succeeds.
     const reEnroll = await rest('POST', 'user_programs', user.token, {
-      body: { user_id: user.uid, program_id: programId, status: 'active' },
+      body: {
+        user_id: user.uid,
+        program_id: programId,
+        status: 'active',
+        active_slot: 1,
+      },
     });
     expect(reEnroll.status).toBeLessThan(300);
   });
