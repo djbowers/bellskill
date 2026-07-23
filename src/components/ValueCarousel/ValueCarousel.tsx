@@ -8,6 +8,10 @@ export const ITEM_WIDTH = 48; // px
 
 const FADE_BY_DISTANCE = [1, 0.7, 0.42, 0.24];
 
+/** Values kept in the DOM either side of center. Wide enough that a fling
+ * cannot outrun a re-render before the next scroll event lands. */
+const WINDOW_RADIUS = 12;
+
 interface ValueCarouselProps {
   /** Return a color to chip a value with, or null to leave it uncoded. */
   chipColor?: (value: number) => string | null;
@@ -53,6 +57,12 @@ export const ValueCarousel = ({
 
   if (values.length === 0) return null;
 
+  // Ranges run to a few hundred values (volume goes to 3000 by 10). Rendering
+  // them all costs a full reconcile on every step, so keep the DOM to the
+  // window either side of center and hold the scroll geometry open with spacers.
+  const first = Math.max(0, focusedIndex - WINDOW_RADIUS);
+  const last = Math.min(values.length - 1, focusedIndex + WINDOW_RADIUS);
+
   return (
     <div className="relative">
       <div
@@ -61,7 +71,9 @@ export const ValueCarousel = ({
         className="no-select flex snap-x snap-mandatory overflow-x-auto py-0.5 [-ms-overflow-style:none] [overscroll-behavior-x:contain] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ paddingInline: `calc(50% - ${ITEM_WIDTH / 2}px)` }}
       >
-        {values.map((current, index) => {
+        <div className="shrink-0" style={{ width: first * ITEM_WIDTH }} />
+        {values.slice(first, last + 1).map((current, offset) => {
+          const index = first + offset;
           const distance = Math.abs(index - focusedIndex);
           const centered = distance === 0;
           const color = chipColor?.(current) ?? null;
@@ -102,6 +114,10 @@ export const ValueCarousel = ({
             </button>
           );
         })}
+        <div
+          className="shrink-0"
+          style={{ width: (values.length - 1 - last) * ITEM_WIDTH }}
+        />
       </div>
 
       <div

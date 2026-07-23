@@ -38,6 +38,32 @@ describe('ValueCarousel', () => {
     });
   });
 
+  it('keeps a long range out of the DOM, holding its width with spacers', () => {
+    const { container } = render(
+      <ValueCarousel
+        min={10}
+        max={3000}
+        step={10}
+        value={1000}
+        onChange={vi.fn()}
+      />,
+    );
+
+    const rendered = container.querySelectorAll('button');
+    expect(rendered.length).toBeLessThan(30);
+    expect(screen.getByText('1000')).toBeInTheDocument();
+    expect(screen.queryByText('2000')).not.toBeInTheDocument();
+
+    const track = container.querySelector('[aria-hidden="true"]')!;
+    const spacers = track.querySelectorAll(':scope > div');
+    const spacerWidth = [...spacers].reduce(
+      (total, spacer) =>
+        total + Number((spacer as HTMLElement).style.width.replace('px', '')),
+      0,
+    );
+    expect(spacerWidth + rendered.length * ITEM_WIDTH).toBe(300 * ITEM_WIDTH);
+  });
+
   it('walks the range by step', () => {
     render(
       <ValueCarousel min={5} max={20} step={5} value={10} onChange={vi.fn()} />,

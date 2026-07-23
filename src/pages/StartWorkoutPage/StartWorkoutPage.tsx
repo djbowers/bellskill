@@ -714,7 +714,8 @@ export const StartWorkoutPage = ({
   // Skip the next session: writes a `skipped` completion (no workout_log), which
   // advances the cursor to the following session without leaving the home card.
   const handleSkipProgram = () => {
-    if (!primaryProgram?.nextSession || completeProgramSession.isPending) return;
+    if (!primaryProgram?.nextSession || completeProgramSession.isPending)
+      return;
     completeProgramSession.mutate({
       userProgramId: primaryProgram.enrollment.id,
       programSessionId: primaryProgram.nextSession.session.id,
