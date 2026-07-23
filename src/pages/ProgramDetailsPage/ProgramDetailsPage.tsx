@@ -26,7 +26,7 @@ import {
   WeightUnit,
   WorkoutGoalUnits,
 } from '~/types';
-import { getWeightUnitLabel } from '~/utils';
+import { getWeightRange, getWeightUnitLabel } from '~/utils';
 
 import { deriveStartingWeight } from './utils/deriveStartingWeight';
 
@@ -257,6 +257,8 @@ export const ProgramDetailsPage = () => {
         {!seeded && <p className="text-sm text-muted-foreground">Loading…</p>}
         {seeded && sharedWeightOneValue !== null && (
           <ModifyCountButtons
+            {...getWeightRange(sharedWeightOneUnit)}
+            bellUnit={sharedWeightOneUnit}
             onClickMinus={() =>
               handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
             }
@@ -278,6 +280,8 @@ export const ProgramDetailsPage = () => {
           sharedWeightTwoValue !== null &&
           sharedWeightTwoValue > 0 && (
             <ModifyCountButtons
+              {...getWeightRange(sharedWeightTwoUnit)}
+              bellUnit={sharedWeightTwoUnit}
               onClickMinus={() =>
                 handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
               }

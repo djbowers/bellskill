@@ -8,5 +8,6 @@ export * from './Page';
 export * from './PremiumGate';
 export * from './SafeAreaWrapper';
 export * from './TrialStatusPill';
+export * from './ValueCarousel';
 export * from './WeeklyBalance';
 export * from './WeightUnitTabs';

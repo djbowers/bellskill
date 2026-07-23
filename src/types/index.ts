@@ -9,6 +9,7 @@ export * from './program.interface';
 export * from './program-session.interface';
 export * from './program-session-completion.interface';
 export * from './user-program.interface';
+export * from './value-range.type';
 export * from './recommendation.interface';
 export * from './rpe-options.type';
 export * from './weight-tab.type';

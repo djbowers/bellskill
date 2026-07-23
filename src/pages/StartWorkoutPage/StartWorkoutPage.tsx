@@ -40,6 +40,7 @@ import {
 } from '~/types';
 import {
   WEIGHT_MODE_LABELS,
+  getWeightRange,
   getWeightTabValue,
   getWeightUnitLabel,
 } from '~/utils';
@@ -59,6 +60,7 @@ import {
   WeightUnitTabs,
 } from './components';
 import { useRecommendedWorkouts } from './hooks';
+import { INCREMENT_VOLUME, getGoalRange } from './utils/goalRange';
 import {
   RecommendationCatalog,
   buildRecommendationCatalog,
@@ -83,7 +85,8 @@ const DEFAULT_WEIGHT_VALUE: number =
 const INCREMENT_DURATION: number = 1; // minutes
 const INCREMENT_INTERVAL_TIMER: number = 5; // seconds
 const INCREMENT_REST_TIMER: number = 5; // seconds
-const INCREMENT_VOLUME: number = 10; // kg
+const TIMER_BOUNDS = { min: 5, max: 300 }; // seconds
+const REPS_RANGE = { min: 1, max: 50, step: 1 };
 const DEFAULT_VOLUME: number = 1000; // kg
 const DEFAULT_MINUTES: number = 10; // minutes
 const DEFAULT_ROUNDS: number = 10; // rounds
@@ -360,7 +363,10 @@ export const StartWorkoutPage = ({
   // the eventual start attributes to `program` and the log step advances that
   // enrollment on completion. Shared by the home "next" card and the progress
   // page's per-session picker (which routes through nav state below).
-  const applyProgramStart = (session: ProgramSession, userProgramId: string) => {
+  const applyProgramStart = (
+    session: ProgramSession,
+    userProgramId: string,
+  ) => {
     loadIntoBuilder(session.workoutOptions);
     setStartSource('program');
     setStartSourceProps({
@@ -708,7 +714,8 @@ export const StartWorkoutPage = ({
   // Skip the next session: writes a `skipped` completion (no workout_log), which
   // advances the cursor to the following session without leaving the home card.
   const handleSkipProgram = () => {
-    if (!primaryProgram?.nextSession || completeProgramSession.isPending) return;
+    if (!primaryProgram?.nextSession || completeProgramSession.isPending)
+      return;
     completeProgramSession.mutate({
       userProgramId: primaryProgram.enrollment.id,
       programSessionId: primaryProgram.nextSession.session.id,
@@ -930,6 +937,7 @@ export const StartWorkoutPage = ({
               }
             >
               <ModifyCountButtons
+                {...getGoalRange(workoutGoalUnits)}
                 onClickMinus={handleDecrementGoalValue}
                 onClickPlus={handleIncrementGoalValue}
                 onChange={setWorkoutGoal}
@@ -964,6 +972,8 @@ export const StartWorkoutPage = ({
                 />
                 {sharedWeightOneValue !== null && (
                   <ModifyCountButtons
+                    {...getWeightRange(sharedWeightOneUnit)}
+                    bellUnit={sharedWeightOneUnit}
                     onClickMinus={() =>
                       handleChangeSharedWeightOneValue(sharedWeightOneValue - 1)
                     }
@@ -985,6 +995,8 @@ export const StartWorkoutPage = ({
                 )}
                 {sharedWeightTwoValue !== null && sharedWeightTwoValue > 0 && (
                   <ModifyCountButtons
+                    {...getWeightRange(sharedWeightTwoUnit)}
+                    bellUnit={sharedWeightTwoUnit}
                     onClickMinus={() =>
                       handleChangeSharedWeightTwoValue(sharedWeightTwoValue - 1)
                     }
@@ -1026,6 +1038,8 @@ export const StartWorkoutPage = ({
             <Card>
               <Section title="Interval Timer">
                 <ModifyCountButtons
+                  {...TIMER_BOUNDS}
+                  step={INCREMENT_INTERVAL_TIMER}
                   onClickMinus={handleDecrementInterval}
                   onClickPlus={handleIncrementInterval}
                   unit="sec"
@@ -1040,6 +1054,8 @@ export const StartWorkoutPage = ({
             <Card>
               <Section title="Rest Timer">
                 <ModifyCountButtons
+                  {...TIMER_BOUNDS}
+                  step={INCREMENT_REST_TIMER}
                   onClickMinus={handleDecrementRest}
                   onClickPlus={handleIncrementRest}
                   unit="sec"
@@ -1103,6 +1119,8 @@ export const StartWorkoutPage = ({
                 {!complexSet && weightTabValue !== 'none' && (
                   <Section title="Load">
                     <ModifyCountButtons
+                      {...getWeightRange(movement.weightOneUnit)}
+                      bellUnit={movement.weightOneUnit}
                       onClickMinus={() =>
                         handleChangeWeightOneValue(
                           index,
@@ -1132,6 +1150,8 @@ export const StartWorkoutPage = ({
                     {movement.weightTwoValue !== null &&
                       movement.weightTwoValue > 0 && (
                         <ModifyCountButtons
+                          {...getWeightRange(movement.weightTwoUnit)}
+                          bellUnit={movement.weightTwoUnit}
                           onClickMinus={() =>
                             handleChangeWeightTwoValue(
                               index,
@@ -1198,10 +1218,13 @@ export const StartWorkoutPage = ({
                   </Tabs>
 
                   {movement.repScheme.map((_, rungIndex) => {
-                    const step = movement.timedRungs ? RUNG_SECONDS_STEP : 1;
+                    const range = movement.timedRungs
+                      ? { ...TIMER_BOUNDS, step: RUNG_SECONDS_STEP }
+                      : REPS_RANGE;
                     return (
                       <ModifyCountButtons
                         key={rungIndex}
+                        {...range}
                         value={movement.repScheme[rungIndex]}
                         onChange={(value) =>
                           handleChangeRepScheme(index, rungIndex, value)
@@ -1210,14 +1233,14 @@ export const StartWorkoutPage = ({
                           handleChangeRepScheme(
                             index,
                             rungIndex,
-                            movement.repScheme[rungIndex] - step,
+                            movement.repScheme[rungIndex] - range.step,
                           )
                         }
                         onClickPlus={() =>
                           handleChangeRepScheme(
                             index,
                             rungIndex,
-                            movement.repScheme[rungIndex] + step,
+                            movement.repScheme[rungIndex] + range.step,
                           )
                         }
                         unit={movement.timedRungs ? 'sec' : 'reps'}
