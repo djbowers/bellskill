@@ -71,6 +71,26 @@ async function restJson<T = unknown>(path: string, token: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function rpcPost<T = unknown>(
+  fn: string,
+  body: unknown,
+  token: string,
+): Promise<T> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`POST rpc/${fn} failed (${res.status}): ${await res.text()}`);
+  }
+  return res.json() as Promise<T>;
+}
+
 // ── Types for the seeded WorkoutOptions blob ─────────────────────────────────
 
 interface MovementOpt {
@@ -81,6 +101,7 @@ interface MovementOpt {
 }
 interface WorkoutOpts {
   complexSet: boolean;
+  straightSets: boolean;
   workoutGoal: number;
   workoutGoalUnits: string;
   preWorkoutNotes: string;
@@ -168,10 +189,14 @@ test.describe('program schema — Easy Strength seed', () => {
         EXPECTED_MOVEMENTS,
       );
 
-      // Each movement carries this session's rep scheme (alternating-rung, like DFW).
+      // Each movement carries this session's rep scheme.
       for (const m of s.workout_options.movements) {
         expect(m.repScheme).toEqual(expectedReps);
       }
+
+      // Straight sets: both sets of a movement before the next movement, per the
+      // source template (20260724000002_easy_strength_straight_sets.sql).
+      expect(s.workout_options.straightSets).toBe(true);
 
       // Goal is a fixed 1 round: one round == completing the whole ladder once.
       expect(s.workout_options.complexSet).toBe(false);
@@ -218,5 +243,38 @@ test.describe('program schema — Easy Strength seed', () => {
     expect(details).toContain('add');
     expect(details).toMatch(/weight|load/);
     expect(details).toMatch(/single|placeholder|manual/);
+  });
+
+  // Starting the program means enrolling, which copy-clones the template into
+  // user-owned sessions. Straight sets is the whole point of this program, so the
+  // clone must carry it on every session — otherwise the builder opens with the
+  // toggle off and the athlete runs Easy Strength as a circuit again.
+  test('enrolling clones straightSets onto every session, so starting the program has it on by default', async () => {
+    const user = await signUpThrowawayUser();
+    const [es] = await restJson<Array<{ id: string }>>(
+      `programs?slug=eq.${ES_SLUG}&select=id`,
+      user.token,
+    );
+
+    const userProgramId = await rpcPost<string>(
+      'enroll_in_program',
+      { p_program_id: es.id },
+      user.token,
+    );
+
+    const [enrollment] = await restJson<Array<{ program_id: string }>>(
+      `user_programs?id=eq.${userProgramId}&select=program_id`,
+      user.token,
+    );
+
+    const cloned = await restJson<Array<{ workout_options: WorkoutOpts }>>(
+      `program_sessions?program_id=eq.${enrollment.program_id}&select=workout_options&order=sequence_index.asc`,
+      user.token,
+    );
+
+    expect(cloned).toHaveLength(ES_SESSION_COUNT);
+    expect(cloned.every((s) => s.workout_options.straightSets === true)).toBe(
+      true,
+    );
   });
 });

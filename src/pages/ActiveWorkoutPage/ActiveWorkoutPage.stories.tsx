@@ -876,3 +876,65 @@ export const ArmorBuildingComplexContinuous: Story = {
     },
   },
 };
+
+// Straight sets (PROD-243) — the Easy Strength seed's shape: five patterns at
+// 2x5, both sets of a movement before the next movement starts, with a fixed
+// 1-round goal so one round is the whole prescription.
+const EASY_STRENGTH_MOVEMENTS = [
+  'Two-Arm Kettlebell Military Press',
+  'Pull-Up',
+  'Kettlebell Swing',
+  'Double Kettlebell Front Squat',
+  "Kettlebell Farmer's Carry",
+].map((movementName) => ({
+  ...DEFAULT_MOVEMENT_OPTIONS,
+  movementName,
+  repScheme: [5, 5],
+  weightOneValue: 24,
+  weightOneUnit: 'kilograms' as const,
+  weightTwoValue: 24,
+  weightTwoUnit: 'kilograms' as const,
+})) satisfies MovementOptions[];
+
+export const StraightSets: Story = {
+  parameters: {
+    workoutOptions: {
+      straightSets: true,
+      workoutGoal: 1,
+      workoutGoalUnits: 'rounds',
+      movements: EASY_STRENGTH_MOVEMENTS,
+    },
+  },
+};
+
+// The rotating order requires every movement to share a rung count; straight
+// sets gives each movement its own ladder, so uneven prescriptions are legal.
+export const StraightSetsUnevenLadders: Story = {
+  parameters: {
+    workoutOptions: {
+      straightSets: true,
+      workoutGoal: 1,
+      workoutGoalUnits: 'rounds',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Two-Arm Kettlebell Military Press',
+          repScheme: [5, 5, 5],
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 24,
+          weightTwoUnit: 'kilograms',
+        },
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Kettlebell Swing',
+          repScheme: [10, 10],
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: null,
+          weightTwoUnit: null,
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};

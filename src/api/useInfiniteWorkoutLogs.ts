@@ -62,6 +62,7 @@ const fetchWorkoutLogsPage = async ({
       sharedWeightTwoUnit: workoutLog.shared_weight_two_unit,
       sharedWeightTwoValue: workoutLog.shared_weight_two_value,
       startedAt: new Date(workoutLog.started_at),
+      straightSets: workoutLog.straight_sets,
       title: workoutLog.title,
       preWorkoutNotes: workoutLog.pre_workout_notes,
       workoutGoal: workoutLog.workout_goal,

@@ -25,6 +25,7 @@ export const SessionRow = ({ workoutLog }: SessionRowProps) => {
     movements,
     rpe,
     startedAt,
+    straightSets,
   } = workoutLog;
 
   const movementsLine = movements.join(' · ');
@@ -38,6 +39,7 @@ export const SessionRow = ({ workoutLog }: SessionRowProps) => {
   const meta = [
     getRowDateLabel(startedAt),
     complexSet === true ? 'Complex' : null,
+    straightSets === true ? 'Straight Sets' : null,
     // Already the headline when the session went unnamed.
     title === movementsLine ? null : movementsLine,
   ].filter(Boolean);

@@ -20,6 +20,7 @@ const baseWorkoutLog = (overrides: Partial<WorkoutLog> = {}): WorkoutLog => ({
   sharedWeightTwoUnit: null,
   sharedWeightTwoValue: null,
   startedAt: new Date('2026-01-01T10:00:00.000Z'),
+  straightSets: false,
   title: 'Morning swings',
   preWorkoutNotes: null,
   workoutGoal: 5,
@@ -66,6 +67,7 @@ describe('workoutLogToWorkoutOptions', () => {
       sharedWeightOneValue: null,
       sharedWeightTwoUnit: null,
       sharedWeightTwoValue: null,
+      straightSets: false,
       title: 'Morning swings',
       preWorkoutNotes: null,
       workoutGoal: 5,
@@ -90,6 +92,14 @@ describe('workoutLogToWorkoutOptions', () => {
     );
     expect(result.previousVolume).toBe(800);
     expect(result.workoutGoalUnits).toBe('kilograms');
+  });
+
+  test('carries the straight-sets order through a repeat', () => {
+    const result = workoutLogToWorkoutOptions(
+      baseWorkoutLog({ straightSets: true }),
+      [movementLog()],
+    );
+    expect(result.straightSets).toBe(true);
   });
 
   test('applies shared weights to every movement for complex workouts', () => {

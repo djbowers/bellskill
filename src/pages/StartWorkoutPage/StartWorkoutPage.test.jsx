@@ -697,6 +697,81 @@ describe('Complex Mode', () => {
   });
 });
 
+describe('Straight Sets', () => {
+  let startWorkout;
+
+  beforeEach(async () => {
+    startWorkout = vi.fn();
+    Default.parameters.updateWorkoutOptions = startWorkout;
+    render(<Default />);
+    await enterBuildMode();
+  });
+
+  test('Add to workout row includes a Straight Sets toggle, off by default', () => {
+    expect(
+      screen.getByRole('button', { name: 'Straight Sets, off' }),
+    ).toBeInTheDocument();
+  });
+
+  test('startWorkout is called with straightSets: true when the toggle is on', async () => {
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Straight Sets, off' }),
+    );
+    await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
+    await userEvent.click(screen.getByRole('button', { name: /Start/i }));
+
+    expect(startWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({ straightSets: true, complexSet: false }),
+    );
+  });
+
+  test('Straight Sets and Complex clear each other', async () => {
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Straight Sets, off' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Straight Sets, off' }),
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Straight Sets, off' }),
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Complex, off' }),
+    ).toBeInTheDocument();
+  });
+
+  test('uneven rep schemes are rejected in the rotating order but allowed in straight sets', async () => {
+    await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
+    await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
+    await userEvent.type(
+      screen.getAllByLabelText('Movement Input')[1],
+      'Swing',
+    );
+
+    // Give the second movement an extra rung.
+    const addRungButtons = screen.getAllByRole('button', { name: '+ Rung' });
+    await userEvent.click(addRungButtons[1]);
+
+    expect(
+      screen.getByText(/Rep schemes must contain the same number of rungs/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start/i })).toBeDisabled();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Straight Sets, off' }),
+    );
+
+    expect(
+      screen.queryByText(/Rep schemes must contain the same number of rungs/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
+  });
+});
+
 describe('integration tests for previous volume retrieval', () => {
   test('retrieves previous volume from workout options when available', async () => {
     const startWorkout = vi.fn();

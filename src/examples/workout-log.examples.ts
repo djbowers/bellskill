@@ -24,6 +24,7 @@ export class ExampleWorkoutLog implements WorkoutLog {
   shared_weight_two_unit: 'kilograms' | 'pounds' | null;
   shared_weight_two_value: number | null;
   started_at: string;
+  straight_sets: boolean;
   user_id: string;
   title: string | null;
   pre_workout_notes: string | null;
@@ -58,6 +59,7 @@ export class ExampleWorkoutLog implements WorkoutLog {
     shared_weight_two_unit = null,
     shared_weight_two_value = null,
     started_at = new Date().toISOString(),
+    straight_sets = false,
     user_id = '1',
     title = '',
     pre_workout_notes = null,
@@ -87,6 +89,7 @@ export class ExampleWorkoutLog implements WorkoutLog {
     this.shared_weight_two_unit = shared_weight_two_unit;
     this.shared_weight_two_value = shared_weight_two_value;
     this.started_at = started_at;
+    this.straight_sets = straight_sets;
     this.user_id = user_id;
     this.title = title;
     this.pre_workout_notes = pre_workout_notes;
