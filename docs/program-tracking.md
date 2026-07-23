@@ -14,9 +14,11 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   also reach staging/prod) — Dry Fighting Weight
   (`*_seed_dry_fighting_weight.sql`), Dan John's 10,000 Swing Challenge
   (`*_seed_10000_swing_challenge.sql`), StrongFirst's A+A Protocol "Plan A"
-  (`*_seed_aa_protocol_plan_a.sql`, the first EMOM/`intervalTimer` program), and
+  (`*_seed_aa_protocol_plan_a.sql`, the first EMOM/`intervalTimer` program),
   Dan John's Armor Building Complex
-  (`*_seed_armor_building_complex.sql`, the first `complexSet: true` program).
+  (`*_seed_armor_building_complex.sql`, the first `complexSet: true` program),
+  and Dr. Mike Prevost's The Kettlebell Mile (`*_seed_kettlebell_mile.sql`, the
+  first carry-centric program and the first `timedRungs: true` program).
   Each is idempotent on `slug` and builds every session's `WorkoutOptions` JSONB
   (shape `Omit<WorkoutOptions,'startedAt'>`, camelCase keys) via a `pg_temp`
   helper; add another by mirroring one. Seed shape is asserted in
@@ -119,6 +121,23 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   (`Omit<WorkoutOptions,'startedAt'>`, camelCase). DFW
   (`*_seed_dry_fighting_weight.sql`) is the template; add a focused
   `e2e/program-<slug>.spec.ts` asserting the seeded shape.
+- **`timedRungs` (timed movements, PROD-200):** a movement with
+  `timedRungs: true` reinterprets each `repScheme` entry as **seconds**, not
+  reps — `ActiveWorkoutPage` runs a per-rung countdown that auto-fires
+  "continue" on expiry (re-armed per rung, so `[30, 60]` works). Deliberately
+  reuses `repScheme` rather than adding a parallel duration array, which would
+  have to be threaded through `workout_options`, `movement_logs.rep_scheme`,
+  `pattern_debt_window`, the builder, and every seed; rung structure (ladders,
+  rounds, mirrored sides, complex alternation) is identical either way. Two
+  consequences worth knowing: timed rungs contribute **no reps and no volume**
+  (seconds × kg is not volume — see `ActiveWorkoutPage`'s `currentRungVolume`
+  and the `timed_rungs` guards in `*_add_timed_rungs.sql`'s
+  `pattern_debt_window`, which keep `set_count`/`last_trained_at` but zero
+  `total_reps`/`volume_kg`), and it is **mutually exclusive with
+  `intervalTimer`** — both drive auto-advance, so the builder disables each when
+  the other is on. The Kettlebell Mile seed is the reference use; see the
+  `KettlebellMileSession` story + the "timed rungs" tests in
+  `ActiveWorkoutPage.test.jsx`.
 - **`intervalTimer` (EMOM programs):** DFW leaves it `0`; the A+A Protocol seed
   (`*_seed_aa_protocol_plan_a.sql`) is the first/reference use. It is a
   per-session seconds cadence — `ActiveWorkoutPage` auto-fires one "continue"
