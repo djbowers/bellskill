@@ -24,7 +24,7 @@ export const ProgramSwitcherTabs = ({
     <div
       role="tablist"
       aria-label="Active programs"
-      className="flex gap-1 overflow-x-auto"
+      className="flex gap-1"
     >
       {programs.map(({ enrollment, program, progress }) => {
         const selected = enrollment.id === selectedEnrollmentId;
@@ -36,14 +36,17 @@ export const ProgramSwitcherTabs = ({
             aria-selected={selected}
             onClick={() => onSelect(enrollment.id)}
             className={cn(
-              'shrink-0 rounded border px-1 py-0.5 text-xs',
+              // Titles truncate rather than scroll: at the 3-program cap, three
+              // full titles overflow a phone viewport and the last pill lands
+              // off-screen.
+              'flex min-w-0 flex-1 items-baseline gap-0.5 rounded border px-1 py-0.5 text-xs',
               selected
                 ? 'border-primary bg-primary text-primary-foreground'
                 : 'border-border text-muted-foreground hover:bg-secondary',
             )}
           >
-            <span className="font-medium">{program.title}</span>
-            <span className="ml-0.5 opacity-75">
+            <span className="truncate font-medium">{program.title}</span>
+            <span className="shrink-0 opacity-75">
               {progress.completed}/{progress.total}
             </span>
           </button>
