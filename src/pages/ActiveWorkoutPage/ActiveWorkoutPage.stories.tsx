@@ -270,6 +270,86 @@ export const AAProtocolPlanASession: Story = {
   },
 };
 
+// Timed movements (PROD-200) — the Kettlebell Mile seed's shape: a single
+// one-handed suitcase carry on ONE 60-second rung, with rounds as the
+// progression lever (week 1 is 3 rounds = 6 min under load). One-handed loading
+// (weightTwoValue 0) makes the runtime mirror the rung per hand, which is
+// exactly the source's "switch hands as often as you want," so one round is
+// 1:00 left + 1:00 right.
+export const KettlebellMileSession: Story = {
+  parameters: {
+    workoutOptions: {
+      intervalTimer: 0,
+      restTimer: 0,
+      complexSet: false,
+      workoutGoal: 3,
+      workoutGoalUnits: 'rounds',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Kettlebell Suitcase Carry',
+          repScheme: [60],
+          timedRungs: true,
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 0,
+          weightTwoUnit: 'kilograms',
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
+// Rungs of differing length prove the countdown is re-armed per rung rather
+// than reusing the first rung's duration for the whole movement.
+export const TimedRungsVaryingDurations: Story = {
+  parameters: {
+    workoutOptions: {
+      intervalTimer: 0,
+      restTimer: 0,
+      workoutGoal: 10,
+      workoutGoalUnits: 'rounds',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Kettlebell Suitcase Carry',
+          repScheme: [30, 60],
+          timedRungs: true,
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: null,
+          weightTwoUnit: null,
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
+// A kilograms-goal workout containing a timed movement: seconds must not be
+// multiplied by load, or the goal would be met before the first carry ends.
+export const TimedRungsVolumeGoal: Story = {
+  parameters: {
+    workoutOptions: {
+      intervalTimer: 0,
+      restTimer: 0,
+      workoutGoal: 1000,
+      workoutGoalUnits: 'kilograms',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Kettlebell Suitcase Carry',
+          repScheme: [120],
+          timedRungs: true,
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: null,
+          weightTwoUnit: null,
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
 export const RestTimer: Story = {
   parameters: {
     workoutOptions: {

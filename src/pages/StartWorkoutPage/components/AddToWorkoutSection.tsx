@@ -5,6 +5,7 @@ export const AddToWorkoutSection = ({
   hasNotes,
   hasInterval,
   hasRest,
+  hasTimedMovements = false,
   onToggleComplex,
   onToggleInterval,
   onToggleNotes,
@@ -15,6 +16,7 @@ export const AddToWorkoutSection = ({
   hasNotes: boolean;
   hasInterval: boolean;
   hasRest: boolean;
+  hasTimedMovements?: boolean;
   onToggleComplex: () => void;
   onToggleInterval: () => void;
   onToggleNotes: () => void;
@@ -37,6 +39,8 @@ export const AddToWorkoutSection = ({
           id="interval"
           label="Interval"
           isOn={hasInterval}
+          disabled={hasTimedMovements}
+          disabledReason="Turn off timed movements first — both drive the set clock."
           onToggle={onToggleInterval}
         />
         <WorkoutAddonToggle

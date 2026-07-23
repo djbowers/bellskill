@@ -51,6 +51,8 @@ export const ActiveWorkoutPage = ({
   const navigate = useNavigate();
   const requestWakeLock = useRequestWakeLock();
 
+  const hasTimedMovements = movements.some((movement) => movement.timedRungs);
+
   const [
     formattedTimeRemaining,
     {
@@ -60,10 +62,15 @@ export const ActiveWorkoutPage = ({
       play: startWorkoutTimer,
     },
   ] = useCountdownTimer(workoutGoal, {
+    // The workout timer's paused state is also the start gate: while it is
+    // paused the controls show Play, and only finishCountdown starts the
+    // interval / rung clocks. So anything that runs on its own clock has to be
+    // listed here, or the workout opens with a countdown that never ticks.
     defaultPaused:
       defaultPaused &&
       ((workoutGoalUnits === 'minutes' && workoutGoal > 0) ||
-        intervalTimer > 0),
+        intervalTimer > 0 ||
+        hasTimedMovements),
     disabled: workoutGoalUnits !== 'minutes',
   });
 
@@ -121,6 +128,29 @@ export const ActiveWorkoutPage = ({
   const isLastMovement = currentMovementIndex === lastMovementIndex;
   const currentMovement = movements[currentMovementIndex];
 
+  // Timed movements (PROD-200): a timed movement's repScheme holds SECONDS per
+  // rung, not reps. The rung runs on its own countdown that auto-fires
+  // "continue" on expiry, exactly as intervalTimer does. The builder makes the
+  // two mutually exclusive; the effects below also guard, since both would
+  // otherwise drive continueWorkout and double-advance.
+  const isTimedRung = currentMovement.timedRungs === true;
+  const currentRungSeconds = isTimedRung
+    ? currentMovement.repScheme[currentMovementRungIndex]
+    : 0;
+
+  const [
+    formattedRungRemaining,
+    {
+      milliseconds: rungRemainingMilliseconds,
+      pause: pauseRungTimer,
+      play: startRungTimer,
+      reset: resetRungTimer,
+    },
+  ] = useCountdownTimer(currentRungSeconds / 60, {
+    defaultPaused: defaultPaused && hasTimedMovements,
+    timeFormat: 'ss.S',
+  });
+
   const primaryWeightSide = isMirrorSet ? 'right' : 'left'; // todo: make primary weight side configurable
 
   const primaryWeightUnit = currentMovement.weightOneUnit;
@@ -173,8 +203,11 @@ export const ActiveWorkoutPage = ({
 
   const currentMovementRungs = currentMovement.repScheme.length;
   const isLastRung = currentMovementRungIndex === currentMovementRungs - 1;
-  const currentRungVolume =
-    currentTotalWeight * currentMovement.repScheme[currentMovementRungIndex];
+  // Seconds are not reps: a timed rung contributes no volume, or a 2-minute
+  // carry at 24 kg would log 2,880 kg and end a kilograms-goal workout instantly.
+  const currentRungVolume = isTimedRung
+    ? 0
+    : currentTotalWeight * currentMovement.repScheme[currentMovementRungIndex];
 
   const currentRound = completedRounds + 1;
   const shouldMirrorReps = isOneHanded || isMixedWeights;
@@ -194,14 +227,22 @@ export const ActiveWorkoutPage = ({
       totalRestMilliseconds) *
     100;
 
+  const totalRungMilliseconds = currentRungSeconds * 1000;
+  const rungCompletedPercentage =
+    ((totalRungMilliseconds - rungRemainingMilliseconds) /
+      totalRungMilliseconds) *
+    100;
+
   // Complex mode: round completes when the longest movement's final rung is done
   const maxMovementRungs = complexSet
     ? Math.max(...movements.map((m) => m.repScheme.length))
     : currentMovementRungs;
 
   const incrementReps = () =>
-    setCompletedReps(
-      (prev) => prev + currentMovement.repScheme[currentMovementRungIndex],
+    setCompletedReps((prev) =>
+      isTimedRung
+        ? prev
+        : prev + currentMovement.repScheme[currentMovementRungIndex],
     );
 
   const incrementRepsComplex = () =>
@@ -209,6 +250,7 @@ export const ActiveWorkoutPage = ({
       (prev) =>
         prev +
         movements.reduce((sum, m) => {
+          if (m.timedRungs) return sum;
           const repIdx = Math.min(
             currentMovementRungIndex,
             m.repScheme.length - 1,
@@ -228,6 +270,7 @@ export const ActiveWorkoutPage = ({
 
   const incrementVolumeComplex = () => {
     const complexVolume = movements.reduce((sum, m) => {
+      if (m.timedRungs) return sum;
       const repIdx = Math.min(currentMovementRungIndex, m.repScheme.length - 1);
       const reps = m.repScheme[repIdx];
       const weight =
@@ -294,6 +337,7 @@ export const ActiveWorkoutPage = ({
     setIsRestActive(true);
     startRestTimer();
     if (intervalTimer > 0) pauseIntervalTimer();
+    if (hasTimedMovements) pauseRungTimer();
   };
 
   const finishRest = () => {
@@ -302,12 +346,18 @@ export const ActiveWorkoutPage = ({
     resetRestTimer();
     setIsRestActive(false);
     if (intervalTimer > 0) startIntervalTimer();
+    if (hasTimedMovements) startRungTimer();
   };
 
   const finishInterval = () => {
     playDing();
     continueWorkout();
     resetIntervalTimer();
+  };
+
+  const finishRung = () => {
+    playDing();
+    continueWorkout();
   };
 
   const continueWorkout = () => {
@@ -332,12 +382,14 @@ export const ActiveWorkoutPage = ({
     resetCountdownTimer();
     startWorkoutTimer();
     if (intervalTimer > 0 && !isRestActive) startIntervalTimer();
+    if (hasTimedMovements && !isRestActive) startRungTimer();
     if (isRestActive) startRestTimer();
   };
 
   const pauseWorkout = () => {
     pauseWorkoutTimer();
     pauseIntervalTimer();
+    pauseRungTimer();
     if (isRestActive) pauseRestTimer();
   };
 
@@ -407,6 +459,29 @@ export const ActiveWorkoutPage = ({
     [intervalRemainingMilliseconds],
   );
 
+  // Re-arm the rung countdown after every advance. Keyed on completedSides
+  // because that is the one counter continueWorkout always bumps: a
+  // single-movement, single-rung timed workout (a plank) leaves both the
+  // movement and rung index at 0, so keying on those would leave the timer
+  // parked at zero and refire handleFinishRung forever.
+  useEffect(
+    function armRungTimer() {
+      if (!isTimedRung) return;
+      resetRungTimer(currentRungSeconds / 60);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-arms once per advance; resetRungTimer is recreated whenever the rung duration changes and must not retrigger this effect
+    [completedSides, currentRungSeconds, isTimedRung],
+  );
+
+  useEffect(
+    function handleFinishRung() {
+      if (!isTimedRung || intervalTimer > 0) return;
+      if (rungRemainingMilliseconds === 0) finishRung();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each rung tick; finishRung is recreated per render and must not retrigger this effect
+    [rungRemainingMilliseconds],
+  );
+
   useEffect(
     function handleFinishRest() {
       if (restTimer === 0) return;
@@ -470,6 +545,7 @@ export const ActiveWorkoutPage = ({
           currentRound={currentRound}
           currentSide={currentSide}
           isOneHanded={isOneHanded}
+          isTimedRung={isTimedRung}
           leftWeightUnit={leftWeightUnit}
           leftWeightValue={leftWeightValue}
           repScheme={currentMovement.repScheme}
@@ -489,13 +565,16 @@ export const ActiveWorkoutPage = ({
           formattedRestRemaining={formattedRestRemaining}
           handleClickContinue={handleClickContinue}
           handleClickStart={handleClickStart}
+          formattedRungRemaining={formattedRungRemaining}
           intervalCompletedPercentage={intervalCompletedPercentage}
           intervalTimer={intervalTimer}
           isComplexMode={complexSet}
           isCountdownActive={isCountdownActive}
           isEffectActive={isEffectActive}
           isRestActive={isRestActive}
+          isTimedRung={isTimedRung}
           restCompletedPercentage={restCompletedPercentage}
+          rungCompletedPercentage={rungCompletedPercentage}
           setIsEffectActive={setIsEffectActive}
           workoutTimerPaused={workoutTimerPaused}
         />

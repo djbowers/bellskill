@@ -39,6 +39,7 @@ const fetchMovementLogsByWorkoutIds = async (
       id: row.id,
       movementName: row.movement_name,
       repScheme: row.rep_scheme,
+      timedRungs: row.timed_rungs,
       userMovementId: row.user_movement_id ?? null,
       functionalMovementId: null,
       weightOneUnit: row.weight_one_unit,

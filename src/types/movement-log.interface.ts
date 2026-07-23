@@ -3,7 +3,9 @@ import { WeightUnit } from './weight-unit.type';
 export interface MovementLog {
   id: number;
   movementName: string;
+  /** Reps per rung, or seconds per rung when `timedRungs` is set. */
   repScheme: number[];
+  timedRungs?: boolean;
   userMovementId: string | null;
   functionalMovementId: string | null;
   weightOneUnit: WeightUnit | null;

@@ -8,13 +8,14 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import { MovementOptions, WeightUnit } from '~/types';
-import { getWeightUnitLabel } from '~/utils';
+import { formatRungDuration, getWeightUnitLabel } from '~/utils';
 
 interface CurrentMovementProps {
   currentMovement: MovementOptions;
   currentRound: number;
   currentSide: number;
   isOneHanded: boolean | null;
+  isTimedRung?: boolean;
   leftWeightUnit: WeightUnit | null;
   leftWeightValue: number | null;
   repScheme: number[];
@@ -31,6 +32,7 @@ export const CurrentMovement = ({
   currentRound,
   currentSide,
   isOneHanded,
+  isTimedRung = false,
   leftWeightUnit,
   leftWeightValue,
   repScheme,
@@ -87,7 +89,7 @@ export const CurrentMovement = ({
   };
 
   return (
-    <Card>
+    <Card data-testid="current-movement-card">
       <CardHeader>
         <div className="flex gap-2">
           <CardTitle>
@@ -138,7 +140,7 @@ export const CurrentMovement = ({
             >
               {isThreeColumn ? 'Left' : 'Weight'}
             </CardDescription>
-            <CardDescription>Reps</CardDescription>
+            <CardDescription>{isTimedRung ? 'Time' : 'Reps'}</CardDescription>
             {isThreeColumn && (
               <CardDescription
                 className={clsx(
@@ -162,7 +164,13 @@ export const CurrentMovement = ({
               className="flex items-end justify-center text-3xl"
               data-testid="current-reps"
             >
-              {restRemaining ? <span className="h-5" /> : repScheme[rungIndex]}
+              {restRemaining ? (
+                <span className="h-5" />
+              ) : isTimedRung ? (
+                formatRungDuration(repScheme[rungIndex])
+              ) : (
+                repScheme[rungIndex]
+              )}
             </div>
 
             {isThreeColumn ? (

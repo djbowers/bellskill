@@ -47,4 +47,18 @@ describe('getRepSchemeDisplayValue', () => {
   test('returns single rep count as is when no bells specified', () => {
     expect(getRepSchemeDisplayValue([5], [0, 0])).toBe('5');
   });
+
+  // Timed rungs hold SECONDS. Without formatting, a 5-second carry renders as
+  // a bare "5 / 5" in history and reads as five reps.
+  test('formats timed rungs as durations', () => {
+    expect(getRepSchemeDisplayValue([5, 60, 90], [24, 24], true)).toBe(
+      '0:05, 1:00, 1:30',
+    );
+  });
+
+  test('duplicates timed rungs per hand for unilateral carries', () => {
+    expect(getRepSchemeDisplayValue([5, 60], [24, 0], true)).toBe(
+      '0:05 / 0:05, 1:00 / 1:00',
+    );
+  });
 });
