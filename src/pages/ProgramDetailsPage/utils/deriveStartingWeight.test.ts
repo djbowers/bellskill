@@ -105,13 +105,11 @@ describe('deriveStartingWeight', () => {
   });
 
   it('derives single loading and the modal weight (A+A Protocol)', () => {
-    // Four sessions at 24kg, one at 20kg — 24 is modal.
+    // Twelve working sessions at 24kg, four deload sessions at 16kg — 24 is
+    // modal, so the deload weeks don't drag the pre-fill down.
     const sessions = [
-      single(24),
-      single(24),
-      single(24),
-      single(24),
-      single(20),
+      ...Array.from({ length: 12 }, () => single(24)),
+      ...Array.from({ length: 4 }, () => single(16)),
     ];
     expect(deriveStartingWeight(sessions)).toEqual({
       sharedWeightOneValue: 24,

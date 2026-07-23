@@ -17,6 +17,9 @@ const SWING10K_SLUG = '10000-swing-challenge';
 const SWING10K_SESSION_COUNT = 20;
 const SNATCH_SLUG = 'strongfirst-snatch-test-plan';
 const SNATCH_SESSION_COUNT = 30; // 10 weeks x 3 days
+const AA_SLUG = 'aa-protocol-plan-a';
+const AA_SESSION_COUNT = 16; // 8 weeks x 2 days
+const AA_DELOAD_WEEKS = [4, 8]; // authored one bell size below the placeholder
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -747,7 +750,7 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
     return { cloneId, sessions };
   }
 
-  test('a shared weight override sets every placeholder session (mixed left/right value + unit) but leaves the W5D2 test day exactly as authored', async () => {
+  test('a shared weight override sets every placeholder session (mixed left/right value + unit) and shifts the W5D2 test day by its authored offset', async () => {
     const user = await signUpThrowawayUser();
     const dfwId = await getDfwProgramId(user.token);
 
@@ -789,14 +792,20 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
       }
     }
 
-    // The W5D2 test day (seq 13) is left exactly as authored in the source:
-    // no sharedWeight override, and its own heavier 28kg movement weight
-    // untouched.
+    // The W5D2 test day (seq 13) is authored 4 kg ABOVE the modal placeholder,
+    // and keeps that offset relative to the enrollee's choice rather than
+    // staying frozen at its absolute 28 kg. Slot one's authored unit
+    // (kilograms) differs from the chosen unit (pounds), so that slot falls
+    // back to the flat override instead of doing cross-unit arithmetic; slot
+    // two matches units and picks up the +4.
     const testDay = sessions.find((s) => s.sequence_index === 13);
     expect(testDay?.title).toBe('Test - new press max');
-    expect(testDay?.workout_options.sharedWeightOneValue).toBeNull();
-    expect(testDay?.workout_options.sharedWeightTwoValue).toBeNull();
-    expect(testDay?.workout_options.movements[0].weightOneValue).toBe(28);
+    expect(testDay?.workout_options.sharedWeightOneValue).toBe(20);
+    expect(testDay?.workout_options.sharedWeightOneUnit).toBe('pounds');
+    expect(testDay?.workout_options.sharedWeightTwoValue).toBe(20);
+    expect(testDay?.workout_options.sharedWeightTwoUnit).toBe('kilograms');
+    expect(testDay?.workout_options.movements[0].weightOneValue).toBe(20);
+    expect(testDay?.workout_options.movements[0].weightTwoValue).toBe(20);
   });
 
   test('a single two-hand override writes weight one and clears weight two on every placeholder session', async () => {
@@ -828,10 +837,14 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
       }
     }
 
-    // The W5D2 test day is still untouched.
+    // Same units this time (kilograms both sides), so the test day keeps its
+    // authored +4 kg offset from the modal: 28 chosen -> 32.
     const testDay = sessions.find((s) => s.sequence_index === 13);
-    expect(testDay?.workout_options.sharedWeightOneValue).toBeNull();
-    expect(testDay?.workout_options.movements[0].weightOneValue).toBe(28);
+    expect(testDay?.workout_options.sharedWeightOneValue).toBe(32);
+    expect(testDay?.workout_options.sharedWeightOneUnit).toBe('kilograms');
+    expect(testDay?.workout_options.sharedWeightTwoValue).toBeNull();
+    expect(testDay?.workout_options.movements[0].weightOneValue).toBe(32);
+    expect(testDay?.workout_options.movements[0].weightTwoValue).toBeNull();
   });
 
   test('enrolling with no starting weight clones sharedWeight* byte-identically to the source (unchanged behavior)', async () => {
@@ -929,6 +942,52 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
       expect(session.workout_options.sharedWeightOneValue).toBe(16);
       // Folded onto the bodyweight movement too (null -> chosen 16).
       expect(session.workout_options.movements[0].weightOneValue).toBe(16);
+    }
+  });
+
+  test("A+A Plan A's deload weeks stay one bell size below the chosen starting weight", async () => {
+    const user = await signUpThrowawayUser();
+
+    const [aa] = await restJson<Array<{ id: string }>>(
+      'GET',
+      `programs?slug=eq.${AA_SLUG}&select=id`,
+      user.token,
+    );
+
+    // Single-bell loading, 8 kg below the 24 kg seed placeholder. Before the
+    // relative-weight fix the deload weeks kept their absolute authored load,
+    // so this enrollee's "deload" came out HEAVIER than their working sets.
+    await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: aa.id,
+      p_shared_weight_one_value: 16,
+      p_shared_weight_one_unit: 'kilograms',
+      p_shared_weight_two_value: 0,
+    });
+
+    const clones = await restJson<Array<{ id: string }>>(
+      'GET',
+      `programs?source_program_id=eq.${aa.id}&owner_id=eq.${user.uid}&select=id`,
+      user.token,
+    );
+    expect(clones).toHaveLength(1);
+
+    const sessions = await restJson<
+      Array<{
+        week_number: number;
+        workout_options: { movements: Array<{ weightOneValue: number }> };
+      }>
+    >(
+      'GET',
+      `program_sessions?program_id=eq.${clones[0].id}&select=week_number,workout_options&order=sequence_index.asc`,
+      user.token,
+    );
+    expect(sessions).toHaveLength(AA_SESSION_COUNT);
+
+    for (const session of sessions) {
+      const isDeloadWeek = AA_DELOAD_WEEKS.includes(session.week_number);
+      expect(session.workout_options.movements[0].weightOneValue).toBe(
+        isDeloadWeek ? 8 : 16,
+      );
     }
   });
 

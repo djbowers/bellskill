@@ -243,10 +243,10 @@ export const IntervalTimer: Story = {
   },
 };
 
-// Mirrors the seeded A+A Protocol "Plan A" session (Stage 4): single-KB one-arm
-// clean & jerk, EMOM-paced at a 30s interval so consecutive auto-fires alternate
-// hands (left on the minute, right 30s later). First shipped program to use
-// intervalTimer.
+// Mirrors a seeded A+A Protocol "Plan A" session at the program's 30-minute
+// target: single-KB one-arm clean & jerk, EMOM-paced at a 30s interval so
+// consecutive auto-fires alternate hands (left on the minute, right 30s later).
+// First shipped program to use intervalTimer.
 export const AAProtocolPlanASession: Story = {
   parameters: {
     workoutOptions: {

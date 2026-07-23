@@ -125,14 +125,28 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   every `intervalTimer` seconds. On a **one-handed** movement (`weightTwoValue: 0`)
   each auto-fire alternates sides, so `intervalTimer: 30` gives "left on the
   minute, right 30s later." See the `AAProtocolPlanASession` story +
-  `ActiveWorkoutPage.test.jsx` EMOM-cadence test.
+  `ActiveWorkoutPage.test.jsx` EMOM-cadence test. The program itself is 8 weeks
+  × 2 days (16 sessions) — a +2 min duration ramp toward the source's 30-minute
+  target, with weeks 4 and 8 deloaded one bell size lighter (24 → 16 kg) at the
+  preceding week's duration. `*_reshape_aa_protocol_plan_a.sql` is the forward
+  data fix that reconciled the original seed with the source article; the
+  original seed migration is applied in prod and is left untouched.
 - **Starting weight on enroll (PROD-TBD):** `enroll_in_program` takes four
   optional params mirroring `workout_options`' shared-weight shape —
   `p_shared_weight_one_value`/`_unit` + `p_shared_weight_two_value`/`_unit`. When
-  weight one is set, the clone is overridden on every cloned session whose source
-  weight matches the _modal_ weight across the program — i.e. the shared
-  placeholder, not a deliberately different session like DFW's W5D2 test day. The
-  override writes the chosen weight into **both** the session's
+  weight one is set, **every** cloned session is overridden, each shifted by its
+  own authored offset from the program's _modal_ (weightOne, weightTwo)
+  placeholder pair (`*_enroll_in_program_relative_weights.sql`). A modal session
+  has delta 0 and clones exactly as before; a deliberately different one keeps
+  its relationship to the working load — DFW's W5D2 test day stays +4 kg, A+A's
+  deload weeks stay −8 kg, rather than being frozen at an absolute number that
+  could land _above_ a light enrollee's working sets. A delta applies only when
+  the session's authored unit for that slot matches the chosen unit (all seeds
+  author kg); on a mismatch the slot falls back to the flat override rather than
+  inventing a converted, non-kettlebell number. A zero delta passes the chosen
+  value through untouched — notably it must skip the `GREATEST(..., 1)` clamp,
+  since single-bell loading legitimately carries weight two = 0. The
+  override writes the resolved weight into **both** the session's
   `sharedWeightOne/Two` fields (the `complexSet` runtime path —
   `ComplexMovementDisplay` reads them) **and folds it onto every movement's own
   `weightOne/Two` fields** (`*_enroll_in_program_fold_movement_weights.sql`,
@@ -143,9 +157,9 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   `resolveSharedWeights` on the start path (that only runs on the log→repeat/history
   path via `workoutLogToWorkoutOptions.ts`), so writing `sharedWeightOne/Two`
   alone was inert and the workout ran at the seed placeholder. If the program has
-  no numeric modal (bodyweight-first sessions or widely-varied first-movement
-  weights make `v_placeholder_weight` NULL), the override falls back to _every_
-  cloned session so the enrollee's chosen weight is never silently discarded. A
+  no numeric modal (bodyweight-first sessions make `v_modal_one` NULL), every
+  delta resolves to 0 and the override degrades to a flat one across all
+  sessions, so the enrollee's chosen weight is never silently discarded. A
   null weight-two slot means two-hand loading; `jsonb_set` is strict, so each override value is
   `COALESCE(to_jsonb(x), 'null'::jsonb)` (unset slots become JSON null, not a
   nulled-out column). Passing no weight params (the default) is byte-identical
