@@ -7,6 +7,7 @@ export * from './PWAInstallPrompt';
 export * from './Page';
 export * from './PremiumGate';
 export * from './SafeAreaWrapper';
+export * from './Sidebar';
 export * from './TrialStatusPill';
 export * from './ValueCarousel';
 export * from './WeeklyBalance';
