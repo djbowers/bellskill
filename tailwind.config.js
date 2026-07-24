@@ -39,6 +39,13 @@ export default {
         foreground: 'hsl(var(--foreground))',
         ['status-warning']: 'hsl(var(--status-warning))',
         ['status-success']: 'hsl(var(--status-positive))',
+        intensity: {
+          0: 'hsl(var(--intensity-0))',
+          1: 'hsl(var(--intensity-1))',
+          2: 'hsl(var(--intensity-2))',
+          3: 'hsl(var(--intensity-3))',
+          4: 'hsl(var(--intensity-4))',
+        },
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
