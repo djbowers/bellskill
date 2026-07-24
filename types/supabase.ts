@@ -776,13 +776,13 @@ export type Database = {
       }
       enroll_in_program: {
         Args: {
+          p_movement_weights?: Json
           p_program_id: string
           p_replace_user_program_id?: string
           p_shared_weight_one_unit?: string
           p_shared_weight_one_value?: number
           p_shared_weight_two_unit?: string
           p_shared_weight_two_value?: number
-          p_weight_overrides?: Json
         }
         Returns: string
       }

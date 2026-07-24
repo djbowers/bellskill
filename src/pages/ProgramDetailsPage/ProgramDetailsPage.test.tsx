@@ -32,27 +32,41 @@ vi.mock('~/contexts', async () => {
   };
 });
 
-// A shared-program session whose first-movement weights drive the derived
-// starting weight. `weightTwo` null → two-hand, 0 → single, >0 → double.
-const sharedSession = (
+// One movement in a session's `movements[]`. The weight config is read from the
+// null-pattern: weightOne null → bodyweight, weightTwo null → two-hand single,
+// weightTwo 0 → single, weightTwo > 0 → double.
+const movement = (
+  movementName: string,
+  weightOne: number | null,
+  weightTwo: number | null,
+) => ({
+  movementName,
+  repScheme: [5],
+  weightOneValue: weightOne,
+  weightOneUnit: weightOne === null ? null : ('kilograms' as const),
+  weightTwoValue: weightTwo,
+  weightTwoUnit:
+    weightTwo === null || weightTwo === 0 ? null : ('kilograms' as const),
+});
+
+const session = (
   seq: number,
   week: number,
   day: number,
   title: string,
-  weightOne: number,
-  weightTwo: number | null,
-  weightLabel: string | null = null,
+  movements: ReturnType<typeof movement>[],
+  { complexSet = false }: { complexSet?: boolean } = {},
 ) => ({
   id: `s-${seq}`,
-  programId: 'dfw-1',
+  programId: 'p-1',
   sequenceIndex: seq,
   weekNumber: week,
   dayNumber: day,
   title,
   notes: null,
-  weightLabel,
+  weightLabel: null,
   workoutOptions: {
-    complexSet: false,
+    complexSet,
     intervalTimer: 0,
     restTimer: 0,
     title: null,
@@ -63,24 +77,7 @@ const sharedSession = (
     sharedWeightOneUnit: null,
     sharedWeightTwoValue: null,
     sharedWeightTwoUnit: null,
-    movements: [
-      {
-        movementName: 'Double Kettlebell Press',
-        repScheme: [5],
-        weightOneValue: weightOne,
-        weightOneUnit: 'kilograms',
-        weightTwoValue: weightTwo,
-        weightTwoUnit: weightTwo ? 'kilograms' : null,
-      },
-      {
-        movementName: 'Kettlebell Swing',
-        repScheme: [10],
-        weightOneValue: weightOne,
-        weightOneUnit: 'kilograms',
-        weightTwoValue: weightTwo,
-        weightTwoUnit: weightTwo ? 'kilograms' : null,
-      },
-    ],
+    movements,
   },
 });
 
@@ -99,9 +96,16 @@ const dfw = {
   archivedAt: null,
 };
 
+// Two double-bell movements at a flat 24 kg.
 const dfwSessions = [
-  sharedSession(0, 1, 1, 'Press Ladders', 24, 24),
-  sharedSession(1, 2, 1, 'Clean & Press', 24, 24),
+  session(0, 1, 1, 'Press Ladders', [
+    movement('Double Kettlebell Press', 24, 24),
+    movement('Kettlebell Swing', 24, 24),
+  ]),
+  session(1, 2, 1, 'Clean & Press', [
+    movement('Double Kettlebell Press', 24, 24),
+    movement('Kettlebell Swing', 24, 24),
+  ]),
 ];
 
 const renderPage = (id = 'dfw-1') =>
@@ -152,68 +156,200 @@ describe('ProgramDetailsPage', () => {
     expect(screen.getAllByText('20 min')).toHaveLength(2);
   });
 
-  it('pre-fills the starting weight from the program and enrolls on Start', () => {
+  it('renders one control per movement, pre-filled, and enrolls per movement', () => {
     enrollMutate.mockImplementation((_input, { onSuccess }) => onSuccess());
 
     renderPage();
 
-    // DFW is double-24: two weight inputs pre-filled at 24.
-    const inputs = screen.getAllByRole('spinbutton');
-    expect(inputs).toHaveLength(2);
-    expect(inputs[0]).toHaveValue(24);
-    expect(inputs[1]).toHaveValue(24);
-
-    // The loading mode is fixed by the program's sessions — no mode tabs to
-    // switch a two-hand program into double bells (mirrors #150).
+    // A heading per distinct movement (separate from the session summary spans).
     expect(
-      screen.queryByRole('tab', { name: 'Two-Hand' }),
-    ).not.toBeInTheDocument();
+      screen.getByRole('heading', { name: 'Double Kettlebell Press' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Kettlebell Swing' }),
+    ).toBeInTheDocument();
+
+    // Two double movements → two bell inputs each, all pre-filled at 24.
+    const inputs = screen.getAllByRole('spinbutton');
+    expect(inputs).toHaveLength(4);
+    inputs.forEach((input) => expect(input).toHaveValue(24));
 
     fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
 
     expect(enrollMutate).toHaveBeenCalledWith(
       {
         programId: 'dfw-1',
-        sharedWeightOneValue: 24,
-        sharedWeightOneUnit: 'kilograms',
-        sharedWeightTwoValue: 24,
-        sharedWeightTwoUnit: 'kilograms',
+        movementWeights: [
+          {
+            movementName: 'Double Kettlebell Press',
+            weightOneValue: 24,
+            weightOneUnit: 'kilograms',
+            weightTwoValue: 24,
+            weightTwoUnit: 'kilograms',
+          },
+          {
+            movementName: 'Kettlebell Swing',
+            weightOneValue: 24,
+            weightOneUnit: 'kilograms',
+            weightTwoValue: 24,
+            weightTwoUnit: 'kilograms',
+          },
+        ],
       },
       expect.anything(),
     );
-    // Enroll success lands on home.
     expect(screen.getByText('home')).toBeInTheDocument();
   });
 
-  it('pre-fills single loading at the modal weight for a single-bell program', () => {
+  it('sends each movement in its own config shape, omitting bodyweight', () => {
     mockUseProgram.mockReturnValue({
       data: {
-        program: { ...dfw, id: 'snatch-1', title: 'Snatch Test Plan' },
+        program: { ...dfw, id: 'es-1', title: 'Easy Strength' },
         sessions: [
-          sharedSession(0, 1, 1, 'Snatches', 24, 0),
-          sharedSession(1, 1, 2, 'Snatches', 24, 0),
+          session(0, 1, 1, '2x5', [
+            movement('Double Kettlebell Front Squat', 24, 24),
+            movement('Pull-Up', null, null),
+            movement('Kettlebell Swing', 24, null),
+          ]),
         ],
       },
       isLoading: false,
       isError: false,
     });
 
-    renderPage('snatch-1');
+    renderPage('es-1');
 
-    // Single-bell collapses to one weight input at the modal 24kg.
-    const inputs = screen.getAllByRole('spinbutton');
-    expect(inputs).toHaveLength(1);
-    expect(inputs[0]).toHaveValue(24);
+    // Bodyweight movement shows a label, no picker; the single swing collapses to
+    // one input; the double squat keeps two — three inputs total.
+    expect(
+      screen.getByRole('heading', { name: 'Pull-Up' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Bodyweight')).toBeInTheDocument();
+    expect(screen.getAllByRole('spinbutton')).toHaveLength(3);
 
     fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
 
     expect(enrollMutate).toHaveBeenCalledWith(
       {
-        programId: 'snatch-1',
+        programId: 'es-1',
+        movementWeights: [
+          {
+            movementName: 'Double Kettlebell Front Squat',
+            weightOneValue: 24,
+            weightOneUnit: 'kilograms',
+            weightTwoValue: 24,
+            weightTwoUnit: 'kilograms',
+          },
+          {
+            movementName: 'Kettlebell Swing',
+            weightOneValue: 24,
+            weightOneUnit: 'kilograms',
+            weightTwoValue: null,
+            weightTwoUnit: null,
+          },
+        ],
+      },
+      expect.anything(),
+    );
+  });
+
+  it('edits one movement independently of the others', () => {
+    renderPage();
+
+    // Drop only the swing; the press stays put.
+    fireEvent.change(screen.getByLabelText('Kettlebell Swing bell 1'), {
+      target: { value: '20' },
+    });
+    expect(screen.getByLabelText('Double Kettlebell Press bell 1')).toHaveValue(
+      24,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        movementWeights: [
+          expect.objectContaining({
+            movementName: 'Double Kettlebell Press',
+            weightOneValue: 24,
+          }),
+          expect.objectContaining({
+            movementName: 'Kettlebell Swing',
+            weightOneValue: 20,
+          }),
+        ],
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('pre-fills each movement at its own modal weight across sessions', () => {
+    // A heavier test day: the press runs at 24 on two working days and 28 once,
+    // so its modal (and pre-fill) is 24 — the RPC applies the per-session offset.
+    mockUseProgram.mockReturnValue({
+      data: {
+        program: { ...dfw, id: 'dfw-1' },
+        sessions: [
+          ...dfwSessions,
+          session(2, 5, 1, 'Test - new press max', [
+            movement('Double Kettlebell Press', 28, 28),
+            movement('Kettlebell Swing', 28, 28),
+          ]),
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage();
+
+    // No separate "test day" control — one control per movement, at the modal 24.
+    expect(screen.getByLabelText('Double Kettlebell Press bell 1')).toHaveValue(
+      24,
+    );
+    expect(screen.getAllByRole('spinbutton')).toHaveLength(4);
+  });
+
+  it('uses a single shared weight for a complex-set program', () => {
+    mockUseProgram.mockReturnValue({
+      data: {
+        program: { ...dfw, id: 'abc-1', title: 'Armor Building Complex' },
+        sessions: [
+          session(
+            0,
+            1,
+            1,
+            '5 rounds',
+            [
+              movement('Double Kettlebell Clean', 24, 24),
+              movement('Double Kettlebell Military Press', 24, 24),
+              movement('Double Kettlebell Front Squat', 24, 24),
+            ],
+            { complexSet: true },
+          ),
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage('abc-1');
+
+    // One shared picker (two bells) for the whole complex — not one per movement.
+    expect(
+      screen.queryByRole('heading', { name: 'Double Kettlebell Clean' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByRole('spinbutton')).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      {
+        programId: 'abc-1',
         sharedWeightOneValue: 24,
         sharedWeightOneUnit: 'kilograms',
-        sharedWeightTwoValue: 0,
-        sharedWeightTwoUnit: null,
+        sharedWeightTwoValue: 24,
+        sharedWeightTwoUnit: 'kilograms',
       },
       expect.anything(),
     );
@@ -236,14 +372,11 @@ describe('ProgramDetailsPage', () => {
 
     expect(screen.queryByText('Replace a program?')).not.toBeInTheDocument();
     expect(enrollMutate).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         programId: 'dfw-1',
-        sharedWeightOneValue: 24,
-        sharedWeightOneUnit: 'kilograms',
-        sharedWeightTwoValue: 24,
-        sharedWeightTwoUnit: 'kilograms',
         replaceUserProgramId: undefined,
-      },
+        movementWeights: expect.any(Array),
+      }),
       expect.anything(),
     );
   });
@@ -270,113 +403,11 @@ describe('ProgramDetailsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Replace program' }));
 
     expect(enrollMutate).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         programId: 'dfw-1',
-        sharedWeightOneValue: 24,
-        sharedWeightOneUnit: 'kilograms',
-        sharedWeightTwoValue: 24,
-        sharedWeightTwoUnit: 'kilograms',
         replaceUserProgramId: 'up-1',
-      },
-      expect.anything(),
-    );
-  });
-
-  // A program whose sessions run at two different weights: 24kg working plus a
-  // deliberately heavier 28kg test day, the shape enroll_in_program offsets.
-  const withTestDay = (weightLabel: string | null = 'Test day') => ({
-    data: {
-      program: { ...dfw, id: 'dfw-1' },
-      sessions: [
-        ...dfwSessions,
-        sharedSession(2, 5, 1, 'Test - new press max', 28, 28, weightLabel),
-      ],
-    },
-    isLoading: false,
-    isError: false,
-  });
-
-  it('renders no extra control for a program that runs at one weight', () => {
-    renderPage();
-
-    expect(screen.getByText('Starting weight')).toBeInTheDocument();
-    expect(screen.getAllByRole('spinbutton')).toHaveLength(2);
-  });
-
-  it('adds a control per extra weight group, labelled from the seed', () => {
-    mockUseProgram.mockReturnValue(withTestDay());
-
-    renderPage();
-
-    expect(screen.getByText('Test day')).toBeInTheDocument();
-    expect(screen.getByText('4 kg heavier · week 5')).toBeInTheDocument();
-    // Working double-24 (2 inputs) + the test day's double-28 (2 more).
-    expect(screen.getByLabelText('Test day bell 1')).toHaveValue(28);
-    expect(screen.getByLabelText('Test day bell 2')).toHaveValue(28);
-  });
-
-  it('describes an unlabelled group by its offset instead', () => {
-    mockUseProgram.mockReturnValue(withTestDay(null));
-
-    renderPage();
-
-    expect(screen.getAllByText('4 kg heavier · week 5').length).toBeGreaterThan(
-      0,
-    );
-    expect(screen.queryByText('Test day')).not.toBeInTheDocument();
-  });
-
-  it('an untouched group follows the working weight, and pins once edited', () => {
-    mockUseProgram.mockReturnValue(withTestDay());
-
-    renderPage();
-
-    // Drop the working bell 24 → 20; the test day rides along, staying +4.
-    fireEvent.click(
-      screen.getByRole('button', { name: '- kg — Starting weight bell 1' }),
-    );
-    expect(screen.getByLabelText('Starting weight bell 1')).toHaveValue(23);
-    expect(screen.getByLabelText('Test day bell 1')).toHaveValue(27);
-
-    // Editing the test day pins it: further working-weight changes leave it.
-    fireEvent.change(screen.getByLabelText('Test day bell 1'), {
-      target: { value: '32' },
-    });
-    fireEvent.click(
-      screen.getByRole('button', { name: '- kg — Starting weight bell 1' }),
-    );
-    expect(screen.getByLabelText('Starting weight bell 1')).toHaveValue(22);
-    expect(screen.getByLabelText('Test day bell 1')).toHaveValue(32);
-  });
-
-  it('sends the chosen group weights as enroll overrides, keyed by source weight', () => {
-    mockUseProgram.mockReturnValue(withTestDay());
-
-    renderPage();
-
-    fireEvent.change(screen.getByLabelText('Test day bell 1'), {
-      target: { value: '32' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
-
-    expect(enrollMutate).toHaveBeenCalledWith(
-      {
-        programId: 'dfw-1',
-        sharedWeightOneValue: 24,
-        sharedWeightOneUnit: 'kilograms',
-        sharedWeightTwoValue: 24,
-        sharedWeightTwoUnit: 'kilograms',
-        weightOverrides: [
-          {
-            sourceWeightOneValue: 28,
-            sourceWeightTwoValue: 28,
-            weightOneValue: 32,
-            weightOneUnit: 'kilograms',
-            weightTwoValue: 28,
-            weightTwoUnit: 'kilograms',
-          },
-        ],
-      },
+        movementWeights: expect.any(Array),
+      }),
       expect.anything(),
     );
   });

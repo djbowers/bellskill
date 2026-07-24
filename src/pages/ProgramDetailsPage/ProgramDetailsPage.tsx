@@ -7,7 +7,7 @@ import {
   useEnrollProgram,
   useProgram,
 } from '~/api';
-import type { ProgramWeightOverride } from '~/api';
+import type { MovementWeight } from '~/api';
 import { ModifyCountButtons, Page, WeightUnitTabs } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
@@ -27,15 +27,17 @@ import {
   WeightUnit,
   WorkoutGoalUnits,
 } from '~/types';
-import { getWeightRange, getWeightUnitLabel } from '~/utils';
+import {
+  getWeightRange,
+  getWeightUnitLabel,
+  WEIGHT_MODE_LABELS,
+} from '~/utils';
 
 import {
-  applyGroupOffset,
-  deriveStartingWeight,
-  deriveWeightGroups,
-  StartingWeight,
-  WeightGroup,
-} from './utils/deriveWeightGroups';
+  deriveMovementWeights,
+  isComplexProgram,
+} from './utils/deriveMovementWeights';
+import { deriveStartingWeight, StartingWeight } from './utils/deriveWeightGroups';
 
 // Fallback weight/unit for the picker's initial state before the per-program
 // pre-fill from deriveWeightGroups lands. The loading mode is fixed by the
@@ -147,6 +149,7 @@ export const ProgramDetailsPage = () => {
 
   const [seeded, setSeeded] = useState(false);
   const [pendingSwitch, setPendingSwitch] = useState(false);
+  // Complex-set path: one shared bell pair for the whole complex.
   const [sharedWeightOneValue, setSharedWeightOneValue] = useState<
     number | null
   >(DEFAULT_STARTING_WEIGHT_VALUE);
@@ -157,14 +160,10 @@ export const ProgramDetailsPage = () => {
   >(DEFAULT_STARTING_WEIGHT_VALUE);
   const [sharedWeightTwoUnit, setSharedWeightTwoUnit] =
     useState<WeightUnit | null>(DEFAULT_WEIGHT_UNIT);
-  // Chosen weight per non-modal group, and the groups the user has touched.
-  // An untouched group tracks the working weight by its authored offset; once
-  // pinned it stops following, so picking a 14kg deload survives a later change
-  // to the working weight.
-  const [groupWeights, setGroupWeights] = useState<
+  // Non-complex path: chosen starting weight per movement, keyed by name.
+  const [movementWeights, setMovementWeights] = useState<
     Record<string, StartingWeight>
   >({});
-  const [pinnedGroups, setPinnedGroups] = useState<string[]>([]);
 
   const program = data?.program;
   const sessions = data?.sessions;
@@ -174,12 +173,17 @@ export const ProgramDetailsPage = () => {
   // for a program you already configured in the builder.
   const isOwnProgram = !!program && program.ownerId === userId;
 
-  const groups = useMemo(
-    () => (sessions ? deriveWeightGroups(sessions) : []),
+  // A complex program (ABC) uses one bell pair for the whole complex, so it
+  // keeps a single shared-weight picker; every other program gets a control per
+  // movement, each sized to that movement's own config.
+  const complex = useMemo(
+    () => (sessions ? isComplexProgram(sessions) : false),
     [sessions],
   );
-  const modalGroup = groups.find((group) => group.isModal);
-  const offsetGroups = groups.filter((group) => !group.isModal);
+  const movementControls = useMemo(
+    () => (sessions ? deriveMovementWeights(sessions) : []),
+    [sessions],
+  );
 
   const workingWeight: StartingWeight = {
     sharedWeightOneValue,
@@ -190,40 +194,24 @@ export const ProgramDetailsPage = () => {
 
   useEffect(() => {
     if (!sessions || seeded) return;
-    const derived = deriveStartingWeight(sessions);
-    setSharedWeightOneValue(derived.sharedWeightOneValue);
-    setSharedWeightOneUnit(derived.sharedWeightOneUnit);
-    setSharedWeightTwoValue(derived.sharedWeightTwoValue);
-    setSharedWeightTwoUnit(derived.sharedWeightTwoUnit);
+    if (complex) {
+      const derived = deriveStartingWeight(sessions);
+      setSharedWeightOneValue(derived.sharedWeightOneValue);
+      setSharedWeightOneUnit(derived.sharedWeightOneUnit);
+      setSharedWeightTwoValue(derived.sharedWeightTwoValue);
+      setSharedWeightTwoUnit(derived.sharedWeightTwoUnit);
+    } else {
+      setMovementWeights(
+        Object.fromEntries(
+          movementControls.map((control) => [
+            control.movementName,
+            control.modalWeight,
+          ]),
+        ),
+      );
+    }
     setSeeded(true);
-  }, [sessions, seeded]);
-
-  // Re-derive every un-pinned group whenever the working weight moves, so
-  // dropping the working bell 24 → 20 carries the deload 16 → 12 along with it.
-  useEffect(() => {
-    if (!seeded || !modalGroup) return;
-    setGroupWeights((current) => {
-      const next = { ...current };
-      for (const group of offsetGroups) {
-        if (pinnedGroups.includes(group.key)) continue;
-        next[group.key] = applyGroupOffset(
-          group.sourceWeight,
-          modalGroup.sourceWeight,
-          workingWeight,
-        );
-      }
-      return next;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    seeded,
-    groups,
-    pinnedGroups,
-    sharedWeightOneValue,
-    sharedWeightOneUnit,
-    sharedWeightTwoValue,
-    sharedWeightTwoUnit,
-  ]);
+  }, [sessions, seeded, complex, movementControls]);
 
   useEffect(() => {
     if (isOwnProgram && id) navigate(`/programs/${id}`, { replace: true });
@@ -236,26 +224,21 @@ export const ProgramDetailsPage = () => {
     setSharedWeightTwoUnit(weight.sharedWeightTwoUnit);
   };
 
-  const handleChangeGroupWeight = (
-    group: WeightGroup,
+  const handleChangeMovementWeight = (
+    movementName: string,
     weight: StartingWeight,
   ) => {
-    setGroupWeights((current) => ({ ...current, [group.key]: weight }));
-    setPinnedGroups((current) =>
-      current.includes(group.key) ? current : [...current, group.key],
-    );
+    setMovementWeights((current) => ({ ...current, [movementName]: weight }));
   };
 
-  // Sent for every offset group, edited or not, so the weight shown on this
-  // screen is exactly the weight that clones — the RPC's own offset math stays
-  // the fallback for callers that send nothing.
-  const weightOverrides: ProgramWeightOverride[] = offsetGroups
-    .filter((group) => groupWeights[group.key])
-    .map((group) => {
-      const chosen = groupWeights[group.key];
+  // One entry per movement carrying a loaded bell — bodyweight movements
+  // ('none') are omitted, so the RPC keeps them bodyweight.
+  const movementWeightPayload: MovementWeight[] = movementControls
+    .filter((control) => control.mode !== 'none')
+    .map((control) => {
+      const chosen = movementWeights[control.movementName] ?? control.modalWeight;
       return {
-        sourceWeightOneValue: group.sourceWeight.sharedWeightOneValue,
-        sourceWeightTwoValue: group.sourceWeight.sharedWeightTwoValue,
+        movementName: control.movementName,
         weightOneValue: chosen.sharedWeightOneValue,
         weightOneUnit: chosen.sharedWeightOneUnit,
         weightTwoValue: chosen.sharedWeightTwoValue,
@@ -279,12 +262,15 @@ export const ProgramDetailsPage = () => {
     enroll.mutate(
       {
         programId: id,
-        sharedWeightOneValue,
-        sharedWeightOneUnit,
-        sharedWeightTwoValue,
-        sharedWeightTwoUnit,
         replaceUserProgramId: displaced?.enrollment.id,
-        ...(weightOverrides.length ? { weightOverrides } : {}),
+        ...(complex
+          ? {
+              sharedWeightOneValue,
+              sharedWeightOneUnit,
+              sharedWeightTwoValue,
+              sharedWeightTwoUnit,
+            }
+          : { movementWeights: movementWeightPayload }),
       },
       { onSuccess: () => navigate('/') },
     );
@@ -397,10 +383,9 @@ export const ProgramDetailsPage = () => {
           it session by session once you&apos;re in the program.
         </p>
         {!seeded && <p className="text-sm text-muted-foreground">Loading…</p>}
-        {seeded && modalGroup?.label && (
-          <p className="text-xs text-muted-foreground">{modalGroup.label}</p>
-        )}
-        {seeded && (
+        {/* Complex sets share one bell pair for the whole complex, so a single
+            picker; every other program gets one control per movement. */}
+        {seeded && complex && (
           <WeightSlots
             weight={workingWeight}
             onChange={handleChangeWorkingWeight}
@@ -409,28 +394,28 @@ export const ProgramDetailsPage = () => {
         )}
       </div>
 
-      {/* One control per weight this program runs at beyond the working one —
-          A+A's deload weeks, DFW's test day, the Snatch Test's light/heavy
-          rungs. Each follows the working weight until it's edited. */}
       {seeded &&
-        offsetGroups.map((group) => {
-          const weight = groupWeights[group.key];
-          if (!weight) return null;
-          const heading = group.label ?? group.description;
-          return (
-            <div key={group.key} className="flex flex-col gap-1">
-              <h2 className="text-sm font-semibold">{heading}</h2>
-              <p className="text-xs text-muted-foreground">
-                {group.label ? group.description : `${group.sessionCount} sessions`}
+        !complex &&
+        movementControls.map((control) => (
+          <div key={control.movementName} className="flex flex-col gap-1">
+            <h2 className="text-sm font-semibold">{control.movementName}</h2>
+            {control.mode === 'none' ? (
+              <p className="text-sm text-muted-foreground">
+                {WEIGHT_MODE_LABELS.none}
               </p>
+            ) : (
               <WeightSlots
-                weight={weight}
-                onChange={(next) => handleChangeGroupWeight(group, next)}
-                namePrefix={heading}
+                weight={
+                  movementWeights[control.movementName] ?? control.modalWeight
+                }
+                onChange={(next) =>
+                  handleChangeMovementWeight(control.movementName, next)
+                }
+                namePrefix={control.movementName}
               />
-            </div>
-          );
-        })}
+            )}
+          </div>
+        ))}
 
       <Button onClick={handleStart} disabled={enroll.isPending || !seeded}>
         Start program

@@ -96,8 +96,11 @@ async function rpcPost<T = unknown>(
 interface MovementOpt {
   movementName: string;
   repScheme: number[];
+  timedRungs?: boolean;
   weightOneValue: number | null;
+  weightOneUnit: string | null;
   weightTwoValue: number | null;
+  weightTwoUnit: string | null;
 }
 interface WorkoutOpts {
   complexSet: boolean;
@@ -115,7 +118,8 @@ interface SessionRow {
 }
 
 // The "Even Easier Strength" 10-workout / 2-week cycle: one shared rep scheme per
-// session applied across all five movement patterns.
+// session applied across the rep-counted movements. The Farmer's Carry runs on
+// the clock instead (a fixed 30-second rung), so it carries its own scheme.
 const EXPECTED_REP_SCHEMES: number[][] = [
   [5, 5], // W1D1 2x5
   [5, 5], // W1D2 2x5
@@ -189,9 +193,15 @@ test.describe('program schema — Easy Strength seed', () => {
         EXPECTED_MOVEMENTS,
       );
 
-      // Each movement carries this session's rep scheme.
+      // Each rep-counted movement carries this session's rep scheme; the timed
+      // carry runs on its own fixed 30-second rung.
       for (const m of s.workout_options.movements) {
-        expect(m.repScheme).toEqual(expectedReps);
+        if (m.movementName === "Kettlebell Farmer's Carry") {
+          expect(m.timedRungs).toBe(true);
+          expect(m.repScheme).toEqual([30]);
+        } else {
+          expect(m.repScheme).toEqual(expectedReps);
+        }
       }
 
       // Straight sets: both sets of a movement before the next movement, per the
@@ -218,6 +228,8 @@ test.describe('program schema — Easy Strength seed', () => {
         24,
       );
       expect(byName["Kettlebell Farmer's Carry"].weightTwoValue).toBe(24);
+      // The carry is a timed double-bell movement, not rep-counted.
+      expect(byName["Kettlebell Farmer's Carry"].timedRungs).toBe(true);
     });
   });
 
@@ -276,5 +288,87 @@ test.describe('program schema — Easy Strength seed', () => {
     expect(cloned.every((s) => s.workout_options.straightSets === true)).toBe(
       true,
     );
+  });
+
+  // The regression this feature exists for: enrolling with a starting weight
+  // used to fold ONE weight onto every movement, turning the bodyweight pull-up
+  // and single-bell swing into doubles. Per-movement weights must land in each
+  // movement's own config shape.
+  test('enrolling with per-movement weights preserves each movement’s config', async () => {
+    const user = await signUpThrowawayUser();
+    const [es] = await restJson<Array<{ id: string }>>(
+      `programs?slug=eq.${ES_SLUG}&select=id`,
+      user.token,
+    );
+
+    const userProgramId = await rpcPost<string>(
+      'enroll_in_program',
+      {
+        p_program_id: es.id,
+        p_movement_weights: [
+          {
+            movementName: 'Double Kettlebell Military Press',
+            weightOneValue: 20,
+            weightOneUnit: 'kilograms',
+            weightTwoValue: 20,
+            weightTwoUnit: 'kilograms',
+          },
+          {
+            movementName: 'Kettlebell Swing',
+            weightOneValue: 32,
+            weightOneUnit: 'kilograms',
+            weightTwoValue: null,
+            weightTwoUnit: null,
+          },
+          {
+            movementName: 'Double Kettlebell Front Squat',
+            weightOneValue: 28,
+            weightOneUnit: 'kilograms',
+            weightTwoValue: 28,
+            weightTwoUnit: 'kilograms',
+          },
+          {
+            movementName: "Kettlebell Farmer's Carry",
+            weightOneValue: 40,
+            weightOneUnit: 'kilograms',
+            weightTwoValue: 40,
+            weightTwoUnit: 'kilograms',
+          },
+        ],
+      },
+      user.token,
+    );
+
+    const [enrollment] = await restJson<Array<{ program_id: string }>>(
+      `user_programs?id=eq.${userProgramId}&select=program_id`,
+      user.token,
+    );
+
+    const [first] = await restJson<Array<{ workout_options: WorkoutOpts }>>(
+      `program_sessions?program_id=eq.${enrollment.program_id}&sequence_index=eq.0&select=workout_options`,
+      user.token,
+    );
+    const byName = Object.fromEntries(
+      first.workout_options.movements.map((m) => [m.movementName, m]),
+    );
+
+    // Chosen weights land per movement, each in its own config shape.
+    expect(byName['Double Kettlebell Military Press'].weightOneValue).toBe(20);
+    expect(byName['Double Kettlebell Military Press'].weightTwoValue).toBe(20);
+    expect(byName['Double Kettlebell Front Squat'].weightOneValue).toBe(28);
+    expect(byName['Double Kettlebell Front Squat'].weightTwoValue).toBe(28);
+
+    // Bodyweight stays bodyweight — never folded into a double.
+    expect(byName['Pull-Up'].weightOneValue).toBeNull();
+    expect(byName['Pull-Up'].weightTwoValue).toBeNull();
+
+    // Single-bell swing keeps its empty second slot.
+    expect(byName['Kettlebell Swing'].weightOneValue).toBe(32);
+    expect(byName['Kettlebell Swing'].weightTwoValue).toBeNull();
+
+    // The carry takes its chosen double load and stays timed.
+    expect(byName["Kettlebell Farmer's Carry"].weightOneValue).toBe(40);
+    expect(byName["Kettlebell Farmer's Carry"].weightTwoValue).toBe(40);
+    expect(byName["Kettlebell Farmer's Carry"].timedRungs).toBe(true);
   });
 });
