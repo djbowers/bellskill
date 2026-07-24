@@ -3,12 +3,16 @@ import { cn } from '~/lib/utils';
 import { WeightTabValue } from '~/types';
 import { WEIGHT_MODE_LABELS } from '~/utils';
 
+import { KettlebellGlyph } from './KettlebellGlyph';
+
 interface WeightModeTabsProps {
   value: WeightTabValue;
   onValueChange: (value: WeightTabValue) => void;
   className?: string;
   hideNone?: boolean;
 }
+
+const MODES: WeightTabValue[] = ['none', '2h', '1h', 'double'];
 
 export const WeightModeTabs = ({
   value,
@@ -22,20 +26,19 @@ export const WeightModeTabs = ({
     className={cn('w-full', className)}
   >
     <TabsList className="flex w-full">
-      {!hideNone && (
-        <TabsTrigger className="min-w-0 flex-1 px-0.5" size="sm" value="none">
-          {WEIGHT_MODE_LABELS.none}
+      {MODES.filter((mode) => !(hideNone && mode === 'none')).map((mode) => (
+        <TabsTrigger
+          key={mode}
+          className="flex min-w-0 flex-1 flex-col gap-0.5 px-0.5 py-1"
+          size="sm"
+          value={mode}
+        >
+          <KettlebellGlyph mode={mode} />
+          <span className="truncate leading-none">
+            {WEIGHT_MODE_LABELS[mode]}
+          </span>
         </TabsTrigger>
-      )}
-      <TabsTrigger className="min-w-0 flex-1 px-0.5" size="sm" value="2h">
-        {WEIGHT_MODE_LABELS['2h']}
-      </TabsTrigger>
-      <TabsTrigger className="min-w-0 flex-1 px-0.5" size="sm" value="1h">
-        {WEIGHT_MODE_LABELS['1h']}
-      </TabsTrigger>
-      <TabsTrigger className="min-w-0 flex-1 px-0.5" size="sm" value="double">
-        {WEIGHT_MODE_LABELS.double}
-      </TabsTrigger>
+      ))}
     </TabsList>
   </Tabs>
 );

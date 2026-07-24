@@ -4,14 +4,12 @@ import {
   DocumentTextIcon,
   PauseIcon,
   QueueListIcon,
-  TagIcon,
 } from '@heroicons/react/24/outline';
 import { ComponentType, SVGProps } from 'react';
 
 import { cn } from '~/lib/utils';
 
 const ICONS = {
-  title: TagIcon,
   notes: DocumentTextIcon,
   interval: ClockIcon,
   rest: PauseIcon,

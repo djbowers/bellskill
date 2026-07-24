@@ -326,12 +326,11 @@ describe('start workout page', () => {
       );
     });
 
-    test('can increment reps for each rung independently', async () => {
+    test('can increment reps for a focused rung independently', async () => {
       await userEvent.click(screen.getByRole('button', { name: '+ Rung' }));
-      const incrementButtons = screen.getAllByRole('button', {
-        name: '+ reps',
-      });
-      await userEvent.click(incrementButtons[0]);
+      // Focus the first rung, then increment it on the caliper picker.
+      await userEvent.click(screen.getByRole('button', { name: /^Rung 1,/ }));
+      await userEvent.click(screen.getByLabelText('+ reps'));
       await userEvent.click(screen.getByRole('button', { name: /Start/i }));
 
       expect(startWorkout).toHaveBeenCalledWith(
@@ -348,12 +347,10 @@ describe('start workout page', () => {
       );
     });
 
-    test('can decrement reps for each rung independently', async () => {
+    test('can decrement reps for a focused rung independently', async () => {
+      // Adding a rung focuses the new (second) rung; decrement it.
       await userEvent.click(screen.getByRole('button', { name: '+ Rung' }));
-      const decrementButtons = screen.getAllByRole('button', {
-        name: '- reps',
-      });
-      await userEvent.click(decrementButtons[1]);
+      await userEvent.click(screen.getByLabelText('- reps'));
       await userEvent.click(screen.getByRole('button', { name: /Start/i }));
 
       expect(startWorkout).toHaveBeenCalledWith(
@@ -627,14 +624,12 @@ describe('Complex Mode', () => {
 
   test('when Complex is active, per-movement weight sections are hidden and rep scheme sections remain visible', async () => {
     await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
-    expect(screen.getAllByRole('heading', { name: 'Load' })).toHaveLength(2);
+    expect(screen.getAllByText('Load')).toHaveLength(2);
 
     await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
 
-    expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
-    expect(screen.getAllByRole('heading', { name: 'Rep Scheme' })).toHaveLength(
-      2,
-    );
+    expect(screen.queryAllByText('Load')).toHaveLength(0);
+    expect(screen.getAllByText('Rep scheme')).toHaveLength(2);
   });
 
   test('toggling Complex off hides shared weight section and restores per-movement weight sections', async () => {
@@ -648,7 +643,7 @@ describe('Complex Mode', () => {
     expect(
       screen.queryByRole('heading', { name: 'Shared Weight' }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Load' })).toBeInTheDocument();
+    expect(screen.getByText('Load')).toBeInTheDocument();
   });
 
   test('startWorkout is called with complexSet: true and shared weight fields when Complex is active', async () => {
