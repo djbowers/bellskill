@@ -24,6 +24,8 @@ const {
   TimedRungsVaryingDurations,
   TimedRungsVolumeGoal,
   RepLadders,
+  StraightSets,
+  StraightSetsUnevenLadders,
   TwoHanded,
   WorkoutGoalRounds,
   WeightUnitsPounds,
@@ -1535,6 +1537,88 @@ describe('active workout page (Armor Building Complex seed session)', () => {
     // The between-rounds rest is active, so the set control is gone.
     expect(screen.getByText('rest')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Complete Set' })).toBeNull();
+  });
+});
+
+describe('active workout page (straight sets)', () => {
+  const { workoutOptions } = StraightSets.parameters;
+
+  const logWorkout = vi.fn();
+
+  beforeEach(() =>
+    useLogWorkout.mockReturnValue({
+      mutate: logWorkout,
+      data: null,
+      isLoading: false,
+    }),
+  );
+
+  afterEach(() => vi.clearAllMocks());
+
+  test('completes every rung of a movement before moving to the next', async () => {
+    render(<StraightSets />);
+
+    const currentMovement = screen.getByTestId('current-movement-card');
+    const names = workoutOptions.movements.map((m) => m.movementName);
+
+    // Two sets each, in order — not one set of each, twice.
+    for (const name of names) {
+      expect(currentMovement).toHaveTextContent(name);
+      expect(screen.getByTestId('current-set')).toHaveTextContent('Set 1 of 2');
+      await clickContinue();
+
+      expect(currentMovement).toHaveTextContent(name);
+      expect(screen.getByTestId('current-set')).toHaveTextContent('Set 2 of 2');
+      await clickContinue();
+    }
+  });
+
+  test('holds the round at 1 until the last movement finishes its ladder', async () => {
+    render(<StraightSets />);
+
+    const round = screen.getByTestId('current-round');
+
+    // 9 of the 10 sets: still round 1, since a round is one pass through the
+    // whole movement list.
+    for (let i = 0; i < 9; i++) {
+      expect(round).toHaveTextContent('1');
+      await clickContinue();
+    }
+
+    expect(round).toHaveTextContent('1');
+  });
+
+  test('finishes on the rounds goal after the last set', async () => {
+    render(<StraightSets />);
+
+    // 5 movements x 2 rungs = 10 sets = the story's 1-round goal.
+    for (let i = 0; i < 10; i++) await clickContinue();
+
+    expect(logWorkout).toHaveBeenCalledWith({
+      completedReps: 50, // 10 sets x 5 reps
+      completedRounds: 1,
+      completedRungs: 10,
+      completedSides: 10,
+      completedVolume: 2400, // 48kg x 5 reps x 10 sets
+    });
+  });
+
+  test('runs movements with different rung counts', async () => {
+    render(<StraightSetsUnevenLadders />);
+
+    const currentMovement = screen.getByTestId('current-movement-card');
+
+    expect(screen.getByTestId('current-set')).toHaveTextContent('Set 1 of 3');
+    await clickContinue();
+    await clickContinue();
+    expect(currentMovement).toHaveTextContent(
+      'Two-Arm Kettlebell Military Press',
+    );
+    expect(screen.getByTestId('current-set')).toHaveTextContent('Set 3 of 3');
+
+    await clickContinue();
+    expect(currentMovement).toHaveTextContent('Kettlebell Swing');
+    expect(screen.getByTestId('current-set')).toHaveTextContent('Set 1 of 2');
   });
 });
 

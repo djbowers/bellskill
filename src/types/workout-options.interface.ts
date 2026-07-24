@@ -6,6 +6,9 @@ export interface WorkoutOptions {
   complexSet: boolean;
   intervalTimer: number; // seconds
   movements: MovementOptions[];
+  // Traversal order: when true, every rung of a movement is completed before the
+  // next movement starts. Absent/false rotates through the movements each rung.
+  straightSets?: boolean;
   restTimer: number; // seconds
   sharedWeightOneUnit: WeightUnit | null;
   sharedWeightOneValue: number | null;

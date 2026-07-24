@@ -36,6 +36,7 @@ export const ActiveWorkoutPage = ({
       sharedWeightTwoUnit,
       sharedWeightTwoValue,
       startedAt,
+      straightSets,
       title,
       preWorkoutNotes,
       workoutGoal,
@@ -322,10 +323,36 @@ export const ActiveWorkoutPage = ({
     }
   };
 
+  // Straight sets (PROD-243): finish a movement's whole ladder before starting
+  // the next one, so the movement index advances once per ladder instead of once
+  // per rung. `completedRungs` counts each movement's rungs here, where the
+  // rotating order counts the single ladder pointer shared by every movement; the
+  // column is logged but never displayed, and reps / volume / rounds / sides come
+  // out identical either way.
+  const goToNextRungStraight = () => {
+    incrementRungs();
+
+    if (!isLastRung) {
+      setCurrentMovementRungIndex((prev) => prev + 1);
+      return;
+    }
+
+    setCurrentMovementRungIndex(0);
+    if (isLastMovement) {
+      incrementRounds();
+      setCurrentMovementIndex(0);
+    } else {
+      setCurrentMovementIndex((prev) => prev + 1);
+    }
+  };
+
+  const advanceMovement = () =>
+    straightSets ? goToNextRungStraight() : goToNextMovement();
+
   const goToNextSide = () => {
     if (isMirrorSet) {
       setIsMirrorSet(false);
-      goToNextMovement();
+      advanceMovement();
     } else {
       setIsMirrorSet(true);
     }
@@ -335,7 +362,7 @@ export const ActiveWorkoutPage = ({
     if (shouldMirrorReps) {
       goToNextSide();
     } else {
-      goToNextMovement();
+      advanceMovement();
     }
   };
 
@@ -560,6 +587,7 @@ export const ActiveWorkoutPage = ({
           rightWeightUnit={rightWeightUnit}
           rightWeightValue={rightWeightValue}
           rungIndex={currentMovementRungIndex}
+          totalRungs={straightSets ? currentMovementRungs : undefined}
           totalSides={totalSides}
           title={title}
           preWorkoutNotes={preWorkoutNotes}

@@ -605,6 +605,7 @@ export type Database = {
             | null
           shared_weight_two_value: number | null
           started_at: string
+          straight_sets: boolean
           title: string | null
           unit: string | null
           user_id: string
@@ -638,6 +639,7 @@ export type Database = {
             | null
           shared_weight_two_value?: number | null
           started_at: string
+          straight_sets?: boolean
           title?: string | null
           unit?: string | null
           user_id: string
@@ -671,6 +673,7 @@ export type Database = {
             | null
           shared_weight_two_value?: number | null
           started_at?: string
+          straight_sets?: boolean
           title?: string | null
           unit?: string | null
           user_id?: string

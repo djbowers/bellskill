@@ -55,5 +55,4 @@ export const lastTrainedLabel = (lastTrained: Date | null): string => {
   return DateTime.fromJSDate(lastTrained).toRelative() ?? 'Recently';
 };
 
-export const formatVolume = (kg: number): string =>
-  `${Math.round(kg).toLocaleString()} kg`;
+export { formatVolume } from '~/utils';

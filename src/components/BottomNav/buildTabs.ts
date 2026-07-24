@@ -1,80 +1,22 @@
-import {
-  ClockIcon,
-  HomeIcon,
-  MagnifyingGlassIcon,
-  RectangleStackIcon,
-  ScaleIcon,
-  SparklesIcon,
-} from '@heroicons/react/24/outline';
-import { ComponentType, SVGProps } from 'react';
-
 import { Features } from '~/config/features';
+import { NavItem, navItemByKey } from '~/lib/navItems';
 
-export type NavIcon = ComponentType<SVGProps<SVGSVGElement>>;
-
-export interface NavTab {
-  /** Stable identity for React keys and tests. */
-  key: string;
-  /** Visible label rendered beneath the icon. */
-  label: string;
-  /** Router destination. */
-  to: string;
-  icon: NavIcon;
-}
-
-/**
- * Feature-gated destinations, in slot-4 promotion priority order. The first
- * enabled feature is promoted into the bar; the rest degrade into "More".
- */
-const PRIORITY_FEATURES: {
-  key: string;
-  flag: keyof Features;
-  label: string;
-  to: string;
-  icon: NavIcon;
-}[] = [
-  {
-    key: 'ai',
-    flag: 'premium',
-    label: 'AI',
-    to: '/recommendations',
-    icon: SparklesIcon,
-  },
-  {
-    key: 'balance',
-    flag: 'weeklyBalance',
-    label: 'Balance',
-    to: '/balance',
-    icon: ScaleIcon,
-  },
-  {
-    key: 'explore',
-    flag: 'explore',
-    label: 'Explore',
-    to: '/movements',
-    icon: MagnifyingGlassIcon,
-  },
-];
+// Promoted-slot priority (slot 4): the first enabled feature wins the bar; the
+// rest degrade into "More". See §3 of the thumb-nav design plan.
+const PRIORITY_KEYS = ['ai', 'balance', 'explore'] as const;
 
 export interface BuiltTabs {
   /** Link tabs rendered directly in the bar, left of the always-present "More". */
-  tabs: NavTab[];
+  tabs: NavItem[];
   /** Enabled features that did not win the promoted slot; shown inside "More". */
-  moreFeatures: NavTab[];
+  moreFeatures: NavItem[];
 }
 
-const stripFlag = (f: (typeof PRIORITY_FEATURES)[number]): NavTab => ({
-  key: f.key,
-  label: f.label,
-  to: f.to,
-  icon: f.icon,
-});
-
 /**
- * Deterministic 5-slot priority fill for the bottom tab bar (see the thumb-nav
- * design plan §3). Slots, in order:
+ * Deterministic 5-slot priority fill for the bottom tab bar, built from the
+ * shared `NAV_ITEMS` registry (see `~/lib/navItems`). Slots, in order:
  *   1. Home        (always)
- *   2. Programs    (reserved — see TODO below)
+ *   2. Programs    (reserved; `programs` flag)
  *   3. History     (always)
  *   4. one promoted feature, AI → Balance → Explore (first enabled wins)
  *   5. More        (always; rendered by the component, not part of `tabs`)
@@ -82,27 +24,18 @@ const stripFlag = (f: (typeof PRIORITY_FEATURES)[number]): NavTab => ({
  * Pure and side-effect free so every flag combination is cheap to unit-test.
  */
 export const buildTabs = (features: Features): BuiltTabs => {
-  const tabs: NavTab[] = [
-    { key: 'home', label: 'Home', to: '/', icon: HomeIcon },
-    // Slot 2 is reserved for Programs (design plan §3), gated by the `programs`
-    // flag until the feature is flipped on.
-    ...(features.programs
-      ? [
-          {
-            key: 'programs',
-            label: 'Programs',
-            to: '/programs',
-            icon: RectangleStackIcon,
-          },
-        ]
-      : []),
-    { key: 'history', label: 'History', to: '/history', icon: ClockIcon },
+  const tabs: NavItem[] = [
+    navItemByKey('home'),
+    ...(features.programs ? [navItemByKey('programs')] : []),
+    navItemByKey('history'),
   ];
 
-  const enabled = PRIORITY_FEATURES.filter((f) => features[f.flag]);
+  const enabled = PRIORITY_KEYS.map(navItemByKey).filter(
+    (item) => item.flag && features[item.flag],
+  );
   const [promoted, ...overflow] = enabled;
 
-  if (promoted) tabs.push(stripFlag(promoted));
+  if (promoted) tabs.push(promoted);
 
-  return { tabs, moreFeatures: overflow.map(stripFlag) };
+  return { tabs, moreFeatures: overflow };
 };

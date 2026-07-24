@@ -22,6 +22,7 @@ export const DEFAULT_WORKOUT_OPTIONS: WorkoutOptions = {
   sharedWeightOneValue: DEFAULT_MOVEMENT_OPTIONS.weightOneValue,
   sharedWeightTwoUnit: null,
   sharedWeightTwoValue: null,
+  straightSets: false,
   title: null,
   preWorkoutNotes: null,
   workoutGoal: 10,

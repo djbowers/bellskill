@@ -25,10 +25,12 @@ export const AllOff: Story = {
     hasInterval: false,
     hasRest: false,
     showComplex: true,
+    straightSets: false,
     onToggleComplex: () => {},
     onToggleInterval: () => {},
     onToggleNotes: () => {},
     onToggleRest: () => {},
+    onToggleStraightSets: () => {},
   },
 };
 
@@ -39,10 +41,19 @@ export const AllOn: Story = {
     hasInterval: true,
     hasRest: true,
     showComplex: true,
+    straightSets: false,
     onToggleComplex: () => {},
     onToggleInterval: () => {},
     onToggleNotes: () => {},
     onToggleRest: () => {},
+    onToggleStraightSets: () => {},
+  },
+};
+
+export const StraightSets: Story = {
+  args: {
+    ...AllOff.args,
+    straightSets: true,
   },
 };
 
@@ -62,6 +73,7 @@ const InteractiveTemplate = ({
   const [hasNotes, setHasNotes] = useState(false);
   const [hasInterval, setHasInterval] = useState(false);
   const [hasRest, setHasRest] = useState(false);
+  const [straightSets, setStraightSets] = useState(false);
 
   return (
     <AddToWorkoutSection
@@ -70,10 +82,18 @@ const InteractiveTemplate = ({
       hasInterval={hasInterval}
       hasRest={hasRest}
       showComplex={showComplex}
-      onToggleComplex={() => setComplexSet((prev) => !prev)}
+      straightSets={straightSets}
+      onToggleComplex={() => {
+        setComplexSet((prev) => !prev);
+        setStraightSets(false);
+      }}
       onToggleNotes={() => setHasNotes((prev) => !prev)}
       onToggleInterval={() => setHasInterval((prev) => !prev)}
       onToggleRest={() => setHasRest((prev) => !prev)}
+      onToggleStraightSets={() => {
+        setStraightSets((prev) => !prev);
+        setComplexSet(false);
+      }}
     />
   );
 };

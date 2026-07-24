@@ -85,6 +85,8 @@ export const RpeBadge = ({ rpeValue }: { rpeValue: RpeOptions }) => {
   );
 };
 
+// Colors come from the shared exertion ramp (--intensity-0…4 in tailwind.css),
+// so the selector, the badge, and the History week strip read as one scale.
 // eslint-disable-next-line react-refresh/only-export-components -- RPE config constant is intentionally co-located with its selector component; splitting the module is out of scope for the lint pass
 export const RPE_CONFIG: {
   [key: string]: {
@@ -92,42 +94,36 @@ export const RPE_CONFIG: {
     description: string;
     ringColor: string;
     text: string;
-    textColor: string;
   };
 } = {
   noEffort: {
-    bgColor: 'bg-gray-300',
+    bgColor: 'bg-intensity-0',
     description: 'Felt like no workout at all.',
-    ringColor: 'ring-gray-300',
+    ringColor: 'ring-intensity-0',
     text: 'No Effort',
-    textColor: 'text-gray-500',
   },
   easy: {
-    bgColor: 'bg-green-400',
+    bgColor: 'bg-intensity-1',
     description: 'Comfortable and sustainable effort.',
-    ringColor: 'ring-green-400',
+    ringColor: 'ring-intensity-1',
     text: 'Easy',
-    textColor: 'text-green-500',
   },
   ideal: {
-    bgColor: 'bg-yellow-400',
+    bgColor: 'bg-intensity-2',
     description: 'Challenging yet manageable workout.',
-    ringColor: 'ring-yellow-400',
+    ringColor: 'ring-intensity-2',
     text: 'Ideal',
-    textColor: 'text-yellow-500',
   },
   hard: {
-    bgColor: 'bg-orange-400',
+    bgColor: 'bg-intensity-3',
     description: 'Pushed near your limits, quite tough.',
-    ringColor: 'ring-orange-400',
+    ringColor: 'ring-intensity-3',
     text: 'Hard',
-    textColor: 'text-orange-500',
   },
   maxEffort: {
-    bgColor: 'bg-red-500',
+    bgColor: 'bg-intensity-4',
     description: 'Peak exertion, pushed to the absolute limit.',
-    ringColor: 'ring-red-500',
+    ringColor: 'ring-intensity-4',
     text: 'Max Effort',
-    textColor: 'text-red-600',
   },
 };
