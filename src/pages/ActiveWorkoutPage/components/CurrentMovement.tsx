@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import { useState } from 'react';
 
 import {
   Card,
@@ -24,7 +25,10 @@ interface CurrentMovementProps {
   rightWeightValue: number | null;
   rungIndex: number;
   totalSides: number;
-  workoutDetails: string | null;
+  title: string | null;
+  preWorkoutNotes: string | null;
+  /** True once lifting has begun; before then the notes are shown in full. */
+  hasStarted: boolean;
 }
 
 export const CurrentMovement = ({
@@ -41,8 +45,12 @@ export const CurrentMovement = ({
   rightWeightValue,
   rungIndex,
   totalSides,
-  workoutDetails,
+  title,
+  preWorkoutNotes,
+  hasStarted,
 }: CurrentMovementProps) => {
+  const [notesExpanded, setNotesExpanded] = useState(false);
+  const showNotesExpanded = !hasStarted || notesExpanded;
   const isThreeColumn = isOneHanded || rightWeightValue;
 
   // One-handed work uses a single bell that alternates hands: the page passes
@@ -110,9 +118,32 @@ export const CurrentMovement = ({
             <div className="text-2xl font-medium">
               {currentMovement.movementName}
             </div>
-            <div className="font-medium text-muted-foreground">
-              {workoutDetails}
-            </div>
+            {title && (
+              <div className="font-medium text-muted-foreground">{title}</div>
+            )}
+            {preWorkoutNotes &&
+              (hasStarted ? (
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    type="button"
+                    aria-expanded={notesExpanded}
+                    onClick={() => setNotesExpanded((open) => !open)}
+                    className="flex items-center gap-0.5 self-start text-xs font-medium text-muted-foreground"
+                  >
+                    <span aria-hidden>{notesExpanded ? '▾' : '▸'}</span>
+                    Session notes
+                  </button>
+                  {showNotesExpanded && (
+                    <p className="whitespace-pre-line text-sm text-muted-foreground">
+                      {preWorkoutNotes}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="whitespace-pre-line text-sm text-muted-foreground">
+                  {preWorkoutNotes}
+                </p>
+              ))}
           </div>
         </div>
       </CardHeader>

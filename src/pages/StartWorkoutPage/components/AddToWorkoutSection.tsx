@@ -2,25 +2,31 @@ import { WorkoutAddonToggle } from './WorkoutAddonToggle';
 
 export const AddToWorkoutSection = ({
   complexSet,
+  hasTitle,
   hasNotes,
   hasInterval,
   hasRest,
   hasTimedMovements = false,
+  showTitle = true,
   onToggleComplex,
   onToggleInterval,
   onToggleNotes,
   onToggleRest,
+  onToggleTitle,
   showComplex,
 }: {
   complexSet: boolean;
+  hasTitle: boolean;
   hasNotes: boolean;
   hasInterval: boolean;
   hasRest: boolean;
   hasTimedMovements?: boolean;
+  showTitle?: boolean;
   onToggleComplex: () => void;
   onToggleInterval: () => void;
   onToggleNotes: () => void;
   onToggleRest: () => void;
+  onToggleTitle: () => void;
   showComplex: boolean;
 }) => {
   return (
@@ -29,6 +35,14 @@ export const AddToWorkoutSection = ({
         Add to workout
       </h2>
       <div className="flex gap-1">
+        {showTitle && (
+          <WorkoutAddonToggle
+            id="title"
+            label="Title"
+            isOn={hasTitle}
+            onToggle={onToggleTitle}
+          />
+        )}
         <WorkoutAddonToggle
           id="notes"
           label="Notes"

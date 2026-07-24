@@ -127,7 +127,8 @@ const logWorkout = async ({
     sharedWeightTwoUnit,
     sharedWeightTwoValue,
     startedAt,
-    workoutDetails,
+    title,
+    preWorkoutNotes,
     workoutGoal,
     workoutGoalUnits,
   } = workoutOptions;
@@ -164,7 +165,8 @@ const logWorkout = async ({
       shared_weight_two_value: sharedWeightTwoValue,
       started_at: (startedAt ?? new Date()).toISOString(),
       user_id: userId,
-      workout_details: workoutDetails,
+      title,
+      pre_workout_notes: preWorkoutNotes,
       workout_goal: workoutGoal,
       workout_goal_units: workoutGoalUnits,
     })

@@ -62,10 +62,11 @@ const fetchWorkoutLogsPage = async ({
       sharedWeightTwoUnit: workoutLog.shared_weight_two_unit,
       sharedWeightTwoValue: workoutLog.shared_weight_two_value,
       startedAt: new Date(workoutLog.started_at),
-      workoutDetails: workoutLog.workout_details,
+      title: workoutLog.title,
+      preWorkoutNotes: workoutLog.pre_workout_notes,
       workoutGoal: workoutLog.workout_goal,
       workoutGoalUnits: workoutLog.workout_goal_units,
-      workoutNotes: workoutLog.workout_notes,
+      postWorkoutNotes: workoutLog.post_workout_notes,
     })),
   };
 };

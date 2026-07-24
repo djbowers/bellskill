@@ -20,10 +20,11 @@ const baseWorkoutLog = (overrides: Partial<WorkoutLog> = {}): WorkoutLog => ({
   sharedWeightTwoUnit: null,
   sharedWeightTwoValue: null,
   startedAt: new Date('2026-01-01T10:00:00.000Z'),
-  workoutDetails: 'Morning swings',
+  title: 'Morning swings',
+  preWorkoutNotes: null,
   workoutGoal: 5,
   workoutGoalUnits: 'rounds',
-  workoutNotes: null,
+  postWorkoutNotes: null,
   ...overrides,
 });
 
@@ -65,7 +66,8 @@ describe('workoutLogToWorkoutOptions', () => {
       sharedWeightOneValue: null,
       sharedWeightTwoUnit: null,
       sharedWeightTwoValue: null,
-      workoutDetails: 'Morning swings',
+      title: 'Morning swings',
+      preWorkoutNotes: null,
       workoutGoal: 5,
       workoutGoalUnits: 'rounds',
       previousVolume: undefined,

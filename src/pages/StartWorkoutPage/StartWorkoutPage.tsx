@@ -92,6 +92,17 @@ const DEFAULT_MINUTES: number = 10; // minutes
 const DEFAULT_ROUNDS: number = 10; // rounds
 
 /**
+ * The History-facing title for a program-started workout: the program name plus
+ * a week/day tag and the session's short label, composed at start time (program
+ * sessions never persist a title — `workoutOptions.title` is null for them).
+ */
+const composeProgramSessionTitle = (
+  programTitle: string,
+  session: ProgramSession,
+): string =>
+  `${programTitle} · W${session.weekNumber}D${session.dayNumber} ${session.title}`;
+
+/**
  * Save-session mode (Slice 2): the builder authors a program session instead of
  * starting a workout. When provided, the footer swaps from "Start workout" to
  * "Save session" and everything above it — the whole builder — is reused as-is.
@@ -319,8 +330,9 @@ export const StartWorkoutPage = ({
   const [movements, setMovements] = useState<MovementOptions[]>(
     workoutOptions.movements,
   );
-  const [workoutDetails, setWorkoutDetails] = useState<string | null>(
-    workoutOptions.workoutDetails,
+  const [title, setTitle] = useState<string | null>(workoutOptions.title);
+  const [preWorkoutNotes, setPreWorkoutNotes] = useState<string | null>(
+    workoutOptions.preWorkoutNotes,
   );
   const [intervalTimer, setIntervalTimer] = useState<number>(
     workoutOptions.intervalTimer,
@@ -340,7 +352,8 @@ export const StartWorkoutPage = ({
   const [sharedWeightTwoUnit, setSharedWeightTwoUnit] =
     useState<WeightUnit | null>(workoutOptions.sharedWeightTwoUnit);
 
-  const detailsRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const notesRef = useRef<HTMLInputElement>(null);
 
   // Fan a set of workout options out to the builder's local state so the user
   // can review/edit before starting. Defined ahead of the gate so the nav-start
@@ -349,7 +362,8 @@ export const StartWorkoutPage = ({
     setMovements(options.movements);
     setWorkoutGoal(options.workoutGoal);
     setWorkoutGoalUnits(options.workoutGoalUnits);
-    setWorkoutDetails(options.workoutDetails);
+    setTitle(options.title);
+    setPreWorkoutNotes(options.preWorkoutNotes);
     setIntervalTimer(options.intervalTimer);
     setRestTimer(options.restTimer);
     setComplexSet(options.complexSet);
@@ -366,8 +380,10 @@ export const StartWorkoutPage = ({
   const applyProgramStart = (
     session: ProgramSession,
     userProgramId: string,
+    programTitle: string,
   ) => {
     loadIntoBuilder(session.workoutOptions);
+    setTitle(composeProgramSessionTitle(programTitle, session));
     setStartSource('program');
     setStartSourceProps({
       user_program_id: userProgramId,
@@ -389,12 +405,13 @@ export const StartWorkoutPage = ({
         startProgramSession?: {
           session: ProgramSession;
           userProgramId: string;
+          programTitle: string;
         };
       } | null;
       const chosen = navState?.startProgramSession;
       if (!chosen) return;
       navigate(location.pathname, { replace: true, state: null });
-      applyProgramStart(chosen.session, chosen.userProgramId);
+      applyProgramStart(chosen.session, chosen.userProgramId, chosen.programTitle);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot per navigation; the handlers close over stable setters only.
     [location.key],
@@ -447,17 +464,27 @@ export const StartWorkoutPage = ({
       prev > 0 ? prev + INCREMENT_REST_TIMER : DEFAULT_REST_TIMER,
     );
 
-  const handleAddDetails = () => setWorkoutDetails('');
+  const handleBlurTitle = () => {
+    setTitle(titleRef.current?.value ?? '');
+  };
 
-  const handleBlurDetails = () => {
-    setWorkoutDetails(detailsRef.current?.value ?? '');
+  const handleToggleTitle = () => {
+    if (title !== null) {
+      setTitle(null);
+    } else {
+      setTitle('');
+    }
+  };
+
+  const handleBlurNotes = () => {
+    setPreWorkoutNotes(notesRef.current?.value ?? '');
   };
 
   const handleToggleNotes = () => {
-    if (workoutDetails !== null) {
-      setWorkoutDetails(null);
+    if (preWorkoutNotes !== null) {
+      setPreWorkoutNotes(null);
     } else {
-      handleAddDetails();
+      setPreWorkoutNotes('');
     }
   };
 
@@ -708,6 +735,7 @@ export const StartWorkoutPage = ({
     applyProgramStart(
       primaryProgram.nextSession.session,
       primaryProgram.enrollment.id,
+      primaryProgram.program.title,
     );
   };
 
@@ -741,7 +769,8 @@ export const StartWorkoutPage = ({
         sharedWeightOneValue,
         sharedWeightTwoUnit,
         sharedWeightTwoValue,
-        workoutDetails: workoutDetails?.trim() || null,
+        title: title?.trim() || null,
+        preWorkoutNotes: preWorkoutNotes?.trim() || null,
         workoutGoal,
         workoutGoalUnits,
       },
@@ -769,7 +798,8 @@ export const StartWorkoutPage = ({
         sharedWeightOneValue,
         sharedWeightTwoUnit,
         sharedWeightTwoValue,
-        workoutDetails: workoutDetails?.trim() || null,
+        title: null,
+        preWorkoutNotes: preWorkoutNotes?.trim() || null,
         workoutGoal,
         workoutGoalUnits,
       },
@@ -949,15 +979,18 @@ export const StartWorkoutPage = ({
 
           <AddToWorkoutSection
             complexSet={complexSet}
-            hasNotes={workoutDetails !== null}
+            hasTitle={title !== null}
+            hasNotes={preWorkoutNotes !== null}
             hasInterval={intervalTimer > 0}
             hasRest={restTimer > 0}
             hasTimedMovements={movements.some((m) => m.timedRungs)}
+            showTitle={!programSaveMode}
             showComplex={features.complexMode}
             onToggleComplex={handleToggleComplex}
             onToggleInterval={handleToggleInterval}
             onToggleNotes={handleToggleNotes}
             onToggleRest={handleToggleRest}
+            onToggleTitle={handleToggleTitle}
           />
 
           {features.complexMode && complexSet && (
@@ -1020,15 +1053,31 @@ export const StartWorkoutPage = ({
             </Card>
           )}
 
-          {workoutDetails !== null && (
+          {title !== null && (
             <Card>
-              <Section title="Notes">
+              <Section title="Title">
                 <Input
                   autoFocus
                   className="w-full"
-                  defaultValue={workoutDetails}
-                  onBlur={handleBlurDetails}
-                  ref={detailsRef}
+                  defaultValue={title}
+                  onBlur={handleBlurTitle}
+                  ref={titleRef}
+                  placeholder="e.g. Morning swings"
+                />
+              </Section>
+            </Card>
+          )}
+
+          {preWorkoutNotes !== null && (
+            <Card>
+              <Section title="Pre-workout notes">
+                <Input
+                  autoFocus
+                  className="w-full"
+                  defaultValue={preWorkoutNotes}
+                  onBlur={handleBlurNotes}
+                  ref={notesRef}
+                  placeholder="Goal, cues, things to keep in mind"
                 />
               </Section>
             </Card>

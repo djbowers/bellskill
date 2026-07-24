@@ -17,7 +17,8 @@ const defaultWorkoutOptions: WorkoutOptions = {
   movements: [
     { ...DEFAULT_MOVEMENT_OPTIONS, movementName: 'Single Arm Clean & Press' },
   ],
-  workoutDetails: 'Example Workout Details',
+  title: 'Example Workout',
+  preWorkoutNotes: 'Example pre-workout notes',
 };
 
 const meta = {

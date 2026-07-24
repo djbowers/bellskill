@@ -20,8 +20,9 @@ export interface WorkoutLog {
   sharedWeightTwoUnit: WeightUnit | null;
   sharedWeightTwoValue: number | null;
   startedAt: Date;
-  workoutDetails: string | null;
+  title: string | null;
+  preWorkoutNotes: string | null;
   workoutGoal: number;
   workoutGoalUnits: WorkoutGoalUnits;
-  workoutNotes: string | null;
+  postWorkoutNotes: string | null;
 }

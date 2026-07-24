@@ -30,7 +30,7 @@ export const workoutLogs: WorkoutLog[] = [
     shared_weight_two_unit: 'kilograms',
     shared_weight_two_value: 16,
     started_at: '2023-10-11T13:47:39.636+00:00',
-    workout_details: 'The Giant 3.0 W1D2',
+    title: 'The Giant 3.0 W1D2',
   }),
   new ExampleWorkoutLog({
     completed_at: '2023-10-14T00:10:26.551963+00:00',
@@ -39,7 +39,7 @@ export const workoutLogs: WorkoutLog[] = [
     completed_rungs: 27,
     movements: ['Clean and Press'],
     started_at: '2023-10-13T23:50:19.461+00:00',
-    workout_details: 'The Giant 3.0 W1D3',
+    title: 'The Giant 3.0 W1D3',
   }),
   new ExampleWorkoutLog({
     completed_at: '2023-10-16T14:12:05.335714+00:00',
@@ -48,7 +48,7 @@ export const workoutLogs: WorkoutLog[] = [
     completed_rungs: 15,
     movements: ['Clean and Press'],
     started_at: '2023-10-16T13:51:51.039+00:00',
-    workout_details: 'The Giant 3.0 W2D1',
+    title: 'The Giant 3.0 W2D1',
   }),
   new ExampleWorkoutLog({
     completed_at: '2023-10-19T01:18:03.539251+00:00',
@@ -57,7 +57,7 @@ export const workoutLogs: WorkoutLog[] = [
     completed_rungs: 10,
     movements: ['Clean and Press'],
     started_at: '2023-10-19T00:57:09.786+00:00',
-    workout_details: 'The Giant 3.0 W2D2',
+    title: 'The Giant 3.0 W2D2',
   }),
   new ExampleWorkoutLog({
     completed_at: '2023-10-20T14:29:17.130734+00:00',
@@ -66,7 +66,7 @@ export const workoutLogs: WorkoutLog[] = [
     completed_rungs: 21,
     movements: ['Clean and Press'],
     started_at: '2023-10-20T14:09:11.755+00:00',
-    workout_details: 'The Giant 3.0 W2D3',
+    title: 'The Giant 3.0 W2D3',
   }),
   new ExampleWorkoutLog({
     completed_at: '2023-10-23T14:15:01.889722+00:00',
@@ -75,7 +75,7 @@ export const workoutLogs: WorkoutLog[] = [
     completed_rungs: 15,
     movements: ['Clean and Press'],
     started_at: '2023-10-23T13:55:00.807+00:00',
-    workout_details: 'The Giant 3.0 W3D1',
+    title: 'The Giant 3.0 W3D1',
   }),
   new ExampleWorkoutLog({
     completed_at: '2023-10-26T14:04:26.316086+00:00',
@@ -84,7 +84,7 @@ export const workoutLogs: WorkoutLog[] = [
     completed_rungs: 10,
     movements: ['Clean and Press'],
     started_at: '2023-10-26T13:44:00.209+00:00',
-    workout_details: 'The Giant 3.0 W3D2',
+    title: 'The Giant 3.0 W3D2',
   }),
   new ExampleWorkoutLog({
     completed_at: '2023-10-09T23:20:00+00:00',
@@ -93,7 +93,7 @@ export const workoutLogs: WorkoutLog[] = [
     completed_rungs: 13,
     movements: ['Clean and Press'],
     started_at: '2023-10-09T23:00:00+00:00',
-    workout_details: 'The Giant 3.0 W1D1',
+    title: 'The Giant 3.0 W1D1',
   }),
   new ExampleWorkoutLog({
     completed_at: '2023-10-29T23:59:03.336378+00:00',
@@ -102,7 +102,7 @@ export const workoutLogs: WorkoutLog[] = [
     completed_rungs: 32,
     movements: ['Clean and Press'],
     started_at: '2023-10-29T23:39:01.207+00:00',
-    workout_details: 'The Giant 3.0 W3D3',
+    title: 'The Giant 3.0 W3D3',
   }),
   new ExampleWorkoutLog({
     completed_at: '2023-11-01T14:18:45.931225+00:00',
@@ -111,7 +111,7 @@ export const workoutLogs: WorkoutLog[] = [
     completed_rungs: 15,
     movements: ['Clean and Press'],
     started_at: '2023-11-01T13:58:18.93+00:00',
-    workout_details: 'The Giant 3.0 W4D1',
+    title: 'The Giant 3.0 W4D1',
   }),
   new ExampleWorkoutLog({
     completed_at: '2023-11-03T14:23:30.861735+00:00',
@@ -120,7 +120,7 @@ export const workoutLogs: WorkoutLog[] = [
     completed_rungs: 10,
     movements: ['Clean and Press'],
     started_at: '2023-11-03T14:03:32.08+00:00',
-    workout_details: 'The Giant 3.0 W4D2',
+    title: 'The Giant 3.0 W4D2',
   }),
   new ExampleWorkoutLog({
     completed_at: '2023-11-09T15:06:59.161679+00:00',
@@ -129,7 +129,7 @@ export const workoutLogs: WorkoutLog[] = [
     completed_rungs: 24,
     movements: ['Clean and Press'],
     started_at: '2023-11-09T14:47:03.617+00:00',
-    workout_details: 'The Giant 3.0 W4D3',
+    title: 'The Giant 3.0 W4D3',
   }),
   new ExampleWorkoutLog({
     completed_at: '2023-11-09T15:06:59.161679+00:00',

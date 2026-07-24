@@ -31,7 +31,8 @@ export interface WorkoutHistoryItemProps {
   sharedWeightTwoUnit?: WeightUnit | null;
   sharedWeightTwoValue?: number | null;
   startedAt: Date;
-  workoutDetails: string | null;
+  title: string | null;
+  preWorkoutNotes: string | null;
   workoutGoal: number;
   workoutGoalUnits: string;
   workoutLogId: number;
@@ -49,7 +50,8 @@ export const WorkoutHistoryItem = ({
   sharedWeightTwoUnit,
   sharedWeightTwoValue,
   startedAt,
-  workoutDetails,
+  title,
+  preWorkoutNotes,
   workoutGoal,
   workoutGoalUnits,
   workoutLogId,
@@ -75,8 +77,15 @@ export const WorkoutHistoryItem = ({
           </div>
           <CardDescription className="text-xs">{timeRange}</CardDescription>
         </CardTitle>
-        {workoutDetails && (
-          <CardDescription className="italic">{workoutDetails}</CardDescription>
+        {title && (
+          <CardDescription className="font-medium text-foreground">
+            {title}
+          </CardDescription>
+        )}
+        {preWorkoutNotes && (
+          <CardDescription className="whitespace-pre-line italic">
+            {preWorkoutNotes}
+          </CardDescription>
         )}
       </CardHeader>
 

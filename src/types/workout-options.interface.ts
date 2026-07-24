@@ -12,7 +12,8 @@ export interface WorkoutOptions {
   sharedWeightTwoUnit: WeightUnit | null;
   sharedWeightTwoValue: number | null;
   startedAt?: Date;
-  workoutDetails: string | null;
+  title: string | null;
+  preWorkoutNotes: string | null;
   workoutGoal: number; // minutes, rounds, or target volume (kg)
   workoutGoalUnits: WorkoutGoalUnits;
   previousVolume?: number; // previous completed volume (kg) for volume goal calculations

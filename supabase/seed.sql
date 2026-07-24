@@ -106,8 +106,8 @@ BEGIN
     rpe,
     interval_timer,
     rest_timer,
-    workout_details,
-    workout_notes,
+    title,
+    post_workout_notes,
     completed_volume,
     is_one_handed
   ) VALUES (
@@ -149,8 +149,8 @@ BEGIN
     rpe,
     interval_timer,
     rest_timer,
-    workout_details,
-    workout_notes,
+    title,
+    post_workout_notes,
     completed_volume,
     is_one_handed
   ) VALUES (
@@ -192,8 +192,8 @@ BEGIN
     rpe,
     interval_timer,
     rest_timer,
-    workout_details,
-    workout_notes,
+    title,
+    post_workout_notes,
     completed_volume,
     is_one_handed
   ) VALUES (
@@ -235,8 +235,8 @@ BEGIN
     rpe,
     interval_timer,
     rest_timer,
-    workout_details,
-    workout_notes,
+    title,
+    post_workout_notes,
     completed_volume,
     is_one_handed
   ) VALUES (
@@ -278,8 +278,8 @@ BEGIN
     rpe,
     interval_timer,
     rest_timer,
-    workout_details,
-    workout_notes,
+    title,
+    post_workout_notes,
     completed_volume,
     is_one_handed
   ) VALUES (

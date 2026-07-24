@@ -53,9 +53,7 @@ export const RecommendedWorkoutsSection = ({
               repeat.workoutOptions;
             const summary = movementsSummary(movements);
             const title =
-              repeat.workoutLog.workoutDetails?.trim() ||
-              summary ||
-              'Recent workout';
+              repeat.workoutLog.title?.trim() || summary || 'Recent workout';
             return (
               <RecommendedWorkoutCard
                 key={repeat.workoutLogId}

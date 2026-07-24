@@ -13,7 +13,8 @@ const BARE_SESSION_OPTIONS: Omit<WorkoutOptions, 'startedAt'> = {
   sharedWeightOneValue: null,
   sharedWeightTwoUnit: null,
   sharedWeightTwoValue: null,
-  workoutDetails: null,
+  title: null,
+  preWorkoutNotes: null,
   workoutGoal: 30,
   workoutGoalUnits: 'minutes',
 };

@@ -31,7 +31,7 @@ export * from './useRecentRepeatableWorkouts';
 export * from './useRecommendSession';
 export * from './useSelectRPE';
 export * from './useSetSubscription';
-export * from './useUpdateWorkoutNotes';
+export * from './useUpdatePostWorkoutNotes';
 export * from './useInfiniteWorkoutLogs';
 export * from './useWorkoutLog';
 export * from './useWorkoutLogs';

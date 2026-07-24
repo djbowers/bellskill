@@ -6,7 +6,7 @@ import {
   useDeleteWorkoutLog,
   useMovementLogs,
   useSelectRPE,
-  useUpdateWorkoutNotes,
+  useUpdatePostWorkoutNotes,
   useWorkoutLog,
 } from '~/api';
 import { Loading, Page } from '~/components';
@@ -54,7 +54,7 @@ export const CompletedWorkoutPage = () => {
     isPending: isDeletingWorkoutLog,
   } = useDeleteWorkoutLog(id);
   const { mutateAsync: selectRPE } = useSelectRPE(id);
-  const { mutate: updateWorkoutNotes } = useUpdateWorkoutNotes(id);
+  const { mutate: updatePostWorkoutNotes } = useUpdatePostWorkoutNotes(id);
 
   const [optimisticRpe, setOptimisticRpe] = useOptimistic(
     workoutLog?.rpe ?? null,
@@ -79,10 +79,10 @@ export const CompletedWorkoutPage = () => {
       await selectRPE(selectedRPE);
     });
 
-  const handleAddNotes = () => updateWorkoutNotes('');
-  const handleClearNotes = () => updateWorkoutNotes(null);
+  const handleAddNotes = () => updatePostWorkoutNotes('');
+  const handleClearNotes = () => updatePostWorkoutNotes(null);
   const handleBlurNotes = () =>
-    updateWorkoutNotes(notesRef.current?.value || null);
+    updatePostWorkoutNotes(notesRef.current?.value || null);
 
   const handleClickRepeat = () => {
     // Prefill the builder (not /active) so the user can review and adjust
@@ -108,7 +108,7 @@ export const CompletedWorkoutPage = () => {
                 Continue
                 <ArrowRightIcon className="h-2 w-2" />
               </Button>
-              {workoutLog.workoutNotes === null && (
+              {workoutLog.postWorkoutNotes === null && (
                 <Button variant="ghost" onClick={handleAddNotes}>
                   Add Notes
                 </Button>
@@ -143,18 +143,19 @@ export const CompletedWorkoutPage = () => {
           sharedWeightTwoUnit={workoutLog.sharedWeightTwoUnit}
           sharedWeightTwoValue={workoutLog.sharedWeightTwoValue}
           startedAt={workoutLog.startedAt}
-          workoutDetails={workoutLog.workoutDetails}
+          title={workoutLog.title}
+          preWorkoutNotes={workoutLog.preWorkoutNotes}
           workoutGoal={workoutLog.workoutGoal}
           workoutGoalUnits={workoutLog.workoutGoalUnits}
           workoutLogId={workoutLog.id}
         />
 
-        {workoutLog.workoutNotes !== null && (
+        {workoutLog.postWorkoutNotes !== null && (
           <Card>
             <Section
-              title="Workout Notes"
+              title="Post-workout notes"
               actions={
-                workoutLog.workoutNotes?.length > 0 && (
+                workoutLog.postWorkoutNotes?.length > 0 && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -166,9 +167,9 @@ export const CompletedWorkoutPage = () => {
               }
             >
               <Textarea
-                aria-label="Workout Notes"
+                aria-label="Post-workout notes"
                 className="w-full"
-                defaultValue={workoutLog.workoutNotes}
+                defaultValue={workoutLog.postWorkoutNotes}
                 onBlur={handleBlurNotes}
                 ref={notesRef}
               />

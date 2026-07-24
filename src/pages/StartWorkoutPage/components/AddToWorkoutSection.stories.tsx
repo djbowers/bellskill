@@ -59,6 +59,7 @@ const InteractiveTemplate = ({
   showComplex: boolean;
 }) => {
   const [complexSet, setComplexSet] = useState(false);
+  const [hasTitle, setHasTitle] = useState(false);
   const [hasNotes, setHasNotes] = useState(false);
   const [hasInterval, setHasInterval] = useState(false);
   const [hasRest, setHasRest] = useState(false);
@@ -66,11 +67,13 @@ const InteractiveTemplate = ({
   return (
     <AddToWorkoutSection
       complexSet={complexSet}
+      hasTitle={hasTitle}
       hasNotes={hasNotes}
       hasInterval={hasInterval}
       hasRest={hasRest}
       showComplex={showComplex}
       onToggleComplex={() => setComplexSet((prev) => !prev)}
+      onToggleTitle={() => setHasTitle((prev) => !prev)}
       onToggleNotes={() => setHasNotes((prev) => !prev)}
       onToggleInterval={() => setHasInterval((prev) => !prev)}
       onToggleRest={() => setHasRest((prev) => !prev)}

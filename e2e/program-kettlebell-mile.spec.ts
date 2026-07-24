@@ -10,7 +10,7 @@ import { expect, test } from '@playwright/test';
 // would silently break it: `timedRungs` surviving into the stored blob, and the
 // one-handed weight mode (weightTwoValue 0) that makes the runtime alternate
 // hands. It also pins the distance -> time approximation to the test session's
-// workoutDetails, so the modeling call can never quietly disappear.
+// preWorkoutNotes, so the modeling call can never quietly disappear.
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY!;
@@ -89,7 +89,7 @@ interface WorkoutOpts {
   intervalTimer: number;
   workoutGoal: number;
   workoutGoalUnits: string;
-  workoutDetails: string;
+  preWorkoutNotes: string;
   movements: MovementOpt[];
 }
 interface SessionRow {
@@ -187,7 +187,7 @@ test.describe('program schema — Kettlebell Mile seed', () => {
     expect(EXPECTED_ROUNDS[5]).toBeGreaterThan(EXPECTED_ROUNDS[6]);
   });
 
-  test('the test session flags the distance→time approximation in workoutDetails', async () => {
+  test('the test session flags the distance→time approximation in preWorkoutNotes', async () => {
     const user = await signUpThrowawayUser();
     const [km] = await restJson<Array<{ id: string }>>(
       `programs?slug=eq.${KM_SLUG}&select=id`,
@@ -202,7 +202,7 @@ test.describe('program schema — Kettlebell Mile seed', () => {
     // The seam that keeps the approximation honest: the source prescribes a
     // MILE, the app prescribes minutes, and the user must be told that the
     // clock-based rungs are a pace guide they can finish early.
-    const details = session.workout_options.workoutDetails.toLowerCase();
+    const details = session.workout_options.preWorkoutNotes.toLowerCase();
     expect(details).toContain('mile');
     expect(details).toMatch(/not a target|pace|finish/);
     expect(details).toContain('9 min'); // the sub-9 benchmark

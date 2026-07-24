@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test';
 // rather than driving the browser, since this is pure seed-data verification.
 // Confirms the 10-workout / 2-week "Even Easier Strength" cycle carries the right
 // rep schemes per session, the correct 5 movement patterns + weight modes, and
-// that the approximated ascending-weight day flags itself in workoutDetails.
+// that the approximated ascending-weight day flags itself in preWorkoutNotes.
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY!;
@@ -83,7 +83,7 @@ interface WorkoutOpts {
   complexSet: boolean;
   workoutGoal: number;
   workoutGoalUnits: string;
-  workoutDetails: string;
+  preWorkoutNotes: string;
   movements: MovementOpt[];
 }
 interface SessionRow {
@@ -196,7 +196,7 @@ test.describe('program schema — Easy Strength seed', () => {
     });
   });
 
-  test('the ascending-weight day is 6 singles and flags its approximation in workoutDetails', async () => {
+  test('the ascending-weight day is 6 singles and flags its approximation in preWorkoutNotes', async () => {
     const user = await signUpThrowawayUser();
     const [es] = await restJson<Array<{ id: string }>>(
       `programs?slug=eq.${ES_SLUG}&select=id`,
@@ -214,7 +214,7 @@ test.describe('program schema — Easy Strength seed', () => {
 
     // The seam that makes the schema-level approximation honest to the user: the
     // details must tell them to add weight manually across the six singles.
-    const details = session.workout_options.workoutDetails.toLowerCase();
+    const details = session.workout_options.preWorkoutNotes.toLowerCase();
     expect(details).toContain('add');
     expect(details).toMatch(/weight|load/);
     expect(details).toMatch(/single|placeholder|manual/);
