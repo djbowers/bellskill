@@ -3,8 +3,25 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERIES } from '~/constants';
 import { WeightUnit } from '~/types';
 
+import type { Json } from '../../types/supabase';
+
 import { supabase } from '../supabaseClient';
 import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
+
+/**
+ * An explicit weight for one of the program's weight groups, keyed by the
+ * group's **authored** weight pair. Overrides `enroll_in_program`'s default,
+ * which shifts each group by its authored offset from the working weight — so
+ * the enrollee can name the bell they actually own for a deload or test day.
+ */
+export interface ProgramWeightOverride {
+  sourceWeightOneValue: number | null;
+  sourceWeightTwoValue: number | null;
+  weightOneValue: number | null;
+  weightOneUnit: WeightUnit | null;
+  weightTwoValue: number | null;
+  weightTwoUnit: WeightUnit | null;
+}
 
 export interface EnrollProgramArgs {
   programId: string;
@@ -24,6 +41,8 @@ export interface EnrollProgramArgs {
    * the lowest free slot and raises `PROGRAM_SLOTS_FULL`.
    */
   replaceUserProgramId?: string | null;
+  /** Per-group explicit weights; omit to let the RPC derive them by offset. */
+  weightOverrides?: ProgramWeightOverride[];
 }
 
 /**
@@ -48,6 +67,7 @@ export const useEnrollProgram = () => {
       sharedWeightTwoValue,
       sharedWeightTwoUnit,
       replaceUserProgramId,
+      weightOverrides,
     }: EnrollProgramArgs): Promise<string> => {
       const { data, error } = await supabase.rpc('enroll_in_program', {
         p_program_id: programId,
@@ -56,6 +76,12 @@ export const useEnrollProgram = () => {
         p_shared_weight_two_value: sharedWeightTwoValue ?? undefined,
         p_shared_weight_two_unit: sharedWeightTwoUnit ?? undefined,
         p_replace_user_program_id: replaceUserProgramId ?? undefined,
+        // Cast: the generated RPC arg is `Json`, which a typed interface can't
+        // satisfy structurally (no index signature). The shape is asserted by
+        // ProgramWeightOverride and by the enroll e2e cases.
+        p_weight_overrides: weightOverrides?.length
+          ? (weightOverrides as unknown as Json)
+          : undefined,
       });
 
       if (error) throw error;

@@ -331,6 +331,7 @@ export type Database = {
           sequence_index: number
           title: string
           week_number: number
+          weight_label: string | null
           workout_options: Json
         }
         Insert: {
@@ -341,6 +342,7 @@ export type Database = {
           sequence_index: number
           title: string
           week_number: number
+          weight_label?: string | null
           workout_options: Json
         }
         Update: {
@@ -351,6 +353,7 @@ export type Database = {
           sequence_index?: number
           title?: string
           week_number?: number
+          weight_label?: string | null
           workout_options?: Json
         }
         Relationships: [
@@ -776,6 +779,7 @@ export type Database = {
           p_shared_weight_one_value?: number
           p_shared_weight_two_unit?: string
           p_shared_weight_two_value?: number
+          p_weight_overrides?: Json
         }
         Returns: string
       }

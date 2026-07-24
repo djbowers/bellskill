@@ -41,6 +41,7 @@ const sharedSession = (
   title: string,
   weightOne: number,
   weightTwo: number | null,
+  weightLabel: string | null = null,
 ) => ({
   id: `s-${seq}`,
   programId: 'dfw-1',
@@ -49,6 +50,7 @@ const sharedSession = (
   dayNumber: day,
   title,
   notes: null,
+  weightLabel,
   workoutOptions: {
     complexSet: false,
     intervalTimer: 0,
@@ -275,6 +277,105 @@ describe('ProgramDetailsPage', () => {
         sharedWeightTwoValue: 24,
         sharedWeightTwoUnit: 'kilograms',
         replaceUserProgramId: 'up-1',
+      },
+      expect.anything(),
+    );
+  });
+
+  // A program whose sessions run at two different weights: 24kg working plus a
+  // deliberately heavier 28kg test day, the shape enroll_in_program offsets.
+  const withTestDay = (weightLabel: string | null = 'Test day') => ({
+    data: {
+      program: { ...dfw, id: 'dfw-1' },
+      sessions: [
+        ...dfwSessions,
+        sharedSession(2, 5, 1, 'Test - new press max', 28, 28, weightLabel),
+      ],
+    },
+    isLoading: false,
+    isError: false,
+  });
+
+  it('renders no extra control for a program that runs at one weight', () => {
+    renderPage();
+
+    expect(screen.getByText('Starting weight')).toBeInTheDocument();
+    expect(screen.getAllByRole('spinbutton')).toHaveLength(2);
+  });
+
+  it('adds a control per extra weight group, labelled from the seed', () => {
+    mockUseProgram.mockReturnValue(withTestDay());
+
+    renderPage();
+
+    expect(screen.getByText('Test day')).toBeInTheDocument();
+    expect(screen.getByText('4 kg heavier · week 5')).toBeInTheDocument();
+    // Working double-24 (2 inputs) + the test day's double-28 (2 more).
+    expect(screen.getByLabelText('Test day bell 1')).toHaveValue(28);
+    expect(screen.getByLabelText('Test day bell 2')).toHaveValue(28);
+  });
+
+  it('describes an unlabelled group by its offset instead', () => {
+    mockUseProgram.mockReturnValue(withTestDay(null));
+
+    renderPage();
+
+    expect(screen.getAllByText('4 kg heavier · week 5').length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.queryByText('Test day')).not.toBeInTheDocument();
+  });
+
+  it('an untouched group follows the working weight, and pins once edited', () => {
+    mockUseProgram.mockReturnValue(withTestDay());
+
+    renderPage();
+
+    // Drop the working bell 24 → 20; the test day rides along, staying +4.
+    fireEvent.click(
+      screen.getByRole('button', { name: '- kg — Starting weight bell 1' }),
+    );
+    expect(screen.getByLabelText('Starting weight bell 1')).toHaveValue(23);
+    expect(screen.getByLabelText('Test day bell 1')).toHaveValue(27);
+
+    // Editing the test day pins it: further working-weight changes leave it.
+    fireEvent.change(screen.getByLabelText('Test day bell 1'), {
+      target: { value: '32' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: '- kg — Starting weight bell 1' }),
+    );
+    expect(screen.getByLabelText('Starting weight bell 1')).toHaveValue(22);
+    expect(screen.getByLabelText('Test day bell 1')).toHaveValue(32);
+  });
+
+  it('sends the chosen group weights as enroll overrides, keyed by source weight', () => {
+    mockUseProgram.mockReturnValue(withTestDay());
+
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText('Test day bell 1'), {
+      target: { value: '32' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      {
+        programId: 'dfw-1',
+        sharedWeightOneValue: 24,
+        sharedWeightOneUnit: 'kilograms',
+        sharedWeightTwoValue: 24,
+        sharedWeightTwoUnit: 'kilograms',
+        weightOverrides: [
+          {
+            sourceWeightOneValue: 28,
+            sourceWeightTwoValue: 28,
+            weightOneValue: 32,
+            weightOneUnit: 'kilograms',
+            weightTwoValue: 28,
+            weightTwoUnit: 'kilograms',
+          },
+        ],
       },
       expect.anything(),
     );

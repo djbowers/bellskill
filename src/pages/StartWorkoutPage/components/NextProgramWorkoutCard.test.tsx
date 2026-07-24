@@ -14,6 +14,7 @@ const nextSession: NextProgramSession = {
     dayNumber: 2,
     title: 'Ladders 1-2-3-4',
     notes: null,
+    weightLabel: null,
     workoutOptions: {
       complexSet: false,
       intervalTimer: 0,
