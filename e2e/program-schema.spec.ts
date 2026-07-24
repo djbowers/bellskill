@@ -1044,6 +1044,160 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
     }
   });
 
+  test('an explicit weight override beats the derived offset for its group', async () => {
+    const user = await signUpThrowawayUser();
+
+    const [aa] = await restJson<Array<{ id: string }>>(
+      'GET',
+      `programs?slug=eq.${AA_SLUG}&select=id`,
+      user.token,
+    );
+
+    // The offset would put the deload at 20 - 8 = 12 kg. The enrollee owns a
+    // 14, so the picker sends that group's weight explicitly, keyed by the
+    // group's AUTHORED 16 kg.
+    await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: aa.id,
+      p_shared_weight_one_value: 20,
+      p_shared_weight_one_unit: 'kilograms',
+      p_shared_weight_two_value: 0,
+      p_weight_overrides: [
+        {
+          sourceWeightOneValue: 16,
+          sourceWeightTwoValue: 0,
+          weightOneValue: 14,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 0,
+          weightTwoUnit: null,
+        },
+      ],
+    });
+
+    const clones = await restJson<Array<{ id: string }>>(
+      'GET',
+      `programs?source_program_id=eq.${aa.id}&owner_id=eq.${user.uid}&select=id`,
+      user.token,
+    );
+
+    const sessions = await restJson<
+      Array<{
+        week_number: number;
+        weight_label: string | null;
+        workout_options: {
+          sharedWeightOneValue: number | null;
+          movements: Array<{ weightOneValue: number; weightTwoValue: number }>;
+        };
+      }>
+    >(
+      'GET',
+      `program_sessions?program_id=eq.${clones[0].id}&select=week_number,weight_label,workout_options&order=sequence_index.asc`,
+      user.token,
+    );
+    expect(sessions).toHaveLength(AA_SESSION_COUNT);
+
+    for (const session of sessions) {
+      const isDeloadWeek = AA_DELOAD_WEEKS.includes(session.week_number);
+      expect(session.workout_options.movements[0].weightOneValue).toBe(
+        isDeloadWeek ? 14 : 20,
+      );
+      // Single-bell loading survives the override: weight two stays 0, never
+      // clamped up to 1.
+      expect(session.workout_options.movements[0].weightTwoValue).toBe(0);
+      // The group's authored label rides along onto the clone.
+      expect(session.weight_label).toBe(
+        isDeloadWeek ? 'Deload weeks' : null,
+      );
+    }
+  });
+
+  test('an override in a different unit lands verbatim, where the offset path declines', async () => {
+    const user = await signUpThrowawayUser();
+
+    const [aa] = await restJson<Array<{ id: string }>>(
+      'GET',
+      `programs?slug=eq.${AA_SLUG}&select=id`,
+      user.token,
+    );
+
+    // Pounds against a kg-authored seed: the offset path refuses to convert and
+    // falls back to a flat override, which silently loses the deload. An
+    // explicit entry is exactly how the picker restores it.
+    await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: aa.id,
+      p_shared_weight_one_value: 44,
+      p_shared_weight_one_unit: 'pounds',
+      p_shared_weight_two_value: 0,
+      p_weight_overrides: [
+        {
+          sourceWeightOneValue: 16,
+          sourceWeightTwoValue: 0,
+          weightOneValue: 26,
+          weightOneUnit: 'pounds',
+          weightTwoValue: 0,
+          weightTwoUnit: null,
+        },
+      ],
+    });
+
+    const clones = await restJson<Array<{ id: string }>>(
+      'GET',
+      `programs?source_program_id=eq.${aa.id}&owner_id=eq.${user.uid}&select=id`,
+      user.token,
+    );
+
+    const sessions = await restJson<
+      Array<{
+        week_number: number;
+        workout_options: {
+          movements: Array<{ weightOneValue: number; weightOneUnit: string }>;
+        };
+      }>
+    >(
+      'GET',
+      `program_sessions?program_id=eq.${clones[0].id}&select=week_number,workout_options&order=sequence_index.asc`,
+      user.token,
+    );
+
+    for (const session of sessions) {
+      const isDeloadWeek = AA_DELOAD_WEEKS.includes(session.week_number);
+      const movement = session.workout_options.movements[0];
+      expect(movement.weightOneValue).toBe(isDeloadWeek ? 26 : 44);
+      expect(movement.weightOneUnit).toBe('pounds');
+    }
+  });
+
+  test('an override matching no session is a no-op, leaving the offset math alone', async () => {
+    const user = await signUpThrowawayUser();
+    const dfwId = await getDfwProgramId(user.token);
+
+    await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: dfwId,
+      p_shared_weight_one_value: 28,
+      p_shared_weight_one_unit: 'kilograms',
+      // No DFW session is authored at 99 kg.
+      p_weight_overrides: [
+        {
+          sourceWeightOneValue: 99,
+          sourceWeightTwoValue: 99,
+          weightOneValue: 8,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: null,
+          weightTwoUnit: null,
+        },
+      ],
+    });
+
+    const { sessions } = await getCloneSessions(user, dfwId);
+
+    // Identical to the no-overrides case: working sessions at the chosen 28,
+    // the test day still carrying its authored +4.
+    for (const session of sessions.filter((s) => s.sequence_index < 13)) {
+      expect(session.workout_options.movements[0].weightOneValue).toBe(28);
+    }
+    const testDay = sessions.find((s) => s.sequence_index === 13);
+    expect(testDay?.workout_options.movements[0].weightOneValue).toBe(32);
+  });
+
   test('a starting weight is ignored when enrolling in your own program (no clone, no session mutation)', async () => {
     const user = await signUpThrowawayUser();
 

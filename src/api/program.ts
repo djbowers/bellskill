@@ -52,6 +52,7 @@ export const mapProgramSessionRow = (
     'startedAt'
   >,
   notes: row.notes,
+  weightLabel: row.weight_label,
 });
 
 /** camelCase mapper for a raw `program_session_completions` row. */

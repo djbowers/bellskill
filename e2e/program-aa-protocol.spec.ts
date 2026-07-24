@@ -135,10 +135,11 @@ test.describe('program schema — A+A Protocol "Plan A" seed', () => {
         sequence_index: number;
         week_number: number;
         day_number: number;
+        weight_label: string | null;
         workout_options: WorkoutOptions;
       }>
     >(
-      `program_sessions?program_id=eq.${aa.id}&select=sequence_index,week_number,day_number,workout_options&order=sequence_index.asc`,
+      `program_sessions?program_id=eq.${aa.id}&select=sequence_index,week_number,day_number,weight_label,workout_options&order=sequence_index.asc`,
       token,
     );
 
@@ -193,6 +194,14 @@ test.describe('program schema — A+A Protocol "Plan A" seed', () => {
       expect(goals[i]).toBeGreaterThanOrEqual(goals[i - 1]);
     }
     expect(goals[goals.length - 1]).toBe(30);
+
+    // The deload group carries an authored name so the enrollment picker can
+    // label its weight control something better than "8 kg lighter".
+    for (const s of sessions) {
+      expect(s.weight_label).toBe(
+        DELOAD_WEEKS.includes(s.week_number) ? 'Deload weeks' : null,
+      );
+    }
 
     for (const week of DELOAD_WEEKS) {
       const deload = sessions.filter((s) => s.week_number === week);

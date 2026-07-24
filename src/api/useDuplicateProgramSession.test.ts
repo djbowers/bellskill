@@ -25,6 +25,7 @@ const session: ProgramSession = {
   weekNumber: 1,
   dayNumber: 1,
   title: 'Day 1',
+  weightLabel: null,
   workoutOptions: {} as never,
   notes: null,
 };
