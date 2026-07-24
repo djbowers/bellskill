@@ -1,7 +1,10 @@
 export * from './AddToWorkoutSection';
 export * from './BuildNewWorkoutDivider';
+export * from './LadderRepScheme';
 export * from './ModifyCountButtons';
+export * from './MovementCard';
 export * from './MovementsHeader';
+export * from './MovementSummaryChips';
 export * from './NextProgramWorkoutCard';
 export * from './ProgramSwitcherTabs';
 export * from './RecommendedWorkoutCard';
@@ -15,3 +18,4 @@ export * from './RecommendSessionSection';
 export * from './Section';
 export * from './WeightModeTabs';
 export * from './WeightUnitTabs';
+export * from './WorkoutSummaryBar';
