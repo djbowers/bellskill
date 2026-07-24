@@ -57,12 +57,11 @@ const { Default, WithoutPreviousVolume } = composeStories(stories);
 const startedAt = new Date();
 vi.setSystemTime(startedAt);
 
-// The builder is now collapsed behind a "Build custom workout" button; reveal
-// it before exercising the builder controls.
+// The builder is a secondary state behind the hub. With no active program the
+// hub shows the quick-start hero, whose "Build a workout" action opens the
+// builder; reveal it before exercising the builder controls.
 const enterBuildMode = () =>
-  userEvent.click(
-    screen.getByRole('button', { name: /build custom workout/i }),
-  );
+  userEvent.click(screen.getByRole('button', { name: /build a workout/i }));
 
 describe('start workout page', () => {
   let startWorkout;
@@ -80,9 +79,9 @@ describe('start workout page', () => {
     expect(startButton).toBeDisabled();
   });
 
-  test('shows a back link to recommendations in build mode', () => {
+  test('shows a back link to home in build mode', () => {
     expect(
-      screen.getByRole('button', { name: /recommendations/i }),
+      screen.getByRole('button', { name: /^home$/i }),
     ).toBeInTheDocument();
   });
 

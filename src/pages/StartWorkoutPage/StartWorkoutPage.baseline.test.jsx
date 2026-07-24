@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -10,9 +11,10 @@ import { server } from '~/mocks/server';
 
 import { StartWorkoutPage } from './StartWorkoutPage';
 
-// PROD-174 baseline: with every discovery flag off the page must be the pure
-// custom builder. The flags are on in the test env, so mock the effective-
-// features hook the page reads to force them off.
+// Hub baseline: with every discovery flag off the page shows the quick-start
+// hub (hero + build-a-workout), and the pure builder is one tap away. The flags
+// are on in the test env, so mock the effective-features hook the page reads to
+// force them off.
 const { mockUseFeatures } = vi.hoisted(() => ({ mockUseFeatures: vi.fn() }));
 vi.mock('~/hooks', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -47,7 +49,7 @@ const renderPage = () =>
     </QueryClientProvider>,
   );
 
-describe('StartWorkoutPage pure-builder baseline (all discovery flags off)', () => {
+describe('StartWorkoutPage hub baseline (all discovery flags off)', () => {
   beforeEach(() => {
     mockUseFeatures.mockReturnValue(allFlagsOff);
     // New user (zero logs) — the curated surface would otherwise show.
@@ -58,27 +60,34 @@ describe('StartWorkoutPage pure-builder baseline (all discovery flags off)', () 
     );
   });
 
-  test('opens directly in the custom builder, with no discovery surfaces', async () => {
+  test('shows the quick-start hub with no discovery surfaces, builder one tap away', async () => {
     renderPage();
 
-    // The builder is shown immediately — no intermediate browse screen.
-    expect(await screen.findByLabelText('Movement Input')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /start workout/i }),
-    ).toBeInTheDocument();
+    // The hub's quick-start hero is the landing — not the raw builder.
+    expect(await screen.findByText('Start a workout')).toBeInTheDocument();
+    const buildButton = screen.getByRole('button', {
+      name: /build a workout/i,
+    });
+    expect(buildButton).toBeInTheDocument();
 
-    // None of the gated surfaces (or the browse-mode chrome) render.
-    expect(
-      screen.queryByRole('button', { name: 'Two-Hand Swing' }),
-    ).not.toBeInTheDocument();
+    // No discovery content with the flags off.
     expect(
       screen.queryByText('Pick up where you left off'),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /build custom workout/i }),
+      screen.queryByText('Your recommended first workout'),
     ).not.toBeInTheDocument();
+    // The builder isn't mounted until the user asks for it.
+    expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
+
+    // Building a workout opens the full builder as a secondary state.
+    await userEvent.click(buildButton);
+    expect(await screen.findByLabelText('Movement Input')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Recommendations' }),
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: /start workout/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /^home$/i }),
+    ).toBeInTheDocument();
   });
 });

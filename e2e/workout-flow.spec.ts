@@ -156,14 +156,20 @@ test.describe('full workout flow', () => {
     // ── 1. Inject auth before page load ──────────────────────────────────
     await injectAuthSession(page, authSession);
 
-    // ── 2. Load the app ───────────────────────────────────────────────────
+    // ── 2. Load the app and open the builder ──────────────────────────────
     await page.goto('/');
 
-    // With every runtime discovery flag OFF (the production baseline, PROD-175),
-    // the Start page opens directly in the custom workout builder — there are no
-    // browse surfaces to show. The "Start workout" button's presence confirms we
-    // bypassed the Signup screen and landed on StartWorkoutPage's builder. (The
-    // eval is async, so the builder appears once the all-OFF result resolves.)
+    // The Start page now opens on the hub (not the raw builder). With no active
+    // program, that's the quick-start hero; its "Build a workout" action opens
+    // the custom builder. Clicking it confirms we bypassed the Signup screen and
+    // landed on StartWorkoutPage's hub. (The eval is async, so the hub appears
+    // once the discovery-flag result resolves.)
+    const buildWorkoutButton = page.getByRole('button', {
+      name: /build a workout/i,
+    });
+    await expect(buildWorkoutButton).toBeVisible({ timeout: 10_000 });
+    await buildWorkoutButton.click();
+
     const startWorkoutButton = page.getByRole('button', {
       name: 'Start workout',
     });

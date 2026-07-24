@@ -4,13 +4,13 @@ import { useState } from 'react';
 import type { ActiveProgram } from '~/api';
 import { exampleActiveProgram } from '~/examples';
 
-import { NextProgramWorkoutCard } from './NextProgramWorkoutCard';
 import { ProgramSwitcherTabs } from './ProgramSwitcherTabs';
+import { StartWorkoutHero } from './StartWorkoutHero';
 
 /**
- * The parallel-programs home surface: the switcher plus the card it drives.
+ * The parallel-programs home surface: the switcher plus the hero it drives.
  * They are shown together because the switcher only means anything in that
- * composition — picking a pill swaps which program the card below offers.
+ * composition — picking a pill swaps which program the hero below offers.
  */
 const ProgramHomeSurface = ({ programs }: { programs: ActiveProgram[] }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -24,7 +24,8 @@ const ProgramHomeSurface = ({ programs }: { programs: ActiveProgram[] }) => {
         selectedEnrollmentId={primary.enrollment.id}
         onSelect={setSelectedId}
       />
-      <NextProgramWorkoutCard
+      <StartWorkoutHero
+        variant="program"
         programTitle={primary.program.title}
         nextSession={primary.nextSession}
         progress={primary.progress}

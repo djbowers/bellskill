@@ -67,13 +67,14 @@ describe('StartWorkoutPage program-gate skeleton', () => {
     expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
   });
 
-  test('lands directly on the builder once the program gate clears with no active program', async () => {
+  test('lands on the quick-start hub once the program gate clears with no active program', async () => {
     mockUseActivePrograms.mockReturnValue({ data: [], isError: false });
 
     renderPage();
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    expect(await screen.findByLabelText('Movement Input')).toBeInTheDocument();
+    expect(await screen.findByText('Start a workout')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
   });
 
   test('editWorkout (history "Repeat") bypasses the skeleton even while the program query is still pending', async () => {
@@ -89,12 +90,12 @@ describe('StartWorkoutPage program-gate skeleton', () => {
     // The query has no `placeholderData`, so a terminal error leaves `data`
     // undefined forever — without the `isError` escape the page would be
     // stuck on the blocking skeleton. It must fall through to the safe
-    // default (no active program → builder).
+    // default (no active program → quick-start hub).
     mockUseActivePrograms.mockReturnValue({ data: undefined, isError: true });
 
     renderPage();
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    expect(await screen.findByLabelText('Movement Input')).toBeInTheDocument();
+    expect(await screen.findByText('Start a workout')).toBeInTheDocument();
   });
 });

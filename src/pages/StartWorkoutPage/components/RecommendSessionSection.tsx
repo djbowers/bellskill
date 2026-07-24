@@ -96,6 +96,9 @@ export const RecommendSessionSection = ({
 
   return (
     <section aria-label="AI recommendation" className="flex flex-col gap-1">
+      <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Recommended for you
+      </h2>
       {result ? (
         <RecommendationCard
           recommendation={result.recommendation}
@@ -120,6 +123,7 @@ export const RecommendSessionSection = ({
       ) : (
         <Button
           className="w-full"
+          variant="secondary"
           loading={mutation.isPending}
           onClick={handleRecommend}
         >

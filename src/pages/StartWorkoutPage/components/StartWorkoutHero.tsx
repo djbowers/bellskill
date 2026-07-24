@@ -1,0 +1,209 @@
+import { ReactNode } from 'react';
+
+import { NextProgramSession, ProgramProgress } from '~/api';
+import { Button } from '~/components/ui/button';
+import { cn } from '~/lib/utils';
+import { WorkoutGoalUnits } from '~/types';
+
+/**
+ * The home page's single high-contrast surface. Every other block on the page is
+ * a quiet bordered card; the hero is filled `primary` so "what am I training now"
+ * is unmistakable. Two shapes share the shell: a running program's next session,
+ * and a quick-start anchor for anyone without an active program.
+ */
+export type StartWorkoutHeroProps =
+  | ({ variant: 'program' } & ProgramHeroProps)
+  | ({ variant: 'quickStart' } & QuickStartHeroProps);
+
+interface ProgramHeroProps {
+  programTitle: string;
+  nextSession: NextProgramSession | null;
+  progress: ProgramProgress;
+  isComplete: boolean;
+  onStart: () => void;
+  onSkip: () => void;
+  /** Whether a skip is in flight (disables both actions). */
+  skipping: boolean;
+  /** Open the program's progress page. Omitted → the link is not rendered. */
+  onViewProgress?: () => void;
+}
+
+interface QuickStartHeroProps {
+  onBuildCustom: () => void;
+  /** Repeat the most recent workout in one tap. Omitted → no repeat action. */
+  onRepeatLast?: () => void;
+}
+
+const estimatedDuration = (
+  goal: number,
+  units: WorkoutGoalUnits,
+): string | null => {
+  if (units === 'minutes') return `~${goal} min`;
+  if (units === 'rounds') return `${goal} rounds`;
+  return null; // volume goals have no meaningful time estimate here
+};
+
+const HeroShell = ({ children }: { children: ReactNode }) => (
+  <section
+    aria-label="Start a workout"
+    className="flex flex-col gap-1.5 rounded-md bg-primary p-3 text-primary-foreground shadow motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-500"
+  >
+    {children}
+  </section>
+);
+
+const Eyebrow = ({ children }: { children: ReactNode }) => (
+  <span className="text-xs font-semibold uppercase tracking-wide text-primary-foreground/75">
+    {children}
+  </span>
+);
+
+const primaryCta =
+  'bg-primary-foreground text-primary shadow-none hover:bg-primary-foreground/90';
+const ghostCta =
+  'border border-primary-foreground/30 bg-transparent text-primary-foreground shadow-none hover:bg-primary-foreground/10';
+
+export const StartWorkoutHero = (props: StartWorkoutHeroProps) => {
+  if (props.variant === 'quickStart') {
+    const { onBuildCustom, onRepeatLast } = props;
+    return (
+      <HeroShell>
+        <div className="flex flex-col gap-0.5">
+          <Eyebrow>Ready to train</Eyebrow>
+          <h2 className="text-2xl font-semibold leading-tight">
+            Start a workout
+          </h2>
+          <p className="text-sm text-primary-foreground/80">
+            Pick your movements, reps, and load — built your way.
+          </p>
+        </div>
+        <Button
+          size="lg"
+          className={cn('mt-0.5 w-full text-base', primaryCta)}
+          onClick={onBuildCustom}
+        >
+          Build a workout
+        </Button>
+        {onRepeatLast && (
+          <button
+            type="button"
+            onClick={onRepeatLast}
+            className="self-start text-xs font-medium text-primary-foreground/80 hover:text-primary-foreground hover:underline"
+          >
+            Repeat last workout →
+          </button>
+        )}
+      </HeroShell>
+    );
+  }
+
+  const {
+    programTitle,
+    nextSession,
+    progress,
+    isComplete,
+    onStart,
+    onSkip,
+    skipping,
+    onViewProgress,
+  } = props;
+
+  const viewProgressLink = onViewProgress && (
+    <button
+      type="button"
+      onClick={onViewProgress}
+      className="self-start text-xs font-medium text-primary-foreground/80 hover:text-primary-foreground hover:underline"
+    >
+      View progress →
+    </button>
+  );
+
+  if (isComplete || !nextSession) {
+    return (
+      <HeroShell>
+        <Eyebrow>{programTitle}</Eyebrow>
+        <h2 className="text-2xl font-semibold leading-tight">
+          🎉 Program complete
+        </h2>
+        <p className="text-sm text-primary-foreground/80">
+          You finished all {progress.total} sessions. Pick a new program to keep
+          going.
+        </p>
+        {viewProgressLink}
+      </HeroShell>
+    );
+  }
+
+  const { session, workoutOptions } = nextSession;
+  const sessionNumber = session.sequenceIndex + 1;
+  const duration = estimatedDuration(
+    workoutOptions.workoutGoal,
+    workoutOptions.workoutGoalUnits,
+  );
+  const title =
+    session.title?.trim() ||
+    `Week ${session.weekNumber} · Day ${session.dayNumber}`;
+  const pct =
+    progress.total > 0
+      ? Math.round((progress.completed / progress.total) * 100)
+      : 0;
+
+  return (
+    <HeroShell>
+      <div className="flex items-center justify-between gap-1">
+        <Eyebrow>{programTitle}</Eyebrow>
+        <span className="shrink-0 rounded-full bg-primary-foreground/15 px-1 py-px text-xs font-medium">
+          Session {sessionNumber} of {progress.total}
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-2xl font-semibold leading-tight">{title}</h2>
+        <span className="text-sm text-primary-foreground/80">
+          Week {session.weekNumber} · Day {session.dayNumber}
+          {duration && ` · ${duration}`}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-1">
+        <div
+          className="h-0.5 flex-1 overflow-hidden rounded-full bg-primary-foreground/20"
+          role="progressbar"
+          aria-valuenow={pct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`${programTitle} progress`}
+        >
+          <div
+            className="h-full rounded-full bg-primary-foreground transition-[width] duration-500"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <span className="text-xs font-medium tabular-nums text-primary-foreground/80">
+          {pct}%
+        </span>
+      </div>
+
+      <div className="mt-0.5 flex gap-1">
+        <Button
+          size="lg"
+          className={cn('flex-1 text-base', primaryCta)}
+          onClick={onStart}
+          disabled={skipping}
+        >
+          Start next workout
+        </Button>
+        <Button
+          size="lg"
+          className={cn('text-base', ghostCta)}
+          onClick={onSkip}
+          disabled={skipping}
+        >
+          {skipping ? 'Skipping…' : 'Skip'}
+        </Button>
+      </div>
+
+      {viewProgressLink}
+    </HeroShell>
+  );
+};
