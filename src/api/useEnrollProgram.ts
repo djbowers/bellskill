@@ -9,14 +9,15 @@ import { supabase } from '../supabaseClient';
 import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
 /**
- * An explicit weight for one of the program's weight groups, keyed by the
- * group's **authored** weight pair. Overrides `enroll_in_program`'s default,
- * which shifts each group by its authored offset from the working weight — so
- * the enrollee can name the bell they actually own for a deload or test day.
+ * The enrollee's chosen starting weight for one movement, keyed by
+ * `movementName`, in that movement's own config shape (a single-bell movement
+ * carries `weightTwoValue` null, a bodyweight one is omitted entirely). The
+ * value is the movement's working weight; `enroll_in_program` shifts each
+ * session by that movement's authored offset from its modal, so a program's
+ * heavier test days and lighter deloads still scale along with it.
  */
-export interface ProgramWeightOverride {
-  sourceWeightOneValue: number | null;
-  sourceWeightTwoValue: number | null;
+export interface MovementWeight {
+  movementName: string;
   weightOneValue: number | null;
   weightOneUnit: WeightUnit | null;
   weightTwoValue: number | null;
@@ -41,8 +42,12 @@ export interface EnrollProgramArgs {
    * the lowest free slot and raises `PROGRAM_SLOTS_FULL`.
    */
   replaceUserProgramId?: string | null;
-  /** Per-group explicit weights; omit to let the RPC derive them by offset. */
-  weightOverrides?: ProgramWeightOverride[];
+  /**
+   * Per-movement starting weights, one entry per distinct non-bodyweight
+   * movement. Omit for complexSet programs (which use the shared weight above)
+   * or to clone verbatim.
+   */
+  movementWeights?: MovementWeight[];
 }
 
 /**
@@ -67,7 +72,7 @@ export const useEnrollProgram = () => {
       sharedWeightTwoValue,
       sharedWeightTwoUnit,
       replaceUserProgramId,
-      weightOverrides,
+      movementWeights,
     }: EnrollProgramArgs): Promise<string> => {
       const { data, error } = await supabase.rpc('enroll_in_program', {
         p_program_id: programId,
@@ -78,9 +83,9 @@ export const useEnrollProgram = () => {
         p_replace_user_program_id: replaceUserProgramId ?? undefined,
         // Cast: the generated RPC arg is `Json`, which a typed interface can't
         // satisfy structurally (no index signature). The shape is asserted by
-        // ProgramWeightOverride and by the enroll e2e cases.
-        p_weight_overrides: weightOverrides?.length
-          ? (weightOverrides as unknown as Json)
+        // MovementWeight and by the enroll e2e cases.
+        p_movement_weights: movementWeights?.length
+          ? (movementWeights as unknown as Json)
           : undefined,
       });
 

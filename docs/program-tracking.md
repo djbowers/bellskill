@@ -233,3 +233,25 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   values/units verbatim, no offset math and no unit-match check; (3) otherwise
   the offset math. Omitting `p_weight_overrides` is byte-identical to the
   offset-only behavior, and an entry matching no session is a silent no-op.
+- **Per-movement starting weights (current):** the shared-weight + weight-group
+  model above applied one weight to every movement in a session, which is right
+  only when a session's movements share a config. Easy Strength mixes a
+  bodyweight pull-up, a single-bell swing and double-bell lifts, so the uniform
+  fold turned the pull-up and swing into doubles. Enrollment now picks a weight
+  **per movement**: `ProgramDetailsPage` renders one control per distinct
+  movement, sized to its config via `deriveMovementWeights`
+  (`ProgramDetailsPage/utils`) + `getWeightTabValue` — bodyweight movements show
+  a "Bodyweight" line (no picker), single-bell one input, double two — and sends
+  them as `p_movement_weights` (`MovementWeight[]` on `useEnrollProgram`), keyed
+  by `movementName`. `enroll_in_program`
+  (`*_enroll_in_program_per_movement_weights.sql`) rebuilds each session's
+  `movements[]`, applying the chosen weight in that movement's own config shape
+  (preserving null/0 slots) shifted by that movement's authored per-session
+  offset from its **per-movement** modal, so cross-session scaling still holds.
+  `complexSet` programs (one bell pair for the whole complex, ABC) keep the
+  single shared-weight picker and the uniform fold; a caller that passes only
+  `p_shared_weight_*` (the homogeneous programs' e2e path) also takes the fold,
+  so the shared-weight API stays backward-compatible. `deriveWeightGroups` +
+  `applyGroupOffset` + `p_weight_overrides` are retired from the enrollment flow
+  (per-movement offset replaces per-group override); `deriveStartingWeight` is
+  kept only to pre-fill the `complexSet` shared picker.

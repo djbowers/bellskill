@@ -132,6 +132,61 @@ describe('useEnrollProgram', () => {
     });
   });
 
+  it('passes per-movement weights through as p_movement_weights', async () => {
+    let receivedBody: unknown;
+    server.use(
+      http.post(RPC_URL, async ({ request }) => {
+        receivedBody = await request.json();
+        return HttpResponse.json('new-user-program-id');
+      }),
+    );
+
+    const { result } = renderHook(() => useEnrollProgram(), {
+      wrapper: makeWrapper(),
+    });
+
+    const movementWeights = [
+      {
+        movementName: 'Kettlebell Swing',
+        weightOneValue: 32,
+        weightOneUnit: 'kilograms' as const,
+        weightTwoValue: null,
+        weightTwoUnit: null,
+      },
+    ];
+
+    await result.current.mutateAsync({
+      programId: 'program-abc',
+      movementWeights,
+    });
+
+    expect(receivedBody).toEqual({
+      p_program_id: 'program-abc',
+      p_movement_weights: movementWeights,
+    });
+  });
+
+  it('omits p_movement_weights when the array is empty', async () => {
+    let receivedBody: unknown;
+    server.use(
+      http.post(RPC_URL, async ({ request }) => {
+        receivedBody = await request.json();
+        return HttpResponse.json('new-user-program-id');
+      }),
+    );
+
+    const { result } = renderHook(() => useEnrollProgram(), {
+      wrapper: makeWrapper(),
+    });
+
+    await result.current.mutateAsync({
+      programId: 'program-abc',
+      movementWeights: [],
+    });
+
+    expect(receivedBody).toEqual({ p_program_id: 'program-abc' });
+  });
+
   it('surfaces RPC errors', async () => {
     server.use(
       http.post(RPC_URL, () =>
