@@ -1,0 +1,26 @@
+import type { Meta, StoryObj } from '@storybook/react';
+import { useState } from 'react';
+
+import { WeightTabValue } from '~/types';
+
+import { WeightModeTabs } from './WeightModeTabs';
+
+const meta: Meta<typeof WeightModeTabs> = {
+  title: 'MovementAutocomplete/WeightModeTabs',
+  component: WeightModeTabs,
+};
+export default meta;
+
+const Interactive = ({ initial }: { initial: WeightTabValue }) => {
+  const [value, setValue] = useState<WeightTabValue>(initial);
+  return (
+    <div className="max-w-md">
+      <WeightModeTabs value={value} onValueChange={setValue} />
+    </div>
+  );
+};
+
+export const Bodyweight: StoryObj = { render: () => <Interactive initial="none" /> };
+export const TwoHand: StoryObj = { render: () => <Interactive initial="2h" /> };
+export const Single: StoryObj = { render: () => <Interactive initial="1h" /> };
+export const Double: StoryObj = { render: () => <Interactive initial="double" /> };
