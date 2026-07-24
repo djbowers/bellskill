@@ -21,28 +21,43 @@ type Story = StoryObj<typeof AddToWorkoutSection>;
 export const AllOff: Story = {
   args: {
     complexSet: false,
+    hasTitle: false,
     hasNotes: false,
     hasInterval: false,
     hasRest: false,
     showComplex: true,
+    straightSets: false,
     onToggleComplex: () => {},
     onToggleInterval: () => {},
     onToggleNotes: () => {},
     onToggleRest: () => {},
+    onToggleStraightSets: () => {},
+    onToggleTitle: () => {},
   },
 };
 
 export const AllOn: Story = {
   args: {
     complexSet: true,
+    hasTitle: true,
     hasNotes: true,
     hasInterval: true,
     hasRest: true,
     showComplex: true,
+    straightSets: false,
     onToggleComplex: () => {},
     onToggleInterval: () => {},
     onToggleNotes: () => {},
     onToggleRest: () => {},
+    onToggleStraightSets: () => {},
+    onToggleTitle: () => {},
+  },
+};
+
+export const StraightSets: Story = {
+  args: {
+    ...AllOff.args,
+    straightSets: true,
   },
 };
 
@@ -63,6 +78,7 @@ const InteractiveTemplate = ({
   const [hasNotes, setHasNotes] = useState(false);
   const [hasInterval, setHasInterval] = useState(false);
   const [hasRest, setHasRest] = useState(false);
+  const [straightSets, setStraightSets] = useState(false);
 
   return (
     <AddToWorkoutSection
@@ -72,11 +88,19 @@ const InteractiveTemplate = ({
       hasInterval={hasInterval}
       hasRest={hasRest}
       showComplex={showComplex}
-      onToggleComplex={() => setComplexSet((prev) => !prev)}
+      straightSets={straightSets}
+      onToggleComplex={() => {
+        setComplexSet((prev) => !prev);
+        setStraightSets(false);
+      }}
       onToggleTitle={() => setHasTitle((prev) => !prev)}
       onToggleNotes={() => setHasNotes((prev) => !prev)}
       onToggleInterval={() => setHasInterval((prev) => !prev)}
       onToggleRest={() => setHasRest((prev) => !prev)}
+      onToggleStraightSets={() => {
+        setStraightSets((prev) => !prev);
+        setComplexSet(false);
+      }}
     />
   );
 };

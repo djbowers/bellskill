@@ -24,6 +24,8 @@ interface CurrentMovementProps {
   rightWeightUnit: WeightUnit | null;
   rightWeightValue: number | null;
   rungIndex: number;
+  /** Rungs in the current movement's ladder; shown only in straight-sets mode. */
+  totalRungs?: number;
   totalSides: number;
   title: string | null;
   preWorkoutNotes: string | null;
@@ -44,6 +46,7 @@ export const CurrentMovement = ({
   rightWeightUnit,
   rightWeightValue,
   rungIndex,
+  totalRungs,
   totalSides,
   title,
   preWorkoutNotes,
@@ -150,6 +153,12 @@ export const CurrentMovement = ({
 
       <CardContent>
         <div className="flex flex-col gap-1">
+          {totalRungs !== undefined && (
+            <CardDescription className="text-center" data-testid="current-set">
+              Set {rungIndex + 1} of {totalRungs}
+            </CardDescription>
+          )}
+
           {totalSides > 1 && (
             <CardDescription className="text-center" data-testid="current-side">
               {activeSide

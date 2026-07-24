@@ -3,6 +3,7 @@ import {
   CubeIcon,
   DocumentTextIcon,
   PauseIcon,
+  QueueListIcon,
   TagIcon,
 } from '@heroicons/react/24/outline';
 import { ComponentType, SVGProps } from 'react';
@@ -15,6 +16,7 @@ const ICONS = {
   interval: ClockIcon,
   rest: PauseIcon,
   complex: CubeIcon,
+  'straight-sets': QueueListIcon,
 } as const;
 
 export type WorkoutAddonId = keyof typeof ICONS;

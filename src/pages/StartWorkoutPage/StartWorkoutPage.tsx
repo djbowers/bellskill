@@ -341,6 +341,9 @@ export const StartWorkoutPage = ({
   const [complexSet, setComplexSet] = useState<boolean>(
     workoutOptions.complexSet,
   );
+  const [straightSets, setStraightSets] = useState<boolean>(
+    workoutOptions.straightSets ?? false,
+  );
   const [sharedWeightOneValue, setSharedWeightOneValue] = useState<
     number | null
   >(workoutOptions.sharedWeightOneValue);
@@ -367,6 +370,7 @@ export const StartWorkoutPage = ({
     setIntervalTimer(options.intervalTimer);
     setRestTimer(options.restTimer);
     setComplexSet(options.complexSet);
+    setStraightSets(options.straightSets ?? false);
     setSharedWeightOneValue(options.sharedWeightOneValue);
     setSharedWeightOneUnit(options.sharedWeightOneUnit);
     setSharedWeightTwoValue(options.sharedWeightTwoValue);
@@ -504,7 +508,18 @@ export const StartWorkoutPage = ({
     }
   };
 
-  const handleToggleComplex = () => setComplexSet((prev) => !prev);
+  // Complex holds one bell through every movement; straight sets finishes one
+  // movement before the next. They describe opposite arrangements, so turning
+  // either on clears the other.
+  const handleToggleComplex = () => {
+    setComplexSet((prev) => !prev);
+    setStraightSets(false);
+  };
+
+  const handleToggleStraightSets = () => {
+    setStraightSets((prev) => !prev);
+    setComplexSet(false);
+  };
 
   const handleChangeMovementName = (index: number, value: string) =>
     setMovements((prev) =>
@@ -769,6 +784,7 @@ export const StartWorkoutPage = ({
         sharedWeightOneValue,
         sharedWeightTwoUnit,
         sharedWeightTwoValue,
+        straightSets,
         title: title?.trim() || null,
         preWorkoutNotes: preWorkoutNotes?.trim() || null,
         workoutGoal,
@@ -798,6 +814,7 @@ export const StartWorkoutPage = ({
         sharedWeightOneValue,
         sharedWeightTwoUnit,
         sharedWeightTwoValue,
+        straightSets,
         title: null,
         preWorkoutNotes: preWorkoutNotes?.trim() || null,
         workoutGoal,
@@ -812,7 +829,10 @@ export const StartWorkoutPage = ({
     weightTwoValue: sharedWeightTwoValue,
   });
 
+  // Only the rotating order needs matching ladders — it walks every movement with
+  // one shared rung pointer. Straight sets gives each movement its own ladder.
   const isDifferentRepSchemes =
+    !straightSets &&
     movements.length > 1 &&
     movements.some(
       (movement) => movement.repScheme.length !== movements[0].repScheme.length,
@@ -986,10 +1006,12 @@ export const StartWorkoutPage = ({
             hasTimedMovements={movements.some((m) => m.timedRungs)}
             showTitle={!programSaveMode}
             showComplex={features.complexMode}
+            straightSets={straightSets}
             onToggleComplex={handleToggleComplex}
             onToggleInterval={handleToggleInterval}
             onToggleNotes={handleToggleNotes}
             onToggleRest={handleToggleRest}
+            onToggleStraightSets={handleToggleStraightSets}
             onToggleTitle={handleToggleTitle}
           />
 
