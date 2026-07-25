@@ -27,15 +27,15 @@ export const PATTERN_LABELS: Record<Pattern, string> = {
 };
 
 export const BAND_BAR_CLASS: Record<DebtBand, string> = {
-  green: 'bg-green-500',
-  yellow: 'bg-yellow-500',
-  red: 'bg-red-500',
+  green: 'bg-status-success',
+  yellow: 'bg-status-warning',
+  red: 'bg-destructive',
 };
 
 export const BAND_TEXT_CLASS: Record<DebtBand, string> = {
-  green: 'text-green-600',
-  yellow: 'text-yellow-600',
-  red: 'text-red-600',
+  green: 'text-status-success',
+  yellow: 'text-status-warning',
+  red: 'text-destructive',
 };
 
 export const BAND_LABEL: Record<DebtBand, string> = {

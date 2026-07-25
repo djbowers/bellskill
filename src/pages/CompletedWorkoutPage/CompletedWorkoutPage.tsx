@@ -118,7 +118,7 @@ export const CompletedWorkoutPage = () => {
               <DialogTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex items-center gap-0.5 text-red-500"
+                  className="flex items-center gap-0.5 text-destructive"
                 >
                   Delete <TrashIcon className="h-2.5 w-2.5" />
                 </Button>
