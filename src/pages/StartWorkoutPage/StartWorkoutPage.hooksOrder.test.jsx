@@ -86,6 +86,7 @@ describe('StartWorkoutPage hooks-order stability', () => {
     ).not.toThrow();
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Movement Input')).toBeInTheDocument();
+    // No active program → the quick-start hub, not the raw builder.
+    expect(screen.getByText('Start a workout')).toBeInTheDocument();
   });
 });

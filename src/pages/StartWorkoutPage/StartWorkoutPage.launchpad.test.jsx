@@ -14,8 +14,9 @@ import { server } from '~/mocks/server';
 
 import { StartWorkoutPage } from './StartWorkoutPage';
 
-// The launchpad shell (PROD-171) is the master gate. These tests exercise the
-// gate itself and the exposure logging, so both the flag hook and trackEvent are
+// The launchpad shell graduated to baseline: the hub always renders, and the
+// discovery content sits behind its own flags. These tests exercise that content
+// gating and the exposure logging, so both the flag hook and trackEvent are
 // mocked: the flag hook is driven per-test, and trackEvent is a spy asserting the
 // launchpad_exposed event's variant / population / content payload.
 const { mockUseFeatureFlags, mockTrackEvent } = vi.hoisted(() => ({
@@ -106,33 +107,32 @@ beforeEach(() => {
   mockTrackEvent.mockClear();
 });
 
-describe('StartWorkoutPage — launchpad shell master gate', () => {
-  describe('shell OFF (control)', () => {
-    test('drops a returning user straight into the pure builder', async () => {
-      setFlags(); // all off — true control baseline
+describe('StartWorkoutPage — hub baseline and content gating', () => {
+  describe('all discovery flags off', () => {
+    test('a returning user still lands on the hub, with no discovery content', async () => {
+      setFlags(); // all off
       renderPage();
 
-      // Pure builder: the movement input is present with no browse surface and
-      // no escape-hatch button (that only exists inside the shell).
+      // The hub renders regardless of flags — not the raw builder.
+      expect(await screen.findByText('Start a workout')).toBeInTheDocument();
       expect(
-        await screen.findByLabelText('Movement Input'),
+        screen.getByRole('button', { name: /build a workout/i }),
       ).toBeInTheDocument();
+      // The builder is a secondary state, not mounted yet.
       expect(
-        screen.queryByRole('button', { name: /build custom workout/i }),
+        screen.queryByLabelText('Movement Input'),
       ).not.toBeInTheDocument();
+      // No gated discovery content.
       expect(
         screen.queryByText('Pick up where you left off'),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole('button', { name: 'Two-Hand Swing' }),
       ).not.toBeInTheDocument();
     });
   });
 
-  describe('shell ON — content routed by the master flag alone', () => {
-    test('a new user sees curated first-workout content (no sub-flags needed)', async () => {
+  describe('content gated by its own flag', () => {
+    test('curatedFirstWorkout on → a new user sees curated first-workout content', async () => {
       returnZeroWorkoutLogs();
-      setFlags({ launchpadShell: true });
+      setFlags({ curatedFirstWorkout: true });
       renderPage();
 
       expect(
@@ -141,20 +141,20 @@ describe('StartWorkoutPage — launchpad shell master gate', () => {
       expect(
         screen.getByRole('heading', { name: 'Your recommended first workout' }),
       ).toBeInTheDocument();
-      // New-user shell is curated, not repeat-previous.
+      // New-user content is curated, not repeat-previous.
       expect(
         screen.queryByText('Pick up where you left off'),
       ).not.toBeInTheDocument();
     });
 
-    test('a returning user sees repeat-previous content (no sub-flags needed)', async () => {
-      setFlags({ launchpadShell: true });
+    test('repeatPrevious on → a returning user sees repeat-previous content', async () => {
+      setFlags({ repeatPrevious: true });
       renderPage();
 
       expect(
         await screen.findByText('Pick up where you left off'),
       ).toBeInTheDocument();
-      // Returning-user shell is repeat-previous, not curated.
+      // Returning-user content is repeat-previous, not curated.
       expect(
         screen.queryByRole('heading', { name: 'Recommended sessions' }),
       ).not.toBeInTheDocument();
@@ -162,9 +162,9 @@ describe('StartWorkoutPage — launchpad shell master gate', () => {
   });
 
   describe('exposure logging (joinable to the PROD-170 funnel by user_id)', () => {
-    test('logs the treatment exposure for a new user in the shell', async () => {
+    test('logs curated content for a new user with the flag on', async () => {
       returnZeroWorkoutLogs();
-      setFlags({ launchpadShell: true });
+      setFlags({ curatedFirstWorkout: true });
       renderPage();
 
       await waitFor(() =>
@@ -173,7 +173,6 @@ describe('StartWorkoutPage — launchpad shell master gate', () => {
             event: 'launchpad_exposed',
             userId: 'user-123',
             properties: expect.objectContaining({
-              shell_variant: 'on',
               population: 'new',
               content: expect.arrayContaining([
                 'curated_first',
@@ -185,7 +184,7 @@ describe('StartWorkoutPage — launchpad shell master gate', () => {
       );
     });
 
-    test('logs the control exposure (pure builder) for a returning user', async () => {
+    test('logs the bare hub for a returning user with all flags off', async () => {
       setFlags(); // all off
       renderPage();
 
@@ -197,7 +196,7 @@ describe('StartWorkoutPage — launchpad shell master gate', () => {
             properties: expect.objectContaining({
               shell_variant: 'off',
               population: 'returning',
-              content: ['builder'],
+              content: ['build_custom'],
             }),
           }),
         ),

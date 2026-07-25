@@ -105,19 +105,19 @@ describe('StartWorkoutPage recommendations', () => {
         screen.queryByText('Pick up where you left off'),
       ).not.toBeInTheDocument();
 
-      // Builder is collapsed until a card or "Build custom workout" is tapped.
+      // Builder is collapsed until a card or "Build a workout" is tapped.
       expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
       expect(
         screen.queryByRole('button', { name: /start workout/i }),
       ).not.toBeInTheDocument();
     });
 
-    test('"Build custom workout" reveals an empty builder and hides recommendations', async () => {
+    test('"Build a workout" reveals an empty builder and hides recommendations', async () => {
       renderPage();
 
       await userEvent.click(
         await screen.findByRole('button', {
-          name: /build custom workout/i,
+          name: /build a workout/i,
         }),
       );
 
@@ -174,7 +174,7 @@ describe('StartWorkoutPage recommendations', () => {
         screen.queryByRole('button', { name: 'Two-Hand Swing' }),
       ).not.toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: /build custom workout/i }),
+        screen.getByRole('button', { name: /build a workout/i }),
       ).toBeInTheDocument();
     });
 
@@ -248,7 +248,7 @@ describe('StartWorkoutPage recommendations', () => {
 
       // ...and the recommendation browse view is not shown.
       expect(
-        screen.queryByRole('button', { name: /build custom workout/i }),
+        screen.queryByRole('button', { name: /build a workout/i }),
       ).not.toBeInTheDocument();
       expect(
         screen.queryByText('Pick up where you left off'),

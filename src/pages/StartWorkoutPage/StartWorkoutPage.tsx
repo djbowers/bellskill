@@ -44,14 +44,16 @@ import {
 
 import {
   AddToWorkoutSection,
+  BuildCustomCard,
+  HubHeader,
   ModifyCountButtons,
   MovementCard,
   MovementsHeader,
-  NextProgramWorkoutCard,
   ProgramSwitcherTabs,
   RecommendSessionSection,
   RecommendedWorkoutsSection,
   Section,
+  StartWorkoutHero,
   WeightModeTabs,
   WeightUnitTabs,
   WorkoutSummaryBar,
@@ -178,24 +180,40 @@ export const StartWorkoutPage = ({
   const population: 'new' | 'returning' | null =
     isFirstWorkout === null ? null : isFirstWorkout ? 'new' : 'returning';
 
+  // Most recent training date for the hub header's "last trained" line. Null
+  // until the logs resolve or for a user who hasn't trained yet.
+  const lastWorkoutAt = useMemo<Date | null>(() => {
+    if (!workoutLogs || workoutLogs.length === 0) return null;
+    return workoutLogs.reduce(
+      (latest, log) => (log.startedAt > latest ? log.startedAt : latest),
+      workoutLogs[0].startedAt,
+    );
+  }, [workoutLogs]);
+
   // Master gate (PROD-171): the launchpad shell replaces the pure custom builder
   // when its flag resolves to treatment; control drops straight into the builder
   // (the true baseline). Content inside the shell is routed by population, not by
   // standalone content flags. An active program still forces the shell — it's a
   // separate release feature, orthogonal to the experiment. Save-session mode
   // never browses.
+  // The hub is the default home surface for everyone now — the launchpad shell
+  // graduated from experiment to baseline, so browse is no longer gated behind
+  // its flag or an active program. `shellOn` is retained only so the exposure
+  // event still records which flag arm a user was assigned to. Save-session mode
+  // never browses.
   const shellOn = experimentFeatures.launchpadShell;
-  const showBrowse =
-    !programSaveMode && (shellOn || hasActiveProgram || programGatePending);
+  const showBrowse = !programSaveMode;
 
-  // Population-routed shell content: curated first workout for new users,
-  // repeat-previous for returning. The AI next-session recommender is Phase-2
-  // nested content within the shell for returning users (its own flag), not a
-  // standalone browse trigger.
-  const showCurated = shellOn && population === 'new';
-  const showRepeat = shellOn && population === 'returning';
+  // Hub suggestions stay behind their own flags and are routed by population:
+  // curated first workout for new users, repeat-previous for returning, and the
+  // Phase-2 AI recommender for returning users. The hub shell itself no longer
+  // depends on any of them.
+  const showCurated =
+    experimentFeatures.curatedFirstWorkout && population === 'new';
+  const showRepeat =
+    experimentFeatures.repeatPrevious && population === 'returning';
   const showRecommender =
-    shellOn && population === 'returning' && experimentFeatures.recommender;
+    experimentFeatures.recommender && population === 'returning';
 
   // The recommender prescribes a single weight per movement; the catalog's
   // primary-item count + arm split tell us whether that load means two-hand,
@@ -918,14 +936,17 @@ export const StartWorkoutPage = ({
     >
       {!showBuilder && showBrowse && (
         <>
-          {primaryProgram && (
+          <HubHeader lastWorkoutAt={lastWorkoutAt} />
+
+          {primaryProgram ? (
             <>
               <ProgramSwitcherTabs
                 programs={activePrograms}
                 selectedEnrollmentId={primaryProgram.enrollment.id}
                 onSelect={setSelectedEnrollmentId}
               />
-              <NextProgramWorkoutCard
+              <StartWorkoutHero
+                variant="program"
                 programTitle={primaryProgram.program.title}
                 nextSession={primaryProgram.nextSession}
                 progress={primaryProgram.progress}
@@ -938,6 +959,16 @@ export const StartWorkoutPage = ({
                 }
               />
             </>
+          ) : (
+            <StartWorkoutHero
+              variant="quickStart"
+              onBuildCustom={handleClickBuildCustom}
+              onRepeatLast={
+                recentRepeats.length > 0
+                  ? () => handleSelectRepeat(recentRepeats[0])
+                  : undefined
+              }
+            />
           )}
 
           <RecommendedWorkoutsSection
@@ -955,13 +986,9 @@ export const StartWorkoutPage = ({
             />
           )}
 
-          <Button
-            variant="secondary"
-            className="w-full"
-            onClick={handleClickBuildCustom}
-          >
-            Build custom workout
-          </Button>
+          {primaryProgram && (
+            <BuildCustomCard onClick={handleClickBuildCustom} />
+          )}
         </>
       )}
 
@@ -974,7 +1001,7 @@ export const StartWorkoutPage = ({
               className="flex items-center gap-0.5 self-start text-xs font-medium text-muted-foreground"
             >
               <ArrowLeftIcon className="h-2 w-2" aria-hidden="true" />
-              Recommendations
+              Home
             </button>
           )}
 
