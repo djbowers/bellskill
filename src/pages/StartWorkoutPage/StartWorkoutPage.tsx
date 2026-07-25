@@ -1204,7 +1204,7 @@ export const StartWorkoutPage = ({
           </Button>
 
           {isDifferentRepSchemes && (
-            <div className="text-sm text-red-500">
+            <div className="text-sm text-destructive">
               Rep schemes must contain the same number of rungs for each
               movement.
             </div>

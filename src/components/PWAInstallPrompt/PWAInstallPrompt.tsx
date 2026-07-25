@@ -121,10 +121,10 @@ export function PWAInstallPrompt() {
           : 'bottom-4',
       )}
     >
-      <div className="relative rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
+      <div className="relative rounded-lg border border-border bg-card p-3 shadow-lg">
         <button
           onClick={handleDismiss}
-          className="absolute right-1 top-1 p-1 text-gray-400 transition-colors hover:text-gray-600"
+          className="absolute right-1 top-1 p-1 text-muted-foreground transition-colors hover:text-foreground"
           aria-label="Dismiss"
         >
           <XMarkIcon className="h-2.5 w-2.5" />
@@ -132,14 +132,14 @@ export function PWAInstallPrompt() {
 
         <div className="flex items-center space-x-3 pr-2.5">
           <div className="flex-shrink-0">
-            <DevicePhoneMobileIcon className="h-2.5 w-2.5 text-blue-600" />
+            <DevicePhoneMobileIcon className="h-2.5 w-2.5 text-primary" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-card-foreground">
               Install BellSkill
             </p>
-            <p className="inline text-xs text-gray-500">
+            <p className="inline text-xs text-muted-foreground">
               Tap the <ArrowUpTrayIcon className="inline h-2 w-2" /> share
               button below, then select &quot;Add to Home Screen&quot;
             </p>
