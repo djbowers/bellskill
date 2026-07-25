@@ -245,6 +245,20 @@ export const ActiveWorkoutPage = ({
     ? Math.max(...movements.map((m) => m.repScheme.length))
     : currentMovementRungs;
 
+  // Single-arm complex (PROD-245): every movement is a one-hand single bell
+  // (weightTwoValue === 0), so each interval fire alternates hands the way a
+  // non-complex one-handed movement does. weightTwoValue null (two-hand) or > 0
+  // (double) are excluded, keeping the two-hand and double-bell complexes on
+  // their existing no-side-switch path.
+  const isSingleArmComplex =
+    complexSet &&
+    movements.every(
+      (m) =>
+        m.weightOneValue !== null &&
+        m.weightOneValue > 0 &&
+        m.weightTwoValue === 0,
+    );
+
   const incrementReps = () =>
     setCompletedReps((prev) =>
       isTimedRung
@@ -311,6 +325,18 @@ export const ActiveWorkoutPage = ({
       setCurrentMovementRungIndex(0);
     } else {
       setCurrentMovementRungIndex((prev) => prev + 1);
+    }
+  };
+
+  // Single-arm complex: mirror the non-complex goToNextSide cadence — the first
+  // fire flips to the other hand at the same rung, the second returns and
+  // advances the rung/round. One round = one L+R pair.
+  const goToNextSideComplex = () => {
+    if (isMirrorSet) {
+      setIsMirrorSet(false);
+      goToNextSetComplex();
+    } else {
+      setIsMirrorSet(true);
     }
   };
 
@@ -399,7 +425,11 @@ export const ActiveWorkoutPage = ({
     if (complexSet) {
       incrementRepsComplex();
       incrementVolumeComplex();
-      goToNextSetComplex();
+      if (isSingleArmComplex) {
+        goToNextSideComplex();
+      } else {
+        goToNextSetComplex();
+      }
     } else {
       incrementReps();
       incrementVolume();
@@ -566,12 +596,14 @@ export const ActiveWorkoutPage = ({
       {complexSet ? (
         <ComplexMovementDisplay
           currentRound={currentRound}
+          currentSide={currentSide}
           movements={movements}
           rungIndex={currentMovementRungIndex}
           sharedWeightTwoUnit={sharedWeightTwoUnit}
           sharedWeightTwoValue={sharedWeightTwoValue}
           sharedWeightUnit={sharedWeightOneUnit}
           sharedWeightValue={sharedWeightOneValue}
+          totalSides={isSingleArmComplex ? totalSides : 1}
         />
       ) : (
         <CurrentMovement
