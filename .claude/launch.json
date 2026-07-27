@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "storybook"],
       "port": 6006
+    },
+    {
+      "name": "bellskill-storybook-alt",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "storybook", "--", "-p", "6016"],
+      "port": 6016
     }
   ]
 }

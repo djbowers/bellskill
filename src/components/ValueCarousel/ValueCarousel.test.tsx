@@ -191,6 +191,109 @@ describe('ValueCarousel', () => {
       expect(onChange).not.toHaveBeenCalled();
     });
 
+    it('commits a fling even when the fallback timer settles early', () => {
+      // iOS Safari has no scrollend, so settles come from a timer that can
+      // fire mid-fling — the fling's real landing must still commit.
+      const descriptor = Object.getOwnPropertyDescriptor(
+        window,
+        'onscrollend',
+      )!;
+      delete (window as { onscrollend?: unknown }).onscrollend;
+
+      try {
+        const onChange = vi.fn();
+        const { container } = render(
+          <ValueCarousel
+            min={1}
+            max={40}
+            step={1}
+            value={24}
+            onChange={onChange}
+          />,
+        );
+        const track = layoutTrack(container);
+
+        fireEvent.pointerDown(track);
+        track.scrollLeft = 23 * ITEM_WIDTH;
+        fireEvent.scroll(track);
+        vi.advanceTimersByTime(200); // premature settle, still at the value
+        track.scrollLeft = 31 * ITEM_WIDTH;
+        fireEvent.scroll(track);
+        vi.advanceTimersByTime(200); // the fling's real landing
+
+        expect(onChange).toHaveBeenCalledWith(32);
+      } finally {
+        Object.defineProperty(window, 'onscrollend', descriptor);
+      }
+    });
+
+    it('disarms a gesture that never scrolled', () => {
+      const onChange = vi.fn();
+      const { container } = render(
+        <ValueCarousel
+          min={1}
+          max={40}
+          step={1}
+          value={24}
+          onChange={onChange}
+        />,
+      );
+      const track = layoutTrack(container);
+
+      // A tap that moves nothing must not turn the next settle — e.g. from a
+      // programmatic scroll after a +/- press — into a user commit.
+      fireEvent.pointerDown(track);
+      fireEvent.pointerUp(track);
+      settleAt(track, 31);
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('snaps the display back after a settle it did not cause', () => {
+      const onChange = vi.fn();
+      const onFocusChange = vi.fn();
+      const { container } = render(
+        <ValueCarousel
+          min={1}
+          max={40}
+          step={1}
+          value={24}
+          onChange={onChange}
+          onFocusChange={onFocusChange}
+        />,
+      );
+
+      settleAt(layoutTrack(container), 0);
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(onFocusChange).toHaveBeenLastCalledWith(24);
+    });
+
+    it('keeps trying to position the strip until it has width', () => {
+      const { container } = render(
+        <ValueCarousel min={1} max={40} step={1} value={24} onChange={vi.fn()} />,
+      );
+      const track = container.querySelector<HTMLDivElement>(
+        '[aria-hidden="true"]',
+      )!;
+      const scrollTo = vi.fn();
+      Object.defineProperty(track, 'scrollTo', {
+        value: scrollTo,
+        configurable: true,
+      });
+
+      vi.advanceTimersByTime(100); // frames pass with no layout — keep waiting
+      expect(scrollTo).not.toHaveBeenCalled();
+
+      layoutTrack(container);
+      vi.advanceTimersByTime(100);
+
+      expect(scrollTo).toHaveBeenCalledWith({
+        left: 23 * ITEM_WIDTH,
+        behavior: 'auto',
+      });
+    });
+
     it('does not re-commit a value it was just given', () => {
       const onChange = vi.fn();
       const { container } = render(

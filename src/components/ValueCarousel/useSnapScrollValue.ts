@@ -10,7 +10,9 @@ const USER_SCROLL_EVENTS = [
   'keydown',
 ] as const;
 
-const supportsScrollEnd =
+// Checked per-mount rather than at module load so tests can exercise the
+// no-scrollend fallback (iOS Safari) by removing the property.
+const supportsScrollEnd = () =>
   typeof window !== 'undefined' && 'onscrollend' in window;
 
 const clamp = (value: number, min: number, max: number) =>
@@ -64,6 +66,7 @@ export const useSnapScrollValue = ({
   const syncedIndex = useRef(nearestIndex(values, value));
   const hasPositioned = useRef(false);
   const pendingUserScroll = useRef(false);
+  const programmaticScroll = useRef(false);
   const [focusedIndex, setFocusedIndex] = useState(syncedIndex.current);
 
   // Reported live during a swipe so the consumer's center display can track the
@@ -92,64 +95,133 @@ export const useSnapScrollValue = ({
     syncedIndex.current = index;
     setFocusedIndex(index);
 
-    const scrollToSynced = (behavior: ScrollBehavior) =>
+    const scrollToSynced = (behavior: ScrollBehavior) => {
+      programmaticScroll.current = true;
       trackRef.current?.scrollTo?.({ left: index * itemWidth, behavior });
+    };
 
-    // On the first commit the track has no laid-out width yet, so scrollTo is a
-    // no-op — place it on the next frame instead, and instantly, since there is
-    // nothing to animate away from.
+    // Until the track has laid-out width, scrollTo is a no-op, and even after
+    // that scroll snap can drag the strip off a target the items haven't laid
+    // out under yet. Re-assert the position each frame until it actually
+    // sticks (StrictMode remounts and off-screen mounts included), instantly,
+    // since there is nothing to animate away from.
     if (!hasPositioned.current) {
-      hasPositioned.current = true;
-      const frame = requestAnimationFrame(() => scrollToSynced('auto'));
+      const target = index * itemWidth;
+      let attempts = 0;
+      let frame = requestAnimationFrame(function position() {
+        const track = trackRef.current;
+        if (pendingUserScroll.current || attempts++ > 120) return;
+        if (track && track.clientWidth > 0) {
+          if (Math.abs(track.scrollLeft - target) < 1) {
+            hasPositioned.current = true;
+            return;
+          }
+          track.scrollTo?.({ left: target, behavior: 'auto' });
+        }
+        frame = requestAnimationFrame(position);
+      });
       return () => cancelAnimationFrame(frame);
     }
 
     scrollToSynced(prefersReducedMotion() ? 'auto' : 'smooth');
   }, [itemWidth, value, values]);
 
-  const handleSettle = useCallback(() => {
-    const index = indexFromScroll();
-    if (index === null) return;
-    focus(index);
-    // A settle the user did not cause is the tail of our own scroll, or a
-    // browser-fired one at position 0 before the strip was placed. Committing
-    // either would overwrite the real value with whatever happens to be centered.
-    const userDriven = pendingUserScroll.current;
-    pendingUserScroll.current = false;
-    if (!userDriven || index === syncedIndex.current) return;
-    syncedIndex.current = index;
-    onChange(values[index]);
-  }, [focus, indexFromScroll, onChange, values]);
+  // `final` distinguishes a scrollend (the scroll is truly over) from the
+  // fallback timer, which can fire mid-fling — only a final settle may clear
+  // the gesture flags, or a fling's real landing would be treated as our own
+  // scroll and never commit.
+  const handleSettle = useCallback(
+    (final: boolean) => {
+      const index = indexFromScroll();
+      if (index === null) return;
+
+      const userDriven = pendingUserScroll.current;
+      const programmatic = programmaticScroll.current;
+      if (final) {
+        pendingUserScroll.current = false;
+        programmaticScroll.current = false;
+      }
+
+      if (index === syncedIndex.current) {
+        focus(index);
+        return;
+      }
+
+      if (userDriven) {
+        focus(index);
+        syncedIndex.current = index;
+        onChange(values[index]);
+        return;
+      }
+
+      // Mid-flight tail of our own smooth scroll — let it finish on its own.
+      if (programmatic) return;
+
+      // A settle the user did not cause, away from the synced value — e.g. a
+      // browser-fired one at position 0 before the strip was placed. Committing
+      // it would overwrite the real value, so snap back to the value instead.
+      focus(syncedIndex.current);
+      trackRef.current?.scrollTo?.({
+        left: syncedIndex.current * itemWidth,
+        behavior: 'auto',
+      });
+    },
+    [focus, indexFromScroll, itemWidth, onChange, values],
+  );
 
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
+    const scrollEndSupported = supportsScrollEnd();
+
+    // A gesture arms the user flag, but only sticks if it actually scrolls:
+    // a tap or dead drag disarms on release, or a later programmatic scroll's
+    // settle would read as user-driven and commit whatever it landed on.
+    let scrolledSinceGesture = false;
 
     const markUserScroll = () => {
       pendingUserScroll.current = true;
+      scrolledSinceGesture = false;
+    };
+
+    const releaseGesture = () => {
+      if (!scrolledSinceGesture) pendingUserScroll.current = false;
     };
 
     const handleScroll = () => {
-      const index = indexFromScroll();
-      if (index !== null) focus(index);
-      if (supportsScrollEnd) return;
+      // Only track the finger. Focusing during our own smooth scroll re-windows
+      // the strip mid-flight, which shifts the spacers and lets scroll snap
+      // abort the animation short of the target.
+      if (pendingUserScroll.current) {
+        scrolledSinceGesture = true;
+        const index = indexFromScroll();
+        if (index !== null) focus(index);
+      }
+      if (scrollEndSupported) return;
       clearTimeout(settleTimer.current);
-      settleTimer.current = setTimeout(handleSettle, SETTLE_DELAY);
+      settleTimer.current = setTimeout(() => handleSettle(false), SETTLE_DELAY);
     };
+
+    const handleScrollEnd = () => handleSettle(true);
 
     USER_SCROLL_EVENTS.forEach((type) =>
       track.addEventListener(type, markUserScroll, { passive: true }),
     );
+    track.addEventListener('pointerup', releaseGesture, { passive: true });
+    track.addEventListener('pointercancel', releaseGesture, { passive: true });
     track.addEventListener('scroll', handleScroll, { passive: true });
-    if (supportsScrollEnd) track.addEventListener('scrollend', handleSettle);
+    if (scrollEndSupported)
+      track.addEventListener('scrollend', handleScrollEnd);
 
     return () => {
       clearTimeout(settleTimer.current);
       USER_SCROLL_EVENTS.forEach((type) =>
         track.removeEventListener(type, markUserScroll),
       );
+      track.removeEventListener('pointerup', releaseGesture);
+      track.removeEventListener('pointercancel', releaseGesture);
       track.removeEventListener('scroll', handleScroll);
-      track.removeEventListener('scrollend', handleSettle);
+      track.removeEventListener('scrollend', handleScrollEnd);
     };
   }, [focus, handleSettle, indexFromScroll]);
 

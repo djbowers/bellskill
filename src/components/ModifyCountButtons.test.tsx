@@ -70,6 +70,25 @@ describe('ModifyCountButtons', () => {
     expect(screen.getByRole('tab', { name: 'lb' })).toBeInTheDocument();
   });
 
+  it('keeps the center display on the value after a stray settle', () => {
+    const { container } = setup({ min: 1, max: 40, value: 24 });
+    const track = container.querySelector<HTMLDivElement>(
+      'div[aria-hidden="true"].no-select',
+    )!;
+    Object.defineProperty(track, 'clientWidth', {
+      value: 240,
+      configurable: true,
+    });
+
+    // The browser can fire a settle at position 0 before the strip is placed;
+    // the display must not drift off the committed value.
+    track.scrollLeft = 0;
+    fireEvent.scroll(track);
+    fireEvent(track, new Event('scrollend'));
+
+    expect(screen.getByRole('spinbutton')).toHaveValue(24);
+  });
+
   it('color-codes the strip only when a bell unit is given', () => {
     const { container, unmount } = setup({
       min: 20,
