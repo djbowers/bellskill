@@ -13,7 +13,6 @@ import { cn } from '~/lib/utils';
 
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -45,6 +44,12 @@ export const BottomNav = () => {
   const features = useFeatures();
   const isVisible = useBottomNavVisible();
   const [moreOpen, setMoreOpen] = useState(false);
+
+  // Closed with an explicit handler rather than `DialogClose asChild`: the Slot
+  // that `asChild` renders forwards `className` to the DOM node verbatim, so
+  // NavLink's function form would land on the anchor as a stringified arrow and
+  // the row would render unstyled.
+  const closeSheet = () => setMoreOpen(false);
 
   if (!isVisible) return null;
 
@@ -100,32 +105,31 @@ export const BottomNav = () => {
               </DialogHeader>
 
               <nav aria-label="More navigation" className="flex flex-col">
-                <DialogClose asChild>
-                  <NavLink
-                    to="/account"
-                    className={({ isActive }) =>
-                      cn(sheetRowClasses, isActive && sheetActiveClasses)
-                    }
-                  >
-                    <UserCircleIcon className="h-3 w-3" aria-hidden="true" />
-                    Account
-                  </NavLink>
-                </DialogClose>
+                <NavLink
+                  to="/account"
+                  onClick={closeSheet}
+                  className={({ isActive }) =>
+                    cn(sheetRowClasses, isActive && sheetActiveClasses)
+                  }
+                >
+                  <UserCircleIcon className="h-3 w-3" aria-hidden="true" />
+                  Account
+                </NavLink>
 
                 {moreFeatures.map((feature) => {
                   const Icon = feature.icon;
                   return (
-                    <DialogClose asChild key={feature.key}>
-                      <NavLink
-                        to={feature.to}
-                        className={({ isActive }) =>
-                          cn(sheetRowClasses, isActive && sheetActiveClasses)
-                        }
-                      >
-                        <Icon className="h-3 w-3" aria-hidden="true" />
-                        {feature.label}
-                      </NavLink>
-                    </DialogClose>
+                    <NavLink
+                      key={feature.key}
+                      to={feature.to}
+                      onClick={closeSheet}
+                      className={({ isActive }) =>
+                        cn(sheetRowClasses, isActive && sheetActiveClasses)
+                      }
+                    >
+                      <Icon className="h-3 w-3" aria-hidden="true" />
+                      {feature.label}
+                    </NavLink>
                   );
                 })}
 
