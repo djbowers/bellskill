@@ -160,7 +160,7 @@ const PatternRow = ({
             debt.hardestRpe ? RPE_DOT_CLASS[debt.hardestRpe] : 'bg-transparent',
           )}
         />
-        <span className="w-9 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+        <span className="w-5 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
           {recencyShort(debt)}
         </span>
       </button>
