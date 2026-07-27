@@ -10,12 +10,14 @@ import { expect, test } from '@playwright/test';
 // authenticated user).
 //
 // The layout asserted here is the refit one from
-// *_refit_aa_protocol_plan_a_autoregulated.sql (PROD-245), which reconciles the
-// seed with the source article: duration is autoregulated (every session a
-// 30-minute ceiling, not a ramp), and progression is milestone-based — the
-// C+J -> C+J+C -> C+J+C+J stages ARE the session blocks, each a single-arm
-// complex (one bell, weightTwoValue 0) so it alternates hands under EMOM and
-// sums volume per lift. Every fourth week deloads one bell size lighter.
+// *_refit_aa_protocol_plan_a_autoregulated.sql (PROD-245): a single 4-week
+// clean & jerk block. Duration is autoregulated (every session a 30-minute
+// ceiling, not a ramp) and every session is the same single-arm C+J complex
+// (One-Arm Clean + One-Arm Jerk, one bell / weightTwoValue 0) so it alternates
+// hands under EMOM and sums volume per lift. The 4th week is a deload one bell
+// size lighter. The later complexes (C+J+C, C+J+C+J) live in the program
+// description as the next step, not as encoded sessions — the app has no
+// queue/repeat primitive to sequence stages, so a user repeats this block.
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY!;
@@ -24,24 +26,16 @@ const CLEAN = 'One-Arm Kettlebell Clean';
 const JERK = 'One-Arm Kettlebell Jerk';
 const EMOM_INTERVAL_SECONDS = 30;
 const GOAL_CEILING = 30;
-const NUM_WEEKS = 12;
+const NUM_WEEKS = 4;
 const DAYS_PER_WEEK = 2;
 const WORKING_WEIGHT = 24;
 // "-8kg for gentlemen" from the 24 kg placeholder.
 const DELOAD_WEIGHT = 16;
-const DELOAD_WEEKS = [4, 8, 12];
+const DELOAD_WEEKS = [4];
 
-// The decomposed complex per milestone stage (no compound "Clean and Jerk").
-const STAGE_MOVEMENTS: Record<number, string[]> = {
-  1: [CLEAN, JERK], // C+J
-  2: [CLEAN, JERK, CLEAN], // C+J+C
-  3: [CLEAN, JERK, CLEAN, JERK], // C+J+C+J
-};
-const STAGE_BY_WEEK: Record<number, number> = {
-  1: 1, 2: 1, 3: 1, 4: 1,
-  5: 2, 6: 2, 7: 2, 8: 2,
-  9: 3, 10: 3, 11: 3, 12: 3,
-};
+// The single-arm clean & jerk complex, decomposed (no compound "Clean and
+// Jerk"). Every session in the block is this same C+J pair.
+const CJ_MOVEMENTS = [CLEAN, JERK];
 
 interface ExpectedSession {
   seq: number;
@@ -52,12 +46,11 @@ interface ExpectedSession {
   movements: string[];
 }
 
-// 12 weeks x 2 days = 24 sessions, in sequence order.
+// 4 weeks x 2 days = 8 sessions, in sequence order.
 const EXPECTED_SESSIONS: ExpectedSession[] = [];
 {
   let seq = 0;
   for (let week = 1; week <= NUM_WEEKS; week++) {
-    const stage = STAGE_BY_WEEK[week];
     const isDeload = DELOAD_WEEKS.includes(week);
     for (let day = 1; day <= DAYS_PER_WEEK; day++) {
       EXPECTED_SESSIONS.push({
@@ -66,7 +59,7 @@ const EXPECTED_SESSIONS: ExpectedSession[] = [];
         day,
         weight: isDeload ? DELOAD_WEIGHT : WORKING_WEIGHT,
         isDeload,
-        movements: STAGE_MOVEMENTS[stage],
+        movements: CJ_MOVEMENTS,
       });
     }
   }
@@ -214,12 +207,21 @@ test.describe('program schema — A+A Protocol "Plan A" seed', () => {
       });
     });
 
-    // Every session belongs to exactly one of twelve weeks, two days apiece.
+    // Every session belongs to exactly one of four weeks, two days apiece.
     expect(new Set(sessions.map((s) => s.week_number)).size).toBe(NUM_WEEKS);
     for (let week = 1; week <= NUM_WEEKS; week++) {
       const inWeek = sessions.filter((s) => s.week_number === week);
       expect(inWeek).toHaveLength(DAYS_PER_WEEK);
       expect(inWeek.map((s) => s.day_number)).toEqual([1, 2]);
+    }
+
+    // Single stage: every session is the same 2-lift C+J complex — no encoded
+    // C+J+C / C+J+C+J progression (that lives in the description as the next step).
+    for (const s of sessions) {
+      expect(s.workout_options.movements.map((m) => m.movementName)).toEqual([
+        CLEAN,
+        JERK,
+      ]);
     }
 
     // Duration is autoregulated, not a ramp: every session shares the 30-minute

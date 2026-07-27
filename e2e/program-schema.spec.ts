@@ -18,8 +18,8 @@ const SWING10K_SESSION_COUNT = 20;
 const SNATCH_SLUG = 'strongfirst-snatch-test-plan';
 const SNATCH_SESSION_COUNT = 30; // 10 weeks x 3 days
 const AA_SLUG = 'aa-protocol-plan-a';
-const AA_SESSION_COUNT = 24; // 12 weeks x 2 days (PROD-245 refit)
-const AA_DELOAD_WEEKS = [4, 8, 12]; // authored one bell size below the placeholder
+const AA_SESSION_COUNT = 8; // 4 weeks x 2 days (PROD-245 refit)
+const AA_DELOAD_WEEKS = [4]; // authored one bell size below the placeholder
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
