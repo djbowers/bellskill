@@ -756,6 +756,26 @@ export type Database = {
       }
     }
     Functions: {
+      activation_funnel_by_variant: {
+        Args: {
+          p_flag_key: string
+          p_signup_from?: string
+          p_signup_to?: string
+        }
+        Returns: {
+          activated_24h_count: number
+          activated_24h_rate: number
+          activated_north_star_count: number
+          activated_north_star_rate: number
+          avg_seconds_to_first_workout: number
+          mature_signups: number
+          median_seconds_to_first_workout: number
+          signup_to_first_workout_rate: number
+          total_signups: number
+          users_with_first_workout: number
+          variant: string
+        }[]
+      }
       activation_funnel_window: {
         Args: { p_signup_from?: string; p_signup_to?: string }
         Returns: {

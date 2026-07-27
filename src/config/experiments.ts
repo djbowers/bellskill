@@ -13,15 +13,14 @@
  */
 
 export const EXPERIMENT_FLAG_KEYS = [
-  // Master gate for the launchpad "start screen" shell (PROD-171). Treatment =
-  // land on the launchpad; control = drop straight into the pure custom builder
-  // (the true baseline). Repeat-previous and curated are *content* of the shell,
-  // not their own gates — this one flag decides shell vs. builder for both the
-  // new-user activation test (PROD-172) and the returning-user retention test.
+  // Former master gate for the launchpad shell (PROD-171). The hub graduated to
+  // the baseline surface for everyone, so this no longer gates any UI — it's
+  // retained only so exposure logging can keep recording which arm a user was
+  // assigned to.
   'launchpad_shell',
-  // Retained for optionality (PROD-171 builds all the flags now), but no longer
-  // the gate: shell content is routed by population, not these. `recommender` is
-  // still read as the Phase-2 nested content flag inside the returning-user shell.
+  // Content gates inside the hub, routed by population: curated first workout
+  // for new users (the PROD-172 activation treatment), repeat-previous and the
+  // Phase-2 recommender for returning users.
   'curated_first_workout',
   'repeat_previous',
   'recommender',
