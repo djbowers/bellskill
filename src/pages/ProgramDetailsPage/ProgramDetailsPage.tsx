@@ -19,6 +19,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog';
+import { Label } from '~/components/ui/label';
+import { Switch } from '~/components/ui/switch';
 import { useSession } from '~/contexts';
 import {
   MovementOptions,
@@ -424,21 +426,22 @@ export const ProgramDetailsPage = () => {
           </div>
         ))}
 
-      <label className="flex items-start gap-2">
-        <input
-          type="checkbox"
-          className="mt-0.5 h-3 w-3 shrink-0"
-          checked={autoRepeat}
-          onChange={(event) => setAutoRepeat(event.target.checked)}
-        />
-        <span className="flex flex-col gap-0.5">
-          <span className="text-sm font-medium">Repeat automatically</span>
-          <span className="text-xs text-muted-foreground">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-0.5">
+          <Label htmlFor="auto-repeat">Repeat automatically</Label>
+          <span id="auto-repeat-help" className="text-xs text-muted-foreground">
             When on, finishing the last session starts the program over instead
             of ending it. Progress by adding weight over time.
           </span>
-        </span>
-      </label>
+        </div>
+        <Switch
+          id="auto-repeat"
+          className="mt-0.5"
+          aria-describedby="auto-repeat-help"
+          checked={autoRepeat}
+          onCheckedChange={setAutoRepeat}
+        />
+      </div>
 
       <Button onClick={handleStart} disabled={enroll.isPending || !seeded}>
         Start program

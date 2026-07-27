@@ -466,7 +466,7 @@ describe('ProgramDetailsPage', () => {
     renderPage('ss-1');
 
     // A repeating program pre-checks the toggle...
-    const toggle = screen.getByRole('checkbox', {
+    const toggle = screen.getByRole('switch', {
       name: /repeat automatically/i,
     });
     expect(toggle).toBeChecked();
