@@ -5,13 +5,14 @@ import { vi } from 'vitest';
 
 import { ProgramProgressPage } from './ProgramProgressPage';
 
-const { mockUseProgramProgress } = vi.hoisted(() => ({
+const { mockUseProgramProgress, mockSetAutoRepeat } = vi.hoisted(() => ({
   mockUseProgramProgress: vi.fn(),
+  mockSetAutoRepeat: { mutate: vi.fn(), isPending: false },
 }));
 
 vi.mock('~/api', () => ({
   useProgramProgress: mockUseProgramProgress,
-  useSetProgramAutoRepeat: () => ({ mutate: vi.fn(), isPending: false }),
+  useSetProgramAutoRepeat: () => mockSetAutoRepeat,
 }));
 
 const session = (seq: number, week: number, day: number, title: string) => ({
@@ -27,7 +28,7 @@ const session = (seq: number, week: number, day: number, title: string) => ({
 
 const progressData = {
   program: { id: 'prog-1', title: 'Dry Fighting Weight', numWeeks: 2 },
-  enrollment: { id: 'up-1', status: 'active' },
+  enrollment: { id: 'up-1', status: 'active', autoRepeat: false },
   weeks: [
     {
       weekNumber: 1,
@@ -92,6 +93,8 @@ const renderPage = () =>
 describe('ProgramProgressPage', () => {
   beforeEach(() => {
     mockUseProgramProgress.mockReset();
+    mockSetAutoRepeat.mutate.mockReset();
+    mockSetAutoRepeat.isPending = false;
   });
 
   it('renders the summary, week groups, and session states', () => {
@@ -216,6 +219,56 @@ describe('ProgramProgressPage', () => {
     renderPage();
 
     expect(screen.getByText('🎉 Program complete')).toBeInTheDocument();
+  });
+
+  it('toggles auto-repeat on the enrollment via the switch', async () => {
+    const user = userEvent.setup();
+    mockUseProgramProgress.mockReturnValue({
+      data: progressData,
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage();
+
+    const toggle = screen.getByRole('switch', {
+      name: 'Repeat automatically when finished',
+    });
+    expect(toggle).not.toBeChecked();
+
+    await user.click(toggle);
+
+    expect(mockSetAutoRepeat.mutate).toHaveBeenCalledWith({
+      userProgramId: 'up-1',
+      autoRepeat: true,
+    });
+  });
+
+  it('shows the repeating summary and disables the switch while saving', () => {
+    mockSetAutoRepeat.isPending = true;
+    mockUseProgramProgress.mockReturnValue({
+      data: {
+        ...progressData,
+        enrollment: {
+          id: 'up-1',
+          status: 'active',
+          autoRepeat: true,
+          cyclesCompleted: 2,
+        },
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage();
+
+    expect(screen.getByText('Repeating workout')).toBeInTheDocument();
+    expect(screen.getByText('2 cycles done')).toBeInTheDocument();
+    expect(
+      screen.getByRole('switch', {
+        name: 'Repeat automatically when finished',
+      }),
+    ).toBeDisabled();
   });
 
   it('renders a not-found state on error', () => {
