@@ -91,9 +91,9 @@ describe('BottomNav', () => {
   });
 
   test('More sheet rows carry their resolved row classes', () => {
-    // AI wins the promoted slot, so Balance is the one that overflows.
+    // AI wins the promoted slot, so Explore is the one that overflows.
     mockedUseFeatures.mockReturnValue(
-      featuresWith({ premium: true, weeklyBalance: true }),
+      featuresWith({ premium: true, explore: true }),
     );
     renderNav();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));
@@ -101,7 +101,7 @@ describe('BottomNav', () => {
     // Regression: routing these through `DialogClose asChild` forwarded
     // NavLink's function className to the anchor as a stringified arrow, so the
     // rows rendered with no styling at all.
-    for (const name of [/Account/, /Balance/]) {
+    for (const name of [/Account/, /Explore/]) {
       expect(screen.getByRole('link', { name })).toHaveClass(
         'flex',
         'items-center',
