@@ -48,6 +48,12 @@ export interface EnrollProgramArgs {
    * or to clone verbatim.
    */
   movementWeights?: MovementWeight[];
+  /**
+   * Whether the new enrollment should loop back to its first session on
+   * completion instead of finishing. Omit to inherit the program's
+   * `defaultAutoRepeat`; pass a boolean to override the pre-enroll toggle choice.
+   */
+  autoRepeat?: boolean;
 }
 
 /**
@@ -73,6 +79,7 @@ export const useEnrollProgram = () => {
       sharedWeightTwoUnit,
       replaceUserProgramId,
       movementWeights,
+      autoRepeat,
     }: EnrollProgramArgs): Promise<string> => {
       const { data, error } = await supabase.rpc('enroll_in_program', {
         p_program_id: programId,
@@ -87,6 +94,7 @@ export const useEnrollProgram = () => {
         p_movement_weights: movementWeights?.length
           ? (movementWeights as unknown as Json)
           : undefined,
+        p_auto_repeat: autoRepeat ?? undefined,
       });
 
       if (error) throw error;

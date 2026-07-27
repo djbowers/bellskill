@@ -4,6 +4,7 @@ export * from './formatVolume';
 export * from './movementSearch';
 export * from './movementWeightModeFilter';
 export * from './ordinalSuffixOf';
+export * from './programCadenceLabel';
 export * from './patternDebt';
 export * from './rankMovements';
 export * from './resolveAuthSession';

@@ -441,4 +441,50 @@ describe('ProgramDetailsPage', () => {
 
     expect(screen.getByText('Program not found.')).toBeInTheDocument();
   });
+
+  it('defaults the repeat toggle from the program and passes it to enroll', () => {
+    // No navigating onSuccess here: keep the page mounted so the toggle can be
+    // flipped and Start clicked a second time.
+    mockUseProgram.mockReturnValue({
+      data: {
+        program: {
+          ...dfw,
+          id: 'ss-1',
+          title: 'Simple & Sinister',
+          defaultAutoRepeat: true,
+        },
+        sessions: [
+          session(0, 1, 1, '100 swings + 10 get-ups', [
+            movement('One-Arm Kettlebell Swing', 24, 0),
+          ]),
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage('ss-1');
+
+    // A repeating program pre-checks the toggle...
+    const toggle = screen.getByRole('checkbox', {
+      name: /repeat automatically/i,
+    });
+    expect(toggle).toBeChecked();
+
+    // ...and enrolling carries autoRepeat true.
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+    expect(enrollMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ programId: 'ss-1', autoRepeat: true }),
+      expect.anything(),
+    );
+
+    // Unchecking it and re-enrolling flips the flag off.
+    enrollMutate.mockClear();
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+    expect(enrollMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ autoRepeat: false }),
+      expect.anything(),
+    );
+  });
 });

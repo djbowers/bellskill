@@ -22,7 +22,6 @@ import {
 import { useSession } from '~/contexts';
 import {
   MovementOptions,
-  Program,
   ProgramSession,
   WeightUnit,
   WorkoutGoalUnits,
@@ -30,6 +29,7 @@ import {
 import {
   getWeightRange,
   getWeightUnitLabel,
+  programCadenceLabel,
   WEIGHT_MODE_LABELS,
 } from '~/utils';
 
@@ -44,11 +44,6 @@ import { deriveStartingWeight, StartingWeight } from './utils/deriveWeightGroups
 // program's own sessions — only the weights are editable here.
 const DEFAULT_STARTING_WEIGHT_VALUE = 24;
 const DEFAULT_WEIGHT_UNIT: WeightUnit = 'kilograms';
-
-const cadenceLabel = (program: Program): string | null =>
-  program.numWeeks && program.daysPerWeek
-    ? `${program.numWeeks} weeks · ${program.daysPerWeek}/week`
-    : null;
 
 const goalLabel = (goal: number, units: WorkoutGoalUnits): string | null => {
   if (units === 'minutes') return `${goal} min`;
@@ -164,6 +159,9 @@ export const ProgramDetailsPage = () => {
   const [movementWeights, setMovementWeights] = useState<
     Record<string, StartingWeight>
   >({});
+  // Whether the enrollment should loop on completion. Seeded from the program's
+  // template default once it loads; the user can flip it before starting.
+  const [autoRepeat, setAutoRepeat] = useState(false);
 
   const program = data?.program;
   const sessions = data?.sessions;
@@ -217,6 +215,14 @@ export const ProgramDetailsPage = () => {
     if (isOwnProgram && id) navigate(`/programs/${id}`, { replace: true });
   }, [isOwnProgram, id, navigate]);
 
+  // Seed the toggle from the program's default once, when the program loads.
+  useEffect(() => {
+    if (program) setAutoRepeat(program.defaultAutoRepeat);
+    // Keyed on program identity so a later re-render never clobbers the user's
+    // choice; only a different program re-seeds the default.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [program?.id]);
+
   const handleChangeWorkingWeight = (weight: StartingWeight) => {
     setSharedWeightOneValue(weight.sharedWeightOneValue);
     setSharedWeightOneUnit(weight.sharedWeightOneUnit);
@@ -263,6 +269,7 @@ export const ProgramDetailsPage = () => {
       {
         programId: id,
         replaceUserProgramId: displaced?.enrollment.id,
+        autoRepeat,
         ...(complex
           ? {
               sharedWeightOneValue,
@@ -322,7 +329,7 @@ export const ProgramDetailsPage = () => {
         <CardContent className="flex flex-col gap-1 pt-2">
           <p className="text-xs text-muted-foreground">
             {data.program.authorName ? `${data.program.authorName} · ` : ''}
-            {cadenceLabel(data.program) ?? 'No sessions yet'}
+            {programCadenceLabel(data.program) ?? 'No sessions yet'}
           </p>
           {data.program.description && (
             <p className="text-sm text-muted-foreground">
@@ -416,6 +423,22 @@ export const ProgramDetailsPage = () => {
             )}
           </div>
         ))}
+
+      <label className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-3 w-3 shrink-0"
+          checked={autoRepeat}
+          onChange={(event) => setAutoRepeat(event.target.checked)}
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium">Repeat automatically</span>
+          <span className="text-xs text-muted-foreground">
+            When on, finishing the last session starts the program over instead
+            of ending it. Progress by adding weight over time.
+          </span>
+        </span>
+      </label>
 
       <Button onClick={handleStart} disabled={enroll.isPending || !seeded}>
         Start program

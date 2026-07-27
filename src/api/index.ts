@@ -26,6 +26,7 @@ export * from './useProgramProgress';
 export * from './usePrograms';
 export * from './useSaveProgramSession';
 export * from './useSetProgramArchived';
+export * from './useSetProgramAutoRepeat';
 export * from './useUpdateProgramSession';
 export * from './useRecentRepeatableWorkouts';
 export * from './useRecommendSession';

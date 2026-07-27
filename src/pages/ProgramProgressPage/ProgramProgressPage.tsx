@@ -5,6 +5,7 @@ import {
   SessionState,
   WeekProgress,
   useProgramProgress,
+  useSetProgramAutoRepeat,
 } from '~/api';
 import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
@@ -33,6 +34,7 @@ export const ProgramProgressPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data, isLoading, isError } = useProgramProgress(id);
+  const setAutoRepeat = useSetProgramAutoRepeat();
 
   if (isLoading) {
     return (
@@ -66,6 +68,13 @@ export const ProgramProgressPage = () => {
 
   const percent =
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  // A repeating enrollment never "completes" — it loops. Show its cycle count
+  // and, for a single-session repeat, drop the within-cycle progress bar (it
+  // would sit empty). Multi-session repeats keep the bar to show cycle progress.
+  const isRepeating = enrollment?.autoRepeat ?? false;
+  const showProgressBar = !isRepeating || totalCount > 1;
+  const cyclesCompleted = enrollment?.cyclesCompleted ?? 0;
 
   // An upcoming session is startable only while the enrollment is active — any
   // session, not just the next one. Starting a later session leaves the earlier
@@ -101,26 +110,51 @@ export const ProgramProgressPage = () => {
         <CardContent className="flex flex-col gap-1 pt-2">
           <div className="flex items-baseline justify-between text-sm font-medium">
             <span>
-              {isComplete
-                ? '🎉 Program complete'
-                : `Week ${currentWeek} of ${totalWeeks}`}
+              {isRepeating
+                ? 'Repeating workout'
+                : isComplete
+                  ? '🎉 Program complete'
+                  : `Week ${currentWeek} of ${totalWeeks}`}
             </span>
             <span className="text-muted-foreground">
-              {completedCount} of {totalCount} sessions
+              {isRepeating
+                ? `${cyclesCompleted} ${cyclesCompleted === 1 ? 'cycle' : 'cycles'} done`
+                : `${completedCount} of ${totalCount} sessions`}
             </span>
           </div>
-          <div
-            className="h-0.5 w-full overflow-hidden rounded-full bg-secondary"
-            role="progressbar"
-            aria-valuenow={completedCount}
-            aria-valuemin={0}
-            aria-valuemax={totalCount}
-          >
+          {showProgressBar && (
             <div
-              className="h-full rounded-full bg-primary transition-all"
-              style={{ width: `${percent}%` }}
-            />
-          </div>
+              className="h-0.5 w-full overflow-hidden rounded-full bg-secondary"
+              role="progressbar"
+              aria-valuenow={completedCount}
+              aria-valuemin={0}
+              aria-valuemax={totalCount}
+            >
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          )}
+          {enrollment && (
+            <label className="mt-1 flex items-center gap-2">
+              <input
+                type="checkbox"
+                className="h-3 w-3 shrink-0"
+                checked={isRepeating}
+                disabled={setAutoRepeat.isPending}
+                onChange={(event) =>
+                  setAutoRepeat.mutate({
+                    userProgramId: enrollment.id,
+                    autoRepeat: event.target.checked,
+                  })
+                }
+              />
+              <span className="text-xs text-muted-foreground">
+                Repeat automatically when finished
+              </span>
+            </label>
+          )}
         </CardContent>
       </Card>
 

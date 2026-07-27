@@ -31,13 +31,7 @@ import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { useSession } from '~/contexts';
 import { Program } from '~/types';
-
-// "5 weeks · 3/week" from the program's derived cadence, or null before any
-// session gives it one (see Program.numWeeks — derived from the sessions).
-const cadenceLabel = (program: Program): string | null =>
-  program.numWeeks && program.daysPerWeek
-    ? `${program.numWeeks} weeks · ${program.daysPerWeek}/week`
-    : null;
+import { programCadenceLabel } from '~/utils';
 
 export const ProgramsPage = () => {
   const navigate = useNavigate();
@@ -256,12 +250,17 @@ export const ProgramsPage = () => {
                 className="flex items-center justify-between gap-2 p-2 hover:bg-secondary"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
+                  <p className="flex items-center gap-1 truncate text-sm font-medium">
                     {program.title}
+                    {program.defaultAutoRepeat && (
+                      <span className="rounded bg-secondary px-0.5 text-xs font-normal text-muted-foreground">
+                        Repeats
+                      </span>
+                    )}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {program.authorName ? `${program.authorName} · ` : ''}
-                    {cadenceLabel(program) ?? 'No sessions yet'}
+                    {programCadenceLabel(program) ?? 'No sessions yet'}
                   </p>
                 </div>
                 <ChevronRightIcon
@@ -336,7 +335,7 @@ export const ProgramsPage = () => {
               )}
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              {cadenceLabel(program) ?? 'No sessions yet'}
+              {programCadenceLabel(program) ?? 'No sessions yet'}
             </p>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">

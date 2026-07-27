@@ -31,6 +31,7 @@ export const mapProgramRow = (row: ProgramRow): Program => ({
   isPublic: row.is_public,
   createdAt: row.created_at,
   archivedAt: row.archived_at,
+  defaultAutoRepeat: row.default_auto_repeat,
 });
 
 /**
@@ -78,4 +79,6 @@ export const mapUserProgramRow = (row: UserProgramRow): UserProgram => ({
   startedAt: row.started_at,
   completedAt: row.completed_at,
   activeSlot: row.active_slot,
+  autoRepeat: row.auto_repeat,
+  cyclesCompleted: row.cycles_completed,
 });
