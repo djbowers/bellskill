@@ -90,6 +90,33 @@ describe('BottomNav', () => {
     ).toBeInTheDocument();
   });
 
+  test('More sheet rows carry their resolved row classes', () => {
+    // AI wins the promoted slot, so Balance is the one that overflows.
+    mockedUseFeatures.mockReturnValue(
+      featuresWith({ premium: true, weeklyBalance: true }),
+    );
+    renderNav();
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+
+    // Regression: routing these through `DialogClose asChild` forwarded
+    // NavLink's function className to the anchor as a stringified arrow, so the
+    // rows rendered with no styling at all.
+    for (const name of [/Account/, /Balance/]) {
+      expect(screen.getByRole('link', { name })).toHaveClass(
+        'flex',
+        'items-center',
+      );
+    }
+  });
+
+  test('navigating from the More sheet closes it', () => {
+    mockedUseFeatures.mockReturnValue(featuresWith());
+    renderNav();
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    fireEvent.click(screen.getByRole('link', { name: /Account/ }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   test('non-promoted features fall into the More sheet', () => {
     mockedUseFeatures.mockReturnValue(
       featuresWith({ premium: true, weeklyBalance: true }),
