@@ -1,4 +1,3 @@
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -45,6 +44,8 @@ import {
 import {
   AddToWorkoutSection,
   BuildCustomCard,
+  BuilderActionBar,
+  BuilderHeaderBar,
   HubHeader,
   ModifyCountButtons,
   MovementCard,
@@ -56,7 +57,6 @@ import {
   StartWorkoutHero,
   WeightModeTabs,
   WeightUnitTabs,
-  WorkoutSummaryBar,
 } from './components';
 import type { SummaryLoad } from './components';
 import { useRecommendedWorkouts } from './hooks';
@@ -889,51 +889,7 @@ export const StartWorkoutPage = ({
   if (gatesPending) return <Loading />;
 
   return (
-    <Page
-      actions={
-        showBuilder ? (
-          <>
-            {movements.length > 0 && (
-              <WorkoutSummaryBar
-                workoutGoal={workoutGoal}
-                workoutGoalUnits={workoutGoalUnits}
-                movementCount={movements.length}
-                loads={summaryLoads}
-              />
-            )}
-            {programSaveMode ? (
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleSaveSession}
-                disabled={
-                  startDisabled ||
-                  sessionTitle.trim().length === 0 ||
-                  programSaveMode.saving
-                }
-              >
-                {programSaveMode.saving
-                  ? programSaveMode.initialSession
-                    ? 'Updating…'
-                    : 'Saving…'
-                  : programSaveMode.initialSession
-                    ? 'Update session'
-                    : 'Save session'}
-              </Button>
-            ) : (
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleClickStart}
-                disabled={startDisabled}
-              >
-                Start workout
-              </Button>
-            )}
-          </>
-        ) : undefined
-      }
-    >
+    <Page>
       {!showBuilder && showBrowse && (
         <>
           <HubHeader lastWorkoutAt={lastWorkoutAt} />
@@ -994,18 +950,7 @@ export const StartWorkoutPage = ({
 
       {showBuilder && (
         <>
-          {showBrowse && (
-            <button
-              type="button"
-              onClick={handleBackToRecommendations}
-              className="flex items-center gap-0.5 self-start text-xs font-medium text-muted-foreground"
-            >
-              <ArrowLeftIcon className="h-2 w-2" aria-hidden="true" />
-              Home
-            </button>
-          )}
-
-          {programSaveMode && (
+          {programSaveMode ? (
             <>
               {programSaveMode.beforeBuilder}
               <Card>
@@ -1019,15 +964,12 @@ export const StartWorkoutPage = ({
                 </Section>
               </Card>
             </>
-          )}
-
-          {!programSaveMode && (
-            <Input
-              className="h-auto border-0 bg-transparent px-0 py-0.5 text-lg font-bold shadow-none focus-visible:ring-0 placeholder:font-semibold placeholder:text-muted-foreground"
-              value={title ?? ''}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Untitled workout"
-              aria-label="Workout title"
+          ) : (
+            <BuilderHeaderBar
+              showBack={showBrowse}
+              onBack={handleBackToRecommendations}
+              title={title ?? ''}
+              onChangeTitle={setTitle}
             />
           )}
 
@@ -1064,6 +1006,57 @@ export const StartWorkoutPage = ({
             </Section>
           </Card>
 
+          <MovementsHeader count={movements.length} />
+
+          {movements.map((movement, index) => (
+            <MovementCard
+              key={index}
+              index={index}
+              movement={movement}
+              complexSet={complexSet}
+              sharedWeightTabValue={sharedWeightTabValue}
+              expanded={!collapsedMovements.has(index)}
+              intervalActive={intervalTimer > 0}
+              onToggleExpanded={() => handleToggleMovementExpanded(index)}
+              onRemove={() => handleClickRemoveMovement(index)}
+              onChangeName={(name) => handleChangeMovementName(index, name)}
+              onChangeWeightTab={(mode) =>
+                complexSet
+                  ? handleChangeSharedWeightTab(mode)
+                  : handleChangeWeightTab(index, mode)
+              }
+              onChangeWeightOneValue={(value) =>
+                handleChangeWeightOneValue(index, value)
+              }
+              onChangeWeightOneUnit={(value) =>
+                handleChangeWeightOneUnit(index, value)
+              }
+              onChangeWeightTwoValue={(value) =>
+                handleChangeWeightTwoValue(index, value)
+              }
+              onChangeWeightTwoUnit={(value) =>
+                handleChangeWeightTwoUnit(index, value)
+              }
+              onChangeRung={(rungIndex, value) =>
+                handleChangeRepScheme(index, rungIndex, value)
+              }
+              onRemoveRung={(rungIndex) => handleRemoveRung(index, rungIndex)}
+              onAddRung={() => handleAddRung(index)}
+              onToggleTimed={(timed) => handleToggleTimedRungs(index, timed)}
+            />
+          ))}
+
+          <Button variant="secondary" onClick={handleClickAddMovement}>
+            + Movement
+          </Button>
+
+          {isDifferentRepSchemes && (
+            <div className="text-sm text-destructive">
+              Rep schemes must contain the same number of rungs for each
+              movement.
+            </div>
+          )}
+
           <AddToWorkoutSection
             complexSet={complexSet}
             hasNotes={preWorkoutNotes !== null}
@@ -1078,6 +1071,53 @@ export const StartWorkoutPage = ({
             onToggleRest={handleToggleRest}
             onToggleStraightSets={handleToggleStraightSets}
           />
+
+          {preWorkoutNotes !== null && (
+            <Card>
+              <Section title="Pre-workout notes">
+                <Input
+                  autoFocus
+                  className="w-full"
+                  defaultValue={preWorkoutNotes}
+                  onBlur={handleBlurNotes}
+                  ref={notesRef}
+                  placeholder="Goal, cues, things to keep in mind"
+                />
+              </Section>
+            </Card>
+          )}
+
+          {intervalTimer > 0 && (
+            <Card>
+              <Section title="Interval Timer">
+                <ModifyCountButtons
+                  {...TIMER_BOUNDS}
+                  step={INCREMENT_INTERVAL_TIMER}
+                  onClickMinus={handleDecrementInterval}
+                  onClickPlus={handleIncrementInterval}
+                  unit="sec"
+                  value={intervalTimer}
+                  onChange={setIntervalTimer}
+                />
+              </Section>
+            </Card>
+          )}
+
+          {restTimer > 0 && (
+            <Card>
+              <Section title="Rest Timer">
+                <ModifyCountButtons
+                  {...TIMER_BOUNDS}
+                  step={INCREMENT_REST_TIMER}
+                  onClickMinus={handleDecrementRest}
+                  onClickPlus={handleIncrementRest}
+                  unit="sec"
+                  value={restTimer}
+                  onChange={setRestTimer}
+                />
+              </Section>
+            </Card>
+          )}
 
           {features.complexMode && complexSet && (
             <Card>
@@ -1139,103 +1179,42 @@ export const StartWorkoutPage = ({
             </Card>
           )}
 
-          {(preWorkoutNotes !== null ||
-            intervalTimer > 0 ||
-            restTimer > 0) && (
-            <Card className="divide-y">
-              {preWorkoutNotes !== null && (
-                <Section title="Pre-workout notes">
-                  <Input
-                    autoFocus
-                    className="w-full"
-                    defaultValue={preWorkoutNotes}
-                    onBlur={handleBlurNotes}
-                    ref={notesRef}
-                    placeholder="Goal, cues, things to keep in mind"
-                  />
-                </Section>
-              )}
-
-              {intervalTimer > 0 && (
-                <Section title="Interval Timer">
-                  <ModifyCountButtons
-                    {...TIMER_BOUNDS}
-                    step={INCREMENT_INTERVAL_TIMER}
-                    onClickMinus={handleDecrementInterval}
-                    onClickPlus={handleIncrementInterval}
-                    unit="sec"
-                    value={intervalTimer}
-                    onChange={setIntervalTimer}
-                  />
-                </Section>
-              )}
-
-              {restTimer > 0 && (
-                <Section title="Rest Timer">
-                  <ModifyCountButtons
-                    {...TIMER_BOUNDS}
-                    step={INCREMENT_REST_TIMER}
-                    onClickMinus={handleDecrementRest}
-                    onClickPlus={handleIncrementRest}
-                    unit="sec"
-                    value={restTimer}
-                    onChange={setRestTimer}
-                  />
-                </Section>
-              )}
-            </Card>
-          )}
-
-          <MovementsHeader count={movements.length} />
-
-          {movements.map((movement, index) => (
-            <MovementCard
-              key={index}
-              index={index}
-              movement={movement}
-              complexSet={complexSet}
-              sharedWeightTabValue={sharedWeightTabValue}
-              expanded={!collapsedMovements.has(index)}
-              intervalActive={intervalTimer > 0}
-              onToggleExpanded={() => handleToggleMovementExpanded(index)}
-              onRemove={() => handleClickRemoveMovement(index)}
-              onChangeName={(name) => handleChangeMovementName(index, name)}
-              onChangeWeightTab={(mode) =>
-                complexSet
-                  ? handleChangeSharedWeightTab(mode)
-                  : handleChangeWeightTab(index, mode)
-              }
-              onChangeWeightOneValue={(value) =>
-                handleChangeWeightOneValue(index, value)
-              }
-              onChangeWeightOneUnit={(value) =>
-                handleChangeWeightOneUnit(index, value)
-              }
-              onChangeWeightTwoValue={(value) =>
-                handleChangeWeightTwoValue(index, value)
-              }
-              onChangeWeightTwoUnit={(value) =>
-                handleChangeWeightTwoUnit(index, value)
-              }
-              onChangeRung={(rungIndex, value) =>
-                handleChangeRepScheme(index, rungIndex, value)
-              }
-              onRemoveRung={(rungIndex) => handleRemoveRung(index, rungIndex)}
-              onAddRung={() => handleAddRung(index)}
-              onToggleTimed={(timed) => handleToggleTimedRungs(index, timed)}
-            />
-          ))}
-
-          <Button variant="secondary" onClick={handleClickAddMovement}>
-            + Movement
-          </Button>
-
-          {isDifferentRepSchemes && (
-            <div className="text-sm text-destructive">
-              Rep schemes must contain the same number of rungs for each
-              movement.
-            </div>
-          )}
+          <BuilderActionBar
+            workoutGoal={workoutGoal}
+            workoutGoalUnits={workoutGoalUnits}
+            movementCount={movements.length}
+            loads={summaryLoads}
+          >
+            {programSaveMode ? (
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={handleSaveSession}
+                disabled={
+                  startDisabled ||
+                  sessionTitle.trim().length === 0 ||
+                  programSaveMode.saving
+                }
+              >
+                {programSaveMode.saving
+                  ? programSaveMode.initialSession
+                    ? 'Updating…'
+                    : 'Saving…'
+                  : programSaveMode.initialSession
+                    ? 'Update session'
+                    : 'Save session'}
+              </Button>
+            ) : (
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={handleClickStart}
+                disabled={startDisabled}
+              >
+                Start workout
+              </Button>
+            )}
+          </BuilderActionBar>
         </>
       )}
     </Page>

@@ -52,7 +52,7 @@ export const WorkoutSummaryBar = ({
     : null;
 
   return (
-    <div className="mb-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 px-0.5 text-xs font-medium text-muted-foreground">
+    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 px-0.5 text-xs font-medium text-muted-foreground">
       <span className="inline-flex items-center gap-0.5">
         <ClockIcon className="h-2 w-2" aria-hidden />
         {goalLabel(workoutGoal, workoutGoalUnits)}
