@@ -315,7 +315,7 @@ describe('start workout page', () => {
     test('can remove a chosen rung, not just the last', async () => {
       await userEvent.click(screen.getByRole('button', { name: 'Add rung' }));
       await userEvent.click(screen.getByRole('button', { name: 'Add rung' }));
-      // Give the middle rung a distinct value so we can tell which one went.
+      // Focus the middle rung; the remove button retargets to whatever is focused.
       await userEvent.click(screen.getByRole('button', { name: /^Rung 2,/ }));
       await userEvent.click(screen.getByLabelText('+ reps'));
 

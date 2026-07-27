@@ -1,6 +1,7 @@
-import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PlusIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
+import { Button } from '~/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { cn } from '~/lib/utils';
 import { formatRungDuration } from '~/utils';
@@ -47,20 +48,15 @@ export const LadderRepScheme = ({
   const label = (rung: number) =>
     timedRungs ? formatRungDuration(rung) : `${rung}`;
 
-  // Adding a rung focuses it (you'll want to set its value); removing keeps the
-  // focus on the same rung it was on, which shifts left when an earlier one goes.
+  // Adding a rung focuses it (you'll want to set its value). Removing the
+  // focused one hands the focus to whatever slides into its place.
   const handleAddRung = () => {
     setFocusedRung(repScheme.length);
     onAddRung();
   };
-  const handleRemoveRung = (rungIndex: number) => {
-    setFocusedRung((current) =>
-      Math.min(
-        rungIndex < current ? current - 1 : current,
-        repScheme.length - 2,
-      ),
-    );
-    onRemoveRung(rungIndex);
+  const handleRemoveFocusedRung = () => {
+    setFocusedRung(Math.min(focused, repScheme.length - 2));
+    onRemoveRung(focused);
   };
 
   return (
@@ -97,39 +93,23 @@ export const LadderRepScheme = ({
         aria-label="Ladder rungs"
       >
         {repScheme.map((rung, rungIndex) => (
-          <div key={rungIndex} className="relative shrink-0">
-            <button
-              type="button"
-              aria-pressed={rungIndex === focused}
-              aria-label={`Rung ${rungIndex + 1}, ${label(rung)}${
-                timedRungs ? '' : ' reps'
-              }`}
-              onClick={() => setFocusedRung(rungIndex)}
-              className={cn(
-                'flex h-5 min-w-5 items-center justify-center rounded-md border px-1 text-base font-semibold transition-colors',
-                rungIndex === focused
-                  ? 'border-primary bg-primary text-primary-foreground shadow'
-                  : 'border-border bg-secondary text-secondary-foreground',
-              )}
-            >
-              {label(rung)}
-            </button>
-            {repScheme.length > 1 && (
-              <button
-                type="button"
-                aria-label={`Remove rung ${rungIndex + 1}`}
-                onClick={() => handleRemoveRung(rungIndex)}
-                className={cn(
-                  'absolute right-0 top-0 flex h-2 w-2 items-center justify-center rounded-md transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-                  rungIndex === focused
-                    ? 'text-primary-foreground/70'
-                    : 'text-muted-foreground',
-                )}
-              >
-                <XMarkIcon className="h-1 w-1" />
-              </button>
+          <button
+            key={rungIndex}
+            type="button"
+            aria-pressed={rungIndex === focused}
+            aria-label={`Rung ${rungIndex + 1}, ${label(rung)}${
+              timedRungs ? '' : ' reps'
+            }`}
+            onClick={() => setFocusedRung(rungIndex)}
+            className={cn(
+              'flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md border px-1 text-base font-semibold transition-colors',
+              rungIndex === focused
+                ? 'border-primary bg-primary text-primary-foreground shadow'
+                : 'border-border bg-secondary text-secondary-foreground',
             )}
-          </div>
+          >
+            {label(rung)}
+          </button>
         ))}
 
         {repScheme.length < MAX_RUNGS && (
@@ -156,6 +136,16 @@ export const LadderRepScheme = ({
           onChangeRung(focused, repScheme[focused] + range.step)
         }
       />
+
+      {repScheme.length > 1 && (
+        <Button
+          variant="secondary"
+          className="self-center text-muted-foreground hover:text-destructive"
+          onClick={handleRemoveFocusedRung}
+        >
+          Remove rung {focused + 1}
+        </Button>
+      )}
     </div>
   );
 };
