@@ -30,4 +30,11 @@ export interface Program {
   createdAt: string;
   /** Soft-archive marker: NULL when live, a timestamp once archived (hidden from the default list, restorable). */
   archivedAt: string | null;
+  /**
+   * Template default for the per-enrollment auto-repeat toggle. `true` for
+   * "repeating workouts" (Simple & Sinister, the Onnit circuit) that loop rather
+   * than finish; `false` for ordinary finite programs. Copied into
+   * {@link UserProgram.autoRepeat} at enroll time, where the user can override it.
+   */
+  defaultAutoRepeat: boolean;
 }

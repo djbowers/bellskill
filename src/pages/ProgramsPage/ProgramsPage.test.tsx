@@ -195,6 +195,31 @@ describe('ProgramsPage', () => {
     expect(screen.queryByText('Starting weight')).not.toBeInTheDocument();
   });
 
+  it('labels a repeating workout and badges it, instead of a week cadence', () => {
+    const simpleSinister = {
+      ...dfw,
+      id: 'ss-1',
+      slug: 'simple-and-sinister',
+      title: 'Simple & Sinister',
+      authorName: 'Pavel Tsatsouline (StrongFirst)',
+      numWeeks: null,
+      daysPerWeek: null,
+      defaultAutoRepeat: true,
+    };
+    mockUsePrograms.mockReturnValue({
+      data: [simpleSinister],
+      isLoading: false,
+    });
+
+    renderPage();
+
+    // Cadence reads "Repeating workout", not a weeks/day span, and a badge shows.
+    expect(
+      screen.getByText('Pavel Tsatsouline (StrongFirst) · Repeating workout'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Repeats')).toBeInTheDocument();
+  });
+
   it('enrolls in your own program directly, with no starting-weight prompt', () => {
     renderPage();
 

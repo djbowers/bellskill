@@ -63,6 +63,8 @@ export const exampleActiveProgram = ({
       startedAt: '2026-07-01T00:00:00Z',
       completedAt: isComplete ? '2026-07-22T00:00:00Z' : null,
       activeSlot,
+      autoRepeat: false,
+      cyclesCompleted: 0,
     },
     program: {
       id: `${id}-program`,
@@ -77,6 +79,7 @@ export const exampleActiveProgram = ({
       isPublic: false,
       archivedAt: null,
       createdAt: '2026-07-01T00:00:00Z',
+      defaultAutoRepeat: false,
     },
     nextSession: isComplete
       ? null

@@ -22,4 +22,12 @@ export interface UserProgram {
    * stale value, which the partial unique index ignores.
    */
   activeSlot: number | null;
+  /**
+   * When `true`, finishing the program's last session loops back to the first
+   * session (a fresh cycle) instead of flipping `status` to `'completed'`.
+   * Initialized from {@link Program.defaultAutoRepeat} at enroll; user-toggleable.
+   */
+  autoRepeat: boolean;
+  /** Number of times this enrollment has looped (bumped on each auto-repeat cycle). */
+  cyclesCompleted: number;
 }

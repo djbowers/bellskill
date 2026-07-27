@@ -11,6 +11,7 @@ const { mockUseProgramProgress } = vi.hoisted(() => ({
 
 vi.mock('~/api', () => ({
   useProgramProgress: mockUseProgramProgress,
+  useSetProgramAutoRepeat: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 const session = (seq: number, week: number, day: number, title: string) => ({

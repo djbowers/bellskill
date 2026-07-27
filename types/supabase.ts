@@ -372,6 +372,7 @@ export type Database = {
           author_name: string | null
           created_at: string
           days_per_week: number | null
+          default_auto_repeat: boolean
           description: string | null
           id: string
           is_public: boolean
@@ -386,6 +387,7 @@ export type Database = {
           author_name?: string | null
           created_at?: string
           days_per_week?: number | null
+          default_auto_repeat?: boolean
           description?: string | null
           id?: string
           is_public?: boolean
@@ -400,6 +402,7 @@ export type Database = {
           author_name?: string | null
           created_at?: string
           days_per_week?: number | null
+          default_auto_repeat?: boolean
           description?: string | null
           id?: string
           is_public?: boolean
@@ -532,8 +535,10 @@ export type Database = {
       user_programs: {
         Row: {
           active_slot: number | null
+          auto_repeat: boolean
           completed_at: string | null
           config: Json
+          cycles_completed: number
           id: string
           program_id: string
           started_at: string
@@ -542,8 +547,10 @@ export type Database = {
         }
         Insert: {
           active_slot?: number | null
+          auto_repeat?: boolean
           completed_at?: string | null
           config?: Json
+          cycles_completed?: number
           id?: string
           program_id: string
           started_at?: string
@@ -552,8 +559,10 @@ export type Database = {
         }
         Update: {
           active_slot?: number | null
+          auto_repeat?: boolean
           completed_at?: string | null
           config?: Json
+          cycles_completed?: number
           id?: string
           program_id?: string
           started_at?: string
@@ -776,6 +785,7 @@ export type Database = {
       }
       enroll_in_program: {
         Args: {
+          p_auto_repeat?: boolean
           p_movement_weights?: Json
           p_program_id: string
           p_replace_user_program_id?: string
