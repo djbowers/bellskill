@@ -15,18 +15,13 @@ import {
   getWeightUnitLabel,
 } from '~/utils';
 
+import { FieldLabel } from './FieldLabel';
 import { LadderRepScheme } from './LadderRepScheme';
 import { ModifyCountButtons } from './ModifyCountButtons';
 import { MovementAutocomplete } from './MovementAutocomplete';
 import { MovementSummaryChips } from './MovementSummaryChips';
 import { WeightModeTabs } from './WeightModeTabs';
 import { WeightUnitTabs } from './WeightUnitTabs';
-
-const FieldLabel = ({ children }: { children: string }) => (
-  <div className="mb-0.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-    {children}
-  </div>
-);
 
 export interface MovementCardProps {
   index: number;
@@ -46,8 +41,8 @@ export interface MovementCardProps {
   onChangeWeightTwoValue: (value: number) => void;
   onChangeWeightTwoUnit: (unit: WeightUnit) => void;
   onChangeRung: (rungIndex: number, value: number) => void;
-  onClickMinusRung: () => void;
-  onClickPlusRung: () => void;
+  onRemoveRung: (rungIndex: number) => void;
+  onAddRung: () => void;
   onToggleTimed: (timed: boolean) => void;
 }
 
@@ -67,8 +62,8 @@ export const MovementCard = ({
   onChangeWeightTwoValue,
   onChangeWeightTwoUnit,
   onChangeRung,
-  onClickMinusRung,
-  onClickPlusRung,
+  onRemoveRung,
+  onAddRung,
   onToggleTimed,
 }: MovementCardProps) => {
   const weightTabValue = getWeightTabValue(movement);
@@ -165,7 +160,7 @@ export const MovementCard = ({
 
           {!complexSet && (
             <div>
-              <FieldLabel>Weight</FieldLabel>
+              <FieldLabel className="mb-0.5">Weight</FieldLabel>
               <WeightModeTabs
                 value={activeWeightMode}
                 onValueChange={onChangeWeightTab}
@@ -175,7 +170,7 @@ export const MovementCard = ({
 
           {showLoad && (
             <div>
-              <FieldLabel>Load</FieldLabel>
+              <FieldLabel className="mb-0.5">Load</FieldLabel>
               <ModifyCountButtons
                 {...getWeightRange(movement.weightOneUnit)}
                 bellUnit={movement.weightOneUnit}
@@ -222,18 +217,15 @@ export const MovementCard = ({
             </div>
           )}
 
-          <div>
-            <FieldLabel>{movement.timedRungs ? 'Duration' : 'Rep scheme'}</FieldLabel>
-            <LadderRepScheme
-              repScheme={movement.repScheme}
-              timedRungs={movement.timedRungs}
-              intervalActive={intervalActive}
-              onChangeRung={onChangeRung}
-              onClickMinusRung={onClickMinusRung}
-              onClickPlusRung={onClickPlusRung}
-              onToggleTimed={onToggleTimed}
-            />
-          </div>
+          <LadderRepScheme
+            repScheme={movement.repScheme}
+            timedRungs={movement.timedRungs}
+            intervalActive={intervalActive}
+            onChangeRung={onChangeRung}
+            onRemoveRung={onRemoveRung}
+            onAddRung={onAddRung}
+            onToggleTimed={onToggleTimed}
+          />
         </div>
       )}
     </Card>
