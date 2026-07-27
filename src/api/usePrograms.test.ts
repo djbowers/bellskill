@@ -54,6 +54,7 @@ const programRow = (
   days_per_week: null,
   is_public: false,
   created_at: '',
+  released_at: null,
   program_sessions: sessions,
   ...overrides,
 });
@@ -113,6 +114,33 @@ describe('usePrograms', () => {
       id: 'seeded',
       numWeeks: 4,
       daysPerWeek: 3,
+    });
+  });
+
+  it('maps released_at through to releasedAt', async () => {
+    server.use(
+      http.get(PROGRAMS_URL, () =>
+        HttpResponse.json([
+          programRow(
+            {
+              id: 'released',
+              is_public: true,
+              released_at: '2026-07-28T12:00:00Z',
+            },
+            [],
+          ),
+        ]),
+      ),
+    );
+
+    const { result } = renderHook(() => usePrograms(), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.[0]).toMatchObject({
+      id: 'released',
+      releasedAt: '2026-07-28T12:00:00Z',
     });
   });
 

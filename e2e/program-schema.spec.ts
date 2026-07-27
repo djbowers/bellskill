@@ -425,6 +425,23 @@ test.describe('program schema — StrongFirst Snatch Test seed', () => {
   });
 });
 
+test.describe('program schema — release gate (PROD-246)', () => {
+  test('every shared program is released in the e2e environment (seed.sql contract)', async () => {
+    // Prod releases programs one by one after a manual test run; seed.sql
+    // releases everything locally so these specs can see the full catalog.
+    // A NULL released_at here means seed.sql and the shared seeds drifted.
+    const user = await signUpThrowawayUser();
+    const shared = await restJson<
+      Array<{ slug: string | null; released_at: string | null }>
+    >('GET', 'programs?is_public=eq.true&select=slug,released_at', user.token);
+
+    expect(shared.length).toBeGreaterThan(0);
+    for (const program of shared) {
+      expect(program.released_at, `${program.slug} unreleased`).not.toBeNull();
+    }
+  });
+});
+
 test.describe('program schema — RLS', () => {
   test("a user cannot read or write another user's private program", async () => {
     const alice = await signUpThrowawayUser();
@@ -942,6 +959,9 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
           num_weeks: 1,
           days_per_week: 2,
           is_public: true,
+          // Public programs are enrollable by others only once released
+          // (PROD-246).
+          released_at: new Date().toISOString(),
         },
         prefer: 'return=representation',
       },

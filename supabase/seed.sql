@@ -373,3 +373,11 @@ BEGIN
 
 END $$;
 
+
+-- Release every shared program in local/staging environments (PROD-246).
+-- seed.sql never runs against prod, where programs are released one by one
+-- (released_at set after a manual test run). Releasing everything here keeps
+-- e2e specs (fresh non-owner users) and deploy previews seeing the full
+-- catalog.
+UPDATE public.programs SET released_at = now()
+  WHERE is_public AND released_at IS NULL;
