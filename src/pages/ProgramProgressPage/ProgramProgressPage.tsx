@@ -10,6 +10,8 @@ import {
 import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
+import { Label } from '~/components/ui/label';
+import { Switch } from '~/components/ui/switch';
 import { cn } from '~/lib/utils';
 import { ProgramSession } from '~/types';
 
@@ -137,23 +139,26 @@ export const ProgramProgressPage = () => {
             </div>
           )}
           {enrollment && (
-            <label className="mt-1 flex items-center gap-2">
-              <input
-                type="checkbox"
-                className="h-3 w-3 shrink-0"
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <Label
+                htmlFor="auto-repeat"
+                size="small"
+                className="text-muted-foreground"
+              >
+                Repeat automatically when finished
+              </Label>
+              <Switch
+                id="auto-repeat"
                 checked={isRepeating}
                 disabled={setAutoRepeat.isPending}
-                onChange={(event) =>
+                onCheckedChange={(autoRepeat) =>
                   setAutoRepeat.mutate({
                     userProgramId: enrollment.id,
-                    autoRepeat: event.target.checked,
+                    autoRepeat,
                   })
                 }
               />
-              <span className="text-xs text-muted-foreground">
-                Repeat automatically when finished
-              </span>
-            </label>
+            </div>
           )}
         </CardContent>
       </Card>
