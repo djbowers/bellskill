@@ -18,8 +18,8 @@ const SWING10K_SESSION_COUNT = 20;
 const SNATCH_SLUG = 'strongfirst-snatch-test-plan';
 const SNATCH_SESSION_COUNT = 30; // 10 weeks x 3 days
 const AA_SLUG = 'aa-protocol-plan-a';
-const AA_SESSION_COUNT = 16; // 8 weeks x 2 days
-const AA_DELOAD_WEEKS = [4, 8]; // authored one bell size below the placeholder
+const AA_SESSION_COUNT = 24; // 12 weeks x 2 days (PROD-245 refit)
+const AA_DELOAD_WEEKS = [4, 8, 12]; // authored one bell size below the placeholder
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -1044,7 +1044,7 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
     }
   });
 
-  test('per-movement weights carry each movement’s cross-session offset', async () => {
+  test('the chosen single bell folds onto every movement of the complex, offset and labelled', async () => {
     const user = await signUpThrowawayUser();
 
     const [aa] = await restJson<Array<{ id: string }>>(
@@ -1053,20 +1053,15 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
       user.token,
     );
 
-    // Single-bell clean & jerk at 16 kg. The deload weeks are authored 8 kg below
-    // the 24 kg modal, so they must scale to 8 relative to the chosen weight
-    // rather than freezing at their absolute seed load.
+    // A+A is now a single-arm complexSet program — one bell for the whole
+    // Clean+Jerk chain — so the picker sends a shared weight (like the ABC), not
+    // per-movement weights. The deload weeks are authored 8 kg below the 24 kg
+    // modal, so they scale to 8 relative to the chosen 16 kg.
     await rpc<string>('enroll_in_program', user.token, {
       p_program_id: aa.id,
-      p_movement_weights: [
-        {
-          movementName: 'One-Arm Kettlebell Clean and Jerk',
-          weightOneValue: 16,
-          weightOneUnit: 'kilograms',
-          weightTwoValue: 0,
-          weightTwoUnit: null,
-        },
-      ],
+      p_shared_weight_one_value: 16,
+      p_shared_weight_one_unit: 'kilograms',
+      p_shared_weight_two_value: 0,
     });
 
     const clones = await restJson<Array<{ id: string }>>(
@@ -1081,6 +1076,7 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
         week_number: number;
         weight_label: string | null;
         workout_options: {
+          sharedWeightOneValue: number;
           movements: Array<{ weightOneValue: number; weightTwoValue: number }>;
         };
       }>
@@ -1093,17 +1089,20 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
 
     for (const session of sessions) {
       const isDeloadWeek = AA_DELOAD_WEEKS.includes(session.week_number);
-      expect(session.workout_options.movements[0].weightOneValue).toBe(
-        isDeloadWeek ? 8 : 16,
-      );
-      // Single-bell loading survives: weight two stays 0, never clamped up to 1.
-      expect(session.workout_options.movements[0].weightTwoValue).toBe(0);
+      const expectedWeight = isDeloadWeek ? 8 : 16;
+      // The offset lands on the shared bell and on EVERY decomposed lift.
+      expect(session.workout_options.sharedWeightOneValue).toBe(expectedWeight);
+      for (const movement of session.workout_options.movements) {
+        expect(movement.weightOneValue).toBe(expectedWeight);
+        // Single-bell loading survives: weight two stays 0, never clamped up to 1.
+        expect(movement.weightTwoValue).toBe(0);
+      }
       // The group's authored label rides along onto the clone.
       expect(session.weight_label).toBe(isDeloadWeek ? 'Deload weeks' : null);
     }
   });
 
-  test('a per-movement weight in a different unit lands flat, declining the offset', async () => {
+  test('a chosen bell in a different unit lands flat, declining the offset', async () => {
     const user = await signUpThrowawayUser();
 
     const [aa] = await restJson<Array<{ id: string }>>(
@@ -1116,15 +1115,9 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
     // session — deload weeks included — lands flat at the chosen 44 lb.
     await rpc<string>('enroll_in_program', user.token, {
       p_program_id: aa.id,
-      p_movement_weights: [
-        {
-          movementName: 'One-Arm Kettlebell Clean and Jerk',
-          weightOneValue: 44,
-          weightOneUnit: 'pounds',
-          weightTwoValue: 0,
-          weightTwoUnit: null,
-        },
-      ],
+      p_shared_weight_one_value: 44,
+      p_shared_weight_one_unit: 'pounds',
+      p_shared_weight_two_value: 0,
     });
 
     const clones = await restJson<Array<{ id: string }>>(
@@ -1136,6 +1129,8 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
     const sessions = await restJson<
       Array<{
         workout_options: {
+          sharedWeightOneValue: number;
+          sharedWeightOneUnit: string;
           movements: Array<{ weightOneValue: number; weightOneUnit: string }>;
         };
       }>
@@ -1146,9 +1141,12 @@ test.describe('program schema — enroll_in_program (starting weight, PROD-TBD)'
     );
 
     for (const session of sessions) {
-      const movement = session.workout_options.movements[0];
-      expect(movement.weightOneValue).toBe(44);
-      expect(movement.weightOneUnit).toBe('pounds');
+      expect(session.workout_options.sharedWeightOneValue).toBe(44);
+      expect(session.workout_options.sharedWeightOneUnit).toBe('pounds');
+      for (const movement of session.workout_options.movements) {
+        expect(movement.weightOneValue).toBe(44);
+        expect(movement.weightOneUnit).toBe('pounds');
+      }
     }
   });
 
