@@ -77,7 +77,7 @@ const groupByWeek = (
  * only for double loading — a two-hand program carries `null` there and a
  * single-bell one carries `0`, neither of which is user-editable.
  */
-const WeightSlots = ({
+export const WeightSlots = ({
   weight,
   onChange,
   namePrefix,

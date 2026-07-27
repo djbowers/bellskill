@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import {
@@ -15,6 +16,8 @@ import { Label } from '~/components/ui/label';
 import { Switch } from '~/components/ui/switch';
 import { cn } from '~/lib/utils';
 import { ProgramSession } from '~/types';
+
+import { AdjustWeightsDialog } from './components/AdjustWeightsDialog';
 
 /** Glyph + label + chip styling for each session state. */
 const STATE_META: Record<SessionState, { icon: string; className: string }> = {
@@ -39,6 +42,7 @@ export const ProgramProgressPage = () => {
   const { data, isLoading, isError } = useProgramProgress(id);
   const setAutoRepeat = useSetProgramAutoRepeat();
   const { data: queuedPrograms = [] } = useQueuedPrograms();
+  const [adjustingWeights, setAdjustingWeights] = useState(false);
 
   if (isLoading) {
     return (
@@ -166,6 +170,16 @@ export const ProgramProgressPage = () => {
               />
             </div>
           )}
+          {canStartSessions && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-1 self-start"
+              onClick={() => setAdjustingWeights(true)}
+            >
+              Adjust weights
+            </Button>
+          )}
           {enrollment?.status === 'active' && nextQueued && (
             <p className="text-xs text-muted-foreground">
               Next up: {nextQueued.program.title}
@@ -174,6 +188,17 @@ export const ProgramProgressPage = () => {
           )}
         </CardContent>
       </Card>
+
+      {enrollment && adjustingWeights && (
+        <AdjustWeightsDialog
+          open={adjustingWeights}
+          onOpenChange={setAdjustingWeights}
+          userProgramId={enrollment.id}
+          sessions={weeks.flatMap((week) =>
+            week.sessions.map((item) => item.session),
+          )}
+        />
+      )}
 
       {weeks.map((week) => (
         <WeekRow
