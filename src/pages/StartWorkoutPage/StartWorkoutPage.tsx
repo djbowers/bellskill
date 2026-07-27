@@ -54,6 +54,7 @@ import {
   RecommendSessionSection,
   RecommendedWorkoutsSection,
   Section,
+  StartProgramCard,
   StartWorkoutHero,
   WeightModeTabs,
   WeightUnitTabs,
@@ -942,8 +943,10 @@ export const StartWorkoutPage = ({
             />
           )}
 
-          {primaryProgram && (
+          {primaryProgram ? (
             <BuildCustomCard onClick={handleClickBuildCustom} />
+          ) : (
+            features.programs && <StartProgramCard />
           )}
         </>
       )}
