@@ -20,6 +20,7 @@ const {
   MultipleMovementsAndMixedWeights,
   OneHanded,
   AAProtocolPlanASession,
+  SingleArmComplexEMOM,
   KettlebellMileSession,
   TimedRungsVaryingDurations,
   TimedRungsVolumeGoal,
@@ -1167,6 +1168,13 @@ describe('active workout page (complex mode)', () => {
     expect(round).toHaveTextContent('1');
   });
 
+  // Regression guard for PROD-245: a two-hand complex (weightTwoValue null) is
+  // NOT a single-arm complex, so it must not alternate sides or show the side
+  // indicator that single-bell one-arm complexes now render.
+  test('does not show a side indicator (two-hand complex, no side-switching)', () => {
+    expect(screen.queryByTestId('current-side')).toBeNull();
+  });
+
   test('shows shared weight in card header', () => {
     const weight = screen.getByTestId('complex-shared-weight');
     expect(weight).toHaveTextContent('24');
@@ -1354,6 +1362,64 @@ describe('active workout page (A+A Protocol interval EMOM cadence)', () => {
     expect(leftWeight).toHaveAttribute('data-active', 'true');
     expect(rightWeight).toHaveAttribute('data-active', 'false');
     expect(round).toHaveTextContent('2');
+  });
+});
+
+// Single-arm complex under EMOM (PROD-245). The A+A seed's stage 2+ shape: a
+// Clean + Jerk chain done on ONE hand, then the other on the next interval fire.
+// complexSet no longer forfeits the arm-alternation a one-handed intervalTimer
+// movement gets — the whole chain mirrors, left on the minute, right 30s later.
+describe('active workout page (single-arm complex EMOM cadence)', () => {
+  vi.mock('~/api', () => ({
+    useLogWorkout: vi.fn(),
+  }));
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    useLogWorkout.mockReturnValue({
+      mutate: vi.fn(),
+      data: null,
+      isLoading: false,
+    });
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  test('auto-alternates hands every 30s, one L+R pair per round', () => {
+    render(<SingleArmComplexEMOM />);
+
+    const side = screen.getByTestId('current-side');
+    const round = screen.getByTestId('current-round');
+
+    // Left hand does the whole complex "on the minute".
+    expect(side).toHaveTextContent('Left hand · side 1 of 2');
+    expect(round).toHaveTextContent('1');
+
+    // 30s later the interval fires a continue on its own -> right hand.
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(side).toHaveTextContent('Right hand · side 2 of 2');
+    expect(round).toHaveTextContent('1');
+
+    // Another 30s completes the L+R pair -> back to left, round 2.
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(side).toHaveTextContent('Left hand · side 1 of 2');
+    expect(round).toHaveTextContent('2');
+  });
+
+  test('sums volume across both movements per hand (24kg Clean + 24kg Jerk = 48kg/hand, 96kg per L+R round)', () => {
+    render(<SingleArmComplexEMOM />);
+
+    const summary = screen.getByTestId('completed-section');
+    expect(summary).toHaveTextContent('0 kg');
+
+    // Each interval fire is one hand's full complex (Clean 24 + Jerk 24 = 48kg).
+    act(() => vi.advanceTimersByTime(30_000)); // left  -> 48kg
+    act(() => vi.advanceTimersByTime(30_000)); // right -> 96kg, one L+R round
+
+    expect(summary).toHaveTextContent('96 kg');
   });
 });
 

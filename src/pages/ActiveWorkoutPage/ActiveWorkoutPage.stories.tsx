@@ -271,6 +271,48 @@ export const AAProtocolPlanASession: Story = {
   },
 };
 
+// A+A Protocol "Plan A" stage 2+ (PROD-245): a SINGLE-arm complex under EMOM.
+// The whole Clean + Jerk chain is done on one hand, then the next interval fires
+// it on the other — left on the minute, right 30s later — while volume sums
+// across every movement. Single bell (weightTwoValue 0 / sharedWeightTwoValue 0)
+// is what distinguishes this from the two-hand and double-bell complexes, which
+// do not alternate sides.
+export const SingleArmComplexEMOM: Story = {
+  parameters: {
+    workoutOptions: {
+      complexSet: true,
+      intervalTimer: 30,
+      restTimer: 0,
+      workoutGoal: 30,
+      workoutGoalUnits: 'minutes',
+      sharedWeightOneValue: 24,
+      sharedWeightOneUnit: 'kilograms',
+      sharedWeightTwoValue: 0,
+      sharedWeightTwoUnit: 'kilograms',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'One-Arm Kettlebell Clean',
+          repScheme: [1],
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 0,
+          weightTwoUnit: 'kilograms',
+        },
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'One-Arm Kettlebell Jerk',
+          repScheme: [1],
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 0,
+          weightTwoUnit: 'kilograms',
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
 // Timed movements (PROD-200) — the Kettlebell Mile seed's shape: a single
 // one-handed suitcase carry on ONE 60-second rung, with rounds as the
 // progression lever (week 1 is 3 rounds = 6 min under load). One-handed loading

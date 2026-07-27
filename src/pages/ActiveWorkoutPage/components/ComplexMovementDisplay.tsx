@@ -1,29 +1,43 @@
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '~/components/ui/card';
 import { MovementOptions, WeightUnit } from '~/types';
 import { formatRungDuration, getWeightUnitLabel } from '~/utils';
 
 interface ComplexMovementDisplayProps {
   currentRound: number;
+  currentSide?: number;
   movements: MovementOptions[];
   rungIndex: number;
   sharedWeightTwoUnit: WeightUnit | null;
   sharedWeightTwoValue: number | null;
   sharedWeightUnit: WeightUnit | null;
   sharedWeightValue: number | null;
+  totalSides?: number;
 }
 
 export const ComplexMovementDisplay = ({
   currentRound,
+  currentSide = 1,
   movements,
   rungIndex,
   sharedWeightTwoUnit,
   sharedWeightTwoValue,
   sharedWeightUnit,
   sharedWeightValue,
+  totalSides = 1,
 }: ComplexMovementDisplayProps) => {
   const hasWeightOne = sharedWeightValue !== null && sharedWeightValue > 0;
   const hasWeightTwo =
     sharedWeightTwoValue !== null && sharedWeightTwoValue > 0;
+
+  // Single-arm complex: the whole chain is done on one hand, then the other on
+  // the next set. currentSide 1 = left, 2 = right.
+  const activeHand = currentSide === 1 ? 'Left' : 'Right';
 
   return (
     <Card>
@@ -74,6 +88,15 @@ export const ComplexMovementDisplay = ({
       </CardHeader>
 
       <CardContent>
+        {totalSides > 1 && (
+          <CardDescription
+            className="pb-1 text-center"
+            data-testid="current-side"
+          >
+            {activeHand} hand · side {currentSide} of {totalSides}
+          </CardDescription>
+        )}
+
         <div className="divide-y">
           {movements.map((movement, index) => {
             const repIndex = Math.min(rungIndex, movement.repScheme.length - 1);
