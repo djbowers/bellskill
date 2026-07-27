@@ -107,4 +107,14 @@ describe('computePatternBalance', () => {
     expect(patterns.squat.lastTrained).toBeInstanceOf(Date);
     expect(patterns.squat.daysSinceLastTrained).toBeCloseTo(3, 5);
   });
+
+  test('passes hardest_rpe through untouched, defaulting to null', () => {
+    const { patterns } = computePatternBalance(
+      [agg({ pattern: 'push', hardest_rpe: 'maxEffort' })],
+      NOW,
+    );
+    expect(patterns.push.hardestRpe).toBe('maxEffort');
+    // Backfilled (untrained) patterns carry no rating.
+    expect(patterns.carry.hardestRpe).toBeNull();
+  });
 });

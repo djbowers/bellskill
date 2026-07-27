@@ -15,6 +15,7 @@ const balance = computePatternBalance([
     total_reps: 45,
     total_volume_kg: 1200,
     baseline_volume_kg: 1000,
+    hardest_rpe: 'hard',
   } as PatternAggregate,
 ]);
 
@@ -30,19 +31,36 @@ describe('WeeklyBalance', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
-  test('renders all seven patterns and the overall balance once unlocked', () => {
+  test('renders all seven patterns and a next-focus prescription once unlocked', () => {
     render(<WeeklyBalance balance={balance} workoutCount={5} />);
     expect(screen.getByText('Hinge')).toBeInTheDocument();
     expect(screen.getByText('Get-up')).toBeInTheDocument();
-    // hinge is the only trained pattern -> the user is hinge-heavy
-    expect(screen.getByText('Hinge-heavy')).toBeInTheDocument();
+    // hinge is the only trained pattern -> a neglected one is surfaced to train
+    expect(screen.getByText(/needs work/i)).toBeInTheDocument();
+  });
+
+  test('ranks the most-neglected pattern first and the freshest last', () => {
+    render(<WeeklyBalance balance={balance} workoutCount={5} />);
+    const rows = screen.getAllByRole('button');
+    expect(rows[0]).toHaveTextContent('Squat');
+    expect(rows[rows.length - 1]).toHaveTextContent('Hinge');
+  });
+
+  test('shows compact recency for a trained pattern', () => {
+    render(<WeeklyBalance balance={balance} workoutCount={5} />);
+    expect(screen.getByRole('button', { name: /Hinge/i })).toHaveTextContent(
+      '1d',
+    );
   });
 
   test('tapping a pattern reveals its drill-down detail', () => {
     render(<WeeklyBalance balance={balance} workoutCount={5} />);
-    expect(screen.queryByText('Debt score')).not.toBeInTheDocument();
+    expect(screen.queryByText('Readiness')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Hinge/i }));
-    expect(screen.getByText('Debt score')).toBeInTheDocument();
+    expect(screen.getByText('Readiness')).toBeInTheDocument();
     expect(screen.getByText('Last trained')).toBeInTheDocument();
+    // Hinge's hardest recent session was rated Hard.
+    expect(screen.getByText('Effort')).toBeInTheDocument();
+    expect(screen.getByText('Hard')).toBeInTheDocument();
   });
 });

@@ -809,6 +809,7 @@ export type Database = {
         Args: { p_baseline_days?: number; p_window_days?: number }
         Returns: {
           baseline_volume_kg: number
+          hardest_rpe: Database["public"]["Enums"]["RPE"]
           last_trained_at: string
           pattern: string
           set_count: number

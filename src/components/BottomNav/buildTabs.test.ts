@@ -44,39 +44,27 @@ describe('buildTabs', () => {
     expect(tabs[2]).toMatchObject({ label: 'AI', to: '/recommendations' });
   });
 
-  test('promotes Balance when only weeklyBalance is enabled', () => {
-    const { tabs } = buildTabs({ ...allOff, weeklyBalance: true });
-    expect(tabs.map((t) => t.key)).toEqual(['home', 'history', 'balance']);
-  });
-
   test('promotes Explore when only explore is enabled', () => {
     const { tabs } = buildTabs({ ...allOff, explore: true });
     expect(tabs.map((t) => t.key)).toEqual(['home', 'history', 'explore']);
   });
 
-  test('AI wins the promoted slot over Balance and Explore', () => {
+  test('AI wins the promoted slot over Explore', () => {
     const features = {
       ...allOff,
       premium: true,
-      weeklyBalance: true,
       explore: true,
     };
     expect(keys(features)).toEqual(['home', 'history', 'ai']);
-    // The non-promoted features degrade into "More", in priority order.
-    expect(moreKeys(features)).toEqual(['balance', 'explore']);
-  });
-
-  test('Balance wins over Explore when AI is off', () => {
-    const features = { ...allOff, weeklyBalance: true, explore: true };
-    expect(keys(features)).toEqual(['home', 'history', 'balance']);
+    // The non-promoted feature degrades into "More".
     expect(moreKeys(features)).toEqual(['explore']);
   });
 
   test('bar never exceeds four link tabs (5th slot is the More sheet)', () => {
     const features = {
       ...allOff,
+      programs: true,
       premium: true,
-      weeklyBalance: true,
       explore: true,
     };
     expect(buildTabs(features).tabs.length).toBeLessThanOrEqual(4);

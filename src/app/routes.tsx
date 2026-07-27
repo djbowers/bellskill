@@ -17,7 +17,6 @@ import {
   ProgramsPage,
   RecommendationsPage,
   StartWorkoutPage,
-  WeeklyBalancePage,
 } from '../pages';
 import { Root } from './Root';
 import { RouteErrorBoundary } from './RouteErrorBoundary';
@@ -65,9 +64,6 @@ export const createRoutes = (flags: Features = features): RouteObject[] => [
         path: 'checkout/cancel',
         element: <CheckoutCancelPage />,
       },
-      ...(flags.weeklyBalance
-        ? [{ path: 'balance', element: <WeeklyBalancePage /> }]
-        : []),
       ...(flags.explore
         ? [{ path: 'movements', element: <MovementsPage /> }]
         : []),

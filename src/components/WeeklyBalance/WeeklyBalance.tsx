@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Loading } from '~/components/Loading';
 import {
@@ -14,13 +14,15 @@ import { Pattern, PatternBalance, PatternDebt } from '~/utils';
 import {
   BAND_BAR_CLASS,
   BAND_LABEL,
-  BAND_TEXT_CLASS,
   MIN_WORKOUTS_FOR_BALANCE,
   PATTERN_LABELS,
-  PATTERN_ORDER,
+  RPE_DOT_CLASS,
+  RPE_DOT_LABEL,
   formatVolume,
   lastTrainedLabel,
-  overallBalanceLabel,
+  nextFocusLabel,
+  patternsByNeglect,
+  recencyShort,
 } from './patternDisplay';
 
 export interface WeeklyBalanceProps {
@@ -40,6 +42,10 @@ export const WeeklyBalance = ({
   isLoading = false,
 }: WeeklyBalanceProps) => {
   const [expanded, setExpanded] = useState<Pattern | null>(null);
+  // Gauges start empty and fill to their charge on mount — the panel's one
+  // signature moment. Reduced-motion users land on the final state (below).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   if (isLoading) {
     return (
@@ -79,16 +85,20 @@ export const WeeklyBalance = ({
     <Card>
       <CardHeader>
         <CardTitle>Weekly Balance</CardTitle>
-        <CardDescription>{overallBalanceLabel(balance.overallBalance)}</CardDescription>
+        <CardDescription>{nextFocusLabel(balance)}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-y-1">
-        {PATTERN_ORDER.map((pattern) => (
+        {patternsByNeglect(balance).map((debt, index) => (
           <PatternRow
-            key={pattern}
-            debt={balance.patterns[pattern]}
-            isExpanded={expanded === pattern}
+            key={debt.pattern}
+            debt={debt}
+            index={index}
+            mounted={mounted}
+            isExpanded={expanded === debt.pattern}
             onToggle={() =>
-              setExpanded((current) => (current === pattern ? null : pattern))
+              setExpanded((current) =>
+                current === debt.pattern ? null : debt.pattern,
+              )
             }
           />
         ))}
@@ -99,12 +109,23 @@ export const WeeklyBalance = ({
 
 interface PatternRowProps {
   debt: PatternDebt;
+  index: number;
+  mounted: boolean;
   isExpanded: boolean;
   onToggle: () => void;
 }
 
-const PatternRow = ({ debt, isExpanded, onToggle }: PatternRowProps) => {
+const PatternRow = ({
+  debt,
+  index,
+  mounted,
+  isExpanded,
+  onToggle,
+}: PatternRowProps) => {
   const label = PATTERN_LABELS[debt.pattern];
+  // A full bar is a pattern you've kept charged; it drains toward empty as the
+  // pattern goes stale. Inverse of the debt score the model reasons over.
+  const readiness = 100 - debt.debtScore;
 
   return (
     <div>
@@ -112,30 +133,46 @@ const PatternRow = ({ debt, isExpanded, onToggle }: PatternRowProps) => {
         type="button"
         onClick={onToggle}
         aria-expanded={isExpanded}
-        aria-label={`${label}: ${BAND_LABEL[debt.band]}`}
+        aria-label={`${label}: ${BAND_LABEL[debt.band]}, ${lastTrainedLabel(debt.lastTrained)}${
+          debt.hardestRpe
+            ? `, felt ${RPE_DOT_LABEL[debt.hardestRpe].toLowerCase()}`
+            : ''
+        }`}
         className="flex w-full items-center gap-x-1.5 rounded-sm py-0.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span className="w-7 shrink-0 text-sm font-medium">{label}</span>
         <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
           <span
-            className={cn('block h-full rounded-full', BAND_BAR_CLASS[debt.band])}
-            style={{ width: `${Math.max(debt.debtScore, 4)}%` }}
+            className={cn(
+              'block h-full rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none',
+              BAND_BAR_CLASS[debt.band],
+            )}
+            style={{
+              width: `${mounted ? readiness : 0}%`,
+              transitionDelay: `${index * 40}ms`,
+            }}
           />
         </span>
         <span
+          aria-hidden
           className={cn(
-            'w-6 shrink-0 text-right text-xs font-semibold',
-            BAND_TEXT_CLASS[debt.band],
+            'h-2 w-2 shrink-0 rounded-full',
+            debt.hardestRpe ? RPE_DOT_CLASS[debt.hardestRpe] : 'bg-transparent',
           )}
-        >
-          {BAND_LABEL[debt.band]}
+        />
+        <span className="w-5 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+          {recencyShort(debt)}
         </span>
       </button>
 
       {isExpanded && (
         <dl className="mt-0.5 grid grid-cols-2 gap-x-2 gap-y-0.5 rounded-sm bg-muted/50 p-1 text-xs text-muted-foreground">
           <Detail term="Last trained" value={lastTrainedLabel(debt.lastTrained)} />
-          <Detail term="Debt score" value={`${debt.debtScore}/100`} />
+          <Detail
+            term="Effort"
+            value={debt.hardestRpe ? RPE_DOT_LABEL[debt.hardestRpe] : '—'}
+          />
+          <Detail term="Readiness" value={`${readiness}/100`} />
           <Detail
             term="Recent volume"
             value={formatVolume(debt.recentVolume)}

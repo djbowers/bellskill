@@ -1,6 +1,12 @@
 import { DateTime } from 'luxon';
 
-import { DebtBand, OverallBalance, Pattern } from '~/utils';
+import {
+  DebtBand,
+  Pattern,
+  PatternBalance,
+  PatternDebt,
+  PatternRpe,
+} from '~/utils';
 
 /** Free users need a little history before a balance read is meaningful. */
 export const MIN_WORKOUTS_FOR_BALANCE = 3;
@@ -26,16 +32,12 @@ export const PATTERN_LABELS: Record<Pattern, string> = {
   get_up: 'Get-up',
 };
 
+// Reuse the RPE exertion ramp so the debt bars read as one scale with the
+// History week strip: on-track green, due amber, overdue red.
 export const BAND_BAR_CLASS: Record<DebtBand, string> = {
-  green: 'bg-status-success',
-  yellow: 'bg-status-warning',
-  red: 'bg-destructive',
-};
-
-export const BAND_TEXT_CLASS: Record<DebtBand, string> = {
-  green: 'text-status-success',
-  yellow: 'text-status-warning',
-  red: 'text-destructive',
+  green: 'bg-intensity-1',
+  yellow: 'bg-intensity-2',
+  red: 'bg-intensity-4',
 };
 
 export const BAND_LABEL: Record<DebtBand, string> = {
@@ -44,10 +46,48 @@ export const BAND_LABEL: Record<DebtBand, string> = {
   red: 'Overdue',
 };
 
-export const overallBalanceLabel = (balance: OverallBalance): string => {
-  if (balance === 'balanced') return 'Well balanced';
-  const pattern = balance.replace('-heavy', '') as Pattern;
-  return `${PATTERN_LABELS[pattern]}-heavy`;
+// The row's exertion dot rides the same RPE intensity ramp as the History week
+// strip, so "how hard" reads consistently across the page.
+export const RPE_DOT_CLASS: Record<PatternRpe, string> = {
+  noEffort: 'bg-intensity-0',
+  easy: 'bg-intensity-1',
+  ideal: 'bg-intensity-2',
+  hard: 'bg-intensity-3',
+  maxEffort: 'bg-intensity-4',
+};
+
+export const RPE_DOT_LABEL: Record<PatternRpe, string> = {
+  noEffort: 'No effort',
+  easy: 'Easy',
+  ideal: 'Ideal',
+  hard: 'Hard',
+  maxEffort: 'Max effort',
+};
+
+/**
+ * Rows ordered by what needs work: most-neglected (highest debt) first, so the
+ * pattern to train next sits on top. The anatomical order breaks ties, keeping
+ * the sort stable when scores are equal.
+ */
+export const patternsByNeglect = (balance: PatternBalance): PatternDebt[] =>
+  PATTERN_ORDER.map((pattern) => balance.patterns[pattern]).sort(
+    (a, b) =>
+      b.debtScore - a.debtScore ||
+      PATTERN_ORDER.indexOf(a.pattern) - PATTERN_ORDER.indexOf(b.pattern),
+  );
+
+/** The card's thesis: name the pattern most in need, or confirm all-clear. */
+export const nextFocusLabel = (balance: PatternBalance): string => {
+  const [top] = patternsByNeglect(balance);
+  if (!top || top.band === 'green') return "You're on track";
+  return `${PATTERN_LABELS[top.pattern]} needs work`;
+};
+
+/** Compact days-since-trained for the row's right rail; em dash when idle. */
+export const recencyShort = (debt: PatternDebt): string => {
+  if (debt.daysSinceLastTrained == null) return '—';
+  const days = Math.round(debt.daysSinceLastTrained);
+  return days <= 0 ? 'today' : `${days}d`;
 };
 
 export const lastTrainedLabel = (lastTrained: Date | null): string => {

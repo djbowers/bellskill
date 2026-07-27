@@ -3,7 +3,6 @@ import {
   HomeIcon,
   MagnifyingGlassIcon,
   RectangleStackIcon,
-  ScaleIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
 import {
@@ -11,7 +10,6 @@ import {
   HomeIcon as HomeSolidIcon,
   MagnifyingGlassIcon as MagnifyingGlassSolidIcon,
   RectangleStackIcon as RectangleStackSolidIcon,
-  ScaleIcon as ScaleSolidIcon,
   SparklesIcon as SparklesSolidIcon,
 } from '@heroicons/react/24/solid';
 import { ComponentType, SVGProps } from 'react';
@@ -72,14 +70,6 @@ export const NAV_ITEMS: NavItem[] = [
     icon: SparklesIcon,
     activeIcon: SparklesSolidIcon,
     flag: 'premium',
-  },
-  {
-    key: 'balance',
-    label: 'Balance',
-    to: '/balance',
-    icon: ScaleIcon,
-    activeIcon: ScaleSolidIcon,
-    flag: 'weeklyBalance',
   },
   {
     key: 'history',
