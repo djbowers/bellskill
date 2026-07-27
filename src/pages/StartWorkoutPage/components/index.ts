@@ -1,6 +1,7 @@
 export * from './AddToWorkoutSection';
 export * from './BuildCustomCard';
 export * from './BuildNewWorkoutDivider';
+export * from './FieldLabel';
 export * from './HubHeader';
 export * from './LadderRepScheme';
 export * from './ModifyCountButtons';
@@ -13,7 +14,6 @@ export * from './RecommendedWorkoutsSection';
 export * from './StartWorkoutHero';
 export * from './WorkoutAddonToggle';
 export * from './MovementAutocomplete';
-export * from './ModifyWorkoutButtons';
 export * from './RecommendationCard';
 export * from './RecommendationPreviewDialog';
 export * from './RecommendSessionSection';

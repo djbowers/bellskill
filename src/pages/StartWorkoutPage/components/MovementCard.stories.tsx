@@ -47,8 +47,8 @@ const meta = {
     onChangeWeightTwoValue: noop,
     onChangeWeightTwoUnit: noop,
     onChangeRung: noop,
-    onClickMinusRung: noop,
-    onClickPlusRung: noop,
+    onRemoveRung: noop,
+    onAddRung: noop,
     onToggleTimed: noop,
   },
 } satisfies Meta<typeof MovementCard>;

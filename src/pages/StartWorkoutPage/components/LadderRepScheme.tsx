@@ -1,16 +1,20 @@
+import { PlusIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
+import { Button } from '~/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { cn } from '~/lib/utils';
 import { formatRungDuration } from '~/utils';
 
+import { FieldLabel } from './FieldLabel';
 import { ModifyCountButtons } from './ModifyCountButtons';
-import { ModifyWorkoutButtons } from './ModifyWorkoutButtons';
 
 // Rung magnitudes. Reps step by one; timed rungs (carries, planks) step by five
 // because nudging a two-minute carry a second at a time is unusable.
 const REPS_RANGE = { min: 1, max: 50, step: 1 };
 const TIMED_RANGE = { min: 5, max: 300, step: 5 };
+
+const MAX_RUNGS = 10;
 
 /**
  * A movement's rep scheme as a ladder: each rung is a chip you tap to focus,
@@ -22,8 +26,8 @@ export const LadderRepScheme = ({
   timedRungs = false,
   intervalActive = false,
   onChangeRung,
-  onClickMinusRung,
-  onClickPlusRung,
+  onRemoveRung,
+  onAddRung,
   onToggleTimed,
 }: {
   repScheme: number[];
@@ -31,8 +35,8 @@ export const LadderRepScheme = ({
   /** The interval timer and timed rungs both drive the set clock — only one may be on. */
   intervalActive?: boolean;
   onChangeRung: (rungIndex: number, value: number) => void;
-  onClickMinusRung: () => void;
-  onClickPlusRung: () => void;
+  onRemoveRung: (rungIndex: number) => void;
+  onAddRung: () => void;
   onToggleTimed: (timed: boolean) => void;
 }) => {
   const [focusedRung, setFocusedRung] = useState(
@@ -44,20 +48,21 @@ export const LadderRepScheme = ({
   const label = (rung: number) =>
     timedRungs ? formatRungDuration(rung) : `${rung}`;
 
-  // Adding a rung focuses it (you'll want to set its value); removing keeps the
-  // focus in range.
-  const handlePlusRung = () => {
+  // Adding a rung focuses it (you'll want to set its value). Removing the
+  // focused one hands the focus to whatever slides into its place.
+  const handleAddRung = () => {
     setFocusedRung(repScheme.length);
-    onClickPlusRung();
+    onAddRung();
   };
-  const handleMinusRung = () => {
-    setFocusedRung((current) => Math.min(current, repScheme.length - 2));
-    onClickMinusRung();
+  const handleRemoveFocusedRung = () => {
+    setFocusedRung(Math.min(focused, repScheme.length - 2));
+    onRemoveRung(focused);
   };
 
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between gap-1">
+        <FieldLabel>{timedRungs ? 'Duration' : 'Rep scheme'}</FieldLabel>
         <Tabs
           value={timedRungs ? 'time' : 'reps'}
           onValueChange={(value) => onToggleTimed(value === 'time')}
@@ -80,16 +85,10 @@ export const LadderRepScheme = ({
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        <ModifyWorkoutButtons
-          count={repScheme.length}
-          label="Rung"
-          onClickMinus={handleMinusRung}
-          onClickPlus={handlePlusRung}
-        />
       </div>
 
       <div
-        className="flex items-end gap-1 overflow-x-auto py-0.5"
+        className="flex items-center gap-1 overflow-x-auto py-0.5"
         role="group"
         aria-label="Ladder rungs"
       >
@@ -112,6 +111,17 @@ export const LadderRepScheme = ({
             {label(rung)}
           </button>
         ))}
+
+        {repScheme.length < MAX_RUNGS && (
+          <button
+            type="button"
+            aria-label="Add rung"
+            onClick={handleAddRung}
+            className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md border border-dashed border-border px-1 text-muted-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            <PlusIcon className="h-2 w-2" />
+          </button>
+        )}
       </div>
 
       <ModifyCountButtons
@@ -126,6 +136,16 @@ export const LadderRepScheme = ({
           onChangeRung(focused, repScheme[focused] + range.step)
         }
       />
+
+      {repScheme.length > 1 && (
+        <Button
+          variant="secondary"
+          className="self-center text-muted-foreground hover:text-destructive"
+          onClick={handleRemoveFocusedRung}
+        >
+          Remove rung {focused + 1}
+        </Button>
+      )}
     </div>
   );
 };

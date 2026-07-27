@@ -18,45 +18,50 @@ export default meta;
 
 type Story = StoryObj<typeof LadderRepScheme>;
 
-/** Tap a rung to focus it, then set its reps on the caliper picker. */
-export const Ladder: Story = {
-  render: () => {
-    const [repScheme, setRepScheme] = useState<number[]>([1, 2, 3, 4, 5]);
-    return (
-      <LadderRepScheme
-        repScheme={repScheme}
-        onChangeRung={(rungIndex, value) =>
-          setRepScheme((prev) =>
-            prev.map((rung, i) => (i === rungIndex ? Math.max(1, value) : rung)),
-          )
-        }
-        onClickMinusRung={() => setRepScheme((prev) => prev.slice(0, -1))}
-        onClickPlusRung={() =>
-          setRepScheme((prev) => [...prev, prev[prev.length - 1] ?? 1])
-        }
-        onToggleTimed={() => {}}
-      />
-    );
-  },
+const StatefulLadder = ({
+  initial,
+  timedRungs = false,
+}: {
+  initial: number[];
+  timedRungs?: boolean;
+}) => {
+  const [repScheme, setRepScheme] = useState<number[]>(initial);
+  return (
+    <LadderRepScheme
+      repScheme={repScheme}
+      timedRungs={timedRungs}
+      onChangeRung={(rungIndex, value) =>
+        setRepScheme((prev) =>
+          prev.map((rung, i) => (i === rungIndex ? Math.max(1, value) : rung)),
+        )
+      }
+      onRemoveRung={(rungIndex) =>
+        setRepScheme((prev) => prev.filter((_, i) => i !== rungIndex))
+      }
+      onAddRung={() =>
+        setRepScheme((prev) => [...prev, prev[prev.length - 1] ?? 1])
+      }
+      onToggleTimed={() => {}}
+    />
+  );
 };
 
+/** Tap a rung to focus it, then set its reps on the caliper picker. */
+export const Ladder: Story = {
+  render: () => <StatefulLadder initial={[1, 2, 3, 4, 5]} />,
+};
+
+/** The last rung can't be removed, so it carries no ×. */
 export const SingleRung: Story = {
-  render: () => {
-    const [repScheme, setRepScheme] = useState<number[]>([5]);
-    return (
-      <LadderRepScheme
-        repScheme={repScheme}
-        onChangeRung={(rungIndex, value) =>
-          setRepScheme((prev) =>
-            prev.map((rung, i) => (i === rungIndex ? Math.max(1, value) : rung)),
-          )
-        }
-        onClickMinusRung={() => setRepScheme((prev) => prev.slice(0, -1))}
-        onClickPlusRung={() =>
-          setRepScheme((prev) => [...prev, prev[prev.length - 1] ?? 1])
-        }
-        onToggleTimed={() => {}}
-      />
-    );
-  },
+  render: () => <StatefulLadder initial={[5]} />,
+};
+
+/** Timed rungs render the widest labels — the tightest fit for the corner ×. */
+export const TimedRungs: Story = {
+  render: () => <StatefulLadder initial={[60, 45, 30]} timedRungs />,
+};
+
+/** At ten rungs the add slot drops away. */
+export const MaxRungs: Story = {
+  render: () => <StatefulLadder initial={[1, 2, 3, 4, 5, 5, 4, 3, 2, 1]} />,
 };

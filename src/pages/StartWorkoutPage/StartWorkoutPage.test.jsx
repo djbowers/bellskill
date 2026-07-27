@@ -289,7 +289,7 @@ describe('start workout page', () => {
     });
 
     test('can add rungs', async () => {
-      await userEvent.click(screen.getByRole('button', { name: '+ Rung' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Add rung' }));
       await userEvent.click(screen.getByRole('button', { name: /Start/i }));
 
       expect(startWorkout).toHaveBeenCalledWith(
@@ -306,9 +306,22 @@ describe('start workout page', () => {
       );
     });
 
-    test('can remove the last rung', async () => {
-      await userEvent.click(screen.getByRole('button', { name: '+ Rung' }));
-      await userEvent.click(screen.getByRole('button', { name: '- Rung' }));
+    test('the only rung cannot be removed', async () => {
+      expect(
+        screen.queryByRole('button', { name: /^Remove rung/ }),
+      ).not.toBeInTheDocument();
+    });
+
+    test('can remove a chosen rung, not just the last', async () => {
+      await userEvent.click(screen.getByRole('button', { name: 'Add rung' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Add rung' }));
+      // Focus the middle rung; the remove button retargets to whatever is focused.
+      await userEvent.click(screen.getByRole('button', { name: /^Rung 2,/ }));
+      await userEvent.click(screen.getByLabelText('+ reps'));
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Remove rung 2' }),
+      );
       await userEvent.click(screen.getByRole('button', { name: /Start/i }));
 
       expect(startWorkout).toHaveBeenCalledWith(
@@ -317,7 +330,7 @@ describe('start workout page', () => {
             {
               ...DEFAULT_MOVEMENT_OPTIONS,
               movementName: 'Test Movement',
-              repScheme: [5],
+              repScheme: [5, 5],
             },
           ],
           startedAt,
@@ -326,7 +339,7 @@ describe('start workout page', () => {
     });
 
     test('can increment reps for a focused rung independently', async () => {
-      await userEvent.click(screen.getByRole('button', { name: '+ Rung' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Add rung' }));
       // Focus the first rung, then increment it on the caliper picker.
       await userEvent.click(screen.getByRole('button', { name: /^Rung 1,/ }));
       await userEvent.click(screen.getByLabelText('+ reps'));
@@ -348,7 +361,7 @@ describe('start workout page', () => {
 
     test('can decrement reps for a focused rung independently', async () => {
       // Adding a rung focuses the new (second) rung; decrement it.
-      await userEvent.click(screen.getByRole('button', { name: '+ Rung' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Add rung' }));
       await userEvent.click(screen.getByLabelText('- reps'));
       await userEvent.click(screen.getByRole('button', { name: /Start/i }));
 
@@ -747,7 +760,7 @@ describe('Straight Sets', () => {
     );
 
     // Give the second movement an extra rung.
-    const addRungButtons = screen.getAllByRole('button', { name: '+ Rung' });
+    const addRungButtons = screen.getAllByRole('button', { name: 'Add rung' });
     await userEvent.click(addRungButtons[1]);
 
     expect(

@@ -681,19 +681,19 @@ export const StartWorkoutPage = ({
       ),
     );
 
-  const handleClickMinusRung = (index: number) =>
+  const handleRemoveRung = (movementIndex: number, rungIndex: number) =>
     setMovements((prev) =>
       prev.map((movement, i) =>
-        i === index
+        i === movementIndex
           ? {
               ...movement,
-              repScheme: movement.repScheme.slice(0, -1),
+              repScheme: movement.repScheme.filter((_, j) => j !== rungIndex),
             }
           : movement,
       ),
     );
 
-  const handleClickPlusRung = (index: number) =>
+  const handleAddRung = (index: number) =>
     setMovements((prev) =>
       prev.map((movement, i) =>
         i === index
@@ -1220,8 +1220,8 @@ export const StartWorkoutPage = ({
               onChangeRung={(rungIndex, value) =>
                 handleChangeRepScheme(index, rungIndex, value)
               }
-              onClickMinusRung={() => handleClickMinusRung(index)}
-              onClickPlusRung={() => handleClickPlusRung(index)}
+              onRemoveRung={(rungIndex) => handleRemoveRung(index, rungIndex)}
+              onAddRung={() => handleAddRung(index)}
               onToggleTimed={(timed) => handleToggleTimedRungs(index, timed)}
             />
           ))}
