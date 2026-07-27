@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERIES } from '~/constants';
 
 import { supabase } from '../supabaseClient';
+import { ProgramProgressResult } from './useProgramProgress';
 import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
 export interface SetProgramAutoRepeatInput {
@@ -20,7 +21,7 @@ export interface SetProgramAutoRepeatInput {
  */
 export const useSetProgramAutoRepeat = () => {
   const queryClient = useQueryClient();
-  const onError = useProgramMutationErrorHandler();
+  const handleError = useProgramMutationErrorHandler();
 
   return useMutation({
     mutationFn: async (input: SetProgramAutoRepeatInput): Promise<void> => {
@@ -30,11 +31,34 @@ export const useSetProgramAutoRepeat = () => {
         .eq('id', input.userProgramId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    // Flip the cached progress entry immediately so the Switch doesn't wait on
+    // a refetch; roll back from the snapshot if the update fails.
+    onMutate: async ({ userProgramId, autoRepeat }) => {
+      await queryClient.cancelQueries({
+        queryKey: [QUERIES.PROGRAM_PROGRESS],
+      });
+      const snapshot = queryClient.getQueriesData<ProgramProgressResult>({
+        queryKey: [QUERIES.PROGRAM_PROGRESS],
+      });
+      queryClient.setQueriesData<ProgramProgressResult>(
+        { queryKey: [QUERIES.PROGRAM_PROGRESS] },
+        (data) =>
+          data?.enrollment?.id === userProgramId
+            ? { ...data, enrollment: { ...data.enrollment, autoRepeat } }
+            : data,
+      );
+      return { snapshot };
+    },
+    onError: (error, _input, context) => {
+      context?.snapshot.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+      handleError(error);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: [QUERIES.ACTIVE_PROGRAM] });
       queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAM_PROGRESS] });
       queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAMS] });
     },
-    onError,
   });
 };
