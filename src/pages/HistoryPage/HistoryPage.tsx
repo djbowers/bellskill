@@ -1,16 +1,18 @@
 import { Link } from 'react-router-dom';
 
 import { useInfiniteWorkoutLogs } from '~/api';
-import { Loading, Page } from '~/components';
+import { Loading, Page, WeeklyBalanceContainer } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { Separator } from '~/components/ui/separator';
+import { useFeatures } from '~/hooks';
 import { formatVolume } from '~/utils';
 
 import { SessionRow, WeekStrip } from './components';
 import { WorkoutWeek, getWeekLabel, groupByDate, groupByWeek } from './utils';
 
 export const HistoryPage = () => {
+  const features = useFeatures();
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteWorkoutLogs();
 
@@ -33,6 +35,10 @@ export const HistoryPage = () => {
       )}
 
       <div className="flex flex-col gap-3">
+        {features.weeklyBalance && workoutLogs.length > 0 && (
+          <WeeklyBalanceContainer />
+        )}
+
         {workoutWeeks.map((workoutWeek) => (
           <WorkoutWeekGroup key={workoutWeek.weekKey} {...workoutWeek} />
         ))}

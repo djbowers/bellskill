@@ -58,6 +58,7 @@ const fetchPatternDebt = async (
     total_volume_kg: Number(row.total_volume_kg),
     baseline_volume_kg:
       row.baseline_volume_kg == null ? null : Number(row.baseline_volume_kg),
+    hardest_rpe: row.hardest_rpe ?? null,
   }));
 
   return computePatternBalance(aggregates);

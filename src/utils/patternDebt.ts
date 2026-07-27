@@ -21,6 +21,14 @@ export type DebtBand = 'green' | 'yellow' | 'red';
 
 export type OverallBalance = 'balanced' | `${Pattern}-heavy`;
 
+/**
+ * Session-level exertion rating (`workout_logs.rpe`) inherited onto each pattern
+ * a session trained. Informational only — never an input to the debt score.
+ * Declared locally so this module stays free of app-path imports for the
+ * recommender edge function; mirrors `RpeOptions` in `src/types`.
+ */
+export type PatternRpe = 'noEffort' | 'easy' | 'ideal' | 'hard' | 'maxEffort';
+
 /** One row as returned by the `pattern_debt_window` RPC. */
 export interface PatternAggregate {
   pattern: Pattern;
@@ -29,6 +37,7 @@ export interface PatternAggregate {
   total_reps: number;
   total_volume_kg: number;
   baseline_volume_kg: number | null;
+  hardest_rpe?: PatternRpe | null;
 }
 
 /** Scored, display-ready view of a single pattern. */
@@ -40,6 +49,7 @@ export interface PatternDebt {
   baselineVolume: number | null;
   debtScore: number;
   band: DebtBand;
+  hardestRpe: PatternRpe | null;
 }
 
 export interface PatternBalance {
@@ -112,6 +122,7 @@ const scorePattern = (agg: PatternAggregate, now: Date): PatternDebt => {
     baselineVolume: agg.baseline_volume_kg,
     debtScore,
     band: classifyBand(debtScore),
+    hardestRpe: agg.hardest_rpe ?? null,
   };
 };
 

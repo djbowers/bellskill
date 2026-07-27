@@ -92,13 +92,13 @@ describe('BottomNav', () => {
 
   test('non-promoted features fall into the More sheet', () => {
     mockedUseFeatures.mockReturnValue(
-      featuresWith({ premium: true, weeklyBalance: true }),
+      featuresWith({ premium: true, explore: true }),
     );
     renderNav();
-    // AI is promoted into the bar; Balance overflows into More.
+    // AI is promoted into the bar; Explore overflows into More.
     expect(screen.getByRole('link', { name: 'AI' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));
-    expect(screen.getByRole('link', { name: /Balance/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Explore/ })).toBeInTheDocument();
   });
 
   test('hides while a text input is focused (mobile keyboard)', () => {

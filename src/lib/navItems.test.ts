@@ -34,11 +34,6 @@ describe('getNavItems', () => {
       'ai',
       'history',
     ]);
-    expect(keys({ ...allOff, weeklyBalance: true })).toEqual([
-      'home',
-      'balance',
-      'history',
-    ]);
   });
 
   test('keeps sidebar display order with every flag on', () => {
@@ -54,7 +49,6 @@ describe('getNavItems', () => {
       'programs',
       'explore',
       'ai',
-      'balance',
       'history',
     ]);
   });
