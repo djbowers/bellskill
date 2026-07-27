@@ -14,6 +14,9 @@ const {
   mockUseCancelProgram,
   mockUseDeleteProgram,
   mockUseSetProgramArchived,
+  mockUseQueuedPrograms,
+  mockUseDequeueProgram,
+  mockUseStartQueuedProgram,
   mockTrackEvent,
   enrollMutate,
   resumeMutate,
@@ -21,6 +24,8 @@ const {
   cancelMutate,
   deleteMutate,
   setArchivedMutate,
+  dequeueMutate,
+  startQueuedMutate,
 } = vi.hoisted(() => ({
   mockUsePrograms: vi.fn(),
   mockUseActivePrograms: vi.fn(),
@@ -31,6 +36,9 @@ const {
   mockUseCancelProgram: vi.fn(),
   mockUseDeleteProgram: vi.fn(),
   mockUseSetProgramArchived: vi.fn(),
+  mockUseQueuedPrograms: vi.fn(),
+  mockUseDequeueProgram: vi.fn(),
+  mockUseStartQueuedProgram: vi.fn(),
   mockTrackEvent: vi.fn(),
   enrollMutate: vi.fn(),
   resumeMutate: vi.fn(),
@@ -38,6 +46,8 @@ const {
   cancelMutate: vi.fn(),
   deleteMutate: vi.fn(),
   setArchivedMutate: vi.fn(),
+  dequeueMutate: vi.fn(),
+  startQueuedMutate: vi.fn(),
 }));
 
 vi.mock('~/api', () => ({
@@ -50,6 +60,9 @@ vi.mock('~/api', () => ({
   useCancelProgram: mockUseCancelProgram,
   useDeleteProgram: mockUseDeleteProgram,
   useSetProgramArchived: mockUseSetProgramArchived,
+  useQueuedPrograms: mockUseQueuedPrograms,
+  useDequeueProgram: mockUseDequeueProgram,
+  useStartQueuedProgram: mockUseStartQueuedProgram,
   trackEvent: mockTrackEvent,
   AnalyticsEvent: { ProgramResumed: 'program_resumed' },
   MAX_ACTIVE_PROGRAMS: 3,
@@ -164,6 +177,17 @@ describe('ProgramsPage', () => {
     });
     mockUseSetProgramArchived.mockReturnValue({
       mutate: setArchivedMutate,
+      isPending: false,
+    });
+    dequeueMutate.mockReset();
+    startQueuedMutate.mockReset();
+    mockUseQueuedPrograms.mockReturnValue({ data: [] });
+    mockUseDequeueProgram.mockReturnValue({
+      mutate: dequeueMutate,
+      isPending: false,
+    });
+    mockUseStartQueuedProgram.mockReturnValue({
+      mutate: startQueuedMutate,
       isPending: false,
     });
   });
@@ -407,5 +431,89 @@ describe('ProgramsPage', () => {
       programId: 'arch-1',
       archived: false,
     });
+  });
+
+  const threeActive = [1, 2, 3].map((slot) => ({
+    enrollment: {
+      id: `up-${slot}`,
+      programId: `other-${slot}`,
+      status: 'active',
+      activeSlot: slot,
+    },
+    program: { title: `Running ${slot}` },
+    progress: { completed: 0, total: 3 },
+  }));
+
+  it('offers "Queue instead" when every slot is taken and queues without replacing', () => {
+    mockUseActivePrograms.mockReturnValue({ data: threeActive });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    // The replace prompt now carries a third path.
+    fireEvent.click(screen.getByRole('button', { name: 'Queue instead' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith({
+      programId: 'mine-1',
+      queue: true,
+    });
+    // Queueing replaces nothing.
+    expect(
+      screen.queryByRole('button', { name: 'Queue instead' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('lists queued programs in order with Remove, hiding Start now at the cap', () => {
+    mockUseActivePrograms.mockReturnValue({ data: threeActive });
+    mockUseQueuedPrograms.mockReturnValue({
+      data: [
+        {
+          enrollment: { id: 'q-1', queuePosition: 1, status: 'queued' },
+          program: { title: 'Queued First' },
+        },
+        {
+          enrollment: { id: 'q-2', queuePosition: 2, status: 'queued' },
+          program: { title: 'Queued Second' },
+        },
+      ],
+    });
+
+    renderPage();
+
+    const rows = screen.getAllByTestId('queued-program');
+    expect(rows[0]).toHaveTextContent('Queued First');
+    expect(rows[1]).toHaveTextContent('Queued Second');
+
+    // No free slot, so nothing can start immediately.
+    expect(
+      screen.queryByRole('button', { name: 'Start now' }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Remove' })[1],
+    );
+    expect(dequeueMutate).toHaveBeenCalledWith({ userProgramId: 'q-2' });
+  });
+
+  it('starts a queued program into the lowest free slot when one is open', () => {
+    mockUseActivePrograms.mockReturnValue({ data: [threeActive[0]] });
+    mockUseQueuedPrograms.mockReturnValue({
+      data: [
+        {
+          enrollment: { id: 'q-1', queuePosition: 1, status: 'queued' },
+          program: { title: 'Queued First' },
+        },
+      ],
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start now' }));
+
+    expect(startQueuedMutate).toHaveBeenCalledWith(
+      { userProgramId: 'q-1', slot: 2 },
+      expect.anything(),
+    );
   });
 });

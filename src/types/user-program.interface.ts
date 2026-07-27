@@ -1,4 +1,9 @@
-export type UserProgramStatus = 'active' | 'completed' | 'abandoned' | 'paused';
+export type UserProgramStatus =
+  | 'active'
+  | 'completed'
+  | 'abandoned'
+  | 'paused'
+  | 'queued';
 
 /**
  * A user's enrollment in a {@link Program}. Up to three rows per user may be
@@ -30,4 +35,10 @@ export interface UserProgram {
   autoRepeat: boolean;
   /** Number of times this enrollment has looped (bumped on each auto-repeat cycle). */
   cyclesCompleted: number;
+  /**
+   * 1-based order within the user's queue while `status === 'queued'`; the
+   * lowest position is promoted when an active program finishes. Gaps are
+   * fine — promotion never renumbers. `null` on non-queued rows.
+   */
+  queuePosition: number | null;
 }

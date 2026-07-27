@@ -72,6 +72,27 @@ describe('useEnrollProgram', () => {
     expect(receivedBody).toEqual({ p_program_id: 'program-abc' });
   });
 
+  it('passes p_queue when queueing instead of starting', async () => {
+    let receivedBody: unknown;
+    server.use(
+      http.post(RPC_URL, async ({ request }) => {
+        receivedBody = await request.json();
+        return HttpResponse.json('queued-user-program-id');
+      }),
+    );
+
+    const { result } = renderHook(() => useEnrollProgram(), {
+      wrapper: makeWrapper(),
+    });
+
+    await result.current.mutateAsync({ programId: 'program-abc', queue: true });
+
+    expect(receivedBody).toEqual({
+      p_program_id: 'program-abc',
+      p_queue: true,
+    });
+  });
+
   it('passes mixed left/right shared weights through to the RPC', async () => {
     let receivedBody: unknown;
     server.use(

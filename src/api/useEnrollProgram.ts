@@ -54,6 +54,12 @@ export interface EnrollProgramArgs {
    * `defaultAutoRepeat`; pass a boolean to override the pre-enroll toggle choice.
    */
   autoRepeat?: boolean;
+  /**
+   * Queue the enrollment instead of starting it: the program is cloned and its
+   * weights baked now, but the row waits at status `'queued'` (no slot) until
+   * an active program finishes and `complete_program_session` promotes it.
+   */
+  queue?: boolean;
 }
 
 /**
@@ -80,6 +86,7 @@ export const useEnrollProgram = () => {
       replaceUserProgramId,
       movementWeights,
       autoRepeat,
+      queue,
     }: EnrollProgramArgs): Promise<string> => {
       const { data, error } = await supabase.rpc('enroll_in_program', {
         p_program_id: programId,
@@ -95,6 +102,7 @@ export const useEnrollProgram = () => {
           ? (movementWeights as unknown as Json)
           : undefined,
         p_auto_repeat: autoRepeat ?? undefined,
+        p_queue: queue ?? undefined,
       });
 
       if (error) throw error;
@@ -103,6 +111,7 @@ export const useEnrollProgram = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERIES.ACTIVE_PROGRAM] });
       queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAMS] });
+      queryClient.invalidateQueries({ queryKey: [QUERIES.QUEUED_PROGRAMS] });
     },
     onError,
   });

@@ -10,11 +10,14 @@ import {
   useCancelProgram,
   useCreateProgram,
   useDeleteProgram,
+  useDequeueProgram,
   useEnrollProgram,
   useProgramProgress,
   usePrograms,
+  useQueuedPrograms,
   useResumeProgram,
   useSetProgramArchived,
+  useStartQueuedProgram,
 } from '~/api';
 import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
@@ -45,6 +48,9 @@ export const ProgramsPage = () => {
   const cancelProgram = useCancelProgram();
   const deleteProgram = useDeleteProgram();
   const setArchived = useSetProgramArchived();
+  const { data: queuedPrograms = [] } = useQueuedPrograms();
+  const dequeue = useDequeueProgram();
+  const startQueued = useStartQueuedProgram();
 
   const [showCreate, setShowCreate] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -150,6 +156,22 @@ export const ProgramsPage = () => {
     routeEnroll(target);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dispatch once the candidate's progress settles; the routing helpers are derived each render.
   }, [pendingEnrollId, candidateProgress, candidateProgressError]);
+
+  // "Queue instead" from the replace prompt: clone + bake weights now, wait
+  // for a slot. The queued row shows up in "Up next" below, so stay here.
+  const queueInstead = () => {
+    if (!pendingSwitchId) return;
+    const target = pendingSwitchId;
+    setPendingSwitchId(null);
+    setReplaceEnrollmentId(null);
+    enroll.mutate({ programId: target, queue: true });
+  };
+
+  // The lowest free parallel slot, or null at the cap — gates "Start now" on
+  // queued programs and gives the claim its slot.
+  const takenSlots = activeEnrollments.map((p) => p.enrollment.activeSlot);
+  const freeSlot =
+    [1, 2, 3].find((slot) => !takenSlots.includes(slot)) ?? null;
 
   const confirmSwitch = () => {
     if (!pendingSwitchId || !replaceEnrollmentId) return;
@@ -268,6 +290,59 @@ export const ProgramsPage = () => {
                   className="h-2 w-2 shrink-0 text-muted-foreground"
                 />
               </Link>
+            ))}
+          </Card>
+        </div>
+      )}
+
+      {queuedPrograms.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <h2 className="text-sm font-semibold">Up next</h2>
+          <Card className="divide-y">
+            {queuedPrograms.map(({ enrollment, program }, index) => (
+              <div
+                key={enrollment.id}
+                className="flex items-center gap-2 p-2"
+                data-testid="queued-program"
+              >
+                <span className="text-xs font-medium text-muted-foreground">
+                  {index + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {program.title}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    Starts when an active program finishes
+                  </p>
+                </div>
+                {freeSlot !== null && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() =>
+                      startQueued.mutate(
+                        { userProgramId: enrollment.id, slot: freeSlot },
+                        { onSuccess: () => navigate('/') },
+                      )
+                    }
+                    disabled={startQueued.isPending}
+                  >
+                    Start now
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-muted-foreground"
+                  onClick={() =>
+                    dequeue.mutate({ userProgramId: enrollment.id })
+                  }
+                  disabled={dequeue.isPending}
+                >
+                  Remove
+                </Button>
+              </div>
             ))}
           </Card>
         </div>
@@ -485,8 +560,9 @@ export const ProgramsPage = () => {
             <DialogDescription>
               You&apos;re already running {MAX_ACTIVE_PROGRAMS} programs — the
               most you can have at once. Pick one to stop so this new one can
-              take its place. Its logged workouts are kept, but its place in the
-              program is cleared.
+              take its place, or queue it to start when one finishes. A
+              replaced program&apos;s logged workouts are kept, but its place in
+              the program is cleared.
             </DialogDescription>
           </DialogHeader>
           <div
@@ -524,6 +600,13 @@ export const ProgramsPage = () => {
               }}
             >
               Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={queueInstead}
+              disabled={enroll.isPending}
+            >
+              Queue instead
             </Button>
             <Button
               onClick={confirmSwitch}

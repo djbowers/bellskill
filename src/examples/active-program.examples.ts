@@ -65,6 +65,7 @@ export const exampleActiveProgram = ({
       activeSlot,
       autoRepeat: false,
       cyclesCompleted: 0,
+      queuePosition: null,
     },
     program: {
       id: `${id}-program`,
