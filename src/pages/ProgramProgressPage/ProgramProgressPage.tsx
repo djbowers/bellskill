@@ -5,6 +5,7 @@ import {
   SessionState,
   WeekProgress,
   useProgramProgress,
+  useQueuedPrograms,
   useSetProgramAutoRepeat,
 } from '~/api';
 import { Page } from '~/components';
@@ -37,6 +38,7 @@ export const ProgramProgressPage = () => {
   const navigate = useNavigate();
   const { data, isLoading, isError } = useProgramProgress(id);
   const setAutoRepeat = useSetProgramAutoRepeat();
+  const { data: queuedPrograms = [] } = useQueuedPrograms();
 
   if (isLoading) {
     return (
@@ -82,6 +84,10 @@ export const ProgramProgressPage = () => {
   // session, not just the next one. Starting a later session leaves the earlier
   // ones upcoming (gaps); the home card still surfaces the lowest incomplete.
   const canStartSessions = enrollment?.status === 'active';
+
+  // The front of the user's queue — it takes the slot this program frees when
+  // it finishes, superseding auto-repeat until the queue drains.
+  const nextQueued = queuedPrograms[0] ?? null;
 
   // Hand the chosen session off to the launchpad builder via nav state; the home
   // page loads it, tags the start `program`, and advances this enrollment on
@@ -159,6 +165,12 @@ export const ProgramProgressPage = () => {
                 }
               />
             </div>
+          )}
+          {enrollment?.status === 'active' && nextQueued && (
+            <p className="text-xs text-muted-foreground">
+              Next up: {nextQueued.program.title}
+              {isRepeating ? ' (queued programs start before a repeat)' : ''}
+            </p>
           )}
         </CardContent>
       </Card>

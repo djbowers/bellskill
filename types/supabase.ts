@@ -541,6 +541,7 @@ export type Database = {
           cycles_completed: number
           id: string
           program_id: string
+          queue_position: number | null
           started_at: string
           status: string
           user_id: string
@@ -553,6 +554,7 @@ export type Database = {
           cycles_completed?: number
           id?: string
           program_id: string
+          queue_position?: number | null
           started_at?: string
           status?: string
           user_id: string
@@ -565,6 +567,7 @@ export type Database = {
           cycles_completed?: number
           id?: string
           program_id?: string
+          queue_position?: number | null
           started_at?: string
           status?: string
           user_id?: string
@@ -788,6 +791,7 @@ export type Database = {
           p_auto_repeat?: boolean
           p_movement_weights?: Json
           p_program_id: string
+          p_queue?: boolean
           p_replace_user_program_id?: string
           p_shared_weight_one_unit?: string
           p_shared_weight_one_value?: number

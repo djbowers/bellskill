@@ -81,4 +81,5 @@ export const mapUserProgramRow = (row: UserProgramRow): UserProgram => ({
   activeSlot: row.active_slot,
   autoRepeat: row.auto_repeat,
   cyclesCompleted: row.cycles_completed,
+  queuePosition: row.queue_position,
 });

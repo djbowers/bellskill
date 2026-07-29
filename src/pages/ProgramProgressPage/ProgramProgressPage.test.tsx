@@ -5,14 +5,17 @@ import { vi } from 'vitest';
 
 import { ProgramProgressPage } from './ProgramProgressPage';
 
-const { mockUseProgramProgress, mockSetAutoRepeat } = vi.hoisted(() => ({
-  mockUseProgramProgress: vi.fn(),
-  mockSetAutoRepeat: { mutate: vi.fn(), isPending: false },
-}));
+const { mockUseProgramProgress, mockSetAutoRepeat, mockUseQueuedPrograms } =
+  vi.hoisted(() => ({
+    mockUseProgramProgress: vi.fn(),
+    mockSetAutoRepeat: { mutate: vi.fn(), isPending: false },
+    mockUseQueuedPrograms: vi.fn(),
+  }));
 
 vi.mock('~/api', () => ({
   useProgramProgress: mockUseProgramProgress,
   useSetProgramAutoRepeat: () => mockSetAutoRepeat,
+  useQueuedPrograms: mockUseQueuedPrograms,
 }));
 
 const session = (seq: number, week: number, day: number, title: string) => ({
@@ -95,6 +98,7 @@ describe('ProgramProgressPage', () => {
     mockUseProgramProgress.mockReset();
     mockSetAutoRepeat.mutate.mockReset();
     mockSetAutoRepeat.isPending = false;
+    mockUseQueuedPrograms.mockReturnValue({ data: [] });
   });
 
   it('renders the summary, week groups, and session states', () => {
@@ -269,6 +273,28 @@ describe('ProgramProgressPage', () => {
         name: 'Repeat automatically when finished',
       }),
     ).toBeDisabled();
+  });
+
+  it('names the front of the queue under the summary while active', () => {
+    mockUseProgramProgress.mockReturnValue({
+      data: progressData,
+      isLoading: false,
+      isError: false,
+    });
+    mockUseQueuedPrograms.mockReturnValue({
+      data: [
+        {
+          enrollment: { id: 'q-1', queuePosition: 1, status: 'queued' },
+          program: { title: 'Armor Building Complex' },
+        },
+      ],
+    });
+
+    renderPage();
+
+    expect(
+      screen.getByText('Next up: Armor Building Complex'),
+    ).toBeInTheDocument();
   });
 
   it('renders a not-found state on error', () => {
