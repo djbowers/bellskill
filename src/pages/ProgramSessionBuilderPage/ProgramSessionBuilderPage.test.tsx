@@ -12,7 +12,9 @@ const {
   mockUseDuplicateProgramSession,
   mockUseDuplicateProgramWeek,
   mockUseReorderProgramSessions,
+  mockUseUpdateProgramSessionsForward,
   updateMutate,
+  updateForwardMutate,
 } = vi.hoisted(() => ({
   mockUseProgram: vi.fn(),
   mockUseSaveProgramSession: vi.fn(),
@@ -21,7 +23,9 @@ const {
   mockUseDuplicateProgramSession: vi.fn(),
   mockUseDuplicateProgramWeek: vi.fn(),
   mockUseReorderProgramSessions: vi.fn(),
+  mockUseUpdateProgramSessionsForward: vi.fn(),
   updateMutate: vi.fn(),
+  updateForwardMutate: vi.fn(),
 }));
 
 vi.mock('~/api', () => ({
@@ -32,6 +36,7 @@ vi.mock('~/api', () => ({
   useDuplicateProgramSession: mockUseDuplicateProgramSession,
   useDuplicateProgramWeek: mockUseDuplicateProgramWeek,
   useReorderProgramSessions: mockUseReorderProgramSessions,
+  useUpdateProgramSessionsForward: mockUseUpdateProgramSessionsForward,
 }));
 
 vi.mock('~/contexts', async () => {
@@ -40,6 +45,7 @@ vi.mock('~/contexts', async () => {
   return {
     ...actual,
     useSession: () => ({ user: { id: 'owner-1' } }),
+    useToast: () => ({ showToast: vi.fn() }),
   };
 });
 
@@ -144,6 +150,11 @@ describe('ProgramSessionBuilderPage', () => {
     mockUseDuplicateProgramSession.mockReturnValue(idleMutation());
     mockUseDuplicateProgramWeek.mockReturnValue(idleMutation());
     mockUseReorderProgramSessions.mockReturnValue(idleMutation());
+    updateForwardMutate.mockReset();
+    mockUseUpdateProgramSessionsForward.mockReturnValue({
+      mutate: updateForwardMutate,
+      isPending: false,
+    });
   });
 
   it('offers an Edit control per session in add mode', () => {
@@ -173,6 +184,83 @@ describe('ProgramSessionBuilderPage', () => {
       },
       expect.anything(),
     );
+  });
+
+  describe('with later sessions in the program', () => {
+    const laterSession = {
+      ...session,
+      id: 's-2',
+      sequenceIndex: 1,
+      dayNumber: 2,
+      title: 'Ladders 1-2-3-4',
+    };
+
+    beforeEach(() => {
+      mockUseProgram.mockReturnValue({
+        data: { program: ownedProgram, sessions: [session, laterSession] },
+        isLoading: false,
+        isError: false,
+      });
+    });
+
+    it('asks whether to apply the edit forward instead of saving directly', () => {
+      renderAt('/programs/p-1/sessions/s-1/edit');
+
+      fireEvent.click(screen.getByRole('button', { name: 'stub-save' }));
+
+      expect(updateMutate).not.toHaveBeenCalled();
+      expect(screen.getByText('Apply changes to…')).toBeInTheDocument();
+    });
+
+    it('saves only the edited session when "This session only" is chosen', () => {
+      renderAt('/programs/p-1/sessions/s-1/edit');
+
+      fireEvent.click(screen.getByRole('button', { name: 'stub-save' }));
+      fireEvent.click(
+        screen.getByRole('button', { name: 'This session only' }),
+      );
+
+      expect(updateForwardMutate).not.toHaveBeenCalled();
+      expect(updateMutate).toHaveBeenCalledWith(
+        {
+          sessionId: 's-1',
+          programId: 'p-1',
+          title: 'Edited title',
+          workoutOptions: { opt: true },
+        },
+        expect.anything(),
+      );
+    });
+
+    it('applies forward when "This and all future sessions" is chosen', () => {
+      renderAt('/programs/p-1/sessions/s-1/edit');
+
+      fireEvent.click(screen.getByRole('button', { name: 'stub-save' }));
+      fireEvent.click(
+        screen.getByRole('button', { name: 'This and all future sessions' }),
+      );
+
+      expect(updateMutate).not.toHaveBeenCalled();
+      expect(updateForwardMutate).toHaveBeenCalledWith(
+        {
+          sessionId: 's-1',
+          programId: 'p-1',
+          title: 'Edited title',
+          workoutOptions: { opt: true },
+        },
+        expect.anything(),
+      );
+    });
+
+    it('saves the last session directly without asking', () => {
+      renderAt('/programs/p-1/sessions/s-2/edit');
+
+      fireEvent.click(screen.getByRole('button', { name: 'stub-save' }));
+
+      expect(screen.queryByText('Apply changes to…')).not.toBeInTheDocument();
+      expect(updateMutate).toHaveBeenCalled();
+      expect(updateForwardMutate).not.toHaveBeenCalled();
+    });
   });
 
   it('blocks editing a session that does not exist', () => {

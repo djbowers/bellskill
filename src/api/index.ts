@@ -30,6 +30,7 @@ export * from './useSaveProgramSession';
 export * from './useSetProgramArchived';
 export * from './useSetProgramAutoRepeat';
 export * from './useUpdateProgramSession';
+export * from './useUpdateProgramSessionsForward';
 export * from './useRecentRepeatableWorkouts';
 export * from './useRecommendSession';
 export * from './useSelectRPE';

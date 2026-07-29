@@ -829,6 +829,10 @@ export type Database = {
         Args: { p_replace_user_program_id?: string; p_user_program_id: string }
         Returns: string
       }
+      update_program_sessions_forward: {
+        Args: { p_forward_options: Json; p_session_id: string }
+        Returns: number
+      }
     }
     Enums: {
       RPE: "noEffort" | "easy" | "ideal" | "hard" | "maxEffort"
