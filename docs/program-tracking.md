@@ -115,6 +115,17 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   rewriting title + `workout_options` only — sequence/week/day and the session id
   are untouched, so completions keep pointing at it). The add-mode session list
   gains a per-session **Edit** button (owner-gated, alongside Reorder/Delete).
+- **Apply-forward session edit:** saving an edit when later sessions exist asks
+  "This session only" vs "This and all future sessions". The forward path
+  (`useUpdateProgramSessionsForward`) rewrites the edited row in full, then the
+  `update_program_sessions_forward` RPC jsonb-merges only the movement
+  prescription — `movements`, `sharedWeightOne/Two` value+unit, `complexSet` —
+  into every later session of the program the caller hasn't completed (no
+  completion row via any of their enrollments), so each later session keeps its
+  own title, notes, goal, duration, and rest settings and completed sessions
+  are never rewritten. This deliberately overwrites per-session weight offsets
+  on future sessions with the edited session's weights; `adjust_program_weights`
+  is the offset-preserving counterpart for weight-only changes.
 - **Program CRUD (PROD-237, owned programs only):** `ProgramsPage`'s "My programs"
   surface adds three actions. **Cancel** = `useCancelProgram` flips the active
   enrollment to `abandoned` (reusing the existing status — no new value), freeing

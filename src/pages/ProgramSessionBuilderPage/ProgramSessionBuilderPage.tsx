@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import {
@@ -8,11 +9,20 @@ import {
   useReorderProgramSessions,
   useSaveProgramSession,
   useUpdateProgramSession,
+  useUpdateProgramSessionsForward,
 } from '~/api';
 import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
-import { useSession } from '~/contexts';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog';
+import { useSession, useToast } from '~/contexts';
 import { ProgramSession, WorkoutOptions } from '~/types';
 
 import { StartWorkoutPage } from '../StartWorkoutPage';
@@ -43,9 +53,18 @@ export const ProgramSessionBuilderPage = () => {
   const { id, sessionId } = useParams<{ id: string; sessionId?: string }>();
   const navigate = useNavigate();
   const session = useSession();
+  const { showToast } = useToast();
   const { data, isLoading, isError } = useProgram(id);
   const saveSession = useSaveProgramSession();
   const updateSession = useUpdateProgramSession();
+  const updateForward = useUpdateProgramSessionsForward();
+
+  // Edit save stashed while the "this session only vs all future" choice
+  // dialog is open.
+  const [pendingSave, setPendingSave] = useState<{
+    options: Omit<WorkoutOptions, 'startedAt'>;
+    title: string;
+  } | null>(null);
   const duplicateSession = useDuplicateProgramSession();
   const duplicateWeek = useDuplicateProgramWeek();
   const reorderSessions = useReorderProgramSessions();
@@ -167,7 +186,11 @@ export const ProgramSessionBuilderPage = () => {
       );
     }
 
-    const handleUpdate = (
+    const laterSessionCount = sessions.filter(
+      (s) => s.sequenceIndex > editingSession.sequenceIndex,
+    ).length;
+
+    const updateThisSessionOnly = (
       options: Omit<WorkoutOptions, 'startedAt'>,
       title: string,
     ) => {
@@ -182,30 +205,114 @@ export const ProgramSessionBuilderPage = () => {
       );
     };
 
-    return (
-      <StartWorkoutPage
-        key={`edit-${editingSession.id}`}
-        programSaveMode={{
-          onSave: handleUpdate,
-          saving: updateSession.isPending,
-          initialSession: {
-            workoutOptions: editingSession.workoutOptions,
-            title: editingSession.title,
+    const updateThisAndFutureSessions = (
+      options: Omit<WorkoutOptions, 'startedAt'>,
+      title: string,
+    ) => {
+      updateForward.mutate(
+        {
+          sessionId: editingSession.id,
+          programId: program.id,
+          title: title || editingSession.title,
+          workoutOptions: options,
+        },
+        {
+          onSuccess: (updatedCount) => {
+            showToast(
+              updatedCount === 1
+                ? 'Updated 1 upcoming session'
+                : `Updated ${updatedCount} upcoming sessions`,
+            );
+            backToBuilder();
           },
-          beforeBuilder: (
-            <>
-              <button
-                type="button"
-                onClick={backToBuilder}
-                className="self-start text-xs font-medium text-muted-foreground"
+        },
+      );
+    };
+
+    // With later sessions, saving asks whether the movement change should
+    // carry forward; on the last session there's nothing ahead, so save
+    // directly.
+    const handleUpdate = (
+      options: Omit<WorkoutOptions, 'startedAt'>,
+      title: string,
+    ) => {
+      if (laterSessionCount > 0) setPendingSave({ options, title });
+      else updateThisSessionOnly(options, title);
+    };
+
+    const saving = updateSession.isPending || updateForward.isPending;
+
+    return (
+      <>
+        <Dialog
+          open={pendingSave !== null}
+          onOpenChange={(open) => {
+            if (!open && !saving) setPendingSave(null);
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Apply changes to…</DialogTitle>
+              <DialogDescription>
+                Carry this session&apos;s movements and weights into the rest
+                of the program, or change just this session. Later sessions
+                keep their own titles, goals, and rep schemes; completed
+                sessions are never changed.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-col gap-1 sm:flex-col">
+              <Button
+                disabled={saving}
+                onClick={() => {
+                  if (pendingSave)
+                    updateThisAndFutureSessions(
+                      pendingSave.options,
+                      pendingSave.title,
+                    );
+                }}
               >
-                ← Sessions
-              </button>
-              <div className="text-xl font-semibold">Edit session</div>
-            </>
-          ),
-        }}
-      />
+                This and all future sessions
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={saving}
+                onClick={() => {
+                  if (pendingSave)
+                    updateThisSessionOnly(
+                      pendingSave.options,
+                      pendingSave.title,
+                    );
+                }}
+              >
+                This session only
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <StartWorkoutPage
+          key={`edit-${editingSession.id}`}
+          programSaveMode={{
+            onSave: handleUpdate,
+            saving,
+            initialSession: {
+              workoutOptions: editingSession.workoutOptions,
+              title: editingSession.title,
+            },
+            beforeBuilder: (
+              <>
+                <button
+                  type="button"
+                  onClick={backToBuilder}
+                  className="self-start text-xs font-medium text-muted-foreground"
+                >
+                  ← Sessions
+                </button>
+                <div className="text-xl font-semibold">Edit session</div>
+              </>
+            ),
+          }}
+        />
+      </>
     );
   }
 
