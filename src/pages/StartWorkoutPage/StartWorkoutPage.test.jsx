@@ -675,6 +675,24 @@ describe('Complex Mode', () => {
     );
   });
 
+  test('propagates an edited shared weight onto every movement at start', async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
+    await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
+    await userEvent.click(screen.getByLabelText('+ kg'));
+    await userEvent.click(screen.getByRole('button', { name: /Start/i }));
+
+    const options = startWorkout.mock.calls[0][0];
+    expect(options.sharedWeightOneValue).not.toBe(
+      DEFAULT_MOVEMENT_OPTIONS.weightOneValue,
+    );
+    options.movements.forEach((movement) => {
+      expect(movement.weightOneValue).toBe(options.sharedWeightOneValue);
+      expect(movement.weightOneUnit).toBe(options.sharedWeightOneUnit);
+      expect(movement.weightTwoValue).toBe(options.sharedWeightTwoValue);
+      expect(movement.weightTwoUnit).toBe(options.sharedWeightTwoUnit);
+    });
+  });
+
   test('complex mode toggle is preserved when adding movements', async () => {
     await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
