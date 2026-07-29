@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useLogWorkout } from '~/api';
@@ -495,11 +495,17 @@ export const ActiveWorkoutPage = ({
     [completedRounds],
   );
 
+  const finishWorkoutRef = useRef(finishWorkout);
+  finishWorkoutRef.current = finishWorkout;
+
   useEffect(
     function handleMinutesGoalReached() {
       if (workoutGoalUnits !== 'minutes' || logWorkoutLoading) return;
-      // small delay for all rounds to be counted from interval timer
-      if (remainingMilliseconds <= -500) finishWorkout();
+      if (remainingMilliseconds > 0) return;
+      // small delay for all rounds to be counted from interval timer; the ref
+      // keeps the logged counts fresh across that delay
+      const grace = setTimeout(() => finishWorkoutRef.current(), 500);
+      return () => clearTimeout(grace);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each remainingMilliseconds tick; finishWorkout and the goal reads must stay fresh without retriggering
     [remainingMilliseconds],
