@@ -24,25 +24,36 @@ const isTextInput = (target: EventTarget | null): boolean => {
   return false;
 };
 
+// Above URL-bar show/hide deltas, below any soft-keyboard height.
+const KEYBOARD_HEIGHT_THRESHOLD = 100;
+
 /**
- * True while a text input, textarea, or contenteditable element is focused —
- * i.e. when the mobile soft keyboard is (or is about to be) open. Used to hide
- * the fixed bottom bar, which iOS Safari otherwise floats above the keyboard on
- * top of the field being edited.
+ * True while the mobile soft keyboard is open. Used to hide the fixed bottom
+ * bar, which iOS Safari otherwise floats above the keyboard on top of the
+ * field being edited.
+ *
+ * Primary signal is the VisualViewport API — the keyboard shrinks the visual
+ * viewport but not the layout viewport, so a large height gap means it is
+ * open. This also catches swipe-dismiss (no blur fires) and correctly ignores
+ * hardware keyboards. Environments without `visualViewport` (jsdom, legacy
+ * browsers) fall back to a text-input focus heuristic.
  */
 export const useIsKeyboardOpen = (): boolean => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isFocusedOnText, setIsFocusedOnText] = useState(false);
+  const [isViewportShrunk, setIsViewportShrunk] = useState(false);
+  const hasVisualViewport =
+    typeof window !== 'undefined' && !!window.visualViewport;
 
   useEffect(() => {
     const handleFocusIn = (event: FocusEvent) => {
-      if (isTextInput(event.target)) setIsOpen(true);
+      if (isTextInput(event.target)) setIsFocusedOnText(true);
     };
     const handleFocusOut = (event: FocusEvent) => {
       if (!isTextInput(event.target)) return;
       // Focus moving straight to another text input keeps the keyboard up, so
       // stay open to avoid the bar flickering back for a frame between fields.
       if (isTextInput(event.relatedTarget)) return;
-      setIsOpen(false);
+      setIsFocusedOnText(false);
     };
 
     document.addEventListener('focusin', handleFocusIn);
@@ -54,5 +65,29 @@ export const useIsKeyboardOpen = (): boolean => {
     };
   }, []);
 
-  return isOpen;
+  useEffect(() => {
+    const visualViewport = window.visualViewport;
+    if (!visualViewport) return;
+
+    let frame = 0;
+    const handleResize = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        setIsViewportShrunk(
+          window.innerHeight - visualViewport.height >
+            KEYBOARD_HEIGHT_THRESHOLD,
+        );
+      });
+    };
+
+    handleResize();
+    visualViewport.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      visualViewport.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  return hasVisualViewport ? isViewportShrunk : isFocusedOnText;
 };
