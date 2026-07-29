@@ -496,6 +496,69 @@ describe('ProgramsPage', () => {
     expect(dequeueMutate).toHaveBeenCalledWith({ userProgramId: 'q-2' });
   });
 
+  it('queues an own program for later from its card, without a slot claim', () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Queue for later' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith({
+      programId: 'mine-1',
+      queue: true,
+    });
+  });
+
+  it('hides Queue for later and badges the card once the program is queued', () => {
+    mockUseQueuedPrograms.mockReturnValue({
+      data: [
+        {
+          enrollment: {
+            id: 'q-1',
+            programId: 'mine-1',
+            queuePosition: 1,
+            status: 'queued',
+          },
+          program: { title: 'My Program' },
+        },
+      ],
+    });
+
+    renderPage();
+
+    expect(screen.getByText('Queued', { selector: 'span' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Queue for later' }),
+    ).not.toBeInTheDocument();
+    // Starting from the card would double-enroll alongside the queued clone;
+    // a queued program starts from "Up next" instead.
+    expect(screen.getByRole('button', { name: 'Queued' })).toBeDisabled();
+  });
+
+  it('chains each queued row to the one before it, with Start now only at the front', () => {
+    mockUseActivePrograms.mockReturnValue({ data: [threeActive[0]] });
+    mockUseQueuedPrograms.mockReturnValue({
+      data: [
+        {
+          enrollment: { id: 'q-1', queuePosition: 1, status: 'queued' },
+          program: { title: 'Queued First' },
+        },
+        {
+          enrollment: { id: 'q-2', queuePosition: 2, status: 'queued' },
+          program: { title: 'Queued Second' },
+        },
+      ],
+    });
+
+    renderPage();
+
+    const rows = screen.getAllByTestId('queued-program');
+    // The front waits on a slot (one is open); the rest wait on the row ahead.
+    expect(rows[0]).toHaveTextContent('A slot is open');
+    expect(rows[1]).toHaveTextContent('After Queued First');
+    expect(screen.getAllByRole('button', { name: 'Start now' })).toHaveLength(
+      1,
+    );
+  });
+
   it('starts a queued program into the lowest free slot when one is open', () => {
     mockUseActivePrograms.mockReturnValue({ data: [threeActive[0]] });
     mockUseQueuedPrograms.mockReturnValue({

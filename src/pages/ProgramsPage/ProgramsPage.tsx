@@ -33,6 +33,7 @@ import {
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { useSession } from '~/contexts';
+import { cn } from '~/lib/utils';
 import { Program } from '~/types';
 import { programCadenceLabel } from '~/utils';
 
@@ -235,6 +236,9 @@ export const ProgramsPage = () => {
   const isActive = (program: Program) =>
     activeEnrollments.some((p) => p.enrollment.programId === program.id);
 
+  const isQueued = (program: Program) =>
+    queuedPrograms.some((q) => q.enrollment.programId === program.id);
+
   const enrollmentFor = (program: Program) =>
     activeEnrollments.find((p) => p.enrollment.programId === program.id) ?? null;
 
@@ -298,52 +302,76 @@ export const ProgramsPage = () => {
       {queuedPrograms.length > 0 && (
         <div className="flex flex-col gap-1">
           <h2 className="text-sm font-semibold">Up next</h2>
-          <Card className="divide-y">
-            {queuedPrograms.map(({ enrollment, program }, index) => (
-              <div
-                key={enrollment.id}
-                className="flex items-center gap-2 p-2"
-                data-testid="queued-program"
-              >
-                <span className="text-xs font-medium text-muted-foreground">
-                  {index + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
-                    {program.title}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    Starts when an active program finishes
-                  </p>
-                </div>
-                {freeSlot !== null && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() =>
-                      startQueued.mutate(
-                        { userProgramId: enrollment.id, slot: freeSlot },
-                        { onSuccess: () => navigate('/') },
-                      )
-                    }
-                    disabled={startQueued.isPending}
+          <Card>
+            <CardContent className="flex flex-col pt-2">
+              {queuedPrograms.map(({ enrollment, program }, index) => {
+                const isFront = index === 0;
+                const isLast = index === queuedPrograms.length - 1;
+                // Each row names what it waits on: the front of the line waits
+                // on a slot, everything behind waits on the row before it.
+                const waitsOn = isFront
+                  ? freeSlot !== null
+                    ? 'A slot is open'
+                    : 'Starts when an active program finishes'
+                  : `After ${queuedPrograms[index - 1].program.title}`;
+                return (
+                  <div
+                    key={enrollment.id}
+                    className={cn('flex gap-1.5', !isLast && 'pb-2')}
+                    data-testid="queued-program"
                   >
-                    Start now
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-muted-foreground"
-                  onClick={() =>
-                    dequeue.mutate({ userProgramId: enrollment.id })
-                  }
-                  disabled={dequeue.isPending}
-                >
-                  Remove
-                </Button>
-              </div>
-            ))}
+                    <div className="flex flex-col items-center">
+                      <span
+                        aria-hidden
+                        className={cn(
+                          'flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full border text-xs font-medium',
+                          isFront
+                            ? 'border-primary text-primary'
+                            : 'border-border text-muted-foreground',
+                        )}
+                      >
+                        {index + 1}
+                      </span>
+                      {!isLast && <span className="w-px flex-1 bg-border" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {program.title}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {waitsOn}
+                      </p>
+                    </div>
+                    {isFront && freeSlot !== null && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() =>
+                          startQueued.mutate(
+                            { userProgramId: enrollment.id, slot: freeSlot },
+                            { onSuccess: () => navigate('/') },
+                          )
+                        }
+                        disabled={startQueued.isPending}
+                      >
+                        Start now
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-muted-foreground"
+                      onClick={() =>
+                        dequeue.mutate({ userProgramId: enrollment.id })
+                      }
+                      disabled={dequeue.isPending}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                );
+              })}
+            </CardContent>
           </Card>
         </div>
       )}
@@ -408,6 +436,11 @@ export const ProgramsPage = () => {
                   Active
                 </span>
               )}
+              {isQueued(program) && (
+                <span className="rounded bg-secondary px-0.5 text-xs font-normal text-muted-foreground">
+                  Queued
+                </span>
+              )}
             </CardTitle>
             <p className="text-xs text-muted-foreground">
               {programCadenceLabel(program) ?? 'No sessions yet'}
@@ -429,19 +462,42 @@ export const ProgramsPage = () => {
                   enroll.isPending ||
                   resume.isPending ||
                   isActive(program) ||
+                  // A queued program starts from "Up next" (Start now / its
+                  // turn), never a second parallel enrollment from here.
+                  isQueued(program) ||
                   pendingEnrollId === program.id
                 }
               >
-                {isActive(program) ? 'Enrolled' : 'Start program'}
+                {isActive(program)
+                  ? 'Enrolled'
+                  : isQueued(program)
+                    ? 'Queued'
+                    : 'Start program'}
               </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(`/programs/${program.id}`)}
-            >
-              View progress
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1"
+                onClick={() => navigate(`/programs/${program.id}`)}
+              >
+                View progress
+              </Button>
+              {!isActive(program) && !isQueued(program) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-1 text-muted-foreground"
+                  onClick={() =>
+                    enroll.mutate({ programId: program.id, queue: true })
+                  }
+                  disabled={enroll.isPending}
+                >
+                  Queue for later
+                </Button>
+              )}
+            </div>
             <div className="flex gap-2">
               {isActive(program) && (
                 <Button

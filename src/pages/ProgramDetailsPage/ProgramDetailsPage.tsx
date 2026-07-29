@@ -264,6 +264,20 @@ export const ProgramDetailsPage = () => {
   // confirm dialog names. Below it, enrolling just claims a free slot.
   const displaced = slotsFull ? activeEnrollments[0] : null;
 
+  // The chosen weights + auto-repeat, shared by an immediate start and a
+  // queue-for-later (a queued clone bakes the same weights now).
+  const enrollmentConfig = () => ({
+    autoRepeat,
+    ...(complex
+      ? {
+          sharedWeightOneValue,
+          sharedWeightOneUnit,
+          sharedWeightTwoValue,
+          sharedWeightTwoUnit,
+        }
+      : { movementWeights: movementWeightPayload }),
+  });
+
   const doEnroll = () => {
     if (!id) return;
     setPendingSwitch(false);
@@ -271,17 +285,19 @@ export const ProgramDetailsPage = () => {
       {
         programId: id,
         replaceUserProgramId: displaced?.enrollment.id,
-        autoRepeat,
-        ...(complex
-          ? {
-              sharedWeightOneValue,
-              sharedWeightOneUnit,
-              sharedWeightTwoValue,
-              sharedWeightTwoUnit,
-            }
-          : { movementWeights: movementWeightPayload }),
+        ...enrollmentConfig(),
       },
       { onSuccess: () => navigate('/') },
+    );
+  };
+
+  // Queue instead of starting: no slot is claimed, so nothing is displaced.
+  // Land on Programs, where "Up next" shows the new place in line.
+  const queueForLater = () => {
+    if (!id) return;
+    enroll.mutate(
+      { programId: id, queue: true, ...enrollmentConfig() },
+      { onSuccess: () => navigate('/programs') },
     );
   };
 
@@ -446,6 +462,16 @@ export const ProgramDetailsPage = () => {
       <Button onClick={handleStart} disabled={enroll.isPending || !seeded}>
         Start program
       </Button>
+      <Button
+        variant="secondary"
+        onClick={queueForLater}
+        disabled={enroll.isPending || !seeded}
+      >
+        Queue for later
+      </Button>
+      <p className="-mt-1 text-center text-xs text-muted-foreground">
+        Queued programs start when an active program finishes.
+      </p>
 
       <Dialog
         open={pendingSwitch}

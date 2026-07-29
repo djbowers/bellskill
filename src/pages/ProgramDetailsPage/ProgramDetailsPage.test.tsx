@@ -201,6 +201,40 @@ describe('ProgramDetailsPage', () => {
     expect(screen.getByText('home')).toBeInTheDocument();
   });
 
+  it('queues for later with the same chosen weights and no slot claim', () => {
+    enrollMutate.mockImplementation((_input, { onSuccess }) => onSuccess());
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Queue for later' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      {
+        programId: 'dfw-1',
+        queue: true,
+        movementWeights: [
+          {
+            movementName: 'Double Kettlebell Press',
+            weightOneValue: 24,
+            weightOneUnit: 'kilograms',
+            weightTwoValue: 24,
+            weightTwoUnit: 'kilograms',
+          },
+          {
+            movementName: 'Kettlebell Swing',
+            weightOneValue: 24,
+            weightOneUnit: 'kilograms',
+            weightTwoValue: 24,
+            weightTwoUnit: 'kilograms',
+          },
+        ],
+      },
+      expect.anything(),
+    );
+    // Lands on Programs, where "Up next" shows the new place in line.
+    expect(screen.getByText('programs list')).toBeInTheDocument();
+  });
+
   it('sends each movement in its own config shape, omitting bodyweight', () => {
     mockUseProgram.mockReturnValue({
       data: {
