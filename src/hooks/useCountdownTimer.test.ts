@@ -83,6 +83,34 @@ it('should use custom time format', () => {
   expect(result.current[0]).toBe('60.0');
 });
 
+it('should track wall-clock time when ticks are throttled', () => {
+  const { result } = renderHook(() => useCountdownTimer(1));
+
+  // simulate a backgrounded tab: the clock advances 5s but only one tick fires
+  vi.setSystemTime(Date.now() + 5000);
+  act(() => vi.advanceTimersByTime(100));
+
+  expect(result.current[1].milliseconds).toBe(54900);
+});
+
+it('should clamp at zero instead of going negative', () => {
+  const { result } = renderHook(() => useCountdownTimer(1));
+
+  act(() => vi.advanceTimersByTime(90000));
+
+  expect(result.current[0]).toBe('0:00');
+  expect(result.current[1].milliseconds).toBe(0);
+});
+
+it('should reach zero after expiring while backgrounded', () => {
+  const { result } = renderHook(() => useCountdownTimer(1));
+
+  vi.setSystemTime(Date.now() + 120000);
+  act(() => vi.advanceTimersByTime(100));
+
+  expect(result.current[1].milliseconds).toBe(0);
+});
+
 it('should not count when disabled', () => {
   const { result } = renderHook(() => useCountdownTimer(1, { disabled: true }));
 
