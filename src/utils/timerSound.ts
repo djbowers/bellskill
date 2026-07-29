@@ -20,12 +20,42 @@ const getAudioContextCtor = (): AudioContextConstructor | undefined => {
 
 let audioContext: AudioContext | null = null;
 
+// iOS reports the non-standard 'interrupted' state after backgrounding, so
+// resume on anything that isn't running rather than only 'suspended'.
+const resumeIfNotRunning = (ctx: AudioContext): void => {
+  if (ctx.state !== 'running') {
+    void ctx.resume?.().catch(() => {});
+  }
+};
+
+const handleVisibilityChange = (): void => {
+  if (document.visibilityState !== 'visible') return;
+  // Only resume an existing context — creating one here would be outside a
+  // user gesture and stay locked on mobile Safari.
+  if (audioContext && audioContext.state !== 'closed') {
+    resumeIfNotRunning(audioContext);
+  }
+};
+
+let visibilityListenerInstalled = false;
+
+const installVisibilityListener = (): void => {
+  if (visibilityListenerInstalled || typeof document === 'undefined') return;
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  visibilityListenerInstalled = true;
+};
+
 const getAudioContext = (): AudioContext | null => {
+  // iOS can close the context outright while backgrounded; recreate it.
+  if (audioContext && audioContext.state === 'closed') {
+    audioContext = null;
+  }
   if (audioContext) return audioContext;
   const Ctor = getAudioContextCtor();
   if (!Ctor) return null;
   try {
     audioContext = new Ctor();
+    installVisibilityListener();
   } catch {
     audioContext = null;
   }
@@ -39,9 +69,7 @@ const getAudioContext = (): AudioContext | null => {
 export const unlockAudio = (): void => {
   const ctx = getAudioContext();
   if (!ctx) return;
-  if (ctx.state === 'suspended') {
-    void ctx.resume().catch(() => {});
-  }
+  resumeIfNotRunning(ctx);
 };
 
 /** Play a single note with a quick attack + exponential decay envelope. */
@@ -84,7 +112,7 @@ export const playDing = (): void => {
   if (!isSoundEnabled()) return;
   const ctx = getAudioContext();
   if (!ctx) return;
-  void ctx.resume?.().catch(() => {});
+  resumeIfNotRunning(ctx);
 
   const now = ctx.currentTime;
   playTone(ctx, 880, now, 0.28); // A5
@@ -101,7 +129,7 @@ export const playStartCue = (): void => {
   if (!isSoundEnabled()) return;
   const ctx = getAudioContext();
   if (!ctx) return;
-  void ctx.resume?.().catch(() => {});
+  resumeIfNotRunning(ctx);
 
   const now = ctx.currentTime;
   playTone(ctx, 1046.5, now, 0.3); // C6
