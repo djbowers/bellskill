@@ -32,6 +32,7 @@ import {
 } from '~/components/ui/dialog';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
+import { isOwner } from '~/config/features';
 import { useSession } from '~/contexts';
 import { cn } from '~/lib/utils';
 import { Program } from '~/types';
@@ -281,6 +282,11 @@ export const ProgramsPage = () => {
                     {program.defaultAutoRepeat && (
                       <span className="rounded bg-secondary px-0.5 text-xs font-normal text-muted-foreground">
                         Repeats
+                      </span>
+                    )}
+                    {isOwner(session) && program.releasedAt && (
+                      <span className="rounded bg-secondary px-0.5 text-xs font-normal text-muted-foreground">
+                        Released
                       </span>
                     )}
                   </p>

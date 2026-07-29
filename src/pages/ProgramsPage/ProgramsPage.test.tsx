@@ -68,12 +68,14 @@ vi.mock('~/api', () => ({
   MAX_ACTIVE_PROGRAMS: 3,
 }));
 
+let mockSessionEmail: string | undefined;
+
 vi.mock('~/contexts', async () => {
   const actual =
     await vi.importActual<typeof import('~/contexts')>('~/contexts');
   return {
     ...actual,
-    useSession: () => ({ user: { id: 'user-123' } }),
+    useSession: () => ({ user: { id: 'user-123', email: mockSessionEmail } }),
   };
 });
 
@@ -89,6 +91,7 @@ const dfw = {
   daysPerWeek: 3,
   isPublic: true,
   createdAt: '',
+  releasedAt: null,
 };
 
 const armor = {
@@ -103,6 +106,7 @@ const armor = {
   daysPerWeek: 3,
   isPublic: true,
   createdAt: '',
+  releasedAt: null,
 };
 
 const myProgram = {
@@ -117,6 +121,7 @@ const myProgram = {
   daysPerWeek: 3,
   isPublic: false,
   createdAt: '',
+  releasedAt: null,
 };
 
 const renderPage = () =>
@@ -135,6 +140,7 @@ const renderPage = () =>
 
 describe('ProgramsPage', () => {
   beforeEach(() => {
+    mockSessionEmail = undefined;
     enrollMutate.mockReset();
     resumeMutate.mockReset();
     createMutate.mockReset();
@@ -242,6 +248,39 @@ describe('ProgramsPage', () => {
       screen.getByText('Pavel Tsatsouline (StrongFirst) · Repeating workout'),
     ).toBeInTheDocument();
     expect(screen.getByText('Repeats')).toBeInTheDocument();
+  });
+
+  it('badges released shared programs for the owner account only', () => {
+    mockSessionEmail = 'daniel_bowers@icloud.com';
+    mockUsePrograms.mockReturnValue({
+      data: [
+        { ...dfw, releasedAt: '2026-07-28T12:00:00Z' },
+        { ...armor, releasedAt: null },
+      ],
+      isLoading: false,
+    });
+
+    renderPage();
+
+    // Chip on the released program only.
+    expect(screen.getAllByText('Released')).toHaveLength(1);
+    expect(
+      screen.getByLabelText('View Dry Fighting Weight'),
+    ).toHaveTextContent('Released');
+    expect(
+      screen.getByLabelText('View Armor Building Complex'),
+    ).not.toHaveTextContent('Released');
+  });
+
+  it('never shows the released badge to a non-owner', () => {
+    mockUsePrograms.mockReturnValue({
+      data: [{ ...dfw, releasedAt: '2026-07-28T12:00:00Z' }],
+      isLoading: false,
+    });
+
+    renderPage();
+
+    expect(screen.queryByText('Released')).not.toBeInTheDocument();
   });
 
   it('enrolls in your own program directly, with no starting-weight prompt', () => {

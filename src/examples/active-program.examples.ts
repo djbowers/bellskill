@@ -81,6 +81,7 @@ export const exampleActiveProgram = ({
       archivedAt: null,
       createdAt: '2026-07-01T00:00:00Z',
       defaultAutoRepeat: false,
+      releasedAt: null,
     },
     nextSession: isComplete
       ? null

@@ -378,6 +378,7 @@ export type Database = {
           is_public: boolean
           num_weeks: number | null
           owner_id: string | null
+          released_at: string | null
           slug: string | null
           source_program_id: string | null
           title: string
@@ -393,6 +394,7 @@ export type Database = {
           is_public?: boolean
           num_weeks?: number | null
           owner_id?: string | null
+          released_at?: string | null
           slug?: string | null
           source_program_id?: string | null
           title: string
@@ -408,6 +410,7 @@ export type Database = {
           is_public?: boolean
           num_weeks?: number | null
           owner_id?: string | null
+          released_at?: string | null
           slug?: string | null
           source_program_id?: string | null
           title?: string

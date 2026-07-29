@@ -32,6 +32,7 @@ export const mapProgramRow = (row: ProgramRow): Program => ({
   createdAt: row.created_at,
   archivedAt: row.archived_at,
   defaultAutoRepeat: row.default_auto_repeat,
+  releasedAt: row.released_at,
 });
 
 /**

@@ -37,4 +37,11 @@ export interface Program {
    * {@link UserProgram.autoRepeat} at enroll time, where the user can override it.
    */
   defaultAutoRepeat: boolean;
+  /**
+   * Release gate for shared programs (PROD-246): NULL means seeded but not yet
+   * released — visible only to the owner account until a manual test run
+   * passes. RLS hides unreleased public programs from everyone else, so most
+   * clients only ever see timestamps here.
+   */
+  releasedAt: string | null;
 }
