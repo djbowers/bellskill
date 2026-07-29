@@ -15,6 +15,7 @@ import { Loading, Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
+import { Textarea } from '~/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { CURATED_WORKOUTS_VERSION } from '~/constants';
 import {
@@ -374,7 +375,7 @@ export const StartWorkoutPage = ({
   const [sharedWeightTwoUnit, setSharedWeightTwoUnit] =
     useState<WeightUnit | null>(workoutOptions.sharedWeightTwoUnit);
 
-  const notesRef = useRef<HTMLInputElement>(null);
+  const notesRef = useRef<HTMLTextAreaElement>(null);
 
   // Fan a set of workout options out to the builder's local state so the user
   // can review/edit before starting. Defined ahead of the gate so the nav-start
@@ -1078,12 +1079,13 @@ export const StartWorkoutPage = ({
           {preWorkoutNotes !== null && (
             <Card>
               <Section title="Pre-workout notes">
-                <Input
+                <Textarea
                   autoFocus
                   className="w-full"
                   defaultValue={preWorkoutNotes}
                   onBlur={handleBlurNotes}
                   ref={notesRef}
+                  rows={3}
                   placeholder="Goal, cues, things to keep in mind"
                 />
               </Section>
