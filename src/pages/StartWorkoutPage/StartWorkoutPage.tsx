@@ -37,6 +37,7 @@ import {
   WorkoutOptions,
 } from '~/types';
 import {
+  applySharedWeights,
   getWeightRange,
   getWeightTabValue,
   getWeightUnitLabel,
@@ -799,7 +800,7 @@ export const StartWorkoutPage = ({
 
   const handleClickStart = () => {
     startWorkout(
-      {
+      applySharedWeights({
         complexSet,
         intervalTimer,
         movements,
@@ -813,7 +814,7 @@ export const StartWorkoutPage = ({
         preWorkoutNotes: preWorkoutNotes?.trim() || null,
         workoutGoal,
         workoutGoalUnits,
-      },
+      }),
       startSource,
       {
         ...startSourceProps,
@@ -829,7 +830,7 @@ export const StartWorkoutPage = ({
   // session instead of starting a workout.
   const handleSaveSession = () => {
     programSaveMode?.onSave(
-      {
+      applySharedWeights({
         complexSet,
         intervalTimer,
         movements,
@@ -843,7 +844,7 @@ export const StartWorkoutPage = ({
         preWorkoutNotes: preWorkoutNotes?.trim() || null,
         workoutGoal,
         workoutGoalUnits,
-      },
+      }),
       sessionTitle.trim(),
     );
   };

@@ -1,3 +1,4 @@
+export * from './applySharedWeights';
 export * from './bellColors';
 export * from './formatRungDuration';
 export * from './formatVolume';

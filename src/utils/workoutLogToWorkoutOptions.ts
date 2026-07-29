@@ -1,5 +1,6 @@
 import { MovementLog, WorkoutLog, WorkoutOptions } from '~/types';
 
+import { applySharedWeights } from './applySharedWeights';
 import { resolveSharedWeights } from './resolveSharedWeights';
 
 /**
@@ -33,25 +34,17 @@ export const workoutLogToWorkoutOptions = (
     movementLogs,
   );
 
-  return {
+  return applySharedWeights({
     complexSet: isComplexSet,
     intervalTimer: workoutLog.intervalTimer,
     movements: movementLogs.map((movementLog) => ({
       movementName: movementLog.movementName,
       repScheme: movementLog.repScheme,
       timedRungs: movementLog.timedRungs ?? false,
-      weightOneUnit: isComplexSet
-        ? sharedWeights.weightOneUnit
-        : movementLog.weightOneUnit,
-      weightOneValue: isComplexSet
-        ? sharedWeights.weightOneValue
-        : movementLog.weightOneValue,
-      weightTwoUnit: isComplexSet
-        ? sharedWeights.weightTwoUnit
-        : movementLog.weightTwoUnit,
-      weightTwoValue: isComplexSet
-        ? sharedWeights.weightTwoValue
-        : movementLog.weightTwoValue,
+      weightOneUnit: movementLog.weightOneUnit,
+      weightOneValue: movementLog.weightOneValue,
+      weightTwoUnit: movementLog.weightTwoUnit,
+      weightTwoValue: movementLog.weightTwoValue,
     })),
     restTimer: workoutLog.restTimer,
     sharedWeightOneUnit: isComplexSet ? sharedWeights.weightOneUnit : null,
@@ -66,5 +59,5 @@ export const workoutLogToWorkoutOptions = (
     previousVolume,
     previousMinutes,
     previousRounds,
-  };
+  });
 };
