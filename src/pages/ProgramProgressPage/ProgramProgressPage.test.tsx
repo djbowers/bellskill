@@ -5,17 +5,26 @@ import { vi } from 'vitest';
 
 import { ProgramProgressPage } from './ProgramProgressPage';
 
-const { mockUseProgramProgress, mockSetAutoRepeat, mockUseQueuedPrograms } =
-  vi.hoisted(() => ({
-    mockUseProgramProgress: vi.fn(),
-    mockSetAutoRepeat: { mutate: vi.fn(), isPending: false },
-    mockUseQueuedPrograms: vi.fn(),
-  }));
+const {
+  mockUseProgramProgress,
+  mockSetAutoRepeat,
+  mockUseQueuedPrograms,
+  mockAdjustMutate,
+} = vi.hoisted(() => ({
+  mockUseProgramProgress: vi.fn(),
+  mockSetAutoRepeat: { mutate: vi.fn(), isPending: false },
+  mockUseQueuedPrograms: vi.fn(),
+  mockAdjustMutate: vi.fn(),
+}));
 
 vi.mock('~/api', () => ({
   useProgramProgress: mockUseProgramProgress,
   useSetProgramAutoRepeat: () => mockSetAutoRepeat,
   useQueuedPrograms: mockUseQueuedPrograms,
+  useAdjustProgramWeights: () => ({
+    mutate: mockAdjustMutate,
+    isPending: false,
+  }),
 }));
 
 const session = (seq: number, week: number, day: number, title: string) => ({
@@ -99,6 +108,7 @@ describe('ProgramProgressPage', () => {
     mockSetAutoRepeat.mutate.mockReset();
     mockSetAutoRepeat.isPending = false;
     mockUseQueuedPrograms.mockReturnValue({ data: [] });
+    mockAdjustMutate.mockReset();
   });
 
   it('renders the summary, week groups, and session states', () => {
@@ -295,6 +305,97 @@ describe('ProgramProgressPage', () => {
     expect(
       screen.getByText('Next up: Armor Building Complex'),
     ).toBeInTheDocument();
+  });
+
+  it('opens the adjust-weights dialog and submits per-movement weights', async () => {
+    const user = userEvent.setup();
+    // Sessions carry real workoutOptions so the dialog can derive one control
+    // per movement (swing loaded, pull-up bodyweight).
+    const withMovements = {
+      ...progressData,
+      weeks: progressData.weeks.map((week) => ({
+        ...week,
+        sessions: week.sessions.map((item) => ({
+          ...item,
+          session: {
+            ...item.session,
+            workoutOptions: {
+              complexSet: false,
+              sharedWeightOneValue: null,
+              sharedWeightOneUnit: null,
+              sharedWeightTwoValue: null,
+              sharedWeightTwoUnit: null,
+              movements: [
+                {
+                  movementName: 'Kettlebell Swing',
+                  repScheme: [10],
+                  weightOneValue: 24,
+                  weightOneUnit: 'kilograms',
+                  weightTwoValue: null,
+                  weightTwoUnit: null,
+                },
+                {
+                  movementName: 'Pull-Up',
+                  repScheme: [5],
+                  weightOneValue: null,
+                  weightOneUnit: null,
+                  weightTwoValue: null,
+                  weightTwoUnit: null,
+                },
+              ],
+            } as never,
+          },
+        })),
+      })),
+    };
+    mockUseProgramProgress.mockReturnValue({
+      data: withMovements,
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'Adjust weights' }));
+    expect(
+      screen.getByRole('heading', { name: 'Adjust weights' }),
+    ).toBeInTheDocument();
+    // One editable control for the swing; the bodyweight pull-up is labeled only.
+    expect(screen.getByText('Kettlebell Swing')).toBeInTheDocument();
+    expect(screen.getByText('Pull-Up')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Update weights' }));
+
+    expect(mockAdjustMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userProgramId: 'up-1',
+        movementWeights: [
+          expect.objectContaining({
+            movementName: 'Kettlebell Swing',
+            weightOneValue: 24,
+            weightOneUnit: 'kilograms',
+          }),
+        ],
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('hides the adjust-weights button when the enrollment is not active', () => {
+    mockUseProgramProgress.mockReturnValue({
+      data: {
+        ...progressData,
+        enrollment: { id: 'up-1', status: 'completed' },
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage();
+
+    expect(
+      screen.queryByRole('button', { name: 'Adjust weights' }),
+    ).toBeNull();
   });
 
   it('renders a not-found state on error', () => {

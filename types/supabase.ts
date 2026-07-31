@@ -796,6 +796,17 @@ export type Database = {
           users_with_first_workout: number
         }[]
       }
+      adjust_program_weights: {
+        Args: {
+          p_movement_weights?: Json
+          p_shared_weight_one_unit?: string
+          p_shared_weight_one_value?: number
+          p_shared_weight_two_unit?: string
+          p_shared_weight_two_value?: number
+          p_user_program_id: string
+        }
+        Returns: number
+      }
       complete_program_session: {
         Args: {
           p_program_session_id: string
