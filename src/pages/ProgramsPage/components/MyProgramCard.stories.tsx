@@ -21,6 +21,8 @@ const program: Program = {
   releasedAt: null,
   defaultAutoRepeat: false,
   stages: null,
+  focusTags: ['strength', 'hypertrophy', 'conditioning'],
+  systemicDemand: 'high',
 };
 
 const meta = {

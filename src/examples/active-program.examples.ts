@@ -84,6 +84,8 @@ export const exampleActiveProgram = ({
       defaultAutoRepeat: false,
       releasedAt: null,
       stages: null,
+      focusTags: [],
+      systemicDemand: null,
     },
     nextSession: isComplete
       ? null

@@ -94,6 +94,8 @@ const dfw = {
   isPublic: true,
   createdAt: '',
   archivedAt: null,
+  focusTags: ['strength', 'hypertrophy', 'conditioning'],
+  systemicDemand: 'high',
 };
 
 // Two double-bell movements at a flat 24 kg.
@@ -389,10 +391,48 @@ describe('ProgramDetailsPage', () => {
     );
   });
 
-  const activeProgram = (id: string, title: string) => ({
+  const activeProgram = (
+    id: string,
+    title: string,
+    // Defaults to an unrated program so these enroll-routing cases stay silent
+    // on stacking advice; the StackFitNote cases below opt in.
+    focusTags: string[] = [],
+    systemicDemand: string | null = null,
+  ) => ({
     enrollment: { id, programId: `${id}-program`, status: 'active' },
-    program: { title },
+    program: { title, focusTags, systemicDemand },
     progress: { completed: 0, total: 3 },
+  });
+
+  it('warns before stacking onto a program that overloads recovery, without blocking it', () => {
+    // dfw is high demand; another high-demand program puts the stack at 6.
+    mockUseActivePrograms.mockReturnValue({
+      data: [
+        activeProgram('up-1', '10,000 Swing Challenge', ['conditioning'], 'high'),
+      ],
+    });
+
+    renderPage();
+
+    const note = screen.getByRole('note', { name: 'Stacking advice' });
+    expect(note).toHaveTextContent('Heavy stack');
+    expect(note).toHaveTextContent('more hard training');
+    // Advisory only — the enroll button stays live.
+    expect(screen.getByRole('button', { name: 'Start program' })).toBeEnabled();
+  });
+
+  it('stays silent rather than guessing when an active program is unrated', () => {
+    // A user-authored program carries no tags or demand, so any verdict about
+    // the stack it's part of would be made up.
+    mockUseActivePrograms.mockReturnValue({
+      data: [activeProgram('up-1', 'My Program')],
+    });
+
+    renderPage();
+
+    expect(
+      screen.queryByRole('note', { name: 'Stacking advice' }),
+    ).not.toBeInTheDocument();
   });
 
   it('starts alongside an existing program with no prompt while a slot is free', () => {

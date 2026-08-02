@@ -92,6 +92,7 @@ const dfw = {
   isPublic: true,
   createdAt: '',
   releasedAt: null,
+  focusTags: ['strength', 'hypertrophy', 'conditioning'],
 };
 
 const armor = {
@@ -107,6 +108,7 @@ const armor = {
   isPublic: true,
   createdAt: '',
   releasedAt: null,
+  focusTags: ['hypertrophy', 'strength', 'conditioning'],
 };
 
 const myProgram = {
@@ -122,6 +124,7 @@ const myProgram = {
   isPublic: false,
   createdAt: '',
   releasedAt: null,
+  focusTags: [],
 };
 
 const renderPage = () =>
@@ -324,6 +327,22 @@ describe('ProgramsPage', () => {
     expect(cards[0]).toHaveTextContent('Active');
     expect(cards[1]).toHaveTextContent('Ready');
     expect(cards[2]).toHaveTextContent('Draft');
+  });
+
+  it('chips a shared program’s focus tags in taxonomy order, and none for an untagged one', () => {
+    mockUsePrograms.mockReturnValue({
+      data: [{ ...dfw, focusTags: ['conditioning', 'strength'] }, myProgram],
+      isLoading: false,
+    });
+
+    renderPage();
+    expandBrowse();
+
+    // Taxonomy order (strength before conditioning), not the order authored.
+    const chips = screen.getAllByRole('listitem').map((li) => li.textContent);
+    expect(chips).toEqual(['Strength', 'Conditioning']);
+    // myProgram is untagged, so its card contributes no chips at all.
+    expect(screen.getByText('My Program')).toBeInTheDocument();
   });
 
   it('labels a repeating workout and badges it, instead of a week cadence', () => {
