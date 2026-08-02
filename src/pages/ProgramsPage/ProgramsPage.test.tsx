@@ -151,7 +151,7 @@ const openCardMenu = (programTitle: string) => {
 
 /**
  * Menu actions are deferred a tick so the menu can close before a dialog mounts
- * (see ProgramCardMenu), so selecting one has to be awaited.
+ * (see OverflowMenu), so selecting one has to be awaited.
  */
 /**
  * The catalog sits below "My programs" behind a disclosure, folded by default
@@ -365,9 +365,9 @@ describe('ProgramsPage', () => {
 
     // Chip on the released program only.
     expect(screen.getAllByText('Released')).toHaveLength(1);
-    expect(
-      screen.getByLabelText('View Dry Fighting Weight'),
-    ).toHaveTextContent('Released');
+    expect(screen.getByLabelText('View Dry Fighting Weight')).toHaveTextContent(
+      'Released',
+    );
     expect(
       screen.getByLabelText('View Armor Building Complex'),
     ).not.toHaveTextContent('Released');
@@ -682,9 +682,7 @@ describe('ProgramsPage', () => {
       screen.queryByRole('button', { name: 'Start now' }),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getAllByRole('button', { name: 'Remove' })[1],
-    );
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[1]);
     expect(dequeueMutate).toHaveBeenCalledWith({ userProgramId: 'q-2' });
   });
 
@@ -717,7 +715,9 @@ describe('ProgramsPage', () => {
 
     renderPage();
 
-    expect(screen.getByText('Queued', { selector: 'span' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Queued', { selector: 'span' }),
+    ).toBeInTheDocument();
     // Starting from the card would double-enroll alongside the queued clone;
     // a queued program starts from "Up next" instead, so the card offers no
     // start at all — not even a disabled one.

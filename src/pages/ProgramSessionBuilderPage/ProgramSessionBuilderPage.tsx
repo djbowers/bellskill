@@ -1,3 +1,4 @@
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -11,7 +12,12 @@ import {
   useUpdateProgramSession,
   useUpdateProgramSessionsForward,
 } from '~/api';
-import { Page } from '~/components';
+import {
+  ConfirmDialog,
+  OverflowMenu,
+  OverflowMenuAction,
+  Page,
+} from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import {
@@ -65,6 +71,13 @@ export const ProgramSessionBuilderPage = () => {
     options: Omit<WorkoutOptions, 'startedAt'>;
     title: string;
   } | null>(null);
+  // The builder opens on demand from the session list; an empty program forces
+  // it open below, since there is no list to show instead.
+  const [builderOpen, setBuilderOpen] = useState(false);
+  // Session queued for deletion while its confirm dialog is open.
+  const [pendingDelete, setPendingDelete] = useState<ProgramSession | null>(
+    null,
+  );
   const duplicateSession = useDuplicateProgramSession();
   const duplicateWeek = useDuplicateProgramWeek();
   const reorderSessions = useReorderProgramSessions();
@@ -110,18 +123,26 @@ export const ProgramSessionBuilderPage = () => {
   const reordering = reorderSessions.isPending;
   const deleting = deleteSession.isPending;
 
+  const showBuilder = builderOpen || sessions.length === 0;
+
+  // A saved session returns to the list, where the new row is the confirmation.
+  // The builder is remounted by key on reopen, so the next session starts from
+  // a clean slate (title cleared, movements reset to defaults).
   const handleSave = (
     options: Omit<WorkoutOptions, 'startedAt'>,
     title: string,
   ) => {
-    saveSession.mutate({
-      programId: program.id,
-      sequenceIndex: nextSequenceIndex,
-      weekNumber: nextWeek,
-      dayNumber: nextDay,
-      title: title || `Session ${nextSequenceIndex + 1}`,
-      workoutOptions: options,
-    });
+    saveSession.mutate(
+      {
+        programId: program.id,
+        sequenceIndex: nextSequenceIndex,
+        weekNumber: nextWeek,
+        dayNumber: nextDay,
+        title: title || `Session ${nextSequenceIndex + 1}`,
+        workoutOptions: options,
+      },
+      { onSuccess: () => setBuilderOpen(false) },
+    );
   };
 
   const handleDuplicateSession = (session: ProgramSession) => {
@@ -156,12 +177,12 @@ export const ProgramSessionBuilderPage = () => {
     reorderSessions.mutate({ programId: program.id, orderedIds });
   };
 
-  const handleDelete = (target: ProgramSession) => {
-    const confirmed = window.confirm(
-      `Delete "${target.title}"? This can't be undone.`,
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    deleteSession.mutate(
+      { sessionId: pendingDelete.id, programId: program.id },
+      { onSettled: () => setPendingDelete(null) },
     );
-    if (!confirmed) return;
-    deleteSession.mutate({ sessionId: target.id, programId: program.id });
   };
 
   const backToBuilder = () => navigate(`/programs/${program.id}/sessions/new`);
@@ -254,14 +275,34 @@ export const ProgramSessionBuilderPage = () => {
             <DialogHeader>
               <DialogTitle>Apply changes to…</DialogTitle>
               <DialogDescription>
-                Carry this session&apos;s movements and weights into the rest
-                of the program, or change just this session. Later sessions
-                keep their own titles, goals, and rep schemes; completed
-                sessions are never changed.
+                Save these movements and weights here, or carry them into the{' '}
+                {laterSessionCount === 1
+                  ? 'next session'
+                  : `next ${laterSessionCount} sessions`}{' '}
+                as well. Later sessions keep their own titles, goals, and rep
+                schemes; completed sessions are never changed.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter className="flex-col gap-1 sm:flex-col">
+            {/* Narrowest blast radius reads as the default; carrying the edit
+                across the rest of the program takes the deliberate second
+                choice, and the escape hatch is last where the thumb lands. */}
+            <DialogFooter className="flex-col gap-1 sm:flex-col sm:gap-1">
               <Button
+                className="w-full"
+                disabled={saving}
+                onClick={() => {
+                  if (pendingSave)
+                    updateThisSessionOnly(
+                      pendingSave.options,
+                      pendingSave.title,
+                    );
+                }}
+              >
+                This session only
+              </Button>
+              <Button
+                variant="secondary"
+                className="w-full"
                 disabled={saving}
                 onClick={() => {
                   if (pendingSave)
@@ -274,17 +315,12 @@ export const ProgramSessionBuilderPage = () => {
                 This and all future sessions
               </Button>
               <Button
-                variant="secondary"
+                variant="ghost"
+                className="w-full"
                 disabled={saving}
-                onClick={() => {
-                  if (pendingSave)
-                    updateThisSessionOnly(
-                      pendingSave.options,
-                      pendingSave.title,
-                    );
-                }}
+                onClick={() => setPendingSave(null)}
               >
-                This session only
+                Keep editing
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -316,14 +352,51 @@ export const ProgramSessionBuilderPage = () => {
     );
   }
 
-  const beforeBuilder = (
-    <>
-      <Link
-        to="/programs"
-        className="self-start text-xs font-medium text-muted-foreground"
-      >
-        ← Programs
-      </Link>
+  const backLink = (
+    <Link
+      to="/programs"
+      className="self-start text-xs font-medium text-muted-foreground"
+    >
+      ← Programs
+    </Link>
+  );
+
+  // The builder is a mode, not the page's resting state: with sessions already
+  // saved, the list leads and "Add session" opens the builder. An empty program
+  // has no list to lead with, so it opens straight into the builder.
+  if (showBuilder) {
+    return (
+      <StartWorkoutPage
+        key={`session-${sessions.length}`}
+        programSaveMode={{
+          onSave: handleSave,
+          saving: saveSession.isPending,
+          beforeBuilder: (
+            <>
+              {sessions.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setBuilderOpen(false)}
+                  className="self-start text-xs font-medium text-muted-foreground"
+                >
+                  ← Sessions
+                </button>
+              ) : (
+                backLink
+              )}
+              <div className="text-xl font-semibold">
+                {sessions.length > 0 ? 'New session' : program.title}
+              </div>
+            </>
+          ),
+        }}
+      />
+    );
+  }
+
+  return (
+    <Page>
+      {backLink}
 
       <div className="text-xl font-semibold">{program.title}</div>
 
@@ -335,48 +408,90 @@ export const ProgramSessionBuilderPage = () => {
             </p>
             {weekGroups.map((group) => (
               <div key={group.weekNumber} className="flex flex-col gap-0.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Week {group.weekNumber}
                   </span>
                   <Button
                     size="sm"
                     variant="ghost"
+                    className="text-muted-foreground"
                     onClick={() => handleDuplicateWeek(group)}
                     disabled={duplicateWeek.isPending}
                   >
                     Duplicate week
                   </Button>
                 </div>
-                {group.sessions.map((groupSession) => {
-                  const flatIndex = sessions.findIndex(
-                    (s) => s.id === groupSession.id,
-                  );
-                  return (
-                    <div
-                      key={groupSession.id}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <span>
-                        Day {groupSession.dayNumber} · {groupSession.title}
-                      </span>
-                      <div className="flex items-center gap-0.5">
-                        {canEdit && (
+                <ul className="flex flex-col">
+                  {group.sessions.map((groupSession) => {
+                    const flatIndex = sessions.findIndex(
+                      (s) => s.id === groupSession.id,
+                    );
+                    const actions: OverflowMenuAction[] = [
+                      ...(canEdit
+                        ? [
+                            {
+                              label: 'Edit session',
+                              onSelect: () =>
+                                navigate(
+                                  `/programs/${program.id}/sessions/${groupSession.id}/edit`,
+                                ),
+                              disabled: deleting || reordering,
+                            },
+                          ]
+                        : []),
+                      {
+                        label: 'Duplicate session',
+                        onSelect: () => handleDuplicateSession(groupSession),
+                        disabled: duplicateSession.isPending,
+                      },
+                      ...(canEdit
+                        ? [
+                            {
+                              label: 'Delete session',
+                              onSelect: () => setPendingDelete(groupSession),
+                              disabled: deleting || reordering,
+                              destructive: true,
+                            },
+                          ]
+                        : []),
+                    ];
+
+                    return (
+                      <li
+                        key={groupSession.id}
+                        className="flex items-center gap-1 border-b border-border/60 py-0.5 last:border-b-0"
+                      >
+                        <span
+                          aria-hidden
+                          className="flex h-3 w-3 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold tabular-nums text-muted-foreground"
+                        >
+                          {groupSession.dayNumber}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm">
+                          <span className="sr-only">
+                            Day {groupSession.dayNumber}:{' '}
+                          </span>
+                          {groupSession.title}
+                        </span>
+                        {canEdit && sessions.length > 1 && (
                           <>
                             <Button
-                              size="sm"
+                              size="icon"
                               variant="ghost"
+                              className="shrink-0 text-muted-foreground"
                               aria-label={`Move ${groupSession.title} up`}
                               onClick={() => handleMove(flatIndex, -1)}
                               disabled={
                                 reordering || deleting || flatIndex === 0
                               }
                             >
-                              ↑
+                              <ChevronUpIcon className="h-2 w-2" aria-hidden />
                             </Button>
                             <Button
-                              size="sm"
+                              size="icon"
                               variant="ghost"
+                              className="shrink-0 text-muted-foreground"
                               aria-label={`Move ${groupSession.title} down`}
                               onClick={() => handleMove(flatIndex, 1)}
                               disabled={
@@ -385,66 +500,53 @@ export const ProgramSessionBuilderPage = () => {
                                 flatIndex === sessions.length - 1
                               }
                             >
-                              ↓
+                              <ChevronDownIcon
+                                className="h-2 w-2"
+                                aria-hidden
+                              />
                             </Button>
                           </>
                         )}
-                        {canEdit && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            aria-label={`Edit ${groupSession.title}`}
-                            onClick={() =>
-                              navigate(
-                                `/programs/${program.id}/sessions/${groupSession.id}/edit`,
-                              )
-                            }
-                            disabled={deleting || reordering}
-                          >
-                            Edit
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDuplicateSession(groupSession)}
-                          disabled={duplicateSession.isPending}
-                        >
-                          Duplicate
-                        </Button>
-                        {canEdit && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            aria-label={`Delete ${groupSession.title}`}
-                            onClick={() => handleDelete(groupSession)}
-                            disabled={deleting || reordering}
-                          >
-                            Delete
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                        <OverflowMenu
+                          actions={actions}
+                          menuLabel={groupSession.title}
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             ))}
           </CardContent>
         </Card>
       )}
-    </>
-  );
 
-  return (
-    // Remount the builder after each save so the next session starts from a
-    // clean slate (title cleared, movements reset to defaults).
-    <StartWorkoutPage
-      key={`session-${sessions.length}`}
-      programSaveMode={{
-        onSave: handleSave,
-        saving: saveSession.isPending,
-        beforeBuilder,
-      }}
-    />
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setPendingDelete(null);
+        }}
+        title="Delete this session?"
+        description={
+          pendingDelete
+            ? `"${pendingDelete.title}" is removed from the program and the sessions after it move up. This can't be undone.`
+            : ''
+        }
+        confirmLabel="Delete session"
+        confirmVariant="destructive"
+        dismissLabel="Keep session"
+        onConfirm={confirmDelete}
+        onDismiss={() => setPendingDelete(null)}
+        isPending={deleting}
+      />
+
+      <Button
+        className="w-full"
+        onClick={() => setBuilderOpen(true)}
+        disabled={reordering || deleting}
+      >
+        Add session
+      </Button>
+    </Page>
   );
 };

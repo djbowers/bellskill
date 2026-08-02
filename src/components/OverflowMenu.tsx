@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
 
-export interface ProgramCardMenuAction {
+export interface OverflowMenuAction {
   label: string;
   onSelect: () => void;
   disabled?: boolean;
@@ -19,16 +19,17 @@ export interface ProgramCardMenuAction {
 }
 
 /**
- * The per-card overflow menu. Every secondary and destructive action lives here
- * so each card can lead with a single primary CTA — destructive actions sit at
- * the top of the card, away from the thumb, and behind a deliberate second tap.
+ * The shared overflow menu. Every secondary and destructive action for a row or
+ * card lives here so the surface can lead with a single primary control —
+ * destructive actions sit behind a deliberate second tap, below a separator.
  */
-export const ProgramCardMenu = ({
+export const OverflowMenu = ({
   actions,
-  programTitle,
+  menuLabel,
 }: {
-  actions: ProgramCardMenuAction[];
-  programTitle: string;
+  actions: OverflowMenuAction[];
+  /** Names the thing being acted on, e.g. a program or session title. */
+  menuLabel: string;
 }) => {
   // Every action here either navigates or opens a dialog, so restoring focus to
   // the trigger on close would yank it straight back out of what just opened.
@@ -40,7 +41,7 @@ export const ProgramCardMenu = ({
   const safeActions = actions.filter((action) => !action.destructive);
   const destructiveActions = actions.filter((action) => action.destructive);
 
-  const select = (action: ProgramCardMenuAction) => () => {
+  const select = (action: OverflowMenuAction) => () => {
     selectedRef.current = true;
     // Let the menu finish closing before the action runs. Several of these open
     // a dialog, and a dialog that mounts mid-close fights the menu's focus
@@ -55,7 +56,7 @@ export const ProgramCardMenu = ({
           variant="ghost"
           size="icon"
           className="-mr-0.5 -mt-0.5 shrink-0 text-muted-foreground"
-          aria-label={`More actions for ${programTitle}`}
+          aria-label={`More actions for ${menuLabel}`}
         >
           <EllipsisHorizontalIcon className="h-2.5 w-2.5" aria-hidden />
         </Button>
