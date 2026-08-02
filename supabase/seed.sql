@@ -114,7 +114,7 @@ BEGIN
     test_user_id,
     NOW() - INTERVAL '2 days' - INTERVAL '1 hour',
     NOW() - INTERVAL '2 days',
-    ARRAY['Kettlebell Swing', 'Goblet Squat', 'Turkish Get-up'],
+    ARRAY['Kettlebell Swing', 'Goblet Squat', 'Kettlebell Turkish Get-Up'],
     ARRAY[20, 10, 5],
     35,
     8,
@@ -157,7 +157,7 @@ BEGIN
     test_user_id,
     NOW() - INTERVAL '1 day' - INTERVAL '45 minutes',
     NOW() - INTERVAL '1 day',
-    ARRAY['Push-up', 'Pull-up', 'Burpee'],
+    ARRAY['Push-Up', 'Pull-Up', 'Burpee'],
     ARRAY[15, 10, 10],
     35,
     10,
@@ -200,7 +200,7 @@ BEGIN
     test_user_id,
     NOW() - INTERVAL '5 hours',
     NOW() - INTERVAL '4 hours',
-    ARRAY['Deadlift', 'Bench Press', 'Squat'],
+    ARRAY['Kettlebell Deadlift', 'Kettlebell Bench Press', 'Bodyweight Squat'],
     ARRAY[5, 5, 5],
     15,
     3,
@@ -243,7 +243,7 @@ BEGIN
     test_user_id,
     NOW() - INTERVAL '3 days' - INTERVAL '30 minutes',
     NOW() - INTERVAL '3 days',
-    ARRAY['Walking', 'Light Stretching'],
+    ARRAY['Kettlebell Farmer''s Carry', 'Kettlebell Halo'],
     ARRAY[1, 1],
     2,
     1,
@@ -286,7 +286,7 @@ BEGIN
     test_user_id,
     NOW() - INTERVAL '4 days' - INTERVAL '1 hour 15 minutes',
     NOW() - INTERVAL '4 days',
-    ARRAY['Single Arm Swing', 'Single Arm Clean', 'Single Arm Press'],
+    ARRAY['One-Arm Kettlebell Swing', 'One-Arm Kettlebell Clean', 'One-Arm Kettlebell Military Press'],
     ARRAY[10, 5, 5],
     20,
     5,
@@ -305,19 +305,19 @@ BEGIN
   );
 
   -- Get the workout_log IDs for movement_logs by matching unique movement combinations
-  SELECT id INTO workout1_id FROM public.workout_logs 
-  WHERE user_id = test_user_id 
-    AND movements = ARRAY['Kettlebell Swing', 'Goblet Squat', 'Turkish Get-up']
+  SELECT id INTO workout1_id FROM public.workout_logs
+  WHERE user_id = test_user_id
+    AND movements = ARRAY['Kettlebell Swing', 'Goblet Squat', 'Kettlebell Turkish Get-Up']
     ORDER BY started_at DESC LIMIT 1;
   
-  SELECT id INTO workout2_id FROM public.workout_logs 
-  WHERE user_id = test_user_id 
-    AND movements = ARRAY['Push-up', 'Pull-up', 'Burpee']
+  SELECT id INTO workout2_id FROM public.workout_logs
+  WHERE user_id = test_user_id
+    AND movements = ARRAY['Push-Up', 'Pull-Up', 'Burpee']
     ORDER BY started_at DESC LIMIT 1;
   
-  SELECT id INTO workout3_id FROM public.workout_logs 
-  WHERE user_id = test_user_id 
-    AND movements = ARRAY['Deadlift', 'Bench Press', 'Squat']
+  SELECT id INTO workout3_id FROM public.workout_logs
+  WHERE user_id = test_user_id
+    AND movements = ARRAY['Kettlebell Deadlift', 'Kettlebell Bench Press', 'Bodyweight Squat']
     ORDER BY started_at DESC LIMIT 1;
 
   -- Add movement logs for workout 1 (kettlebell workout)
@@ -334,7 +334,7 @@ BEGIN
     ) VALUES
     (workout1_id, test_user_id, 'Kettlebell Swing', ARRAY[20]::smallint[], 24, 'kilograms', NULL, NULL),
     (workout1_id, test_user_id, 'Goblet Squat', ARRAY[10]::smallint[], 24, 'kilograms', NULL, NULL),
-    (workout1_id, test_user_id, 'Turkish Get-up', ARRAY[5]::smallint[], 16, 'kilograms', NULL, NULL);
+    (workout1_id, test_user_id, 'Kettlebell Turkish Get-Up', ARRAY[5]::smallint[], 16, 'kilograms', NULL, NULL);
   END IF;
 
   -- Add movement logs for workout 2 (bodyweight workout)
@@ -349,8 +349,8 @@ BEGIN
       weight_two_value,
       weight_two_unit
     ) VALUES
-    (workout2_id, test_user_id, 'Push-up', ARRAY[15]::smallint[], NULL, NULL, NULL, NULL),
-    (workout2_id, test_user_id, 'Pull-up', ARRAY[10]::smallint[], NULL, NULL, NULL, NULL),
+    (workout2_id, test_user_id, 'Push-Up', ARRAY[15]::smallint[], NULL, NULL, NULL, NULL),
+    (workout2_id, test_user_id, 'Pull-Up', ARRAY[10]::smallint[], NULL, NULL, NULL, NULL),
     (workout2_id, test_user_id, 'Burpee', ARRAY[10]::smallint[], NULL, NULL, NULL, NULL);
   END IF;
 
@@ -366,9 +366,9 @@ BEGIN
       weight_two_value,
       weight_two_unit
     ) VALUES
-    (workout3_id, test_user_id, 'Deadlift', ARRAY[5, 5, 5]::smallint[], 100, 'kilograms', NULL, NULL),
-    (workout3_id, test_user_id, 'Bench Press', ARRAY[5, 5, 5]::smallint[], 80, 'kilograms', NULL, NULL),
-    (workout3_id, test_user_id, 'Squat', ARRAY[5, 5, 5]::smallint[], 90, 'kilograms', NULL, NULL);
+    (workout3_id, test_user_id, 'Kettlebell Deadlift', ARRAY[5, 5, 5]::smallint[], 100, 'kilograms', NULL, NULL),
+    (workout3_id, test_user_id, 'Kettlebell Bench Press', ARRAY[5, 5, 5]::smallint[], 80, 'kilograms', NULL, NULL),
+    (workout3_id, test_user_id, 'Bodyweight Squat', ARRAY[5, 5, 5]::smallint[], 90, 'kilograms', NULL, NULL);
   END IF;
 
 END $$;
