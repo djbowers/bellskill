@@ -1,13 +1,9 @@
-import { MovementOptions, WeightUnit } from '~/types';
+import { MovementOptions } from '~/types';
 
-interface SharedWeightOptions {
-  complexSet: boolean;
-  movements: MovementOptions[];
-  sharedWeightOneUnit: WeightUnit | null;
-  sharedWeightOneValue: number | null;
-  sharedWeightTwoUnit: WeightUnit | null;
-  sharedWeightTwoValue: number | null;
-}
+import {
+  SharedWeightOptions,
+  resolveMovementWeights,
+} from './resolveMovementWeights';
 
 /**
  * Complex sets are loaded with one shared weight, but every consumer of
@@ -16,19 +12,17 @@ interface SharedWeightOptions {
  * movement so the two stores can't disagree; non-complex options pass through
  * untouched.
  */
-export const applySharedWeights = <T extends SharedWeightOptions>(
+export const applySharedWeights = <
+  T extends SharedWeightOptions & { movements: MovementOptions[] },
+>(
   options: T,
 ): T => {
   if (!options.complexSet) return options;
 
   return {
     ...options,
-    movements: options.movements.map((movement) => ({
-      ...movement,
-      weightOneUnit: options.sharedWeightOneUnit,
-      weightOneValue: options.sharedWeightOneValue,
-      weightTwoUnit: options.sharedWeightTwoUnit,
-      weightTwoValue: options.sharedWeightTwoValue,
-    })),
+    movements: options.movements.map((movement) =>
+      resolveMovementWeights(movement, options),
+    ),
   };
 };

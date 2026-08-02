@@ -9,10 +9,12 @@ import { Card } from '~/components/ui/card';
 import { getWeightsDisplayValue } from '~/pages/CompletedWorkoutPage/utils/displayValues';
 import { MovementOptions, WeightTabValue, WeightUnit } from '~/types';
 import {
+  SharedWeightOptions,
   WEIGHT_MODE_LABELS,
   getWeightRange,
   getWeightTabValue,
   getWeightUnitLabel,
+  resolveMovementWeights,
 } from '~/utils';
 
 import { FieldLabel } from './FieldLabel';
@@ -29,6 +31,8 @@ export interface MovementCardProps {
   complexSet: boolean;
   /** For complex sets the whole card reflects the shared-weight mode. */
   sharedWeightTabValue: WeightTabValue;
+  /** The complex set's shared weight, displayed in place of the movement's own. */
+  sharedWeights: Omit<SharedWeightOptions, 'complexSet'>;
   expanded: boolean;
   /** The interval timer is on, so timed rungs must be disabled. */
   intervalActive: boolean;
@@ -51,6 +55,7 @@ export const MovementCard = ({
   movement,
   complexSet,
   sharedWeightTabValue,
+  sharedWeights,
   expanded,
   intervalActive,
   onToggleExpanded,
@@ -69,12 +74,16 @@ export const MovementCard = ({
   const weightTabValue = getWeightTabValue(movement);
   const activeWeightMode = complexSet ? sharedWeightTabValue : weightTabValue;
   const named = movement.movementName.length > 0;
+  const displayedMovement = resolveMovementWeights(movement, {
+    complexSet,
+    ...sharedWeights,
+  });
   const weightSummary = named
     ? getWeightsDisplayValue(
-        movement.weightOneValue,
-        movement.weightOneUnit,
-        movement.weightTwoValue,
-        movement.weightTwoUnit,
+        displayedMovement.weightOneValue,
+        displayedMovement.weightOneUnit,
+        displayedMovement.weightTwoValue,
+        displayedMovement.weightTwoUnit,
       )
     : null;
   const showLoad = !complexSet && weightTabValue !== 'none';
@@ -121,7 +130,7 @@ export const MovementCard = ({
               </div>
               <div className="mt-0.5">
                 <MovementSummaryChips
-                  movement={movement}
+                  movement={displayedMovement}
                   weightMode={activeWeightMode}
                 />
               </div>
