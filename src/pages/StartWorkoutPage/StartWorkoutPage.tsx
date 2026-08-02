@@ -11,7 +11,7 @@ import {
   useMovements,
   useWorkoutLogs,
 } from '~/api';
-import { Loading, Page } from '~/components';
+import { Page, PageLoading } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
@@ -889,7 +889,7 @@ export const StartWorkoutPage = ({
   // the hook count between renders (Rules of Hooks / React #310). The mode above
   // is still derived from a forced `showBrowse` until the gate settles, so
   // withhold the real UI rather than commit to it.
-  if (gatesPending) return <Loading />;
+  if (gatesPending) return <PageLoading />;
 
   return (
     <Page>
