@@ -12,7 +12,12 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY!;
 const ES_SLUG = 'easy-strength';
 const ABC_SLUG = 'armor-building-complex';
+const AA_SLUG = 'aa-protocol-plan-a';
+const DFW_SLUG = 'dry-fighting-weight';
 const SWING = 'Kettlebell Swing';
+const DFW_PRESS = 'Double Kettlebell Clean and Press';
+const DELOAD_LABEL = 'Deload weeks';
+const TEST_DAY_LABEL = 'Test day';
 
 interface TestUser {
   token: string;
@@ -103,6 +108,7 @@ interface MovementOpt {
 interface SessionRow {
   id: string;
   sequence_index: number;
+  weight_label: string | null;
   workout_options: {
     complexSet: boolean;
     sharedWeightOneValue: number | null;
@@ -118,7 +124,7 @@ async function orderedSessions(
 ): Promise<SessionRow[]> {
   return restJson<SessionRow[]>(
     'GET',
-    `program_sessions?program_id=eq.${programId}&select=id,sequence_index,workout_options&order=sequence_index.asc`,
+    `program_sessions?program_id=eq.${programId}&select=id,sequence_index,weight_label,workout_options&order=sequence_index.asc`,
     token,
   );
 }
@@ -329,5 +335,189 @@ test.describe('adjust_program_weights — mid-program weight change', () => {
         p_user_program_id: userProgramId,
       }),
     ).rejects.toThrow(/No weights provided/);
+  });
+});
+
+/** Assert A+A work/deload absolute loads (shared + every movement). */
+function expectAaLoads(
+  sessions: SessionRow[],
+  workWeight: number,
+  deloadWeight: number,
+) {
+  for (const session of sessions) {
+    const isDeload = session.weight_label === DELOAD_LABEL;
+    const expected = isDeload ? deloadWeight : workWeight;
+    expect(session.workout_options.sharedWeightOneValue).toBe(expected);
+    expect(session.workout_options.sharedWeightTwoValue).toBe(0);
+    for (const m of session.workout_options.movements) {
+      expect(m.weightOneValue).toBe(expected);
+      expect(m.weightTwoValue).toBe(0);
+    }
+  }
+}
+
+async function adjustAaShared(
+  token: string,
+  userProgramId: string,
+  weight: number,
+): Promise<number> {
+  return rpc<number>('adjust_program_weights', token, {
+    p_user_program_id: userProgramId,
+    p_shared_weight_one_value: weight,
+    p_shared_weight_one_unit: 'kilograms',
+    p_shared_weight_two_value: 0,
+    p_shared_weight_two_unit: 'kilograms',
+  });
+}
+
+test.describe('adjust_program_weights — A+A Plan A deload offsets', () => {
+  test('enroll with shared weights then adjust keeps deload at chosen − 8', async () => {
+    const user = await signUpThrowawayUser();
+    const aaId = await programIdBySlug(user.token, AA_SLUG);
+    // UI-shaped enroll: pick a working bell (seed modal is 24; choose 20).
+    const userProgramId = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: aaId,
+      p_shared_weight_one_value: 20,
+      p_shared_weight_one_unit: 'kilograms',
+      p_shared_weight_two_value: 0,
+      p_shared_weight_two_unit: 'kilograms',
+    });
+    const cloneId = await cloneProgramId(user.token, userProgramId);
+    expectAaLoads(await orderedSessions(user.token, cloneId), 20, 12);
+
+    await adjustAaShared(user.token, userProgramId, 28);
+    expectAaLoads(await orderedSessions(user.token, cloneId), 28, 20);
+  });
+
+  test('mid-block re-adjust after completing work does not double-apply deltas', async () => {
+    const user = await signUpThrowawayUser();
+    const aaId = await programIdBySlug(user.token, AA_SLUG);
+    const userProgramId = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: aaId,
+    });
+    const cloneId = await cloneProgramId(user.token, userProgramId);
+    const before = await orderedSessions(user.token, cloneId);
+    // Complete 4 of 6 work sessions so stale completed 24s would outvote
+    // rebased upcoming work under the old all-sessions modal.
+    const work = before.filter((s) => s.weight_label !== DELOAD_LABEL);
+    expect(work).toHaveLength(6);
+    for (const session of work.slice(0, 4)) {
+      await completeSession(user, userProgramId, session.id);
+    }
+
+    await adjustAaShared(user.token, userProgramId, 28);
+    const afterFirst = await orderedSessions(user.token, cloneId);
+    // Completed rows untouched at enroll weight; upcoming work 28 / deload 20.
+    for (const session of afterFirst) {
+      const wasCompleted = work.slice(0, 4).some((w) => w.id === session.id);
+      if (wasCompleted) {
+        expect(session.workout_options.sharedWeightOneValue).toBe(24);
+      } else if (session.weight_label === DELOAD_LABEL) {
+        expect(session.workout_options.sharedWeightOneValue).toBe(20);
+      } else {
+        expect(session.workout_options.sharedWeightOneValue).toBe(28);
+      }
+    }
+
+    // Second adjust: label-aware modal is incomplete work at 28, not stale 24.
+    await adjustAaShared(user.token, userProgramId, 32);
+    const afterSecond = await orderedSessions(user.token, cloneId);
+    for (const session of afterSecond) {
+      const wasCompleted = work.slice(0, 4).some((w) => w.id === session.id);
+      if (wasCompleted) {
+        expect(session.workout_options.sharedWeightOneValue).toBe(24);
+      } else if (session.weight_label === DELOAD_LABEL) {
+        expect(session.workout_options.sharedWeightOneValue).toBe(24);
+      } else {
+        expect(session.workout_options.sharedWeightOneValue).toBe(32);
+      }
+    }
+  });
+
+  test('adjusting when only deload sessions remain keeps chosen − 8', async () => {
+    const user = await signUpThrowawayUser();
+    const aaId = await programIdBySlug(user.token, AA_SLUG);
+    const userProgramId = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: aaId,
+    });
+    const cloneId = await cloneProgramId(user.token, userProgramId);
+    const before = await orderedSessions(user.token, cloneId);
+    const work = before.filter((s) => s.weight_label !== DELOAD_LABEL);
+    for (const session of work) {
+      await completeSession(user, userProgramId, session.id);
+    }
+
+    // Naive incomplete-only modal would treat deload 16 as working and flatten.
+    await adjustAaShared(user.token, userProgramId, 28);
+    const after = await orderedSessions(user.token, cloneId);
+    for (const session of after) {
+      if (session.weight_label === DELOAD_LABEL) {
+        expect(session.workout_options.sharedWeightOneValue).toBe(20);
+        for (const m of session.workout_options.movements) {
+          expect(m.weightOneValue).toBe(20);
+        }
+      } else {
+        expect(session.workout_options.sharedWeightOneValue).toBe(24);
+      }
+    }
+  });
+});
+
+test.describe('adjust_program_weights — DFW test-day offset', () => {
+  test('per-movement adjust keeps Test day at chosen + 4', async () => {
+    const user = await signUpThrowawayUser();
+    const dfwId = await programIdBySlug(user.token, DFW_SLUG);
+    const userProgramId = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: dfwId,
+      p_movement_weights: [
+        {
+          movementName: DFW_PRESS,
+          weightOneValue: 20,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 20,
+          weightTwoUnit: 'kilograms',
+        },
+        {
+          movementName: 'Front Squat With Two Kettlebells',
+          weightOneValue: 20,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 20,
+          weightTwoUnit: 'kilograms',
+        },
+      ],
+    });
+    const cloneId = await cloneProgramId(user.token, userProgramId);
+    const enrolled = await orderedSessions(user.token, cloneId);
+    const testDay = enrolled.find((s) => s.weight_label === TEST_DAY_LABEL);
+    expect(testDay).toBeDefined();
+    const testPress = testDay!.workout_options.movements.find(
+      (m) => m.movementName === DFW_PRESS,
+    );
+    expect(testPress?.weightOneValue).toBe(24); // 20 + 4
+
+    await rpc<number>('adjust_program_weights', user.token, {
+      p_user_program_id: userProgramId,
+      p_movement_weights: [
+        {
+          movementName: DFW_PRESS,
+          weightOneValue: 28,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 28,
+          weightTwoUnit: 'kilograms',
+        },
+      ],
+    });
+
+    const after = await orderedSessions(user.token, cloneId);
+    for (const session of after) {
+      const press = session.workout_options.movements.find(
+        (m) => m.movementName === DFW_PRESS,
+      );
+      if (!press) continue;
+      const expected =
+        session.weight_label === TEST_DAY_LABEL ? 32 : 28; // +4 on test day
+      expect(press.weightOneValue).toBe(expected);
+      expect(press.weightTwoValue).toBe(expected);
+    }
   });
 });
