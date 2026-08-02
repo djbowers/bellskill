@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { vi } from 'vitest';
 
@@ -138,6 +138,35 @@ const renderPage = () =>
     </MemoryRouter>,
   );
 
+/**
+ * Secondary and destructive card actions live behind the card's ⋯ menu now, so
+ * every one of them is a two-step interaction: open the menu, pick the item.
+ */
+const openCardMenu = (programTitle: string) => {
+  fireEvent.keyDown(
+    screen.getByRole('button', { name: `More actions for ${programTitle}` }),
+    { key: 'Enter' },
+  );
+};
+
+/**
+ * Menu actions are deferred a tick so the menu can close before a dialog mounts
+ * (see ProgramCardMenu), so selecting one has to be awaited.
+ */
+/**
+ * The catalog sits below "My programs" behind a disclosure, folded by default
+ * for anyone who already has programs of their own.
+ */
+const expandBrowse = () =>
+  fireEvent.click(screen.getByRole('button', { name: /Browse programs/ }));
+
+const clickMenuItem = async (name: string) => {
+  fireEvent.click(screen.getByRole('menuitem', { name }));
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+};
+
 describe('ProgramsPage', () => {
   beforeEach(() => {
     mockSessionEmail = undefined;
@@ -205,6 +234,7 @@ describe('ProgramsPage', () => {
     });
 
     renderPage();
+    expandBrowse();
 
     expect(screen.getByText('Dry Fighting Weight')).toBeInTheDocument();
     expect(screen.getByText('Armor Building Complex')).toBeInTheDocument();
@@ -223,6 +253,77 @@ describe('ProgramsPage', () => {
       screen.queryByRole('button', { name: 'Start Dry Fighting Weight' }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText('Starting weight')).not.toBeInTheDocument();
+  });
+
+  it('folds the catalog away when you already have programs of your own', () => {
+    renderPage();
+
+    // "My programs" leads the page; the seed list waits behind a disclosure.
+    expect(screen.queryByText('Dry Fighting Weight')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Browse programs/ }),
+    ).toHaveAttribute('aria-expanded', 'false');
+
+    expandBrowse();
+
+    expect(screen.getByText('Dry Fighting Weight')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Browse programs/ }),
+    ).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('opens the catalog for a user with no programs of their own', () => {
+    mockUsePrograms.mockReturnValue({ data: [dfw], isLoading: false });
+
+    renderPage();
+
+    // Nothing of their own to lead with, so the catalog is the page.
+    expect(
+      screen.getByRole('button', { name: /Browse programs/ }),
+    ).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Dry Fighting Weight')).toBeInTheDocument();
+  });
+
+  it('orders my programs by what is running, then startable, then unfinished', () => {
+    const running = { ...myProgram, id: 'mine-2', title: 'Running Program' };
+    const draft = {
+      ...myProgram,
+      id: 'mine-3',
+      title: 'Draft Program',
+      numWeeks: null,
+      daysPerWeek: null,
+    };
+    // Deliberately supplied worst-first.
+    mockUsePrograms.mockReturnValue({
+      data: [draft, myProgram, running],
+      isLoading: false,
+    });
+    mockUseActivePrograms.mockReturnValue({
+      data: [
+        {
+          enrollment: {
+            id: 'up-1',
+            programId: 'mine-2',
+            status: 'active',
+            activeSlot: 1,
+          },
+          program: { title: 'Running Program' },
+          progress: { completed: 0, total: 3 },
+        },
+      ],
+    });
+
+    renderPage();
+
+    const cards = screen.getAllByTestId('my-program-card');
+    expect(cards[0]).toHaveTextContent('Running Program');
+    expect(cards[1]).toHaveTextContent('My Program');
+    expect(cards[2]).toHaveTextContent('Draft Program');
+
+    // Each tier names itself, so the three treatments are never guesswork.
+    expect(cards[0]).toHaveTextContent('Active');
+    expect(cards[1]).toHaveTextContent('Ready');
+    expect(cards[2]).toHaveTextContent('Draft');
   });
 
   it('labels a repeating workout and badges it, instead of a week cadence', () => {
@@ -394,7 +495,7 @@ describe('ProgramsPage', () => {
     expect(screen.getByText('builder for program')).toBeInTheDocument();
   });
 
-  it('cancels the active program only after confirming', () => {
+  it('cancels the active program only after confirming', async () => {
     mockUseActivePrograms.mockReturnValue({
       data: [
         {
@@ -407,8 +508,9 @@ describe('ProgramsPage', () => {
 
     renderPage();
 
-    // The management "Cancel" surfaces only on the active card.
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    // The management "Cancel program" surfaces only on the active card's menu.
+    openCardMenu('My Program');
+    await clickMenuItem('Cancel program');
 
     // The RPC is gated behind an explicit confirm (progress is discarded).
     expect(cancelMutate).not.toHaveBeenCalled();
@@ -419,10 +521,11 @@ describe('ProgramsPage', () => {
     expect(cancelMutate).toHaveBeenCalledWith({ userProgramId: 'up-1' });
   });
 
-  it('hard-deletes a program only after an explicit confirm', () => {
+  it('hard-deletes a program only after an explicit confirm', async () => {
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    openCardMenu('My Program');
+    await clickMenuItem('Delete program');
 
     // Irreversible — nothing happens until the confirm dialog is accepted.
     expect(deleteMutate).not.toHaveBeenCalled();
@@ -433,10 +536,11 @@ describe('ProgramsPage', () => {
     expect(deleteMutate).toHaveBeenCalledWith({ programId: 'mine-1' });
   });
 
-  it('archives a live program (no confirm — it is reversible)', () => {
+  it('archives a live program (no confirm — it is reversible)', async () => {
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Archive' }));
+    openCardMenu('My Program');
+    await clickMenuItem('Archive program');
 
     expect(setArchivedMutate).toHaveBeenCalledWith({
       programId: 'mine-1',
@@ -470,6 +574,55 @@ describe('ProgramsPage', () => {
       programId: 'arch-1',
       archived: false,
     });
+  });
+
+  it('reads an archived program with no sessions through the cadence label', () => {
+    mockUsePrograms.mockReturnValue({
+      data: [
+        {
+          ...myProgram,
+          id: 'arch-1',
+          title: 'Old Program',
+          numWeeks: null,
+          daysPerWeek: null,
+          archivedAt: '2026-07-01T00:00:00Z',
+        },
+      ],
+      isLoading: false,
+    });
+
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'Show archived (1)' }));
+
+    // Regression: this card used to print the raw "null weeks · null/week".
+    expect(screen.getByText('No sessions yet')).toBeInTheDocument();
+    expect(screen.queryByText(/null/)).not.toBeInTheDocument();
+  });
+
+  it('leads a draft program with Add sessions and demotes the rest to the menu', () => {
+    mockUsePrograms.mockReturnValue({
+      data: [{ ...myProgram, numWeeks: null, daysPerWeek: null }],
+      isLoading: false,
+    });
+
+    renderPage();
+
+    // A program with no sessions cannot be started — the one CTA is the thing
+    // it actually needs.
+    expect(
+      screen.getByRole('button', { name: 'Add sessions' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Start program' }),
+    ).not.toBeInTheDocument();
+
+    openCardMenu('My Program');
+    expect(
+      screen.getByRole('menuitem', { name: 'View progress' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('menuitem', { name: 'Delete program' }),
+    ).toBeInTheDocument();
   });
 
   const threeActive = [1, 2, 3].map((slot) => ({
@@ -535,10 +688,11 @@ describe('ProgramsPage', () => {
     expect(dequeueMutate).toHaveBeenCalledWith({ userProgramId: 'q-2' });
   });
 
-  it('queues an own program for later from its card, without a slot claim', () => {
+  it('queues an own program for later from its card, without a slot claim', async () => {
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Queue for later' }));
+    openCardMenu('My Program');
+    await clickMenuItem('Queue for later');
 
     expect(enrollMutate).toHaveBeenCalledWith({
       programId: 'mine-1',
@@ -564,12 +718,17 @@ describe('ProgramsPage', () => {
     renderPage();
 
     expect(screen.getByText('Queued', { selector: 'span' })).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Queue for later' }),
-    ).not.toBeInTheDocument();
     // Starting from the card would double-enroll alongside the queued clone;
-    // a queued program starts from "Up next" instead.
-    expect(screen.getByRole('button', { name: 'Queued' })).toBeDisabled();
+    // a queued program starts from "Up next" instead, so the card offers no
+    // start at all — not even a disabled one.
+    expect(
+      screen.queryByRole('button', { name: 'Start program' }),
+    ).not.toBeInTheDocument();
+
+    openCardMenu('My Program');
+    expect(
+      screen.queryByRole('menuitem', { name: 'Queue for later' }),
+    ).not.toBeInTheDocument();
   });
 
   it('chains each queued row to the one before it, with Start now only at the front', () => {

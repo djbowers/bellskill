@@ -1,6 +1,5 @@
-import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import {
   AnalyticsEvent,
@@ -21,22 +20,21 @@ import {
 } from '~/api';
 import { Page } from '~/components';
 import { Button } from '~/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '~/components/ui/dialog';
-import { Input } from '~/components/ui/input';
-import { Label } from '~/components/ui/label';
 import { isOwner } from '~/config/features';
 import { useSession } from '~/contexts';
-import { cn } from '~/lib/utils';
 import { Program } from '~/types';
-import { programCadenceLabel } from '~/utils';
+
+import {
+  ArchivedProgramCard,
+  BrowseProgramsSection,
+  ConfirmDialog,
+  CreateProgramForm,
+  MyProgramCard,
+  QueueTimeline,
+  ReplaceProgramDialog,
+  ResumeProgramDialog,
+} from './components';
+import { myProgramCardSortWeight, myProgramCardState } from './utils';
 
 export const ProgramsPage = () => {
   const navigate = useNavigate();
@@ -56,6 +54,9 @@ export const ProgramsPage = () => {
 
   const [showCreate, setShowCreate] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  // Null until the user touches the disclosure, so the default can follow from
+  // whether they have any programs of their own (resolved below).
+  const [browseOpen, setBrowseOpen] = useState<boolean | null>(null);
   // Program pending an irreversible hard-delete confirm.
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   // Active enrollment pending a cancel confirm (discards in-progress progress).
@@ -172,8 +173,7 @@ export const ProgramsPage = () => {
   // The lowest free parallel slot, or null at the cap — gates "Start now" on
   // queued programs and gives the claim its slot.
   const takenSlots = activeEnrollments.map((p) => p.enrollment.activeSlot);
-  const freeSlot =
-    [1, 2, 3].find((slot) => !takenSlots.includes(slot)) ?? null;
+  const freeSlot = [1, 2, 3].find((slot) => !takenSlots.includes(slot)) ?? null;
 
   const confirmSwitch = () => {
     if (!pendingSwitchId || !replaceEnrollmentId) return;
@@ -182,6 +182,11 @@ export const ProgramsPage = () => {
     setPendingSwitchId(null);
     setReplaceEnrollmentId(null);
     enrollIn(target, replaced);
+  };
+
+  const dismissSwitch = () => {
+    setPendingSwitchId(null);
+    setReplaceEnrollmentId(null);
   };
 
   const resumeDialogProgram =
@@ -263,125 +268,25 @@ export const ProgramsPage = () => {
     cancelProgram.mutate({ userProgramId: target });
   };
 
+  // What's running comes first, then what's queued, then what you could start
+  // today, then the drafts still being built.
+  const sortedLivePrograms = [...myLivePrograms].sort(
+    (a, b) =>
+      myProgramCardSortWeight(
+        myProgramCardState(a, { isActive: isActive(a), isQueued: isQueued(a) }),
+      ) -
+      myProgramCardSortWeight(
+        myProgramCardState(b, { isActive: isActive(b), isQueued: isQueued(b) }),
+      ),
+  );
+
+  // The catalog stays folded for anyone with programs of their own; a user with
+  // none gets it open, because then it's the only thing on the page worth
+  // doing. An explicit toggle always wins over both.
+  const isBrowseOpen = browseOpen ?? (!isLoading && myPrograms.length === 0);
+
   return (
     <Page title="Programs">
-      {sharedPrograms.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <h2 className="text-sm font-semibold">Browse programs</h2>
-          <Card className="divide-y">
-            {sharedPrograms.map((program) => (
-              <Link
-                key={program.id}
-                to={`/programs/${program.id}/details`}
-                aria-label={`View ${program.title}`}
-                className="flex items-center justify-between gap-2 p-2 hover:bg-secondary"
-              >
-                <div className="min-w-0">
-                  <p className="flex items-center gap-1 truncate text-sm font-medium">
-                    {program.title}
-                    {program.defaultAutoRepeat && (
-                      <span className="rounded bg-secondary px-0.5 text-xs font-normal text-muted-foreground">
-                        Repeats
-                      </span>
-                    )}
-                    {isOwner(session) && program.releasedAt && (
-                      <span className="rounded bg-secondary px-0.5 text-xs font-normal text-muted-foreground">
-                        Released
-                      </span>
-                    )}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {program.authorName ? `${program.authorName} · ` : ''}
-                    {programCadenceLabel(program) ?? 'No sessions yet'}
-                  </p>
-                </div>
-                <ChevronRightIcon
-                  aria-hidden
-                  className="h-2 w-2 shrink-0 text-muted-foreground"
-                />
-              </Link>
-            ))}
-          </Card>
-        </div>
-      )}
-
-      {queuedPrograms.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <h2 className="text-sm font-semibold">Up next</h2>
-          <Card>
-            <CardContent className="flex flex-col pt-2">
-              {queuedPrograms.map(({ enrollment, program }, index) => {
-                const isFront = index === 0;
-                const isLast = index === queuedPrograms.length - 1;
-                // Each row names what it waits on: the front of the line waits
-                // on a slot, everything behind waits on the row before it.
-                const waitsOn = isFront
-                  ? freeSlot !== null
-                    ? 'A slot is open'
-                    : 'Starts when an active program finishes'
-                  : `After ${queuedPrograms[index - 1].program.title}`;
-                return (
-                  <div
-                    key={enrollment.id}
-                    className={cn('flex gap-1.5', !isLast && 'pb-2')}
-                    data-testid="queued-program"
-                  >
-                    <div className="flex flex-col items-center">
-                      <span
-                        aria-hidden
-                        className={cn(
-                          'flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full border text-xs font-medium',
-                          isFront
-                            ? 'border-primary text-primary'
-                            : 'border-border text-muted-foreground',
-                        )}
-                      >
-                        {index + 1}
-                      </span>
-                      {!isLast && <span className="w-px flex-1 bg-border" />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {program.title}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {waitsOn}
-                      </p>
-                    </div>
-                    {isFront && freeSlot !== null && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          startQueued.mutate(
-                            { userProgramId: enrollment.id, slot: freeSlot },
-                            { onSuccess: () => navigate('/') },
-                          )
-                        }
-                        disabled={startQueued.isPending}
-                      >
-                        Start now
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-muted-foreground"
-                      onClick={() =>
-                        dequeue.mutate({ userProgramId: enrollment.id })
-                      }
-                      disabled={dequeue.isPending}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">My programs</h2>
         <Button
@@ -394,30 +299,12 @@ export const ProgramsPage = () => {
       </div>
 
       {showCreate && (
-        <Card>
-          <CardContent className="flex flex-col gap-2 pt-2">
-            <div className="flex flex-col gap-0.5">
-              <Label htmlFor="program-title">Title</Label>
-              <Input
-                id="program-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Dry Fighting Weight"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Weeks and days per week are set by the sessions you add next.
-            </p>
-            <Button
-              onClick={handleCreate}
-              disabled={title.trim().length === 0 || createProgram.isPending}
-            >
-              {createProgram.isPending
-                ? 'Creating…'
-                : 'Create and add sessions'}
-            </Button>
-          </CardContent>
-        </Card>
+        <CreateProgramForm
+          title={title}
+          onTitleChange={setTitle}
+          onCreate={handleCreate}
+          isPending={createProgram.isPending}
+        />
       )}
 
       {isLoading && (
@@ -426,128 +313,41 @@ export const ProgramsPage = () => {
 
       {!isLoading && myPrograms.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          You haven&apos;t created any programs yet.
+          You haven&apos;t created any programs yet. Start from a ready-made
+          plan below, or build your own.
         </p>
       )}
 
-      {myLivePrograms.map((program) => (
-        <Card key={program.id}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-1">
-              <Link to={`/programs/${program.id}`} className="hover:underline">
-                {program.title}
-              </Link>
-              {isActive(program) && (
-                <span className="rounded bg-primary px-0.5 text-xs text-primary-foreground">
-                  Active
-                </span>
-              )}
-              {isQueued(program) && (
-                <span className="rounded bg-secondary px-0.5 text-xs font-normal text-muted-foreground">
-                  Queued
-                </span>
-              )}
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              {programCadenceLabel(program) ?? 'No sessions yet'}
-            </p>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                className="flex-1"
-                onClick={() => navigate(`/programs/${program.id}/sessions/new`)}
-              >
-                Add sessions
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() => handleEnroll(program.id)}
-                disabled={
-                  enroll.isPending ||
-                  resume.isPending ||
-                  isActive(program) ||
-                  // A queued program starts from "Up next" (Start now / its
-                  // turn), never a second parallel enrollment from here.
-                  isQueued(program) ||
-                  pendingEnrollId === program.id
-                }
-              >
-                {isActive(program)
-                  ? 'Enrolled'
-                  : isQueued(program)
-                    ? 'Queued'
-                    : 'Start program'}
-              </Button>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-1"
-                onClick={() => navigate(`/programs/${program.id}`)}
-              >
-                View progress
-              </Button>
-              {!isActive(program) && !isQueued(program) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex-1 text-muted-foreground"
-                  onClick={() =>
-                    enroll.mutate({ programId: program.id, queue: true })
-                  }
-                  disabled={enroll.isPending}
-                >
-                  Queue for later
-                </Button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              {isActive(program) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex-1 text-muted-foreground"
-                  onClick={() =>
-                    setPendingCancelId(
-                      enrollmentFor(program)?.enrollment.id ?? null,
-                    )
-                  }
-                  disabled={cancelProgram.isPending}
-                >
-                  Cancel
-                </Button>
-              )}
-              {!isActive(program) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex-1 text-muted-foreground"
-                  onClick={() =>
-                    setArchived.mutate({
-                      programId: program.id,
-                      archived: true,
-                    })
-                  }
-                  disabled={setArchived.isPending}
-                >
-                  Archive
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-1 text-destructive"
-                onClick={() => setPendingDeleteId(program.id)}
-                disabled={deleteProgram.isPending}
-              >
-                Delete
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {sortedLivePrograms.map((program) => (
+        <MyProgramCard
+          key={program.id}
+          program={program}
+          isActive={isActive(program)}
+          isQueued={isQueued(program)}
+          isStarting={pendingEnrollId === program.id}
+          pending={{
+            enroll: enroll.isPending,
+            resume: resume.isPending,
+            cancel: cancelProgram.isPending,
+            archive: setArchived.isPending,
+            delete: deleteProgram.isPending,
+          }}
+          onStart={() => handleEnroll(program.id)}
+          onAddSessions={() =>
+            navigate(`/programs/${program.id}/sessions/new`)
+          }
+          onViewProgress={() => navigate(`/programs/${program.id}`)}
+          onQueueForLater={() =>
+            enroll.mutate({ programId: program.id, queue: true })
+          }
+          onCancel={() =>
+            setPendingCancelId(enrollmentFor(program)?.enrollment.id ?? null)
+          }
+          onArchive={() =>
+            setArchived.mutate({ programId: program.id, archived: true })
+          }
+          onDelete={() => setPendingDeleteId(program.id)}
+        />
       ))}
 
       {myArchivedPrograms.length > 0 && (
@@ -565,228 +365,128 @@ export const ProgramsPage = () => {
 
           {showArchived &&
             myArchivedPrograms.map((program) => (
-              <Card key={program.id}>
-                <CardHeader>
-                  <CardTitle className="text-muted-foreground">
-                    {program.title}
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground">
-                    Archived · {program.numWeeks} weeks · {program.daysPerWeek}
-                    /week
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() =>
-                        setArchived.mutate({
-                          programId: program.id,
-                          archived: false,
-                        })
-                      }
-                      disabled={setArchived.isPending}
-                    >
-                      Restore
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex-1 text-destructive"
-                      onClick={() => setPendingDeleteId(program.id)}
-                      disabled={deleteProgram.isPending}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <ArchivedProgramCard
+                key={program.id}
+                program={program}
+                pending={{
+                  archive: setArchived.isPending,
+                  delete: deleteProgram.isPending,
+                }}
+                onRestore={() =>
+                  setArchived.mutate({
+                    programId: program.id,
+                    archived: false,
+                  })
+                }
+                onDelete={() => setPendingDeleteId(program.id)}
+              />
             ))}
         </>
       )}
 
-      <Dialog
+      {queuedPrograms.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <h2 className="text-sm font-semibold">Up next</h2>
+          <QueueTimeline
+            queuedPrograms={queuedPrograms}
+            freeSlot={freeSlot}
+            pending={{
+              start: startQueued.isPending,
+              remove: dequeue.isPending,
+            }}
+            onStartNow={(userProgramId, slot) =>
+              startQueued.mutate(
+                { userProgramId, slot },
+                { onSuccess: () => navigate('/') },
+              )
+            }
+            onRemove={(userProgramId) => dequeue.mutate({ userProgramId })}
+          />
+        </div>
+      )}
+
+      {sharedPrograms.length > 0 && (
+        <BrowseProgramsSection
+          programs={sharedPrograms}
+          open={isBrowseOpen}
+          onOpenChange={setBrowseOpen}
+          showReleasedBadge={isOwner(session)}
+        />
+      )}
+
+      <ReplaceProgramDialog
         open={pendingSwitchId !== null}
         onOpenChange={(open) => {
-          if (!open) {
-            setPendingSwitchId(null);
-            setReplaceEnrollmentId(null);
-          }
+          if (!open) dismissSwitch();
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Replace a program?</DialogTitle>
-            <DialogDescription>
-              You&apos;re already running {MAX_ACTIVE_PROGRAMS} programs — the
-              most you can have at once. Pick one to stop so this new one can
-              take its place, or queue it to start when one finishes. A
-              replaced program&apos;s logged workouts are kept, but its place in
-              the program is cleared.
-            </DialogDescription>
-          </DialogHeader>
-          <div
-            role="radiogroup"
-            aria-label="Program to replace"
-            className="flex flex-col gap-0.5"
-          >
-            {activeEnrollments.map(({ enrollment, program, progress }) => (
-              <label
-                key={enrollment.id}
-                className="flex items-center gap-1 rounded p-1 hover:bg-secondary"
-              >
-                <input
-                  type="radio"
-                  name="replace-enrollment"
-                  value={enrollment.id}
-                  checked={replaceEnrollmentId === enrollment.id}
-                  onChange={() => setReplaceEnrollmentId(enrollment.id)}
-                />
-                <span className="min-w-0 flex-1 truncate text-sm">
-                  {program.title}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {progress.completed}/{progress.total}
-                </span>
-              </label>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setPendingSwitchId(null);
-                setReplaceEnrollmentId(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={queueInstead}
-              disabled={enroll.isPending}
-            >
-              Queue instead
-            </Button>
-            <Button
-              onClick={confirmSwitch}
-              disabled={enroll.isPending || !replaceEnrollmentId}
-            >
-              Replace program
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        activeEnrollments={activeEnrollments}
+        replaceEnrollmentId={replaceEnrollmentId}
+        onSelectReplace={setReplaceEnrollmentId}
+        onCancel={dismissSwitch}
+        onQueueInstead={queueInstead}
+        onConfirm={confirmSwitch}
+        isPending={enroll.isPending}
+      />
 
-      <Dialog
+      <ResumeProgramDialog
         open={resumeTarget !== null}
         onOpenChange={(open) => {
           if (!open) setResumeTarget(null);
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Resume this program?</DialogTitle>
-            <DialogDescription>
-              You already have progress in
-              {resumeDialogProgram ? ` "${resumeDialogProgram.title}"` : ''}.
-              Pick up where you left off, or start over from the first session.
-              {displacedByResume
-                ? ` You're at ${MAX_ACTIVE_PROGRAMS} programs, so either way this replaces ${displacedByResume.program.title}.`
-                : ''}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={startOverFromResume}
-              disabled={enroll.isPending || resume.isPending}
-            >
-              Start over
-            </Button>
-            <Button
-              onClick={confirmResume}
-              disabled={enroll.isPending || resume.isPending}
-            >
-              Resume
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        program={resumeDialogProgram}
+        displacedByResume={displacedByResume}
+        onResume={confirmResume}
+        onStartOver={startOverFromResume}
+        isPending={enroll.isPending || resume.isPending}
+      />
 
-      <Dialog
+      <ConfirmDialog
         open={pendingCancelId !== null}
         onOpenChange={(open) => {
           if (!open) setPendingCancelId(null);
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancel program?</DialogTitle>
-            <DialogDescription>
-              This stops
-              {pendingCancelProgram
-                ? ` ${pendingCancelProgram.program.title}`
-                : ' this program'}
-              . Your logged workouts are kept, but your place in the program is
-              cleared — restarting begins from the first session.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setPendingCancelId(null)}
-            >
-              Keep going
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmCancel}
-              disabled={cancelProgram.isPending}
-            >
-              Cancel program
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        title="Cancel program?"
+        description={
+          <>
+            This stops
+            {pendingCancelProgram
+              ? ` ${pendingCancelProgram.program.title}`
+              : ' this program'}
+            . Your logged workouts are kept, but your place in the program is
+            cleared — restarting begins from the first session.
+          </>
+        }
+        confirmLabel="Cancel program"
+        confirmVariant="destructive"
+        dismissLabel="Keep going"
+        onConfirm={confirmCancel}
+        onDismiss={() => setPendingCancelId(null)}
+        isPending={cancelProgram.isPending}
+      />
 
-      <Dialog
+      <ConfirmDialog
         open={pendingDeleteId !== null}
         onOpenChange={(open) => {
           if (!open) setPendingDeleteId(null);
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete program?</DialogTitle>
-            <DialogDescription>
-              This permanently deletes
-              {pendingDeleteProgram ? ` "${pendingDeleteProgram.title}"` : ''},
-              its sessions, and its history. This can&apos;t be undone
-              {pendingDeleteProgram?.archivedAt
-                ? '.'
-                : ' — archive it instead if you just want it out of the way.'}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setPendingDeleteId(null)}
-            >
-              Keep program
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDelete}
-              disabled={deleteProgram.isPending}
-            >
-              Delete permanently
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        title="Delete program?"
+        description={
+          <>
+            This permanently deletes
+            {pendingDeleteProgram ? ` "${pendingDeleteProgram.title}"` : ''},
+            its sessions, and its history. This can&apos;t be undone
+            {pendingDeleteProgram?.archivedAt
+              ? '.'
+              : ' — archive it instead if you just want it out of the way.'}
+          </>
+        }
+        confirmLabel="Delete permanently"
+        confirmVariant="destructive"
+        dismissLabel="Keep program"
+        onConfirm={confirmDelete}
+        onDismiss={() => setPendingDeleteId(null)}
+        isPending={deleteProgram.isPending}
+      />
     </Page>
   );
 };
