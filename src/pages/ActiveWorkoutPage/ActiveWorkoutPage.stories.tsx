@@ -15,7 +15,7 @@ import { ActiveWorkoutPage } from './ActiveWorkoutPage';
 const defaultWorkoutOptions: WorkoutOptions = {
   ...DEFAULT_WORKOUT_OPTIONS,
   movements: [
-    { ...DEFAULT_MOVEMENT_OPTIONS, movementName: 'Single Arm Clean & Press' },
+    { ...DEFAULT_MOVEMENT_OPTIONS, movementName: 'Kettlebell Clean and Press' },
   ],
   title: 'Example Workout',
   preWorkoutNotes: 'Example pre-workout notes',
