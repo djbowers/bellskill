@@ -8,6 +8,7 @@ export * from './ModifyCountButtons';
 export * from './PWAInstallPrompt';
 export * from './Page';
 export * from './PremiumGate';
+export * from './ProgramTags';
 export * from './SafeAreaWrapper';
 export * from './Sidebar';
 export * from './TrialStatusPill';

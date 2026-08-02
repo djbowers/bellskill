@@ -1,7 +1,9 @@
 import {
   Program,
+  ProgramFocusTag,
   ProgramSession,
   ProgramStage,
+  ProgramSystemicDemand,
   ProgramSessionCompletion,
   ProgramSessionCompletionStatus,
   UserProgram,
@@ -35,6 +37,8 @@ export const mapProgramRow = (row: ProgramRow): Program => ({
   defaultAutoRepeat: row.default_auto_repeat,
   releasedAt: row.released_at,
   stages: row.stages as unknown as ProgramStage[] | null,
+  focusTags: row.focus_tags as ProgramFocusTag[],
+  systemicDemand: row.systemic_demand as ProgramSystemicDemand | null,
 });
 
 /**

@@ -1,6 +1,7 @@
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 
+import { ProgramTags } from '~/components';
 import { Card } from '~/components/ui/card';
 import { Program } from '~/types';
 import { programCadenceLabel } from '~/utils';
@@ -54,6 +55,7 @@ export const BrowseProgramsList = ({
             {program.authorName ? `${program.authorName} · ` : ''}
             {programCadenceLabel(program) ?? 'No sessions yet'}
           </p>
+          <ProgramTags tags={program.focusTags} className="mt-0.5" />
         </div>
         <ChevronRightIcon
           aria-hidden

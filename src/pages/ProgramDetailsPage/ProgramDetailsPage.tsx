@@ -8,7 +8,12 @@ import {
   useProgram,
 } from '~/api';
 import type { MovementWeight } from '~/api';
-import { ModifyCountButtons, Page, WeightUnitTabs } from '~/components';
+import {
+  ModifyCountButtons,
+  Page,
+  ProgramTags,
+  WeightUnitTabs,
+} from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import {
@@ -349,6 +354,7 @@ export const ProgramDetailsPage = () => {
             {data.program.authorName ? `${data.program.authorName} · ` : ''}
             {programCadenceLabel(data.program) ?? 'No sessions yet'}
           </p>
+          <ProgramTags tags={data.program.focusTags} />
           {data.program.description && (
             <p className="text-sm text-muted-foreground">
               {data.program.description}

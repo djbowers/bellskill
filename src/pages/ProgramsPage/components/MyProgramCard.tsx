@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 
+import { ProgramTags } from '~/components';
 import { Button, ButtonProps } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { cn } from '~/lib/utils';
@@ -205,6 +206,7 @@ export const MyProgramCard = ({
           <p className="truncate text-xs text-muted-foreground">
             {cadence ?? 'No sessions yet'}
           </p>
+          <ProgramTags tags={program.focusTags} className="mt-0.5" />
         </div>
 
         <ProgramCardMenu actions={menuActions} programTitle={program.title} />

@@ -94,6 +94,7 @@ const dfw = {
   isPublic: true,
   createdAt: '',
   archivedAt: null,
+  focusTags: ['strength', 'hypertrophy', 'conditioning'],
 };
 
 // Two double-bell movements at a flat 24 kg.
