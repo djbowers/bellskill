@@ -18,7 +18,7 @@ import {
   useSetProgramArchived,
   useStartQueuedProgram,
 } from '~/api';
-import { Page } from '~/components';
+import { ConfirmDialog, Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { isOwner } from '~/config/features';
 import { useSession } from '~/contexts';
@@ -27,7 +27,6 @@ import { Program } from '~/types';
 import {
   ArchivedProgramCard,
   BrowseProgramsSection,
-  ConfirmDialog,
   CreateProgramForm,
   MyProgramCard,
   QueueTimeline,
@@ -246,7 +245,8 @@ export const ProgramsPage = () => {
     queuedPrograms.some((q) => q.enrollment.programId === program.id);
 
   const enrollmentFor = (program: Program) =>
-    activeEnrollments.find((p) => p.enrollment.programId === program.id) ?? null;
+    activeEnrollments.find((p) => p.enrollment.programId === program.id) ??
+    null;
 
   const pendingDeleteProgram =
     programs.find((p) => p.id === pendingDeleteId) ?? null;
@@ -333,9 +333,7 @@ export const ProgramsPage = () => {
             delete: deleteProgram.isPending,
           }}
           onStart={() => handleEnroll(program.id)}
-          onAddSessions={() =>
-            navigate(`/programs/${program.id}/sessions/new`)
-          }
+          onAddSessions={() => navigate(`/programs/${program.id}/sessions/new`)}
           onViewProgress={() => navigate(`/programs/${program.id}`)}
           onQueueForLater={() =>
             enroll.mutate({ programId: program.id, queue: true })

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { vi } from 'vitest';
 
@@ -15,6 +15,10 @@ const {
   mockUseUpdateProgramSessionsForward,
   updateMutate,
   updateForwardMutate,
+  deleteMutate,
+  reorderMutate,
+  duplicateSessionMutate,
+  saveMutate,
 } = vi.hoisted(() => ({
   mockUseProgram: vi.fn(),
   mockUseSaveProgramSession: vi.fn(),
@@ -26,7 +30,13 @@ const {
   mockUseUpdateProgramSessionsForward: vi.fn(),
   updateMutate: vi.fn(),
   updateForwardMutate: vi.fn(),
+  deleteMutate: vi.fn(),
+  reorderMutate: vi.fn(),
+  duplicateSessionMutate: vi.fn(),
+  saveMutate: vi.fn(),
 }));
+
+let mockUserId: string | undefined = 'owner-1';
 
 vi.mock('~/api', () => ({
   useProgram: mockUseProgram,
@@ -44,7 +54,7 @@ vi.mock('~/contexts', async () => {
     await vi.importActual<typeof import('~/contexts')>('~/contexts');
   return {
     ...actual,
-    useSession: () => ({ user: { id: 'owner-1' } }),
+    useSession: () => (mockUserId ? { user: { id: mockUserId } } : null),
     useToast: () => ({ showToast: vi.fn() }),
   };
 });
@@ -117,6 +127,22 @@ const ownedProgram = {
 
 const idleMutation = () => ({ mutate: vi.fn(), isPending: false });
 
+/** Per-session actions live behind the row's ⋯ menu: open it, then pick. */
+const openSessionMenu = (title: string) => {
+  fireEvent.keyDown(
+    screen.getByRole('button', { name: `More actions for ${title}` }),
+    { key: 'Enter' },
+  );
+};
+
+/** Menu selections are deferred a tick so a dialog can mount after the close. */
+const clickMenuItem = async (name: string) => {
+  fireEvent.click(screen.getByRole('menuitem', { name }));
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+};
+
 const renderAt = (path: string) =>
   render(
     <MemoryRouter initialEntries={[path]}>
@@ -135,21 +161,38 @@ const renderAt = (path: string) =>
 
 describe('ProgramSessionBuilderPage', () => {
   beforeEach(() => {
+    mockUserId = 'owner-1';
     updateMutate.mockReset();
+    deleteMutate.mockReset();
+    reorderMutate.mockReset();
+    duplicateSessionMutate.mockReset();
+    saveMutate.mockReset();
     mockUseProgram.mockReturnValue({
       data: { program: ownedProgram, sessions: [session] },
       isLoading: false,
       isError: false,
     });
-    mockUseSaveProgramSession.mockReturnValue(idleMutation());
+    mockUseSaveProgramSession.mockReturnValue({
+      mutate: saveMutate,
+      isPending: false,
+    });
     mockUseUpdateProgramSession.mockReturnValue({
       mutate: updateMutate,
       isPending: false,
     });
-    mockUseDeleteProgramSession.mockReturnValue(idleMutation());
-    mockUseDuplicateProgramSession.mockReturnValue(idleMutation());
+    mockUseDeleteProgramSession.mockReturnValue({
+      mutate: deleteMutate,
+      isPending: false,
+    });
+    mockUseDuplicateProgramSession.mockReturnValue({
+      mutate: duplicateSessionMutate,
+      isPending: false,
+    });
     mockUseDuplicateProgramWeek.mockReturnValue(idleMutation());
-    mockUseReorderProgramSessions.mockReturnValue(idleMutation());
+    mockUseReorderProgramSessions.mockReturnValue({
+      mutate: reorderMutate,
+      isPending: false,
+    });
     updateForwardMutate.mockReset();
     mockUseUpdateProgramSessionsForward.mockReturnValue({
       mutate: updateForwardMutate,
@@ -157,12 +200,142 @@ describe('ProgramSessionBuilderPage', () => {
     });
   });
 
-  it('offers an Edit control per session in add mode', () => {
+  it('rests on the session list and reveals the builder on demand', () => {
     renderAt('/programs/p-1/sessions/new');
 
     expect(
-      screen.getByRole('button', { name: 'Edit Ladders 1-2-3' }),
+      screen.queryByRole('button', { name: 'stub-save' }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add session' }));
+
+    expect(
+      screen.getByRole('button', { name: 'stub-save' }),
     ).toBeInTheDocument();
+    expect(screen.queryByText('Saved sessions (1)')).not.toBeInTheDocument();
+  });
+
+  it('returns to the list from the open builder', () => {
+    renderAt('/programs/p-1/sessions/new');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add session' }));
+    fireEvent.click(screen.getByRole('button', { name: '← Sessions' }));
+
+    expect(screen.getByText('Saved sessions (1)')).toBeInTheDocument();
+  });
+
+  it('saves a new session from the revealed builder', () => {
+    renderAt('/programs/p-1/sessions/new');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add session' }));
+    fireEvent.click(screen.getByRole('button', { name: 'stub-save' }));
+
+    expect(saveMutate).toHaveBeenCalledWith(
+      {
+        programId: 'p-1',
+        sequenceIndex: 1,
+        weekNumber: 1,
+        dayNumber: 2,
+        title: 'Edited title',
+        workoutOptions: { opt: true },
+      },
+      expect.anything(),
+    );
+  });
+
+  it('opens straight into the builder for a program with no sessions', () => {
+    mockUseProgram.mockReturnValue({
+      data: { program: ownedProgram, sessions: [] },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderAt('/programs/p-1/sessions/new');
+
+    expect(
+      screen.getByRole('button', { name: 'stub-save' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Add session' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers an Edit control per session in add mode', async () => {
+    renderAt('/programs/p-1/sessions/new');
+
+    openSessionMenu('Ladders 1-2-3');
+
+    expect(
+      screen.getByRole('menuitem', { name: 'Edit session' }),
+    ).toBeInTheDocument();
+  });
+
+  it('duplicates a session from the row menu', async () => {
+    renderAt('/programs/p-1/sessions/new');
+
+    openSessionMenu('Ladders 1-2-3');
+    await clickMenuItem('Duplicate session');
+
+    expect(duplicateSessionMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        session: expect.objectContaining({ id: 's-1' }),
+      }),
+    );
+  });
+
+  it('confirms in a dialog before deleting a session', async () => {
+    renderAt('/programs/p-1/sessions/new');
+
+    openSessionMenu('Ladders 1-2-3');
+    await clickMenuItem('Delete session');
+
+    expect(deleteMutate).not.toHaveBeenCalled();
+    expect(screen.getByText('Delete this session?')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete session' }));
+
+    expect(deleteMutate).toHaveBeenCalledWith(
+      { sessionId: 's-1', programId: 'p-1' },
+      expect.anything(),
+    );
+  });
+
+  it('keeps the session when the confirm dialog is dismissed', async () => {
+    renderAt('/programs/p-1/sessions/new');
+
+    openSessionMenu('Ladders 1-2-3');
+    await clickMenuItem('Delete session');
+    fireEvent.click(screen.getByRole('button', { name: 'Keep session' }));
+
+    expect(deleteMutate).not.toHaveBeenCalled();
+  });
+
+  it('duplicates a whole week', () => {
+    renderAt('/programs/p-1/sessions/new');
+
+    expect(
+      screen.getByRole('button', { name: 'Duplicate week' }),
+    ).toBeInTheDocument();
+  });
+
+  it('leaves a non-owner with Duplicate only', async () => {
+    mockUserId = 'someone-else';
+    renderAt('/programs/p-1/sessions/new');
+
+    openSessionMenu('Ladders 1-2-3');
+
+    expect(
+      screen.getByRole('menuitem', { name: 'Duplicate session' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('menuitem', { name: 'Edit session' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('menuitem', { name: 'Delete session' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^Move / }),
+    ).not.toBeInTheDocument();
   });
 
   it('seeds the builder from the target session and updates it in place on save', () => {
@@ -200,6 +373,27 @@ describe('ProgramSessionBuilderPage', () => {
         data: { program: ownedProgram, sessions: [session, laterSession] },
         isLoading: false,
         isError: false,
+      });
+    });
+
+    it('reorders both directions from the row arrows', () => {
+      renderAt('/programs/p-1/sessions/new');
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Move Ladders 1-2-3 down' }),
+      );
+      expect(reorderMutate).toHaveBeenCalledWith({
+        programId: 'p-1',
+        orderedIds: ['s-2', 's-1'],
+      });
+
+      reorderMutate.mockReset();
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Move Ladders 1-2-3-4 up' }),
+      );
+      expect(reorderMutate).toHaveBeenCalledWith({
+        programId: 'p-1',
+        orderedIds: ['s-2', 's-1'],
       });
     });
 
