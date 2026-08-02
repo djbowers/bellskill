@@ -12,6 +12,7 @@ import {
   ModifyCountButtons,
   Page,
   ProgramTags,
+  StackFitNote,
   WeightUnitTabs,
 } from '~/components';
 import { Button } from '~/components/ui/button';
@@ -464,6 +465,13 @@ export const ProgramDetailsPage = () => {
           onCheckedChange={setAutoRepeat}
         />
       </div>
+
+      {program && (
+        <StackFitNote
+          candidate={program}
+          active={activeEnrollments.map((a) => a.program)}
+        />
+      )}
 
       <Button onClick={handleStart} disabled={enroll.isPending || !seeded}>
         Start program
