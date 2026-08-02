@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { MovementOptions } from '~/types';
 
-import { MovementCard } from './MovementCard';
+import { MovementCard, MovementCardProps } from './MovementCard';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
@@ -37,6 +37,12 @@ const meta = {
     movement: swing,
     complexSet: false,
     sharedWeightTabValue: 'none',
+    sharedWeights: {
+      sharedWeightOneValue: null,
+      sharedWeightOneUnit: null,
+      sharedWeightTwoValue: null,
+      sharedWeightTwoUnit: null,
+    },
     intervalActive: false,
     onToggleExpanded: noop,
     onRemove: noop,
@@ -60,6 +66,24 @@ type Story = StoryObj<typeof MovementCard>;
 export const Expanded: Story = { args: { expanded: true } };
 
 export const Collapsed: Story = { args: { expanded: false } };
+
+/** In a complex set the card shows the shared 24 kg, not the movement's own 16 kg. */
+const complexArgs = {
+  complexSet: true,
+  sharedWeightTabValue: '2h',
+  sharedWeights: {
+    sharedWeightOneValue: 24,
+    sharedWeightOneUnit: 'kilograms',
+    sharedWeightTwoValue: null,
+    sharedWeightTwoUnit: null,
+  },
+} satisfies Partial<MovementCardProps>;
+
+export const ComplexSet: Story = { args: { ...complexArgs, expanded: true } };
+
+export const ComplexSetCollapsed: Story = {
+  args: { ...complexArgs, expanded: false },
+};
 
 /** The two states side by side, driven by the real collapse toggle. */
 export const Interactive: Story = {

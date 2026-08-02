@@ -8,6 +8,7 @@ import {
   DEFAULT_MOVEMENT_OPTIONS,
   DEFAULT_WORKOUT_OPTIONS,
   EntitlementContext,
+  SessionProvider,
   WorkoutOptionsContext,
 } from '~/contexts';
 
@@ -52,6 +53,41 @@ function makeQueryClient() {
   });
 }
 
+// App only mounts this page behind a resolved session, so the program queries
+// always have a user id. Without one they stay disabled and the program gate
+// never settles, leaving the page on its loading state.
+const mockSession = {
+  user: {
+    id: 'user-123',
+    app_metadata: {},
+    user_metadata: {},
+    created_at: '',
+    aud: '',
+  },
+  access_token: '',
+  refresh_token: '',
+  expires_in: 10000,
+  token_type: '',
+};
+
+/** The page under the providers App gives it, for tests not driving a story. */
+const renderStartWorkoutPage = (workoutOptions, startWorkout) =>
+  render(
+    <QueryClientProvider client={makeQueryClient()}>
+      <MemoryRouter>
+        <SessionProvider value={mockSession}>
+          <EntitlementContext.Provider value={freeEntitlement}>
+            <WorkoutOptionsContext.Provider
+              value={[workoutOptions, startWorkout]}
+            >
+              <StartWorkoutPage />
+            </WorkoutOptionsContext.Provider>
+          </EntitlementContext.Provider>
+        </SessionProvider>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+
 const { Default, WithoutPreviousVolume } = composeStories(stories);
 
 const startedAt = new Date();
@@ -60,8 +96,12 @@ vi.setSystemTime(startedAt);
 // The builder is a secondary state behind the hub. With no active program the
 // hub shows the quick-start hero, whose "Build a workout" action opens the
 // builder; reveal it before exercising the builder controls.
-const enterBuildMode = () =>
-  userEvent.click(screen.getByRole('button', { name: /build a workout/i }));
+// The program gate resolves asynchronously, so wait the hub out rather than
+// querying the still-pending loading state.
+const enterBuildMode = async () =>
+  userEvent.click(
+    await screen.findByRole('button', { name: /build a workout/i }),
+  );
 
 describe('start workout page', () => {
   let startWorkout;
@@ -693,6 +733,26 @@ describe('Complex Mode', () => {
     });
   });
 
+  test('movement card shows the shared weight, not its own, while Complex is on', async () => {
+    await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
+    // The suggestion list hides the weight summary while it's open.
+    const closeSuggestions = () =>
+      userEvent.click(screen.getByRole('heading', { name: 'Movements' }));
+    await closeSuggestions();
+    const ownWeight = `${DEFAULT_MOVEMENT_OPTIONS.weightOneValue} kg (2h)`;
+    expect(screen.getByText(ownWeight)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
+    await userEvent.click(screen.getByLabelText('+ kg'));
+
+    const sharedWeight = screen.getByText(/kg \(2h\)/).textContent;
+    expect(sharedWeight).not.toBe(ownWeight);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Complex, on' }));
+
+    expect(screen.getByText(ownWeight)).toBeInTheDocument();
+  });
+
   test('complex mode toggle is preserved when adding movements', async () => {
     await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
@@ -805,19 +865,7 @@ describe('integration tests for previous volume retrieval', () => {
       previousVolume: 1500, // Custom previous volume
     };
 
-    render(
-      <QueryClientProvider client={makeQueryClient()}>
-        <MemoryRouter>
-          <EntitlementContext.Provider value={freeEntitlement}>
-            <WorkoutOptionsContext.Provider
-              value={[customWorkoutOptions, startWorkout]}
-            >
-              <StartWorkoutPage />
-            </WorkoutOptionsContext.Provider>
-          </EntitlementContext.Provider>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
+    renderStartWorkoutPage(customWorkoutOptions, startWorkout);
 
     await enterBuildMode();
     await userEvent.type(
@@ -847,19 +895,7 @@ describe('integration tests for previous volume retrieval', () => {
       previousVolume: 1200, // Volume from completed workout
     };
 
-    render(
-      <QueryClientProvider client={makeQueryClient()}>
-        <MemoryRouter>
-          <EntitlementContext.Provider value={freeEntitlement}>
-            <WorkoutOptionsContext.Provider
-              value={[workoutOptionsAfterCompletion, startWorkout]}
-            >
-              <StartWorkoutPage />
-            </WorkoutOptionsContext.Provider>
-          </EntitlementContext.Provider>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
+    renderStartWorkoutPage(workoutOptionsAfterCompletion, startWorkout);
 
     await enterBuildMode();
     await userEvent.type(
@@ -892,19 +928,7 @@ describe('integration tests for previous volume retrieval', () => {
       previousRounds: 20,
     };
 
-    render(
-      <QueryClientProvider client={makeQueryClient()}>
-        <MemoryRouter>
-          <EntitlementContext.Provider value={freeEntitlement}>
-            <WorkoutOptionsContext.Provider
-              value={[workoutOptionsWithAllPrevious, startWorkout]}
-            >
-              <StartWorkoutPage />
-            </WorkoutOptionsContext.Provider>
-          </EntitlementContext.Provider>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
+    renderStartWorkoutPage(workoutOptionsWithAllPrevious, startWorkout);
 
     await enterBuildMode();
     await userEvent.type(

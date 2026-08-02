@@ -9,6 +9,7 @@ export * from './programCadenceLabel';
 export * from './patternDebt';
 export * from './rankMovements';
 export * from './resolveAuthSession';
+export * from './resolveMovementWeights';
 export * from './resolveSharedWeights';
 export * from './soundPreference';
 export * from './timerSound';

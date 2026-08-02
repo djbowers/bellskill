@@ -1020,6 +1020,12 @@ export const StartWorkoutPage = ({
               movement={movement}
               complexSet={complexSet}
               sharedWeightTabValue={sharedWeightTabValue}
+              sharedWeights={{
+                sharedWeightOneUnit,
+                sharedWeightOneValue,
+                sharedWeightTwoUnit,
+                sharedWeightTwoValue,
+              }}
               expanded={!collapsedMovements.has(index)}
               intervalActive={intervalTimer > 0}
               onToggleExpanded={() => handleToggleMovementExpanded(index)}
