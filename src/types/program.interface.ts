@@ -7,6 +7,27 @@
  *
  * camelCase mirror of the generated `programs` row.
  */
+/** One movement of a {@link ProgramStage} complex — name and reps only; weights come from each session. */
+export interface ProgramStageMovement {
+  movementName: string;
+  repScheme: number[];
+}
+
+/**
+ * One rung of a program's milestone-gated progression ladder (e.g. A+A's
+ * C+J → C+J+C → … → 3 cleans + 3 jerks). Advancing an enrollment to a stage
+ * (`set_program_stage`) rewrites every not-yet-completed session's title,
+ * movements, and notes; each session keeps its own shared weights, so stages
+ * author none.
+ */
+export interface ProgramStage {
+  title: string;
+  movements: ProgramStageMovement[];
+  preWorkoutNotes?: string;
+  /** Notes variant for sessions in the 'Deload weeks' weight group. */
+  deloadPreWorkoutNotes?: string;
+}
+
 export interface Program {
   id: string;
   /** NULL for system/shared programs; the owning user otherwise. */
@@ -44,4 +65,10 @@ export interface Program {
    * clients only ever see timestamps here.
    */
   releasedAt: string | null;
+  /**
+   * Ordered progression ladder, or `null` for programs without one. Copied to
+   * the clone at enroll time; {@link UserProgram.currentStageIndex} tracks the
+   * enrollment's position.
+   */
+  stages: ProgramStage[] | null;
 }

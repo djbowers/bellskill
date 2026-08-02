@@ -1,6 +1,7 @@
 import {
   Program,
   ProgramSession,
+  ProgramStage,
   ProgramSessionCompletion,
   ProgramSessionCompletionStatus,
   UserProgram,
@@ -33,6 +34,7 @@ export const mapProgramRow = (row: ProgramRow): Program => ({
   archivedAt: row.archived_at,
   defaultAutoRepeat: row.default_auto_repeat,
   releasedAt: row.released_at,
+  stages: row.stages as unknown as ProgramStage[] | null,
 });
 
 /**
@@ -83,4 +85,5 @@ export const mapUserProgramRow = (row: UserProgramRow): UserProgram => ({
   autoRepeat: row.auto_repeat,
   cyclesCompleted: row.cycles_completed,
   queuePosition: row.queue_position,
+  currentStageIndex: row.current_stage_index,
 });
