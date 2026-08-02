@@ -6,6 +6,7 @@ import {
   DEFAULT_WORKOUT_OPTIONS,
   EntitlementContext,
   EntitlementContextValue,
+  SessionProvider,
   WorkoutOptionsContext,
 } from '~/contexts';
 
@@ -27,6 +28,23 @@ const freeEntitlement: EntitlementContextValue = {
   refetch: () => {},
 };
 
+// App only mounts this page behind a resolved session, so the program queries
+// always have a user id. Without one they stay disabled and the program gate
+// never settles, leaving the page on its loading state.
+const mockSession = {
+  user: {
+    id: 'user-123',
+    app_metadata: {},
+    user_metadata: {},
+    created_at: '',
+    aud: '',
+  },
+  access_token: '',
+  refresh_token: '',
+  expires_in: 10000,
+  token_type: '',
+};
+
 export default {
   component: StartWorkoutPage,
   decorators: [
@@ -37,18 +55,20 @@ export default {
     ),
     (Story, { parameters }) => (
       <QueryClientProvider client={queryClient}>
-        <EntitlementContext.Provider
-          value={parameters.entitlement || freeEntitlement}
-        >
-          <WorkoutOptionsContext.Provider
-            value={[
-              parameters.workoutOptions || DEFAULT_WORKOUT_OPTIONS,
-              parameters.updateWorkoutOptions,
-            ]}
+        <SessionProvider value={parameters.session ?? mockSession}>
+          <EntitlementContext.Provider
+            value={parameters.entitlement || freeEntitlement}
           >
-            <Story />
-          </WorkoutOptionsContext.Provider>
-        </EntitlementContext.Provider>
+            <WorkoutOptionsContext.Provider
+              value={[
+                parameters.workoutOptions || DEFAULT_WORKOUT_OPTIONS,
+                parameters.updateWorkoutOptions,
+              ]}
+            >
+              <Story />
+            </WorkoutOptionsContext.Provider>
+          </EntitlementContext.Provider>
+        </SessionProvider>
       </QueryClientProvider>
     ),
   ],

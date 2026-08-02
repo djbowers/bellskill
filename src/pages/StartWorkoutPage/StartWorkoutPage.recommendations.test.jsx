@@ -8,6 +8,7 @@ import { CURATED_WORKOUTS } from '~/constants';
 import {
   DEFAULT_WORKOUT_OPTIONS,
   EntitlementContext,
+  SessionProvider,
   WorkoutOptionsContext,
 } from '~/contexts';
 import { VITE_SUPABASE_URL } from '~/env';
@@ -55,20 +56,42 @@ const makeQueryClient = () =>
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
 
+// App only mounts this page behind a resolved session, so the program queries
+// always have a user id. Without one they stay disabled and the program gate
+// never settles, leaving the page on its loading state.
+const mockSession = {
+  user: {
+    id: 'user-123',
+    app_metadata: {},
+    user_metadata: {},
+    created_at: '',
+    aud: '',
+  },
+  access_token: '',
+  refresh_token: '',
+  expires_in: 10000,
+  token_type: '',
+};
+
 const renderPage = (updateWorkoutOptions = vi.fn()) => {
   render(
     <QueryClientProvider client={makeQueryClient()}>
       <MemoryRouter initialEntries={['/']}>
-        <EntitlementContext.Provider value={freeEntitlement}>
-          <WorkoutOptionsContext.Provider
-            value={[DEFAULT_WORKOUT_OPTIONS, updateWorkoutOptions]}
-          >
-            <Routes>
-              <Route path="/" element={<StartWorkoutPage />} />
-              <Route path="/active" element={<div>active workout page</div>} />
-            </Routes>
-          </WorkoutOptionsContext.Provider>
-        </EntitlementContext.Provider>
+        <SessionProvider value={mockSession}>
+          <EntitlementContext.Provider value={freeEntitlement}>
+            <WorkoutOptionsContext.Provider
+              value={[DEFAULT_WORKOUT_OPTIONS, updateWorkoutOptions]}
+            >
+              <Routes>
+                <Route path="/" element={<StartWorkoutPage />} />
+                <Route
+                  path="/active"
+                  element={<div>active workout page</div>}
+                />
+              </Routes>
+            </WorkoutOptionsContext.Provider>
+          </EntitlementContext.Provider>
+        </SessionProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   );
