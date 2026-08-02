@@ -66,6 +66,7 @@ export const exampleActiveProgram = ({
       autoRepeat: false,
       cyclesCompleted: 0,
       queuePosition: null,
+      currentStageIndex: 0,
     },
     program: {
       id: `${id}-program`,
@@ -82,6 +83,7 @@ export const exampleActiveProgram = ({
       createdAt: '2026-07-01T00:00:00Z',
       defaultAutoRepeat: false,
       releasedAt: null,
+      stages: null,
     },
     nextSession: isComplete
       ? null

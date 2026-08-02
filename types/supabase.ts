@@ -381,6 +381,7 @@ export type Database = {
           released_at: string | null
           slug: string | null
           source_program_id: string | null
+          stages: Json | null
           title: string
         }
         Insert: {
@@ -397,6 +398,7 @@ export type Database = {
           released_at?: string | null
           slug?: string | null
           source_program_id?: string | null
+          stages?: Json | null
           title: string
         }
         Update: {
@@ -413,6 +415,7 @@ export type Database = {
           released_at?: string | null
           slug?: string | null
           source_program_id?: string | null
+          stages?: Json | null
           title?: string
         }
         Relationships: [
@@ -541,6 +544,7 @@ export type Database = {
           auto_repeat: boolean
           completed_at: string | null
           config: Json
+          current_stage_index: number
           cycles_completed: number
           id: string
           program_id: string
@@ -554,6 +558,7 @@ export type Database = {
           auto_repeat?: boolean
           completed_at?: string | null
           config?: Json
+          current_stage_index?: number
           cycles_completed?: number
           id?: string
           program_id: string
@@ -567,6 +572,7 @@ export type Database = {
           auto_repeat?: boolean
           completed_at?: string | null
           config?: Json
+          current_stage_index?: number
           cycles_completed?: number
           id?: string
           program_id?: string
@@ -862,6 +868,10 @@ export type Database = {
       resume_program: {
         Args: { p_replace_user_program_id?: string; p_user_program_id: string }
         Returns: string
+      }
+      set_program_stage: {
+        Args: { p_stage_index: number; p_user_program_id: string }
+        Returns: number
       }
       update_program_sessions_forward: {
         Args: { p_forward_options: Json; p_session_id: string }

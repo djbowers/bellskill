@@ -41,4 +41,9 @@ export interface UserProgram {
    * fine — promotion never renumbers. `null` on non-queued rows.
    */
   queuePosition: number | null;
+  /**
+   * Position on {@link Program.stages} (0-based). Always 0 for programs
+   * without a ladder; moved by the `set_program_stage` RPC.
+   */
+  currentStageIndex: number;
 }

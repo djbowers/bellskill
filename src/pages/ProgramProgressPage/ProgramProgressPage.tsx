@@ -18,6 +18,7 @@ import { cn } from '~/lib/utils';
 import { ProgramSession } from '~/types';
 
 import { AdjustWeightsDialog } from './components/AdjustWeightsDialog';
+import { StageCard } from './components/StageCard';
 
 /** Glyph + label + chip styling for each session state. */
 const STATE_META: Record<SessionState, { icon: string; className: string }> = {
@@ -188,6 +189,15 @@ export const ProgramProgressPage = () => {
           )}
         </CardContent>
       </Card>
+
+      {enrollment && !!program.stages?.length && (
+        <StageCard
+          userProgramId={enrollment.id}
+          stages={program.stages}
+          currentStageIndex={enrollment.currentStageIndex}
+          canAdvance={enrollment.status === 'active'}
+        />
+      )}
 
       {enrollment && adjustingWeights && (
         <AdjustWeightsDialog

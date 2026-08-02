@@ -126,6 +126,22 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   are never rewritten. This deliberately overwrites per-session weight offsets
   on future sessions with the edited session's weights; `adjust_program_weights`
   is the offset-preserving counterpart for weight-only changes.
+- **Stages (autoregulated progression):** a program can carry an ordered ladder
+  in `programs.stages` (JSONB `ProgramStage[]`: `title`, `movements` as
+  name+repScheme only, `preWorkoutNotes`, `deloadPreWorkoutNotes`), copied to
+  the clone at enroll. The enrollment's position is
+  `user_programs.current_stage_index` (default 0). The `set_program_stage`
+  RPC (`useSetProgramStage`, StageCard on `ProgramProgressPage`) takes an
+  absolute index — one function serves Advance and Go back — and rewrites
+  every session of the clone with no completion for the enrollment: title
+  (`'Deload · ' + title` on `weight_label = 'Deload weeks'` rows), movements
+  stamped with each session's OWN `sharedWeightOne/Two` (deloads stay light;
+  `adjust_program_weights` remains the sole weight authority), and
+  `preWorkoutNotes` (deload variant on deload rows). Goal/interval/rest are
+  untouched, completed sessions never rewritten. v1 assumes shared-weight
+  complexSet programs; the only shipped ladder is A+A's five stages
+  (C+J → … → C+J+C+J+C+J), seeded in `*_seed_aa_protocol_stages.sql`.
+  Backend coverage in `e2e/program-stages.spec.ts`.
 - **Program CRUD (PROD-237, owned programs only):** `ProgramsPage`'s "My programs"
   surface adds three actions. **Cancel** = `useCancelProgram` flips the active
   enrollment to `abandoned` (reusing the existing status — no new value), freeing

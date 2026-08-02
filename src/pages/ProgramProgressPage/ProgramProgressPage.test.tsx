@@ -25,6 +25,7 @@ vi.mock('~/api', () => ({
     mutate: mockAdjustMutate,
     isPending: false,
   }),
+  useSetProgramStage: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 const session = (seq: number, week: number, day: number, title: string) => ({
@@ -396,6 +397,33 @@ describe('ProgramProgressPage', () => {
     expect(
       screen.queryByRole('button', { name: 'Adjust weights' }),
     ).toBeNull();
+  });
+
+  it('shows the stage card when the program has a stage ladder', () => {
+    mockUseProgramProgress.mockReturnValue({
+      data: {
+        ...progressData,
+        program: {
+          ...progressData.program,
+          stages: [
+            { title: 'C+J', movements: [] },
+            { title: 'C+J+C', movements: [] },
+          ],
+        },
+        enrollment: {
+          id: 'up-1',
+          status: 'active',
+          autoRepeat: false,
+          currentStageIndex: 1,
+        },
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage();
+
+    expect(screen.getByText('Stage 2 of 2: C+J+C')).toBeInTheDocument();
   });
 
   it('renders a not-found state on error', () => {
