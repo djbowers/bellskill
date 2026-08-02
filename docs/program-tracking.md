@@ -128,7 +128,13 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   own title, notes, goal, duration, and rest settings and completed sessions
   are never rewritten. This deliberately overwrites per-session weight offsets
   on future sessions with the edited session's weights; `adjust_program_weights`
-  is the offset-preserving counterpart for weight-only changes.
+  is the offset-preserving counterpart for weight-only changes. Its modal
+  baseline is the mode over **unlabeled working sessions** (`weight_label IS
+  NULL`): incomplete first, else completed (so A+A week-4 deload-only still
+  offsets from the last working load), else incomplete when every session is
+  labeled. That keeps authored deltas (A+A deload −8 kg, DFW test day +4 kg)
+  stable across mid-program and repeated adjusts; the Adjust Weights dialog
+  prefills via the same rule (`selectWeightModalSessions`).
 - **Stages (autoregulated progression):** a program can carry an ordered ladder
   in `programs.stages` (JSONB `ProgramStage[]`: `title`, `movements` as
   name+repScheme only, `preWorkoutNotes`, `deloadPreWorkoutNotes`), copied to
