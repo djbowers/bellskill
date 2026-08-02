@@ -10,8 +10,10 @@ import { expect, test } from '@playwright/test';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY!;
 const AA_SLUG = 'aa-protocol-plan-a';
+const SE025_SLUG = 'strong-endurance-plan-025';
 const CLEAN = 'One-Arm Kettlebell Clean';
 const JERK = 'One-Arm Kettlebell Jerk';
+const SWING = 'One-Arm Kettlebell Swing';
 
 interface TestUser {
   token: string;
@@ -415,6 +417,153 @@ test.describe('set_program_stage — A+A progression ladder', () => {
       for (const m of session.workout_options.movements) {
         expect(m.weightOneValue).toBe(expected);
       }
+    }
+  });
+});
+
+// Plan 025 exercises the generalized non-complex path: NULL shared weights,
+// per-movement loads, and day-label titles the stage must not clobber.
+test.describe('set_program_stage — Strong Endurance Plan 025 rep ladder', () => {
+  test('template carries the 6-stage rep ladder, and the enroll clone copies it at stage 0', async () => {
+    const user = await signUpThrowawayUser();
+    const seId = await programIdBySlug(user.token, SE025_SLUG);
+
+    const [template] = await restJson<StageRow[]>(
+      'GET',
+      `programs?id=eq.${seId}&select=stages`,
+      user.token,
+    );
+    expect(template.stages).toHaveLength(6);
+    expect(template.stages!.map((s) => s.title)).toEqual([
+      'Sets of 5',
+      'Sets of 6',
+      'Sets of 7',
+      'Sets of 8',
+      'Sets of 9',
+      'Sets of 10',
+    ]);
+    template.stages!.forEach((stage, i) => {
+      expect(stage.movements).toHaveLength(1);
+      expect(stage.movements[0].movementName).toBe(SWING);
+      expect(stage.movements[0].repScheme).toEqual([5 + i]);
+      // Day-agnostic note: high-day autoregulation plus Medium/Low derivation.
+      expect(stage.preWorkoutNotes).toContain('80%');
+      expect(stage.preWorkoutNotes).toContain('60%');
+      expect(stage.deloadPreWorkoutNotes).toBeUndefined();
+    });
+    expect(template.stages![2].preWorkoutNotes).toContain('sets of 8');
+    expect(template.stages![5].preWorkoutNotes).toContain('500 reps in 50 min');
+
+    const userProgramId = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: seId,
+    });
+    const enrollment = await enrollmentRow(user.token, userProgramId);
+    expect(enrollment.current_stage_index).toBe(0);
+
+    const [clone] = await restJson<StageRow[]>(
+      'GET',
+      `programs?id=eq.${enrollment.program_id}&select=stages`,
+      user.token,
+    );
+    expect(clone.stages).toEqual(template.stages);
+  });
+
+  test('advancing rewrites uncompleted repSchemes and notes, preserving per-movement weights and day titles', async () => {
+    const user = await signUpThrowawayUser();
+    const seId = await programIdBySlug(user.token, SE025_SLUG);
+    const userProgramId = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: seId,
+    });
+    const { program_id: cloneId } = await enrollmentRow(
+      user.token,
+      userProgramId,
+    );
+
+    const before = await orderedSessions(user.token, cloneId);
+    expect(before.map((s) => s.title)).toEqual([
+      'High volume',
+      'Medium volume',
+      'Low volume',
+    ]);
+    const completedSession = before[0];
+    await completeSession(user, userProgramId, completedSession.id);
+
+    const updated = await rpc<number>('set_program_stage', user.token, {
+      p_user_program_id: userProgramId,
+      p_stage_index: 1,
+    });
+    expect(updated).toBe(before.length - 1);
+    expect(
+      (await enrollmentRow(user.token, userProgramId)).current_stage_index,
+    ).toBe(1);
+
+    const after = await orderedSessions(user.token, cloneId);
+    for (const session of after) {
+      const prior = before.find((s) => s.id === session.id)!;
+
+      if (session.id === completedSession.id) {
+        expect(session.workout_options).toEqual(prior.workout_options);
+        continue;
+      }
+
+      // Day-label titles survive the stage change on the non-complex path.
+      expect(session.title).toBe(prior.title);
+
+      // The single swing moves to sets of 6 at ITS OWN prior weights,
+      // including weightTwoValue 0 (one-handed mode).
+      expect(session.workout_options.movements).toHaveLength(1);
+      const [swing] = session.workout_options.movements;
+      const [priorSwing] = prior.workout_options.movements;
+      expect(swing.movementName).toBe(SWING);
+      expect(swing.repScheme).toEqual([6]);
+      expect(swing.weightOneValue).toBe(priorSwing.weightOneValue);
+      expect(swing.weightOneUnit).toBe(priorSwing.weightOneUnit);
+      expect(swing.weightTwoValue).toBe(0);
+
+      // Shared weights stay null; notes swap to the stage's; cadence stays.
+      expect(session.workout_options.sharedWeightOneValue).toBeNull();
+      expect(session.workout_options.preWorkoutNotes).toContain('Sets of 6');
+      expect(session.workout_options.workoutGoal).toBe(
+        prior.workout_options.workoutGoal,
+      );
+      expect(session.workout_options.intervalTimer).toBe(
+        prior.workout_options.intervalTimer,
+      );
+      expect(session.workout_options.complexSet).toBe(false);
+    }
+
+    // Going back restores sets of 5 on the same scope.
+    await rpc('set_program_stage', user.token, {
+      p_user_program_id: userProgramId,
+      p_stage_index: 0,
+    });
+    for (const session of await orderedSessions(user.token, cloneId)) {
+      if (session.id === completedSession.id) continue;
+      expect(session.workout_options.movements[0].repScheme).toEqual([5]);
+    }
+  });
+
+  test('the final stage note says you graduated', async () => {
+    const user = await signUpThrowawayUser();
+    const seId = await programIdBySlug(user.token, SE025_SLUG);
+    const userProgramId = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: seId,
+    });
+    const { program_id: cloneId } = await enrollmentRow(
+      user.token,
+      userProgramId,
+    );
+
+    await rpc('set_program_stage', user.token, {
+      p_user_program_id: userProgramId,
+      p_stage_index: 5,
+    });
+    for (const session of await orderedSessions(user.token, cloneId)) {
+      expect(session.workout_options.movements[0].repScheme).toEqual([10]);
+      expect(session.workout_options.preWorkoutNotes).toContain(
+        '500 reps in 50 min',
+      );
+      expect(session.workout_options.preWorkoutNotes).toContain('heavier bell');
     }
   });
 });
