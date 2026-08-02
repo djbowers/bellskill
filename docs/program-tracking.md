@@ -1,5 +1,8 @@
 # Program Tracking (behind the `programs` flag)
 
+User-facing flows (browse, enroll, progress, authoring, lifecycle) and their
+test traceability: `docs/program-user-flows.md`. This doc is the data/RPC record.
+
 A sequencing/progress layer over the existing `workout_logs` pipeline. Four
 tables (`programs`, `program_sessions`, `user_programs`,
 `program_session_completions`) plus four SQL functions: `enroll_in_program`
