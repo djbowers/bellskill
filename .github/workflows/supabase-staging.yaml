@@ -58,7 +58,7 @@ jobs:
 
       - name: Deploy edge functions
         run: |
-          for fn in create-checkout-session stripe-webhook create-portal-session recommend-session set-subscription; do
+          for fn in create-checkout-session stripe-webhook create-portal-session recommend-session set-subscription spotify-auth spotify-player; do
             supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_ID"
           done
 
