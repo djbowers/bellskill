@@ -98,8 +98,8 @@ async function callModel(
         model: MODEL,
         max_tokens: MAX_TOKENS,
         thinking: { type: 'disabled' },
+        // Haiku rejects `effort`; Sonnet accepts it. Omit so both models work.
         output_config: {
-          effort: 'low',
           format: { type: 'json_schema', schema: RECOMMENDATION_SCHEMA },
         },
         system,
