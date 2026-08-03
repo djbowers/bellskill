@@ -14,6 +14,7 @@ const {
   mockUseCancelProgram,
   mockUseDeleteProgram,
   mockUseSetProgramArchived,
+  mockUseSetProgramReleased,
   mockUseQueuedPrograms,
   mockUseDequeueProgram,
   mockUseStartQueuedProgram,
@@ -24,6 +25,7 @@ const {
   cancelMutate,
   deleteMutate,
   setArchivedMutate,
+  setReleasedMutate,
   dequeueMutate,
   startQueuedMutate,
 } = vi.hoisted(() => ({
@@ -36,6 +38,7 @@ const {
   mockUseCancelProgram: vi.fn(),
   mockUseDeleteProgram: vi.fn(),
   mockUseSetProgramArchived: vi.fn(),
+  mockUseSetProgramReleased: vi.fn(),
   mockUseQueuedPrograms: vi.fn(),
   mockUseDequeueProgram: vi.fn(),
   mockUseStartQueuedProgram: vi.fn(),
@@ -46,6 +49,7 @@ const {
   cancelMutate: vi.fn(),
   deleteMutate: vi.fn(),
   setArchivedMutate: vi.fn(),
+  setReleasedMutate: vi.fn(),
   dequeueMutate: vi.fn(),
   startQueuedMutate: vi.fn(),
 }));
@@ -60,6 +64,7 @@ vi.mock('~/api', () => ({
   useCancelProgram: mockUseCancelProgram,
   useDeleteProgram: mockUseDeleteProgram,
   useSetProgramArchived: mockUseSetProgramArchived,
+  useSetProgramReleased: mockUseSetProgramReleased,
   useQueuedPrograms: mockUseQueuedPrograms,
   useDequeueProgram: mockUseDequeueProgram,
   useStartQueuedProgram: mockUseStartQueuedProgram,
@@ -182,6 +187,7 @@ describe('ProgramsPage', () => {
     cancelMutate.mockReset();
     deleteMutate.mockReset();
     setArchivedMutate.mockReset();
+    setReleasedMutate.mockReset();
     mockTrackEvent.mockReset();
     mockUsePrograms.mockReturnValue({
       data: [dfw, myProgram],
@@ -218,6 +224,10 @@ describe('ProgramsPage', () => {
     });
     mockUseSetProgramArchived.mockReturnValue({
       mutate: setArchivedMutate,
+      isPending: false,
+    });
+    mockUseSetProgramReleased.mockReturnValue({
+      mutate: setReleasedMutate,
       isPending: false,
     });
     dequeueMutate.mockReset();
@@ -373,7 +383,7 @@ describe('ProgramsPage', () => {
     expect(screen.getByText('Repeats')).toBeInTheDocument();
   });
 
-  it('badges released shared programs for the owner account only', () => {
+  it('shows the owner a release toggle reflecting each shared program state', () => {
     mockSessionEmail = 'daniel_bowers@icloud.com';
     mockUsePrograms.mockReturnValue({
       data: [
@@ -385,17 +395,43 @@ describe('ProgramsPage', () => {
 
     renderPage();
 
-    // Chip on the released program only.
-    expect(screen.getAllByText('Released')).toHaveLength(1);
     expect(screen.getByLabelText('View Dry Fighting Weight')).toHaveTextContent(
-      'Released',
+      'Unrelease',
     );
     expect(
       screen.getByLabelText('View Armor Building Complex'),
-    ).not.toHaveTextContent('Released');
+    ).toHaveTextContent('Release');
   });
 
-  it('never shows the released badge to a non-owner', () => {
+  it('releases and unreleases from the toggle without navigating', () => {
+    mockSessionEmail = 'daniel_bowers@icloud.com';
+    mockUsePrograms.mockReturnValue({
+      data: [
+        { ...dfw, releasedAt: '2026-07-28T12:00:00Z' },
+        { ...armor, releasedAt: null },
+      ],
+      isLoading: false,
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Unrelease' }));
+    expect(setReleasedMutate).toHaveBeenCalledWith({
+      programId: dfw.id,
+      released: false,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Release' }));
+    expect(setReleasedMutate).toHaveBeenCalledWith({
+      programId: armor.id,
+      released: true,
+    });
+
+    // Still on the programs page — the row link didn't navigate.
+    expect(screen.getByText('Browse programs')).toBeInTheDocument();
+  });
+
+  it('never shows the release toggle to a non-owner', () => {
     mockUsePrograms.mockReturnValue({
       data: [{ ...dfw, releasedAt: '2026-07-28T12:00:00Z' }],
       isLoading: false,
@@ -403,7 +439,9 @@ describe('ProgramsPage', () => {
 
     renderPage();
 
-    expect(screen.queryByText('Released')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /release/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('enrolls in your own program directly, with no starting-weight prompt', () => {

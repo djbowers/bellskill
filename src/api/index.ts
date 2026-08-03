@@ -31,6 +31,7 @@ export * from './usePrograms';
 export * from './useSaveProgramSession';
 export * from './useSetProgramArchived';
 export * from './useSetProgramAutoRepeat';
+export * from './useSetProgramReleased';
 export * from './useSetProgramStage';
 export * from './useUpdateProgramSession';
 export * from './useUpdateProgramSessionsForward';
