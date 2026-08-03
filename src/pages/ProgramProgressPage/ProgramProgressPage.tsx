@@ -17,7 +17,11 @@ import { Switch } from '~/components/ui/switch';
 import { cn } from '~/lib/utils';
 import { ProgramSession } from '~/types';
 
+import { deriveMovementWeights } from '~/pages/ProgramDetailsPage/utils/deriveMovementWeights';
+import { selectWeightModalSessions } from '~/pages/ProgramDetailsPage/utils/selectWeightModalSessions';
+
 import { AdjustWeightsDialog } from './components/AdjustWeightsDialog';
+import { SwapMovementDialog } from './components/SwapMovementDialog';
 import { StageCard } from './components/StageCard';
 
 /**
@@ -42,6 +46,7 @@ export const ProgramProgressPage = () => {
   const setAutoRepeat = useSetProgramAutoRepeat();
   const { data: queuedPrograms = [] } = useQueuedPrograms();
   const [adjustingWeights, setAdjustingWeights] = useState(false);
+  const [swappingMovement, setSwappingMovement] = useState(false);
 
   if (isLoading) {
     return (
@@ -218,6 +223,13 @@ export const ProgramProgressPage = () => {
                 >
                   Adjust weights
                 </Button>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => setSwappingMovement(true)}
+                >
+                  Swap movement
+                </Button>
               </div>
             )}
           </CardContent>
@@ -243,6 +255,24 @@ export const ProgramProgressPage = () => {
               session: item.session,
               state: item.state,
             })),
+          )}
+        />
+      )}
+
+      {enrollment && swappingMovement && (
+        <SwapMovementDialog
+          open={swappingMovement}
+          onOpenChange={setSwappingMovement}
+          userProgramId={enrollment.id}
+          movements={deriveMovementWeights(
+            selectWeightModalSessions(
+              weeks.flatMap((week) =>
+                week.sessions.map((item) => ({
+                  session: item.session,
+                  state: item.state,
+                })),
+              ),
+            ),
           )}
         />
       )}

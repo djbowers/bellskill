@@ -9,17 +9,24 @@ const {
   mockUseActivePrograms,
   mockUseEnrollProgram,
   enrollMutate,
+  swapMutateAsync,
 } = vi.hoisted(() => ({
   mockUseProgram: vi.fn(),
   mockUseActivePrograms: vi.fn(),
   mockUseEnrollProgram: vi.fn(),
   enrollMutate: vi.fn(),
+  swapMutateAsync: vi.fn(),
 }));
 
 vi.mock('~/api', () => ({
   useProgram: mockUseProgram,
   useActivePrograms: mockUseActivePrograms,
   useEnrollProgram: mockUseEnrollProgram,
+  useSwapProgramMovement: () => ({
+    mutate: vi.fn(),
+    mutateAsync: swapMutateAsync,
+    isPending: false,
+  }),
   MAX_ACTIVE_PROGRAMS: 3,
 }));
 
@@ -29,8 +36,25 @@ vi.mock('~/contexts', async () => {
   return {
     ...actual,
     useSession: () => ({ user: { id: 'user-123' } }),
+    useToast: () => ({ showToast: vi.fn() }),
   };
 });
+
+vi.mock('~/components/MovementAutocomplete', () => ({
+  MovementAutocomplete: ({
+    value,
+    onChange,
+  }: {
+    value: string;
+    onChange: (name: string) => void;
+  }) => (
+    <input
+      aria-label="Movement Input"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  ),
+}));
 
 // One movement in a session's `movements[]`. The weight config is read from the
 // null-pattern: weightOne null → bodyweight, weightTwo null → two-hand single,
@@ -125,6 +149,7 @@ const renderPage = (id = 'dfw-1') =>
 describe('ProgramDetailsPage', () => {
   beforeEach(() => {
     enrollMutate.mockReset();
+    swapMutateAsync.mockReset().mockResolvedValue(1);
     mockUseActivePrograms.mockReturnValue({ data: [] });
     mockUseEnrollProgram.mockReturnValue({
       mutate: enrollMutate,
@@ -158,7 +183,7 @@ describe('ProgramDetailsPage', () => {
     expect(screen.getAllByText('20 min')).toHaveLength(2);
   });
 
-  it('renders one control per movement, pre-filled, and enrolls per movement', () => {
+  it('renders one control per movement, pre-filled, and enrolls per movement', async () => {
     enrollMutate.mockImplementation((_input, { onSuccess }) => onSuccess());
 
     renderPage();
@@ -200,10 +225,10 @@ describe('ProgramDetailsPage', () => {
       },
       expect.anything(),
     );
-    expect(screen.getByText('home')).toBeInTheDocument();
+    expect(await screen.findByText('home')).toBeInTheDocument();
   });
 
-  it('queues for later with the same chosen weights and no slot claim', () => {
+  it('queues for later with the same chosen weights and no slot claim', async () => {
     enrollMutate.mockImplementation((_input, { onSuccess }) => onSuccess());
 
     renderPage();
@@ -234,7 +259,7 @@ describe('ProgramDetailsPage', () => {
       expect.anything(),
     );
     // Lands on Programs, where "Up next" shows the new place in line.
-    expect(screen.getByText('programs list')).toBeInTheDocument();
+    expect(await screen.findByText('programs list')).toBeInTheDocument();
   });
 
   it('sends each movement in its own config shape, omitting bodyweight', () => {
@@ -561,6 +586,78 @@ describe('ProgramDetailsPage', () => {
         ],
       }),
       expect.anything(),
+    );
+  });
+
+  it('stages a swap pre-enroll, enrolls under the old name, then applies the swap', async () => {
+    enrollMutate.mockImplementation((_input, { onSuccess }) =>
+      onSuccess('up-new'),
+    );
+
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Swap Kettlebell Swing' }),
+    );
+    fireEvent.change(screen.getByLabelText('Movement Input'), {
+      target: { value: 'Kettlebell Snatch' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Swap movement' }));
+
+    // The control now shows the replacement; the RPC is deferred to enrollment.
+    expect(
+      screen.getByRole('heading', { name: 'Kettlebell Snatch' }),
+    ).toBeInTheDocument();
+    expect(swapMutateAsync).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    // Enrollment still speaks the program's original movement names.
+    expect(enrollMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        movementWeights: expect.arrayContaining([
+          expect.objectContaining({ movementName: 'Kettlebell Swing' }),
+        ]),
+      }),
+      expect.anything(),
+    );
+
+    expect(await screen.findByText('home')).toBeInTheDocument();
+    expect(swapMutateAsync).toHaveBeenCalledWith({
+      userProgramId: 'up-new',
+      oldMovementName: 'Kettlebell Swing',
+      newMovementName: 'Kettlebell Snatch',
+      weightOneValue: 24,
+      weightOneUnit: 'kilograms',
+      weightTwoValue: 24,
+      weightTwoUnit: 'kilograms',
+    });
+  });
+
+  it('applies staged swaps after queueing for later too', async () => {
+    enrollMutate.mockImplementation((_input, { onSuccess }) =>
+      onSuccess('up-queued'),
+    );
+
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Swap Double Kettlebell Press' }),
+    );
+    fireEvent.change(screen.getByLabelText('Movement Input'), {
+      target: { value: 'Double Kettlebell Jerk' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Swap movement' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Queue for later' }));
+
+    expect(await screen.findByText('programs list')).toBeInTheDocument();
+    expect(swapMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userProgramId: 'up-queued',
+        oldMovementName: 'Double Kettlebell Press',
+        newMovementName: 'Double Kettlebell Jerk',
+      }),
     );
   });
 

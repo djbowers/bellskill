@@ -19,6 +19,7 @@ export * from './useDeleteProgramSession';
 export * from './useDuplicateProgramSession';
 export * from './useReorderProgramSession';
 export * from './useAdjustProgramWeights';
+export * from './useSwapProgramMovement';
 export * from './useDequeueProgram';
 export * from './useEnrollProgram';
 export * from './useQueuedPrograms';
