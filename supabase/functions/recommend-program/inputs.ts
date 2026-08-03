@@ -1,21 +1,22 @@
 // recommend-program: assemble the standalone RecommenderInputs.
 //
 // The service-role client (bypasses RLS) handles the user-scoped reads; the
-// caller's JWT-bound client is needed only for `pattern_debt_window`, which is
-// SECURITY INVOKER and filters on auth.uid() internally.
+// caller's JWT-bound client is needed only for `pattern_debt_movements`, which
+// is SECURITY INVOKER and filters on auth.uid() internally.
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
   assessStackFit,
   computePatternBalance,
-  type PatternAggregate,
+  type MovementAggregate,
   type ProgramSystemicDemand,
   type StackProgram,
 } from './scoring.ts';
 import type {
   ActiveProgramSummary,
   CandidateProgram,
+  PatternDebtInput,
   QueuedProgramSummary,
   RecommenderInputs,
   WorkoutSummary,
@@ -179,13 +180,43 @@ export async function gatherInputs(
   }));
 
   // Pattern debt: SECURITY INVOKER RPC, so it must run as the caller.
+  // Generated DB types don't yet know this function — cast at the RPC
+  // boundary only (mirrors src/api/usePatternDebt.ts).
   const { data: debtRows, error: debtErr } = await userClient.rpc(
-    'pattern_debt_window',
+    'pattern_debt_movements' as never,
   );
   if (debtErr) throw debtErr;
-  const pattern_debt = computePatternBalance(
-    (debtRows ?? []) as PatternAggregate[],
-  );
+
+  const debtAggregates: MovementAggregate[] = (
+    (debtRows ?? []) as Record<string, unknown>[]
+  ).map((row) => ({
+    movement_id: (row.movement_id ?? null) as string | null,
+    movement_name: row.movement_name as string,
+    pattern_credits: (row.pattern_credits ?? null) as string[] | null,
+    last_trained_at: row.last_trained_at as string | null,
+    set_count: Number(row.set_count),
+    total_reps: Number(row.total_reps),
+    total_volume_kg: Number(row.total_volume_kg),
+    baseline_volume_kg:
+      row.baseline_volume_kg == null ? null : Number(row.baseline_volume_kg),
+    hardest_rpe: (row.hardest_rpe ?? null) as MovementAggregate['hardest_rpe'],
+  }));
+
+  const debtBalance = computePatternBalance(debtAggregates);
+  const pattern_debt: PatternDebtInput = {
+    overall_balance: debtBalance.overallBalance,
+    patterns: Object.values(debtBalance.patterns).map((p) => ({
+      pattern: p.pattern,
+      days_since_last_trained:
+        p.daysSinceLastTrained == null
+          ? null
+          : Math.floor(p.daysSinceLastTrained),
+      debt_score: p.debtScore,
+      band: p.band,
+      hardest_rpe: p.hardestRpe,
+      is_new: p.isNew,
+    })),
+  };
 
   // Recent workout history + persistent training goal.
   const { data: logs, error: logErr } = await admin

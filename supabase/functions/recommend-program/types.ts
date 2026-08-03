@@ -3,7 +3,33 @@
 // RecommenderInputs is the typed snapshot fed to the LLM and persisted verbatim
 // into program_recommendations.inputs.
 
-import type { PatternBalanceSummary, StackFit } from './scoring.ts';
+import type {
+  DebtBand,
+  OverallBalance,
+  Pattern,
+  PatternRpe,
+  StackFit,
+} from './scoring.ts';
+
+/**
+ * One pattern's scored debt, serialized (dates as ISO strings) for the inputs
+ * JSONB snapshot and the prompt. Derived from the shared scoring model
+ * (src/utils/patternDebt.ts, PROD-155).
+ */
+export interface PatternDebtEntry {
+  pattern: Pattern;
+  days_since_last_trained: number | null;
+  debt_score: number;
+  band: DebtBand;
+  hardest_rpe: PatternRpe | null;
+  /** Never trained in the baseline window — treat as neutral, not overdue. */
+  is_new: boolean;
+}
+
+export interface PatternDebtInput {
+  overall_balance: OverallBalance;
+  patterns: PatternDebtEntry[];
+}
 
 /** One program the user is currently running. */
 export interface ActiveProgramSummary {
@@ -50,7 +76,7 @@ export interface RecommenderInputs {
   active_programs: ActiveProgramSummary[];
   queued_programs: QueuedProgramSummary[];
   candidates: CandidateProgram[];
-  pattern_debt: PatternBalanceSummary;
+  pattern_debt: PatternDebtInput;
   recent_history: WorkoutSummary[];
 }
 

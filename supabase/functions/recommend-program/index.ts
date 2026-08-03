@@ -33,7 +33,7 @@ Deno.serve(async (req: Request) => {
     if (!authHeader) return json({ error: 'Missing authorization' }, 401);
 
     // (1) Identity: anon client bound to the caller's JWT. Also used for the
-    // SECURITY INVOKER pattern_debt_window RPC, which scopes on auth.uid().
+    // SECURITY INVOKER pattern_debt_movements RPC, which scopes on auth.uid().
     const authClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',

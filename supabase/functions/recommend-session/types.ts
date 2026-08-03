@@ -44,6 +44,8 @@ export interface PatternDebtEntry {
   debt_score: number;
   band: DebtBand;
   hardest_rpe: PatternRpe | null;
+  /** Never trained in the baseline window — treat as neutral, not overdue. */
+  is_new: boolean;
 }
 
 export interface PatternDebtInput {
@@ -58,7 +60,7 @@ export interface RecommenderInputs {
   days_since_last_workout: number | null;
   recent_history: WorkoutHistoryEntry[];
   candidates: CandidateMovement[];
-  /** Null when the pattern_debt_window RPC fails — never blocks a recommendation. */
+  /** Null when the pattern_debt_movements RPC fails — never blocks a recommendation. */
   pattern_debt: PatternDebtInput | null;
   // Reserved, populated later (PROD-78). Kept in the snapshot so the prompt and
   // the logged inputs are forward-compatible.
