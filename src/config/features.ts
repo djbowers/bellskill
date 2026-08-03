@@ -6,6 +6,7 @@ export type FeatureName =
   | 'explore'
   | 'premium'
   | 'programs'
+  | 'spotify'
   | 'weeklyBalance';
 
 export type Features = Record<FeatureName, boolean>;
@@ -25,6 +26,7 @@ const baseFeatures: Features = {
   explore: import.meta.env.VITE_FEATURE_EXPLORE === 'true',
   premium: import.meta.env.VITE_FEATURE_PREMIUM === 'true',
   programs: import.meta.env.VITE_FEATURE_PROGRAMS === 'true',
+  spotify: import.meta.env.VITE_FEATURE_SPOTIFY === 'true',
   weeklyBalance: import.meta.env.VITE_FEATURE_WEEKLY_BALANCE === 'true',
 };
 
@@ -95,6 +97,7 @@ export const getFeatures = (session?: Session | null): Features => {
       explore: true,
       premium: true,
       programs: true,
+      spotify: true,
       weeklyBalance: true,
     };
   }

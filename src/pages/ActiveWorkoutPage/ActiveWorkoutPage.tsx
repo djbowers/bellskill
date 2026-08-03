@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useLogWorkout } from '~/api';
-import { Page } from '~/components';
+import { Page, SpotifyMiniPlayer } from '~/components';
 import { useWorkoutOptions } from '~/contexts';
-import { useCountdownTimer } from '~/hooks';
+import { useCountdownTimer, useFeatures } from '~/hooks';
 import { playDing, playStartCue, unlockAudio } from '~/utils';
 
 import {
@@ -25,6 +25,8 @@ interface ActiveWorkoutPageProps {
 export const ActiveWorkoutPage = ({
   defaultPaused = true,
 }: ActiveWorkoutPageProps) => {
+  const features = useFeatures();
+
   const [
     {
       complexSet,
@@ -663,6 +665,8 @@ export const ActiveWorkoutPage = ({
         onClickFinish={handleClickFinish}
         startedAt={startedAt ?? new Date()}
       />
+
+      {features.spotify && <SpotifyMiniPlayer />}
     </Page>
   );
 };

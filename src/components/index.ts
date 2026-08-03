@@ -11,6 +11,7 @@ export * from './PremiumGate';
 export * from './ProgramTags';
 export * from './SafeAreaWrapper';
 export * from './Sidebar';
+export * from './SpotifyMiniPlayer';
 export * from './StackFitNote';
 export * from './TrialStatusPill';
 export * from './ValueCarousel';
