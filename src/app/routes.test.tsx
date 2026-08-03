@@ -13,6 +13,7 @@ const flagsOff: Features = {
   explore: false,
   premium: false,
   programs: false,
+  spotify: false,
   weeklyBalance: false,
 };
 

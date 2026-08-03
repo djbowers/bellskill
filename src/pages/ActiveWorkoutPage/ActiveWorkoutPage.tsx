@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { AnalyticsEvent, trackEvent, useLogWorkout } from '~/api';
-import { Page } from '~/components';
+import { Page, SpotifyMiniPlayer } from '~/components';
 import { ConfirmDialog } from '~/components/ConfirmDialog';
 import { useProgramSession, useSession, useWorkoutOptions } from '~/contexts';
-import { useCountdownTimer } from '~/hooks';
+import { useCountdownTimer, useFeatures } from '~/hooks';
 import { playDing, playStartCue, unlockAudio } from '~/utils';
 
 import {
@@ -26,6 +26,8 @@ interface ActiveWorkoutPageProps {
 export const ActiveWorkoutPage = ({
   defaultPaused = true,
 }: ActiveWorkoutPageProps) => {
+  const features = useFeatures();
+
   const [
     {
       complexSet,
@@ -701,6 +703,8 @@ export const ActiveWorkoutPage = ({
         onConfirm={cancelWorkout}
         onDismiss={() => setCancelDialogOpen(false)}
       />
+
+      {features.spotify && <SpotifyMiniPlayer />}
     </Page>
   );
 };

@@ -9,6 +9,8 @@ export enum QUERIES {
   PROGRAM_PROGRESS = 'programProgress',
   PROGRAMS = 'programs',
   QUEUED_PROGRAMS = 'queuedPrograms',
+  SPOTIFY_CONNECTION = 'spotifyConnection',
+  SPOTIFY_NOW_PLAYING = 'spotifyNowPlaying',
   USER_MOVEMENTS = 'userMovements',
   WORKOUT_LOG = 'workoutLog',
   WORKOUT_LOGS = 'workoutLogs',

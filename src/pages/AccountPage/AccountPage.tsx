@@ -3,8 +3,11 @@ import { useFormStatus } from 'react-dom';
 
 import {
   SubscriptionState,
+  useConnectSpotify,
   useCreatePortalSession,
+  useDisconnectSpotify,
   useSetSubscription,
+  useSpotifyConnection,
 } from '~/api';
 import { Page, TrialStatusPill } from '~/components';
 import { Button } from '~/components/ui/button';
@@ -16,6 +19,7 @@ import {
   setPreviewOverrideEnabled,
 } from '~/config/features';
 import { useEntitlement, useSession } from '~/contexts';
+import { useFeatures } from '~/hooks';
 import { supabase } from '~/supabaseClient';
 import { isSoundEnabled, setSoundEnabled } from '~/utils';
 
@@ -62,6 +66,30 @@ export const AccountPage = () => {
     setSubscription(state, {
       onSuccess: () => refetchEntitlement(),
     });
+  };
+
+  const features = useFeatures();
+  const { data: spotifyConnection } = useSpotifyConnection(features.spotify);
+  const { mutate: connectSpotify, isPending: connectingSpotify } =
+    useConnectSpotify();
+  const { mutate: disconnectSpotify, isPending: disconnectingSpotify } =
+    useDisconnectSpotify();
+
+  const spotifyConnected = spotifyConnection?.connected ?? false;
+  const spotifyUserId = spotifyConnection?.spotifyUserId;
+
+  const handleConnectSpotify = () => {
+    connectSpotify(undefined, {
+      onSuccess: (url) => {
+        window.location.href = url;
+      },
+    });
+  };
+
+  const handleDisconnectSpotify = () => {
+    if (window.confirm('Disconnect Spotify from Bellskill?')) {
+      disconnectSpotify();
+    }
   };
 
   const handleManageSubscription = () => {
@@ -139,6 +167,34 @@ export const AccountPage = () => {
           {soundEnabled ? 'Disable timer sounds' : 'Enable timer sounds'}
         </Button>
       </div>
+
+      {features.spotify && (
+        <div className="flex flex-col gap-1 border-t pt-2">
+          <Label>Spotify</Label>
+          <p className="text-xs text-muted-foreground">
+            {spotifyConnected
+              ? `Connected${spotifyUserId ? ` as ${spotifyUserId}` : ''}. Music controls appear during your workouts.`
+              : 'Connect your Spotify account to see and control your music during workouts.'}
+          </p>
+          {spotifyConnected ? (
+            <Button
+              variant="outline"
+              onClick={handleDisconnectSpotify}
+              loading={disconnectingSpotify}
+            >
+              Disconnect Spotify
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={handleConnectSpotify}
+              loading={connectingSpotify}
+            >
+              Connect Spotify
+            </Button>
+          )}
+        </div>
+      )}
 
       {isPremium && (
         <div className="flex flex-col gap-1 border-t pt-2">

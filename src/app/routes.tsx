@@ -16,6 +16,7 @@ import {
   ProgramSessionBuilderPage,
   ProgramsPage,
   RecommendationsPage,
+  SpotifyCallbackPage,
   StartWorkoutPage,
 } from '../pages';
 import { Root } from './Root';
@@ -64,6 +65,9 @@ export const createRoutes = (flags: Features = features): RouteObject[] => [
         path: 'checkout/cancel',
         element: <CheckoutCancelPage />,
       },
+      ...(flags.spotify
+        ? [{ path: 'spotify/callback', element: <SpotifyCallbackPage /> }]
+        : []),
       ...(flags.explore
         ? [{ path: 'movements', element: <MovementsPage /> }]
         : []),
