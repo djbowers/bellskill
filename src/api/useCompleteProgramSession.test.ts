@@ -3,6 +3,7 @@ import { HttpResponse, http } from 'msw';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import { QUERIES } from '~/constants';
 import { SessionProvider } from '~/contexts';
 import { server } from '~/mocks/server';
 
@@ -25,17 +26,20 @@ const mockSession = {
   token_type: '',
 };
 
-const makeWrapper = () => {
-  const queryClient = new QueryClient({
+const makeQueryClient = () =>
+  new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return ({ children }: { children: React.ReactNode }) =>
+
+const wrapperFor = (queryClient: QueryClient) =>
+  ({ children }: { children: React.ReactNode }) =>
     React.createElement(
       QueryClientProvider,
       { client: queryClient },
       React.createElement(SessionProvider, { value: mockSession }, children),
     );
-};
+
+const makeWrapper = () => wrapperFor(makeQueryClient());
 
 describe('useCompleteProgramSession', () => {
   it('completes a session with its workout_log_id and resolves the program-complete flag', async () => {
@@ -93,6 +97,54 @@ describe('useCompleteProgramSession', () => {
     });
     // No workout_log_id sent for a skip — the RPC's NULL default applies.
     expect(receivedBody?.p_workout_log_id).toBeUndefined();
+  });
+
+  it('invalidates the active-program query after a successful skip', async () => {
+    server.use(http.post(RPC_URL, () => HttpResponse.json(false)));
+
+    const queryClient = makeQueryClient();
+    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useCompleteProgramSession(), {
+      wrapper: wrapperFor(queryClient),
+    });
+
+    await result.current.mutateAsync({
+      userProgramId: 'up-1',
+      programSessionId: 'ps-9',
+      status: 'skipped',
+    });
+
+    await waitFor(() =>
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: [QUERIES.ACTIVE_PROGRAM],
+      }),
+    );
+  });
+
+  it('leaves the active-program query alone when the RPC fails', async () => {
+    server.use(
+      http.post(RPC_URL, () =>
+        HttpResponse.json({ message: 'boom' }, { status: 400 }),
+      ),
+    );
+
+    const queryClient = makeQueryClient();
+    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useCompleteProgramSession(), {
+      wrapper: wrapperFor(queryClient),
+    });
+
+    await expect(
+      result.current.mutateAsync({
+        userProgramId: 'up-1',
+        programSessionId: 'ps-9',
+        status: 'skipped',
+      }),
+    ).rejects.toBeTruthy();
+
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
   it('surfaces RPC errors', async () => {
