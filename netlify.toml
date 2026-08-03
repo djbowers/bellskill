@@ -25,13 +25,14 @@
 # VITE_SUPABASE_ANON_KEY is a public, RLS-protected key (it ships in the client
 # bundle), so it is safe to commit here.
 #
-# IMPORTANT: these two variables must NOT also be set in the Netlify UI. UI
-# environment variables override netlify.toml, so a UI value scoped to "all
-# contexts" would defeat the deploy-preview override below. Keep them here only.
-
-[context.production.environment]
-  VITE_SUPABASE_URL = "https://ynzzqpajkhqjzftiynfo.supabase.co"
-  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluenpxcGFqa2hxanpmdGl5bmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTA2NjI3NjMsImV4cCI6MjAwNjIzODc2M30.xLRZaFcdp9K2HucbAkJig0GSEfyYsWOYrVOTDIrgK8g"
+# There is intentionally NO [context.production.environment] block: netlify.toml
+# applies to every site building this repo, and context blocks OVERRIDE per-site
+# UI variables. A production block with prod Supabase values hijacked the staging
+# site's production-context builds of `develop`, pointing stage.bellskill.com at
+# the prod database. Production Supabase values live as UI env vars on the
+# `bellskill` site; staging values live as UI env vars on the `dev-kettlebells`
+# site. The deploy-preview block below stays in the file because previews build
+# on both sites and must always target staging.
 
 [context.deploy-preview.environment]
   NODE_VERSION = "24"

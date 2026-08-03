@@ -1,0 +1,23 @@
+# Mirrors main onto develop after every push to main, so the staging site
+# (dev-kettlebells, which builds develop) always deploys the latest merged code.
+# develop carries no unique work — it exists only as the staging deploy branch —
+# so a force mirror is safe and self-heals any divergence.
+
+name: Sync develop with main
+
+on:
+  push:
+    branches: ['main']
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git push --force origin main:develop
