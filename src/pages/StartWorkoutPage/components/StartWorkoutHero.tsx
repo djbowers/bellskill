@@ -1,6 +1,8 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { NextProgramSession, ProgramProgress } from '~/api';
+import { ConfirmDialog } from '~/components/ConfirmDialog';
+import { OverflowMenu } from '~/components/OverflowMenu';
 import { Button } from '~/components/ui/button';
 import { cn } from '~/lib/utils';
 import { WorkoutGoalUnits } from '~/types';
@@ -10,6 +12,10 @@ import { WorkoutGoalUnits } from '~/types';
  * a quiet bordered card; the hero is filled `primary` so "what am I training now"
  * is unmistakable. Two shapes share the shell: a running program's next session,
  * and a quick-start anchor for anyone without an active program.
+ *
+ * The program shape carries exactly one button — starting the next session.
+ * Skipping advances the program past a session, so it sits in the ⋯ menu behind
+ * a confirm rather than beside the CTA where a thumb can find it by accident.
  */
 export type StartWorkoutHeroProps =
   | ({ variant: 'program' } & ProgramHeroProps)
@@ -52,16 +58,25 @@ const HeroShell = ({ children }: { children: ReactNode }) => (
   </section>
 );
 
-const Eyebrow = ({ children }: { children: ReactNode }) => (
-  <span className="text-xs font-semibold uppercase tracking-wide text-primary-foreground/75">
+const Eyebrow = ({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) => (
+  <span
+    className={cn(
+      'text-xs font-semibold uppercase tracking-wide text-primary-foreground/75',
+      className,
+    )}
+  >
     {children}
   </span>
 );
 
 const primaryCta =
   'bg-primary-foreground text-primary shadow-none hover:bg-primary-foreground/90';
-const ghostCta =
-  'border border-primary-foreground/30 bg-transparent text-primary-foreground shadow-none hover:bg-primary-foreground/10';
 
 export const StartWorkoutHero = (props: StartWorkoutHeroProps) => {
   if (props.variant === 'quickStart') {
@@ -97,16 +112,20 @@ export const StartWorkoutHero = (props: StartWorkoutHeroProps) => {
     );
   }
 
-  const {
-    programTitle,
-    nextSession,
-    progress,
-    isComplete,
-    onStart,
-    onSkip,
-    skipping,
-    onViewProgress,
-  } = props;
+  return <ProgramHero {...props} />;
+};
+
+const ProgramHero = ({
+  programTitle,
+  nextSession,
+  progress,
+  isComplete,
+  onStart,
+  onSkip,
+  skipping,
+  onViewProgress,
+}: ProgramHeroProps) => {
+  const [confirmingSkip, setConfirmingSkip] = useState(false);
 
   const viewProgressLink = onViewProgress && (
     <button
@@ -150,11 +169,23 @@ export const StartWorkoutHero = (props: StartWorkoutHeroProps) => {
 
   return (
     <HeroShell>
-      <div className="flex items-center justify-between gap-1">
-        <Eyebrow>{programTitle}</Eyebrow>
-        <span className="shrink-0 rounded-full bg-primary-foreground/15 px-1 py-px text-xs font-medium">
+      <div className="flex items-center gap-1">
+        <Eyebrow className="min-w-0 truncate">{programTitle}</Eyebrow>
+        <span className="ml-auto shrink-0 rounded-full bg-primary-foreground/15 px-1 py-px text-xs font-medium">
           Session {sessionNumber} of {progress.total}
         </span>
+        <OverflowMenu
+          menuLabel={programTitle}
+          triggerClassName="text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+          actions={[
+            {
+              label: 'Skip this session',
+              onSelect: () => setConfirmingSkip(true),
+              disabled: skipping,
+              destructive: true,
+            },
+          ]}
+        />
       </div>
 
       <div className="flex flex-col gap-0.5">
@@ -184,26 +215,38 @@ export const StartWorkoutHero = (props: StartWorkoutHeroProps) => {
         </span>
       </div>
 
-      <div className="mt-0.5 flex gap-1">
-        <Button
-          size="lg"
-          className={cn('flex-1 text-base', primaryCta)}
-          onClick={onStart}
-          disabled={skipping}
-        >
-          Start next workout
-        </Button>
-        <Button
-          size="lg"
-          className={cn('text-base', ghostCta)}
-          onClick={onSkip}
-          disabled={skipping}
-        >
-          {skipping ? 'Skipping…' : 'Skip'}
-        </Button>
-      </div>
+      {skipping ? (
+        <span className="self-start text-xs font-medium text-primary-foreground/80">
+          Skipping this session…
+        </span>
+      ) : (
+        viewProgressLink
+      )}
 
-      {viewProgressLink}
+      <Button
+        size="lg"
+        className={cn('mt-0.5 w-full text-base', primaryCta)}
+        onClick={onStart}
+        disabled={skipping}
+      >
+        Start next workout
+      </Button>
+
+      <ConfirmDialog
+        open={confirmingSkip}
+        onOpenChange={setConfirmingSkip}
+        title="Skip this session?"
+        description={`Session ${sessionNumber} won't be logged, and ${programTitle} moves on to the next one.`}
+        confirmLabel="Skip session"
+        confirmVariant="destructive"
+        dismissLabel="Keep this session"
+        onConfirm={() => {
+          setConfirmingSkip(false);
+          onSkip();
+        }}
+        onDismiss={() => setConfirmingSkip(false)}
+        isPending={skipping}
+      />
     </HeroShell>
   );
 };

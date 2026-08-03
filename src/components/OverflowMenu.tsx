@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
+import { cn } from '~/lib/utils';
 
 export interface OverflowMenuAction {
   label: string;
@@ -26,10 +27,13 @@ export interface OverflowMenuAction {
 export const OverflowMenu = ({
   actions,
   menuLabel,
+  triggerClassName,
 }: {
   actions: OverflowMenuAction[];
   /** Names the thing being acted on, e.g. a program or session title. */
   menuLabel: string;
+  /** Retones the ⋯ for surfaces that aren't the default card background. */
+  triggerClassName?: string;
 }) => {
   // Every action here either navigates or opens a dialog, so restoring focus to
   // the trigger on close would yank it straight back out of what just opened.
@@ -55,7 +59,10 @@ export const OverflowMenu = ({
         <Button
           variant="ghost"
           size="icon"
-          className="-mr-0.5 -mt-0.5 shrink-0 text-muted-foreground"
+          className={cn(
+            '-mr-0.5 -mt-0.5 shrink-0 text-muted-foreground',
+            triggerClassName,
+          )}
           aria-label={`More actions for ${menuLabel}`}
         >
           <EllipsisHorizontalIcon className="h-2.5 w-2.5" aria-hidden />
