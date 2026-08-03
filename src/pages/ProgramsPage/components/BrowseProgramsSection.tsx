@@ -9,7 +9,7 @@ export interface BrowseProgramsSectionProps {
   programs: Program[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Owner-only: surfaces the release state of a shared program. */
+  /** Owner-only: shows a release/unrelease toggle on each shared program. */
   showReleasedBadge: boolean;
 }
 
