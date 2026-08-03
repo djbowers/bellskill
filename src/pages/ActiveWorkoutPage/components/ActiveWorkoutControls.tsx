@@ -56,7 +56,12 @@ export const ActiveWorkoutControls = ({
 
   if (workoutTimerPaused) {
     return (
-      <Button onClick={handleClickStart} size="lg" className="grow">
+      <Button
+        aria-label="Start workout"
+        onClick={handleClickStart}
+        size="lg"
+        className="grow"
+      >
         <PlayIcon className="h-3 w-3" />
       </Button>
     );

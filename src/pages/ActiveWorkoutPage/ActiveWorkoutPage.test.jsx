@@ -51,6 +51,8 @@ const {
 describe('finishing a workout', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -123,6 +125,8 @@ describe('finishing a workout', () => {
 describe('integration tests for previous volume persistence', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -197,6 +201,8 @@ describe('integration tests for previous volume persistence', () => {
 describe('volume calculation with kilogram weights', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -251,6 +257,8 @@ describe('volume calculation with kilogram weights', () => {
 describe('volume calculation with pound weights', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -291,6 +299,8 @@ describe('volume calculation with pound weights', () => {
 describe('volume calculation with mixed weight units', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -353,6 +363,8 @@ describe('volume calculation with mixed weight units', () => {
 describe('volume calculation with one-handed movements', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -390,6 +402,8 @@ describe('volume calculation with one-handed movements', () => {
 describe('volume calculation with bodyweight movements', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -426,6 +440,8 @@ describe('volume calculation with bodyweight movements', () => {
 describe('volume accumulation across multiple rungs', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -758,6 +774,8 @@ describe('active workout page (bodyweight movements)', () => {
 describe('automatic workout completion with volume goals', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -808,6 +826,8 @@ describe('automatic workout completion with volume goals', () => {
 describe('volume rounding on workout completion', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -864,6 +884,8 @@ describe('volume rounding on workout completion', () => {
 describe('volume does not trigger completion for non-volume goals', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -906,6 +928,8 @@ describe('volume does not trigger completion for non-volume goals', () => {
 describe('edge case and boundary tests', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -1044,6 +1068,8 @@ describe('edge case and boundary tests', () => {
 describe('volume calculation for complex mode', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   const logWorkout = vi.fn();
@@ -1323,6 +1349,8 @@ describe('active workout page (complex mode, different rep schemes)', () => {
 describe('active workout page (A+A Protocol interval EMOM cadence)', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   beforeEach(() => {
@@ -1372,6 +1400,8 @@ describe('active workout page (A+A Protocol interval EMOM cadence)', () => {
 describe('active workout page (single-arm complex EMOM cadence)', () => {
   vi.mock('~/api', () => ({
     useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
   }));
 
   beforeEach(() => {
@@ -1522,7 +1552,9 @@ describe('active workout page (timed rungs)', () => {
     expect(screen.getByTestId('current-round')).toHaveTextContent('1');
 
     // Start it: 3s lead-in countdown, then the 1:00 rung runs and hands swap.
-    act(() => screen.getAllByRole('button')[0].click());
+    act(() =>
+      screen.getByRole('button', { name: 'Start workout' }).click(),
+    );
     act(() => vi.advanceTimersByTime(3_000));
     act(() => vi.advanceTimersByTime(60_000));
     expect(leftWeight).toHaveAttribute('data-active', 'false');
@@ -1685,6 +1717,59 @@ describe('active workout page (straight sets)', () => {
     await clickContinue();
     expect(currentMovement).toHaveTextContent('Kettlebell Swing');
     expect(screen.getByTestId('current-set')).toHaveTextContent('Set 1 of 2');
+  });
+});
+
+describe('cancelling a workout', () => {
+  const logWorkout = vi.fn();
+
+  beforeEach(() =>
+    useLogWorkout.mockReturnValue({
+      mutate: logWorkout,
+      data: null,
+      isLoading: false,
+    }),
+  );
+
+  afterEach(() => vi.clearAllMocks());
+
+  test('cancel button opens a confirmation dialog', async () => {
+    render(<DoubleWeights />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /cancel workout/i }),
+    );
+
+    expect(screen.getByText('Cancel this workout?')).toBeInTheDocument();
+    expect(logWorkout).not.toHaveBeenCalled();
+  });
+
+  test('keep going dismisses the dialog and the workout continues', async () => {
+    render(<DoubleWeights />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /cancel workout/i }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: /keep going/i }));
+
+    expect(screen.queryByText('Cancel this workout?')).not.toBeInTheDocument();
+    expect(logWorkout).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('button', { name: /finish workout/i }),
+    ).toBeInTheDocument();
+  });
+
+  test('discard workout does not log the workout', async () => {
+    render(<DoubleWeights />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /cancel workout/i }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /discard workout/i }),
+    );
+
+    expect(logWorkout).not.toHaveBeenCalled();
   });
 });
 
