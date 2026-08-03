@@ -33,3 +33,20 @@ export interface RecommendSessionResponse {
   id: string;
   recommendation: Recommendation;
 }
+
+/** Whether the recommended program starts now or waits for a free slot. */
+export type ProgramRecommendationMode = 'concurrent' | 'queue';
+
+/** Validated output of the `recommend-program` Edge Function. */
+export interface ProgramRecommendation {
+  program_id: string;
+  mode: ProgramRecommendationMode;
+  rationale: string;
+  confidence: RecommendationConfidence;
+}
+
+/** Success payload from `recommend-program`. */
+export interface RecommendProgramResponse {
+  id: string;
+  recommendation: ProgramRecommendation;
+}

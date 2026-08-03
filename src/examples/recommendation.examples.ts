@@ -1,4 +1,4 @@
-import type { Recommendation } from '~/types';
+import type { ProgramRecommendation, Recommendation } from '~/types';
 
 /**
  * A realistic recommendation for tests, stories, and the free-user preview
@@ -38,5 +38,28 @@ export class ExampleRecommendation implements Recommendation {
     this.format = format;
     this.confidence = confidence;
     this.blocks = blocks;
+  }
+}
+
+/**
+ * A realistic program recommendation for tests and stories. Defaults model an
+ * easy strength program queued behind a running conditioning block.
+ */
+export class ExampleProgramRecommendation implements ProgramRecommendation {
+  program_id: ProgramRecommendation['program_id'];
+  mode: ProgramRecommendation['mode'];
+  rationale: ProgramRecommendation['rationale'];
+  confidence: ProgramRecommendation['confidence'];
+
+  constructor({
+    program_id = 'example-easy-strength',
+    mode = 'queue',
+    rationale = 'Your pull and carry patterns are the most undertrained, and Easy Strength hits both without adding recovery load. Your current program fills your recovery budget, so queue this to start the day it finishes.',
+    confidence = 'medium',
+  }: Partial<ProgramRecommendation> = {}) {
+    this.program_id = program_id;
+    this.mode = mode;
+    this.rationale = rationale;
+    this.confidence = confidence;
   }
 }

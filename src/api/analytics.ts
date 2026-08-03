@@ -24,6 +24,10 @@ export enum AnalyticsEvent {
   RecommendationAccepted = 'recommendation_accepted',
   RecommendationRegenerated = 'recommendation_regenerated',
   RecommendationPreviewShown = 'recommendation_preview_shown',
+  // AI Program Recommender.
+  ProgramRecommendationRequested = 'program_recommendation_requested',
+  ProgramRecommendationAccepted = 'program_recommendation_accepted',
+  ProgramRecommendationDismissed = 'program_recommendation_dismissed',
 }
 
 interface TrackEventParams {

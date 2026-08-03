@@ -263,6 +263,57 @@ export type Database = {
           },
         ]
       }
+      program_recommendations: {
+        Row: {
+          acted_at: string | null
+          created_at: string
+          error: string | null
+          id: string
+          inputs: Json
+          output: Json | null
+          program_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          acted_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          inputs: Json
+          output?: Json | null
+          program_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          acted_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          inputs?: Json
+          output?: Json | null
+          program_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_recommendations_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       program_session_completions: {
         Row: {
           completed_at: string
