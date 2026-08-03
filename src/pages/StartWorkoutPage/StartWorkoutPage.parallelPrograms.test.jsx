@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 import { DEFAULT_WORKOUT_OPTIONS, WorkoutOptionsContext } from '~/contexts';
@@ -116,7 +116,7 @@ describe('StartWorkoutPage parallel programs', () => {
     expect(screen.queryByText('Day 1')).not.toBeInTheDocument();
   });
 
-  test('skips the selected program, not the default one', () => {
+  test('skips the selected program, not the default one', async () => {
     mockUseActivePrograms.mockReturnValue({
       data: [
         activeProgram('up-1', 'Easy Strength', 'Day 1'),
@@ -130,7 +130,18 @@ describe('StartWorkoutPage parallel programs', () => {
     fireEvent.click(
       screen.getByRole('tab', { name: /Dry Fighting Weight/ }),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    // Skip now lives behind the hero's ⋯ menu and a confirm.
+    fireEvent.keyDown(
+      screen.getByRole('button', {
+        name: 'More actions for Dry Fighting Weight',
+      }),
+      { key: 'Enter' },
+    );
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Skip this session' }));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Skip session' }));
 
     expect(mockSkipMutate).toHaveBeenCalledWith({
       userProgramId: 'up-2',

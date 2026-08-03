@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { NextProgramSession, ProgramProgress } from '~/api';
@@ -53,9 +53,22 @@ const progress: ProgramProgress = {
   day: 2,
 };
 
+// Skip sits behind the hero's ⋯ menu and a confirm, and OverflowMenu defers the
+// selection a tick so the menu can close before the dialog mounts.
+const openSkipConfirm = async (programTitle: string) => {
+  fireEvent.keyDown(
+    screen.getByRole('button', { name: `More actions for ${programTitle}` }),
+    { key: 'Enter' },
+  );
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Skip this session' }));
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+};
+
 describe('StartWorkoutHero', () => {
   describe('program variant', () => {
-    it('renders the next session with title, chip, week/day, duration, progress and actions', () => {
+    it('renders the next session with title, chip, week/day, duration, progress and actions', async () => {
       const onStart = vi.fn();
       const onSkip = vi.fn();
 
@@ -89,8 +102,36 @@ describe('StartWorkoutHero', () => {
       );
       expect(onStart).toHaveBeenCalledTimes(1);
 
-      fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+      await openSkipConfirm('Dry Fighting Weight');
+      expect(onSkip).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Skip session' }));
       expect(onSkip).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves the session alone when the skip confirm is dismissed', async () => {
+      const onSkip = vi.fn();
+
+      render(
+        <StartWorkoutHero
+          variant="program"
+          programTitle="Dry Fighting Weight"
+          nextSession={nextSession}
+          progress={progress}
+          isComplete={false}
+          onStart={vi.fn()}
+          onSkip={onSkip}
+          skipping={false}
+        />,
+      );
+
+      await openSkipConfirm('Dry Fighting Weight');
+      fireEvent.click(screen.getByRole('button', { name: 'Keep this session' }));
+
+      expect(onSkip).not.toHaveBeenCalled();
+      expect(
+        screen.queryByRole('button', { name: 'Skip session' }),
+      ).not.toBeInTheDocument();
     });
 
     it('falls back to week/day as the title when the session has none', () => {
@@ -130,7 +171,17 @@ describe('StartWorkoutHero', () => {
       expect(
         screen.getByRole('button', { name: 'Start next workout' }),
       ).toBeDisabled();
-      expect(screen.getByRole('button', { name: 'Skipping…' })).toBeDisabled();
+      expect(screen.getByText('Skipping this session…')).toBeInTheDocument();
+
+      fireEvent.keyDown(
+        screen.getByRole('button', {
+          name: 'More actions for Dry Fighting Weight',
+        }),
+        { key: 'Enter' },
+      );
+      expect(
+        screen.getByRole('menuitem', { name: 'Skip this session' }),
+      ).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('renders the complete state when the program is finished', () => {
