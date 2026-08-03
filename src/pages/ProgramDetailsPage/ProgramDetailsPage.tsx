@@ -6,6 +6,7 @@ import {
   useActivePrograms,
   useEnrollProgram,
   useProgram,
+  useSwapProgramMovement,
 } from '~/api';
 import type { MovementWeight } from '~/api';
 import {
@@ -21,6 +22,10 @@ import { Label } from '~/components/ui/label';
 import { Switch } from '~/components/ui/switch';
 import { useSession } from '~/contexts';
 import { cn } from '~/lib/utils';
+import {
+  MovementSwap,
+  SwapMovementDialog,
+} from '~/pages/ProgramProgressPage/components/SwapMovementDialog';
 import { ReplaceProgramDialog } from '~/pages/ProgramsPage/components/ReplaceProgramDialog';
 import { programSpanLabel } from '~/pages/ProgramsPage/utils';
 import { ProgramSession, WeightUnit, WorkoutGoalUnits } from '~/types';
@@ -165,6 +170,7 @@ export const ProgramDetailsPage = () => {
   const { data, isLoading, isError } = useProgram(id);
   const { data: activePrograms = [] } = useActivePrograms();
   const enroll = useEnrollProgram();
+  const swapMovement = useSwapProgramMovement();
 
   const [seeded, setSeeded] = useState(false);
   const [pendingSwitch, setPendingSwitch] = useState(false);
@@ -187,6 +193,14 @@ export const ProgramDetailsPage = () => {
   const [movementWeights, setMovementWeights] = useState<
     Record<string, StartingWeight>
   >({});
+  // Swaps chosen before enrolling, keyed by the OLD movement name — the enroll
+  // payload still speaks the program's original names; the swap RPC renames
+  // each one right after the enrollment row exists.
+  const [pendingSwaps, setPendingSwaps] = useState<
+    Record<string, MovementSwap>
+  >({});
+  // Which movement's swap dialog is open (its original name), if any.
+  const [swapTarget, setSwapTarget] = useState<string | null>(null);
   // Whether the enrollment should loop on completion. Seeded from the program's
   // template default once it loads; the user can flip it before starting.
   const [autoRepeat, setAutoRepeat] = useState(false);
@@ -308,6 +322,15 @@ export const ProgramDetailsPage = () => {
       : { movementWeights: movementWeightPayload }),
   });
 
+  // The enrollment clones the program under its original movement names; each
+  // pending swap then renames its movement on the fresh clone, one at a time
+  // (the RPC rewrites whole sessions, so parallel calls could clobber).
+  const applyPendingSwaps = async (userProgramId: string) => {
+    for (const swap of Object.values(pendingSwaps)) {
+      await swapMovement.mutateAsync({ userProgramId, ...swap });
+    }
+  };
+
   const doEnroll = () => {
     if (!id) return;
     setPendingSwitch(false);
@@ -317,7 +340,12 @@ export const ProgramDetailsPage = () => {
         replaceUserProgramId: displacedId ?? undefined,
         ...enrollmentConfig(),
       },
-      { onSuccess: () => navigate('/') },
+      {
+        onSuccess: async (userProgramId) => {
+          await applyPendingSwaps(userProgramId);
+          navigate('/');
+        },
+      },
     );
   };
 
@@ -328,7 +356,12 @@ export const ProgramDetailsPage = () => {
     setPendingSwitch(false);
     enroll.mutate(
       { programId: id, queue: true, ...enrollmentConfig() },
-      { onSuccess: () => navigate('/programs') },
+      {
+        onSuccess: async (userProgramId) => {
+          await applyPendingSwaps(userProgramId);
+          navigate('/programs');
+        },
+      },
     );
   };
 
@@ -523,7 +556,21 @@ export const ProgramDetailsPage = () => {
                 key={control.movementName}
                 className="flex flex-col gap-0.5 border-t border-border pt-1.5"
               >
-                <h3 className="text-sm font-medium">{control.movementName}</h3>
+                <div className="flex items-center justify-between gap-1">
+                  <h3 className="text-sm font-medium">
+                    {pendingSwaps[control.movementName]?.newMovementName ??
+                      control.movementName}
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto px-1 py-0.5 text-xs text-muted-foreground"
+                    aria-label={`Swap ${control.movementName}`}
+                    onClick={() => setSwapTarget(control.movementName)}
+                  >
+                    {pendingSwaps[control.movementName] ? 'Swapped' : 'Swap'}
+                  </Button>
+                </div>
                 {control.mode === 'none' ? (
                   <p className="text-xs text-muted-foreground">
                     {WEIGHT_MODE_LABELS.none}
@@ -616,6 +663,26 @@ export const ProgramDetailsPage = () => {
         onConfirm={doEnroll}
         isPending={enroll.isPending}
       />
+
+      {swapTarget && (
+        <SwapMovementDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setSwapTarget(null);
+          }}
+          movements={movementControls}
+          oldMovementName={swapTarget}
+          extraTakenNames={Object.entries(pendingSwaps)
+            .filter(([oldName]) => oldName !== swapTarget)
+            .map(([, swap]) => swap.newMovementName)}
+          onPendingSwap={(swap) =>
+            setPendingSwaps((current) => ({
+              ...current,
+              [swap.oldMovementName]: swap,
+            }))
+          }
+        />
+      )}
     </Page>
   );
 };

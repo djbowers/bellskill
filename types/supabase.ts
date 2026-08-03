@@ -978,6 +978,18 @@ export type Database = {
         Args: { p_stage_index: number; p_user_program_id: string }
         Returns: number
       }
+      swap_program_movement: {
+        Args: {
+          p_new_movement_name: string
+          p_old_movement_name: string
+          p_user_program_id: string
+          p_weight_one_unit?: string
+          p_weight_one_value?: number
+          p_weight_two_unit?: string
+          p_weight_two_value?: number
+        }
+        Returns: number
+      }
       update_program_sessions_forward: {
         Args: { p_forward_options: Json; p_session_id: string }
         Returns: number
