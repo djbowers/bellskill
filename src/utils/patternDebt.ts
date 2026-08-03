@@ -5,6 +5,8 @@
 // Pure + deterministic so it can be unit-tested here and reused verbatim by the
 // recommender edge function. See docs/pattern-debt-scoring-model.md.
 
+import { daysBetweenCalendarDays } from './dateOnly';
+
 export const PATTERNS = [
   'hinge',
   'squat',
@@ -100,13 +102,10 @@ export const computeDebtScore = (
   return Math.round(100 * (W_RECENCY * recency + W_VOLUME * deficit));
 };
 
-const daysBetween = (from: Date, to: Date): number =>
-  (to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24);
-
 const scorePattern = (agg: PatternAggregate, now: Date): PatternDebt => {
   const lastTrained = agg.last_trained_at ? new Date(agg.last_trained_at) : null;
   const daysSinceLastTrained = lastTrained
-    ? Math.max(0, daysBetween(lastTrained, now))
+    ? Math.max(0, daysBetweenCalendarDays(lastTrained, now))
     : null;
   const debtScore = computeDebtScore(
     daysSinceLastTrained,

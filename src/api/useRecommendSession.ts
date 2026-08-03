@@ -2,6 +2,7 @@ import { FunctionsHttpError } from '@supabase/supabase-js';
 import { useMutation } from '@tanstack/react-query';
 
 import { supabase } from '../supabaseClient';
+import { localDateString } from '~/utils/dateOnly';
 import type { RecommendSessionResponse } from '~/types';
 
 /** Stable codes for the failure modes the UI messages differently. */
@@ -21,11 +22,14 @@ export class RecommendSessionError extends Error {
 }
 
 const recommendSession = async (): Promise<RecommendSessionResponse> => {
-  // Body is empty for now; daily-readiness wiring lands in PROD-151.
+  // client_today anchors the recommender's "days since last workout" to the
+  // user's local calendar date — the edge function runs in UTC and has no
+  // notion of the caller's timezone otherwise. Daily-readiness wiring lands
+  // in PROD-151.
   const { data, error } =
     await supabase.functions.invoke<RecommendSessionResponse>(
       'recommend-session',
-      { body: {} },
+      { body: { client_today: localDateString() } },
     );
 
   if (error) {
