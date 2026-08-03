@@ -5,7 +5,7 @@
 // Pure + deterministic so it can be unit-tested here and reused verbatim by the
 // recommender edge function. See docs/pattern-debt-scoring-model.md.
 
-import { daysBetweenCalendarDays } from './dateOnly';
+import { daysBetweenCalendarDays } from './dateOnly.ts';
 
 export const PATTERNS = [
   'hinge',
