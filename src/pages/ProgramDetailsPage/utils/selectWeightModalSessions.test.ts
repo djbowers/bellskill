@@ -1,8 +1,8 @@
 import { ProgramSession, WorkoutOptions } from '~/types';
 
 import {
-  selectWeightModalSessions,
   SessionWithState,
+  selectWeightModalSessions,
 } from './selectWeightModalSessions';
 
 const session = (

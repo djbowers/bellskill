@@ -51,5 +51,10 @@ export const Redundant = {
 
 /** A clean pairing renders nothing at all. */
 export const GoodPairing = {
-  args: { candidate: easyStrength, active: [program('Simple & Sinister', ['power', 'strength', 'mobility'], 'low')] },
+  args: {
+    candidate: easyStrength,
+    active: [
+      program('Simple & Sinister', ['power', 'strength', 'mobility'], 'low'),
+    ],
+  },
 };

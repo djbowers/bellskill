@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import { ProgramTags } from '~/components';
+import { OverflowMenu, OverflowMenuAction, ProgramTags } from '~/components';
 import { Button, ButtonProps } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { cn } from '~/lib/utils';
@@ -12,7 +12,6 @@ import {
   myProgramCardState,
   programSpanLabel,
 } from '../utils';
-import { ProgramCardMenu, ProgramCardMenuAction } from './ProgramCardMenu';
 
 export interface MyProgramCardProps {
   program: Program;
@@ -126,7 +125,7 @@ export const MyProgramCard = ({
           }
         : { label: 'View progress', onClick: onViewProgress, disabled: false };
 
-  const menuActions: ProgramCardMenuAction[] = [
+  const menuActions: OverflowMenuAction[] = [
     ...(primary.label === 'Add sessions'
       ? []
       : [{ label: 'Add sessions', onSelect: onAddSessions }]),
@@ -209,7 +208,7 @@ export const MyProgramCard = ({
           <ProgramTags tags={program.focusTags} className="mt-0.5" />
         </div>
 
-        <ProgramCardMenu actions={menuActions} programTitle={program.title} />
+        <OverflowMenu actions={menuActions} menuLabel={program.title} />
       </div>
 
       <Button

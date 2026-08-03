@@ -127,6 +127,25 @@ describe('ProgramProgressPage', () => {
     expect(screen.getByText('Week 1')).toBeInTheDocument();
     expect(screen.getByText('Week 2')).toBeInTheDocument();
     expect(screen.getByText('W1D1')).toBeInTheDocument();
+    // The status eyebrow names the enrollment's state above the headline.
+    expect(screen.getByText('In progress')).toBeInTheDocument();
+    expect(screen.getByText('Program settings')).toBeInTheDocument();
+  });
+
+  it('gives each session state its own affordance', () => {
+    mockUseProgramProgress.mockReturnValue({
+      data: progressData,
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage();
+
+    // Done reads as done, upcoming as tappable, skipped as inert.
+    expect(screen.getByText('W1D1').closest('a')).toBeInTheDocument();
+    expect(screen.getByText('W2D1').closest('button')).toBeInTheDocument();
+    const skipped = screen.getByText('W1D2').closest('div');
+    expect(skipped).toHaveClass('border-dashed');
   });
 
   it('links a completed session chip to its logged workout', () => {
@@ -234,6 +253,7 @@ describe('ProgramProgressPage', () => {
     renderPage();
 
     expect(screen.getByText('🎉 Program complete')).toBeInTheDocument();
+    expect(screen.getByText('Complete')).toBeInTheDocument();
   });
 
   it('toggles auto-repeat on the enrollment via the switch', async () => {
@@ -278,6 +298,7 @@ describe('ProgramProgressPage', () => {
     renderPage();
 
     expect(screen.getByText('Repeating workout')).toBeInTheDocument();
+    expect(screen.getByText('Repeating')).toBeInTheDocument();
     expect(screen.getByText('2 cycles done')).toBeInTheDocument();
     expect(
       screen.getByRole('switch', {

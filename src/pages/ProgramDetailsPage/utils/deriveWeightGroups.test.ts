@@ -280,8 +280,9 @@ describe('deriveWeightGroups', () => {
       28, 24, 20,
     ]);
     expect(groups.filter((g) => g.isModal)).toHaveLength(1);
-    expect(groups.find((g) => g.isModal)!.sourceWeight.sharedWeightOneValue)
-      .toBe(24);
+    expect(
+      groups.find((g) => g.isModal)!.sourceWeight.sharedWeightOneValue,
+    ).toBe(24);
   });
 
   it('returns no groups for an all-bodyweight program', () => {

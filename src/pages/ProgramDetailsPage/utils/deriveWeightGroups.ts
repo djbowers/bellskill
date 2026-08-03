@@ -95,8 +95,9 @@ const describeGroup = (
     (source.sharedWeightTwoValue ?? 0) - (modal.sharedWeightTwoValue ?? 0);
   const delta = oneDelta !== 0 ? oneDelta : twoDelta;
   const unit = getWeightUnitLabel(
-    (oneDelta !== 0 ? source.sharedWeightOneUnit : source.sharedWeightTwoUnit) ??
-      source.sharedWeightOneUnit,
+    (oneDelta !== 0
+      ? source.sharedWeightOneUnit
+      : source.sharedWeightTwoUnit) ?? source.sharedWeightOneUnit,
   );
 
   const relation =
@@ -159,15 +160,14 @@ export const deriveWeightGroups = (
   if (groups.size === 0) return [];
 
   const entries = [...groups.entries()];
-  const modalKey = [...entries]
-    .sort((a, b) => {
-      if (b[1].sessionCount !== a[1].sessionCount)
-        return b[1].sessionCount - a[1].sessionCount;
-      return (
-        (a[1].sourceWeight.sharedWeightOneValue ?? 0) -
-        (b[1].sourceWeight.sharedWeightOneValue ?? 0)
-      );
-    })[0][0];
+  const modalKey = [...entries].sort((a, b) => {
+    if (b[1].sessionCount !== a[1].sessionCount)
+      return b[1].sessionCount - a[1].sessionCount;
+    return (
+      (a[1].sourceWeight.sharedWeightOneValue ?? 0) -
+      (b[1].sourceWeight.sharedWeightOneValue ?? 0)
+    );
+  })[0][0];
   const modal = groups.get(modalKey)!.sourceWeight;
 
   return entries.map(([key, group]) => {

@@ -35,16 +35,33 @@ const shared = (
 });
 
 const programs = [
-  shared('ss', 'Simple & Sinister', 'Pavel Tsatsouline', null, null,
-    ['power', 'strength', 'mobility'], true),
-  shared('kb-mile', 'The Kettlebell Mile', 'Dr. Mike Prevost', 8, 1,
-    ['endurance', 'conditioning']),
-  shared('easy-strength', 'Easy Strength', 'Dan John', 2, 5,
-    ['strength', 'skill']),
-  shared('abc', 'Armor Building Complex', 'Dan John', 5, 4,
-    ['hypertrophy', 'strength', 'conditioning']),
-  shared('dfw', 'Dry Fighting Weight', 'Geoff Neupert', 5, 3,
-    ['strength', 'hypertrophy', 'conditioning']),
+  shared(
+    'ss',
+    'Simple & Sinister',
+    'Pavel Tsatsouline',
+    null,
+    null,
+    ['power', 'strength', 'mobility'],
+    true,
+  ),
+  shared('kb-mile', 'The Kettlebell Mile', 'Dr. Mike Prevost', 8, 1, [
+    'endurance',
+    'conditioning',
+  ]),
+  shared('easy-strength', 'Easy Strength', 'Dan John', 2, 5, [
+    'strength',
+    'skill',
+  ]),
+  shared('abc', 'Armor Building Complex', 'Dan John', 5, 4, [
+    'hypertrophy',
+    'strength',
+    'conditioning',
+  ]),
+  shared('dfw', 'Dry Fighting Weight', 'Geoff Neupert', 5, 3, [
+    'strength',
+    'hypertrophy',
+    'conditioning',
+  ]),
 ];
 
 const meta = {
@@ -73,7 +90,9 @@ type Story = StoryObj<typeof meta>;
 export const Collapsed: Story = {
   render: (args) => {
     const [open, setOpen] = useState(false);
-    return <BrowseProgramsSection {...args} open={open} onOpenChange={setOpen} />;
+    return (
+      <BrowseProgramsSection {...args} open={open} onOpenChange={setOpen} />
+    );
   },
 };
 
@@ -81,6 +100,8 @@ export const Collapsed: Story = {
 export const Expanded: Story = {
   render: (args) => {
     const [open, setOpen] = useState(true);
-    return <BrowseProgramsSection {...args} open={open} onOpenChange={setOpen} />;
+    return (
+      <BrowseProgramsSection {...args} open={open} onOpenChange={setOpen} />
+    );
   },
 };

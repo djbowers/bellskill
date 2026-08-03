@@ -17,35 +17,28 @@ import {
 } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '~/components/ui/dialog';
 import { Label } from '~/components/ui/label';
 import { Switch } from '~/components/ui/switch';
 import { useSession } from '~/contexts';
+import { cn } from '~/lib/utils';
+import { ReplaceProgramDialog } from '~/pages/ProgramsPage/components/ReplaceProgramDialog';
+import { programSpanLabel } from '~/pages/ProgramsPage/utils';
+import { ProgramSession, WeightUnit, WorkoutGoalUnits } from '~/types';
 import {
-  MovementOptions,
-  ProgramSession,
-  WeightUnit,
-  WorkoutGoalUnits,
-} from '~/types';
-import {
+  WEIGHT_MODE_LABELS,
   getWeightRange,
   getWeightUnitLabel,
   programCadenceLabel,
-  WEIGHT_MODE_LABELS,
 } from '~/utils';
 
 import {
   deriveMovementWeights,
   isComplexProgram,
 } from './utils/deriveMovementWeights';
-import { deriveStartingWeight, StartingWeight } from './utils/deriveWeightGroups';
+import {
+  StartingWeight,
+  deriveStartingWeight,
+} from './utils/deriveWeightGroups';
 
 // Fallback weight/unit for the picker's initial state before the per-program
 // pre-fill from deriveWeightGroups lands. The loading mode is fixed by the
@@ -59,11 +52,23 @@ const goalLabel = (goal: number, units: WorkoutGoalUnits): string | null => {
   return `${goal} kg`;
 };
 
-const movementsSummary = (movements: MovementOptions[]): string =>
-  movements
-    .map((movement) => movement.movementName)
-    .filter((name) => name.length > 0)
-    .join(' · ');
+/**
+ * The movements the whole program trains, in the order they first appear. Every
+ * session of a program tends to repeat the same short list, so it reads once
+ * above the week rails instead of once per day.
+ */
+const programMovements = (sessions: ProgramSession[]): string => {
+  const names = new Set<string>();
+  for (const session of sessions) {
+    for (const movement of session.workoutOptions.movements) {
+      if (movement.movementName.length > 0) names.add(movement.movementName);
+    }
+  }
+  return [...names].join(' · ');
+};
+
+/** Long blurbs collapse; the toggle only appears when there's something hidden. */
+const DESCRIPTION_CLAMP_LENGTH = 240;
 
 /** Sessions grouped by their 1-based week, preserving sequenceIndex order. */
 const groupByWeek = (
@@ -87,10 +92,16 @@ export const WeightSlots = ({
   weight,
   onChange,
   namePrefix,
+  showUnitTabs = true,
 }: {
   weight: StartingWeight;
   onChange: (weight: StartingWeight) => void;
   namePrefix: string;
+  /**
+   * Off when the surface hoists a single unit control above a stack of these —
+   * one kg/lb switch for the whole screen beats one per bell.
+   */
+  showUnitTabs?: boolean;
 }) => {
   const setSlot = (slot: 'One' | 'Two', value: number) =>
     onChange({ ...weight, [`sharedWeight${slot}Value`]: Math.max(1, value) });
@@ -119,12 +130,17 @@ export const WeightSlots = ({
             onClickPlus={() => setSlot(slot, value + 1)}
             unit={getWeightUnitLabel(unit)}
             unitTabs={
-              <WeightUnitTabs
-                value={unit}
-                onChange={(nextUnit) =>
-                  onChange({ ...weight, [`sharedWeight${slot}Unit`]: nextUnit })
-                }
-              />
+              showUnitTabs ? (
+                <WeightUnitTabs
+                  value={unit}
+                  onChange={(nextUnit) =>
+                    onChange({
+                      ...weight,
+                      [`sharedWeight${slot}Unit`]: nextUnit,
+                    })
+                  }
+                />
+              ) : undefined
             }
             value={value}
             onChange={(next) => setSlot(slot, next)}
@@ -152,6 +168,10 @@ export const ProgramDetailsPage = () => {
 
   const [seeded, setSeeded] = useState(false);
   const [pendingSwitch, setPendingSwitch] = useState(false);
+  const [replaceEnrollmentId, setReplaceEnrollmentId] = useState<string | null>(
+    null,
+  );
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   // Complex-set path: one shared bell pair for the whole complex.
   const [sharedWeightOneValue, setSharedWeightOneValue] = useState<
     number | null
@@ -250,7 +270,8 @@ export const ProgramDetailsPage = () => {
   const movementWeightPayload: MovementWeight[] = movementControls
     .filter((control) => control.mode !== 'none')
     .map((control) => {
-      const chosen = movementWeights[control.movementName] ?? control.modalWeight;
+      const chosen =
+        movementWeights[control.movementName] ?? control.modalWeight;
       return {
         movementName: control.movementName,
         weightOneValue: chosen.sharedWeightOneValue,
@@ -266,9 +287,12 @@ export const ProgramDetailsPage = () => {
     (p) => p.enrollment.status === 'active',
   );
   const slotsFull = activeEnrollments.length >= MAX_ACTIVE_PROGRAMS;
-  // At the cap this program displaces the least-recently-worked one, which the
-  // confirm dialog names. Below it, enrolling just claims a free slot.
-  const displaced = slotsFull ? activeEnrollments[0] : null;
+  // At the cap one running program has to stop. The prompt pre-selects the
+  // least-recently-worked one and lets the choice move; below the cap,
+  // enrolling just claims a free slot and displaces nothing.
+  const displacedId = slotsFull
+    ? (replaceEnrollmentId ?? activeEnrollments[0]?.enrollment.id ?? null)
+    : null;
 
   // The chosen weights + auto-repeat, shared by an immediate start and a
   // queue-for-later (a queued clone bakes the same weights now).
@@ -290,7 +314,7 @@ export const ProgramDetailsPage = () => {
     enroll.mutate(
       {
         programId: id,
-        replaceUserProgramId: displaced?.enrollment.id,
+        replaceUserProgramId: displacedId ?? undefined,
         ...enrollmentConfig(),
       },
       { onSuccess: () => navigate('/') },
@@ -301,6 +325,7 @@ export const ProgramDetailsPage = () => {
   // Land on Programs, where "Up next" shows the new place in line.
   const queueForLater = () => {
     if (!id) return;
+    setPendingSwitch(false);
     enroll.mutate(
       { programId: id, queue: true, ...enrollmentConfig() },
       { onSuccess: () => navigate('/programs') },
@@ -308,11 +333,42 @@ export const ProgramDetailsPage = () => {
   };
 
   const handleStart = () => {
-    if (displaced) {
+    if (slotsFull) {
+      setReplaceEnrollmentId(
+        replaceEnrollmentId ?? activeEnrollments[0]?.enrollment.id ?? null,
+      );
       setPendingSwitch(true);
     } else {
       doEnroll();
     }
+  };
+
+  // The kg/lb switch is hoisted out of the individual bell controls: one unit
+  // for the screen, applied to every slot that carries a weight at all.
+  const displayUnit: WeightUnit =
+    (complex
+      ? sharedWeightOneUnit
+      : movementControls
+          .map((control) => movementWeights[control.movementName])
+          .find((weight) => weight?.sharedWeightOneUnit)
+          ?.sharedWeightOneUnit) ?? DEFAULT_WEIGHT_UNIT;
+
+  const retuneUnits = (weight: StartingWeight, unit: WeightUnit) => ({
+    ...weight,
+    sharedWeightOneUnit: weight.sharedWeightOneUnit === null ? null : unit,
+    sharedWeightTwoUnit: weight.sharedWeightTwoUnit === null ? null : unit,
+  });
+
+  const handleChangeUnit = (unit: WeightUnit) => {
+    handleChangeWorkingWeight(retuneUnits(workingWeight, unit));
+    setMovementWeights((current) =>
+      Object.fromEntries(
+        Object.entries(current).map(([name, weight]) => [
+          name,
+          retuneUnits(weight, unit),
+        ]),
+      ),
+    );
   };
 
   if (isLoading) {
@@ -339,6 +395,9 @@ export const ProgramDetailsPage = () => {
   if (isOwnProgram) return null;
 
   const weeks = groupByWeek(data.sessions);
+  const movements = programMovements(data.sessions);
+  const description = data.program.description ?? '';
+  const clampable = description.length > DESCRIPTION_CLAMP_LENGTH;
 
   return (
     <Page title={data.program.title}>
@@ -350,122 +409,174 @@ export const ProgramDetailsPage = () => {
       </Link>
 
       <Card>
-        <CardContent className="flex flex-col gap-1 pt-2">
-          <p className="text-xs text-muted-foreground">
-            {data.program.authorName ? `${data.program.authorName} · ` : ''}
-            {programCadenceLabel(data.program) ?? 'No sessions yet'}
-          </p>
-          <ProgramTags tags={data.program.focusTags} />
-          {data.program.description && (
-            <p className="text-sm text-muted-foreground">
-              {data.program.description}
+        <CardContent className="flex gap-1.5 pt-2">
+          {/* The same span monogram the catalog row carried, so the program you
+              tapped still looks like itself here. */}
+          <span
+            aria-hidden
+            className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold tabular-nums text-primary"
+          >
+            {programSpanLabel(data.program)}
+          </span>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {data.program.authorName ? `${data.program.authorName} · ` : ''}
+              {programCadenceLabel(data.program) ?? 'No sessions yet'}
             </p>
-          )}
+            <ProgramTags tags={data.program.focusTags} />
+            {description && (
+              <>
+                <p
+                  className={cn(
+                    'text-sm text-muted-foreground',
+                    clampable && !descriptionExpanded && 'line-clamp-4',
+                  )}
+                >
+                  {description}
+                </p>
+                {clampable && (
+                  <button
+                    type="button"
+                    className="self-start text-xs font-medium text-primary"
+                    onClick={() => setDescriptionExpanded((open) => !open)}
+                  >
+                    {descriptionExpanded ? 'Show less' : 'Read more'}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
 
       {weeks.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold">Sessions</h2>
+        <section className="flex flex-col gap-1.5">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Sessions
+          </h2>
+          {movements && (
+            <p className="-mt-1 text-xs text-muted-foreground">{movements}</p>
+          )}
           {weeks.map((week) => (
             <div key={week.weekNumber} className="flex flex-col gap-0.5">
-              <span className="text-xs font-medium text-muted-foreground">
+              <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
                 Week {week.weekNumber}
+                <span aria-hidden className="h-px flex-1 bg-border" />
               </span>
-              <Card className="divide-y">
+              <div className="flex flex-wrap gap-1">
                 {week.sessions.map((programSession) => {
-                  const { movements, workoutGoal, workoutGoalUnits } =
+                  const { workoutGoal, workoutGoalUnits } =
                     programSession.workoutOptions;
                   const goal = goalLabel(workoutGoal, workoutGoalUnits);
-                  const summary = movementsSummary(movements);
                   return (
-                    <div
+                    <span
                       key={programSession.id}
-                      className="flex flex-col gap-0.5 p-2"
+                      className="flex max-w-full items-center gap-1 rounded-md border border-border/60 px-1.5 py-1 text-xs"
                     >
-                      <div className="flex items-baseline justify-between gap-1">
-                        <span className="text-sm font-medium">
-                          Day {programSession.dayNumber} ·{' '}
-                          {programSession.title}
-                        </span>
-                        {goal && (
-                          <span className="text-xs text-muted-foreground">
-                            {goal}
-                          </span>
-                        )}
-                      </div>
-                      {summary && (
-                        <span className="text-xs text-muted-foreground">
-                          {summary}
+                      <span className="truncate font-medium">
+                        Day {programSession.dayNumber} · {programSession.title}
+                      </span>
+                      {goal && (
+                        <span className="shrink-0 tabular-nums text-muted-foreground">
+                          {goal}
                         </span>
                       )}
-                    </div>
+                    </span>
                   );
                 })}
-              </Card>
+              </div>
             </div>
           ))}
-        </div>
+        </section>
       )}
 
-      <div className="flex flex-col gap-1">
-        <h2 className="text-sm font-semibold">Starting weight</h2>
-        <p className="text-xs text-muted-foreground">
-          Set the weight your working sessions start with. You can still adjust
-          it session by session once you&apos;re in the program.
-        </p>
-        {!seeded && <p className="text-sm text-muted-foreground">Loading…</p>}
-        {/* Complex sets share one bell pair for the whole complex, so a single
-            picker; every other program gets one control per movement. */}
-        {seeded && complex && (
-          <WeightSlots
-            weight={workingWeight}
-            onChange={handleChangeWorkingWeight}
-            namePrefix="Starting weight"
-          />
-        )}
-      </div>
-
-      {seeded &&
-        !complex &&
-        movementControls.map((control) => (
-          <div key={control.movementName} className="flex flex-col gap-1">
-            <h2 className="text-sm font-semibold">{control.movementName}</h2>
-            {control.mode === 'none' ? (
-              <p className="text-sm text-muted-foreground">
-                {WEIGHT_MODE_LABELS.none}
-              </p>
-            ) : (
-              <WeightSlots
-                weight={
-                  movementWeights[control.movementName] ?? control.modalWeight
-                }
-                onChange={(next) =>
-                  handleChangeMovementWeight(control.movementName, next)
-                }
-                namePrefix={control.movementName}
-              />
-            )}
+      <Card>
+        <CardContent className="flex min-w-0 flex-col gap-1.5 pt-2">
+          <div className="flex items-center justify-between gap-1">
+            <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Starting weight
+            </h2>
+            <WeightUnitTabs value={displayUnit} onChange={handleChangeUnit} />
           </div>
-        ))}
+          <p className="text-xs text-muted-foreground">
+            What your working sessions start with. You can still adjust it
+            session by session once you&apos;re in the program.
+          </p>
 
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-0.5">
-          <Label htmlFor="auto-repeat">Repeat automatically</Label>
-          <span id="auto-repeat-help" className="text-xs text-muted-foreground">
-            When on, finishing the last session starts the program over instead
-            of ending it. Progress by adding weight over time.
-          </span>
-        </div>
-        <Switch
-          id="auto-repeat"
-          className="mt-0.5"
-          aria-describedby="auto-repeat-help"
-          checked={autoRepeat}
-          onCheckedChange={setAutoRepeat}
-        />
-      </div>
+          {!seeded && <p className="text-sm text-muted-foreground">Loading…</p>}
 
+          {/* Complex sets share one bell pair for the whole complex, so a single
+              picker; every other program gets one control per movement. */}
+          {seeded && complex && (
+            <WeightSlots
+              weight={workingWeight}
+              onChange={handleChangeWorkingWeight}
+              namePrefix="Starting weight"
+              showUnitTabs={false}
+            />
+          )}
+
+          {seeded &&
+            !complex &&
+            movementControls.map((control) => (
+              <div
+                key={control.movementName}
+                className="flex flex-col gap-0.5 border-t border-border pt-1.5"
+              >
+                <h3 className="text-sm font-medium">{control.movementName}</h3>
+                {control.mode === 'none' ? (
+                  <p className="text-xs text-muted-foreground">
+                    {WEIGHT_MODE_LABELS.none}
+                  </p>
+                ) : (
+                  <WeightSlots
+                    weight={
+                      movementWeights[control.movementName] ??
+                      control.modalWeight
+                    }
+                    onChange={(next) =>
+                      handleChangeMovementWeight(control.movementName, next)
+                    }
+                    namePrefix={control.movementName}
+                    showUnitTabs={false}
+                  />
+                )}
+              </div>
+            ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="flex flex-col gap-1 pt-2">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Program settings
+          </h2>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex flex-col gap-px">
+              <Label htmlFor="auto-repeat" size="small">
+                Repeat automatically
+              </Label>
+              <span
+                id="auto-repeat-help"
+                className="text-xs text-muted-foreground"
+              >
+                Finishing the last session starts the program over instead of
+                ending it. Progress by adding weight over time.
+              </span>
+            </div>
+            <Switch
+              id="auto-repeat"
+              className="mt-0.5"
+              aria-describedby="auto-repeat-help"
+              checked={autoRepeat}
+              onCheckedChange={setAutoRepeat}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Advisory only: what this program costs on top of what's already
+          running. Silent when there's nothing worth saying. */}
       {program && (
         <StackFitNote
           candidate={program}
@@ -473,47 +584,38 @@ export const ProgramDetailsPage = () => {
         />
       )}
 
-      <Button onClick={handleStart} disabled={enroll.isPending || !seeded}>
-        Start program
-      </Button>
-      <Button
-        variant="secondary"
-        onClick={queueForLater}
-        disabled={enroll.isPending || !seeded}
-      >
-        Queue for later
-      </Button>
-      <p className="-mt-1 text-center text-xs text-muted-foreground">
-        Queued programs start when an active program finishes.
-      </p>
+      {/* One primary decision — start it. Queueing is the same commitment made
+          later, so it reads as the quiet alternative rather than a peer CTA. */}
+      <div className="flex flex-col gap-0.5">
+        <Button onClick={handleStart} disabled={enroll.isPending || !seeded}>
+          Start program
+        </Button>
+        <Button
+          variant="ghost"
+          className="text-muted-foreground"
+          onClick={queueForLater}
+          disabled={enroll.isPending || !seeded}
+        >
+          Queue for later
+        </Button>
+        <p className="text-center text-xs text-muted-foreground">
+          Queued programs start when an active program finishes.
+        </p>
+      </div>
 
-      <Dialog
+      <ReplaceProgramDialog
         open={pendingSwitch}
         onOpenChange={(open) => {
           if (!open) setPendingSwitch(false);
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Replace a program?</DialogTitle>
-            <DialogDescription>
-              You&apos;re already running {MAX_ACTIVE_PROGRAMS} programs — the
-              most you can have at once. Starting this one stops
-              {displaced ? ` ${displaced.program.title}` : ' your oldest one'},
-              the program you&apos;ve worked least recently. Its logged workouts
-              are kept, but its place in the program is cleared.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setPendingSwitch(false)}>
-              Cancel
-            </Button>
-            <Button onClick={doEnroll} disabled={enroll.isPending}>
-              Replace program
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        activeEnrollments={activeEnrollments}
+        replaceEnrollmentId={replaceEnrollmentId}
+        onSelectReplace={setReplaceEnrollmentId}
+        onCancel={() => setPendingSwitch(false)}
+        onQueueInstead={queueForLater}
+        onConfirm={doEnroll}
+        isPending={enroll.isPending}
+      />
     </Page>
   );
 };

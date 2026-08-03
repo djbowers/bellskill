@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import {
@@ -20,21 +20,19 @@ import { ProgramSession } from '~/types';
 import { AdjustWeightsDialog } from './components/AdjustWeightsDialog';
 import { StageCard } from './components/StageCard';
 
-/** Glyph + label + chip styling for each session state. */
-const STATE_META: Record<SessionState, { icon: string; className: string }> = {
-  done: {
-    icon: '✓',
-    className:
-      'border-primary bg-primary/10 text-foreground hover:bg-primary/20',
-  },
-  skipped: {
-    icon: '⊘',
-    className: 'border-dashed border-muted-foreground/40 text-muted-foreground',
-  },
-  upcoming: {
-    icon: '',
-    className: 'border-border text-muted-foreground',
-  },
+/**
+ * Three session states, three different-looking chips. A done chip is filled and
+ * settled, an actionable chip is raised and carries a play glyph, and an inert
+ * chip (skipped, or upcoming with no active enrollment) is flat and dimmed — so
+ * "what can I tap" is answerable without reading a single label.
+ */
+const CHIP_STYLES: Record<SessionState | 'inert', string> = {
+  done: 'border-transparent bg-primary/10 text-foreground',
+  upcoming:
+    'border-border bg-card text-foreground shadow-sm hover:border-primary hover:bg-primary/5 active:translate-y-px',
+  skipped:
+    'border-dashed border-muted-foreground/30 bg-transparent text-muted-foreground',
+  inert: 'border-border/60 bg-transparent text-muted-foreground',
 };
 
 export const ProgramProgressPage = () => {
@@ -121,23 +119,42 @@ export const ProgramProgressPage = () => {
 
       <Card>
         <CardContent className="flex flex-col gap-1 pt-2">
-          <div className="flex items-baseline justify-between text-sm font-medium">
-            <span>
+          <span
+            className={cn(
+              'flex items-center gap-0.5 text-xs font-medium uppercase tracking-wide',
+              isComplete && !isRepeating
+                ? 'text-status-success'
+                : 'text-muted-foreground',
+            )}
+          >
+            <span
+              aria-hidden
+              className={cn(
+                'h-0.5 w-0.5 rounded-full',
+                isComplete && !isRepeating ? 'bg-status-success' : 'bg-primary',
+              )}
+            />
+            {isRepeating ? 'Repeating' : isComplete ? 'Complete' : 'In progress'}
+          </span>
+
+          <div className="flex items-baseline justify-between gap-1">
+            <span className="text-lg font-semibold leading-tight">
               {isRepeating
                 ? 'Repeating workout'
                 : isComplete
                   ? '🎉 Program complete'
                   : `Week ${currentWeek} of ${totalWeeks}`}
             </span>
-            <span className="text-muted-foreground">
+            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
               {isRepeating
                 ? `${cyclesCompleted} ${cyclesCompleted === 1 ? 'cycle' : 'cycles'} done`
                 : `${completedCount} of ${totalCount} sessions`}
             </span>
           </div>
+
           {showProgressBar && (
             <div
-              className="h-0.5 w-full overflow-hidden rounded-full bg-secondary"
+              className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-secondary"
               role="progressbar"
               aria-valuenow={completedCount}
               aria-valuemin={0}
@@ -149,15 +166,32 @@ export const ProgramProgressPage = () => {
               />
             </div>
           )}
-          {enrollment && (
-            <div className="mt-1 flex items-center justify-between gap-2">
-              <Label
-                htmlFor="auto-repeat"
-                size="small"
-                className="text-muted-foreground"
-              >
-                Repeat automatically when finished
-              </Label>
+
+          {enrollment?.status === 'active' && nextQueued && (
+            <p className="mt-1 border-t border-border pt-1 text-xs text-muted-foreground">
+              Next up: {nextQueued.program.title}
+              {isRepeating ? ' (queued programs start before a repeat)' : ''}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {enrollment && (
+        <Card>
+          <CardContent className="flex flex-col gap-1.5 pt-2">
+            <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Program settings
+            </h2>
+
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col gap-px">
+                <Label htmlFor="auto-repeat" size="small">
+                  Repeat automatically when finished
+                </Label>
+                <span className="text-xs text-muted-foreground">
+                  Starts a fresh cycle instead of ending the program.
+                </span>
+              </div>
               <Switch
                 id="auto-repeat"
                 checked={isRepeating}
@@ -170,25 +204,25 @@ export const ProgramProgressPage = () => {
                 }
               />
             </div>
-          )}
-          {canStartSessions && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="mt-1 self-start"
-              onClick={() => setAdjustingWeights(true)}
-            >
-              Adjust weights
-            </Button>
-          )}
-          {enrollment?.status === 'active' && nextQueued && (
-            <p className="text-xs text-muted-foreground">
-              Next up: {nextQueued.program.title}
-              {isRepeating ? ' (queued programs start before a repeat)' : ''}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+
+            {canStartSessions && (
+              <div className="flex flex-col gap-0.5 border-t border-border pt-1.5">
+                <span className="text-xs text-muted-foreground">
+                  Change the working weight on every session you haven&apos;t
+                  done yet.
+                </span>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => setAdjustingWeights(true)}
+                >
+                  Adjust weights
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {enrollment && !!program.stages?.length && (
         <StageCard
@@ -213,14 +247,19 @@ export const ProgramProgressPage = () => {
         />
       )}
 
-      {weeks.map((week) => (
-        <WeekRow
-          key={week.weekNumber}
-          week={week}
-          canStartSessions={canStartSessions}
-          onStartSession={handleStartSession}
-        />
-      ))}
+      <section className="flex flex-col gap-1.5">
+        <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Sessions
+        </h2>
+        {weeks.map((week) => (
+          <WeekRow
+            key={week.weekNumber}
+            week={week}
+            canStartSessions={canStartSessions}
+            onStartSession={handleStartSession}
+          />
+        ))}
+      </section>
     </Page>
   );
 };
@@ -233,8 +272,9 @@ interface WeekRowProps {
 
 const WeekRow = ({ week, canStartSessions, onStartSession }: WeekRowProps) => (
   <div className="flex flex-col gap-0.5">
-    <span className="text-xs font-medium text-muted-foreground">
+    <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
       Week {week.weekNumber}
+      <span aria-hidden className="h-px flex-1 bg-border" />
     </span>
     <div className="flex flex-wrap gap-1">
       {week.sessions.map((item) => (
@@ -257,47 +297,91 @@ interface SessionChipProps {
 
 const SessionChip = ({ item, canStart, onStart }: SessionChipProps) => {
   const { session, state, workoutLogId } = item;
-  const meta = STATE_META[state];
+  const isStartable = state === 'upcoming' && canStart;
+  const isDoneLink = state === 'done' && workoutLogId !== null;
 
-  const label = (
+  const chipLabel = (glyph: ReactNode, muted?: boolean) => (
     <>
-      {meta.icon && <span aria-hidden>{meta.icon}</span>}
-      <span className="font-medium">Day {session.dayNumber}</span>
+      {glyph}
+      <span className={cn('font-medium', muted && 'line-through')}>
+        Day {session.dayNumber}
+      </span>
       <span className="truncate opacity-80">{session.title}</span>
     </>
   );
 
-  const baseClassName = cn(
-    'flex max-w-full items-center gap-0.5 rounded-md border px-1 py-0.5 text-xs',
-    meta.className,
-  );
+  const baseClassName =
+    'flex max-w-full items-center gap-0.5 rounded-md border px-1.5 py-1 text-xs transition-colors';
 
   // Completed sessions link to their logged workout.
-  if (state === 'done' && workoutLogId !== null) {
+  if (isDoneLink) {
     return (
       <Link
         to={`/history/${workoutLogId}`}
-        className={cn(baseClassName, 'hover:cursor-pointer')}
+        className={cn(
+          baseClassName,
+          CHIP_STYLES.done,
+          'hover:cursor-pointer hover:bg-primary/20',
+        )}
       >
-        {label}
+        {chipLabel(
+          <span
+            aria-hidden
+            className="flex h-1.5 w-1.5 items-center justify-center rounded-full bg-primary text-[9px] font-bold leading-none text-primary-foreground"
+          >
+            ✓
+          </span>,
+        )}
       </Link>
     );
   }
 
   // Upcoming sessions are startable while enrolled — tap any one to start it.
-  if (state === 'upcoming' && canStart) {
+  if (isStartable) {
     return (
       <button
         type="button"
         aria-label={`Start Day ${session.dayNumber} ${session.title}`}
         onClick={() => onStart(session)}
-        className={cn(baseClassName, 'hover:cursor-pointer hover:bg-secondary')}
+        className={cn(
+          baseClassName,
+          CHIP_STYLES.upcoming,
+          'hover:cursor-pointer',
+        )}
       >
-        {label}
+        {chipLabel(
+          <span aria-hidden className="text-[9px] text-primary">
+            ▶
+          </span>,
+        )}
       </button>
     );
   }
 
   // Skipped sessions (and upcoming ones with no active enrollment) are static.
-  return <div className={baseClassName}>{label}</div>;
+  return (
+    <div
+      className={cn(
+        baseClassName,
+        state === 'done'
+          ? CHIP_STYLES.done
+          : state === 'skipped'
+            ? CHIP_STYLES.skipped
+            : CHIP_STYLES.inert,
+      )}
+    >
+      {chipLabel(
+        state === 'skipped' ? (
+          <span aria-hidden className="opacity-70">
+            ⊘
+          </span>
+        ) : state === 'done' ? (
+          <span aria-hidden className="text-primary">
+            ✓
+          </span>
+        ) : null,
+        state === 'skipped',
+      )}
+    </div>
+  );
 };

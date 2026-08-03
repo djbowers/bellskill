@@ -151,10 +151,10 @@ describe('ProgramDetailsPage', () => {
     expect(screen.getByText('Week 2')).toBeInTheDocument();
     expect(screen.getByText('Day 1 · Press Ladders')).toBeInTheDocument();
     expect(screen.getByText('Day 1 · Clean & Press')).toBeInTheDocument();
-    // Movement summary + goal label appear per session (both sessions share them).
+    // The movements read once for the program; the goal still reads per session.
     expect(
-      screen.getAllByText('Double Kettlebell Press · Kettlebell Swing'),
-    ).toHaveLength(2);
+      screen.getByText('Double Kettlebell Press · Kettlebell Swing'),
+    ).toBeInTheDocument();
     expect(screen.getAllByText('20 min')).toHaveLength(2);
   });
 
@@ -408,7 +408,12 @@ describe('ProgramDetailsPage', () => {
     // dfw is high demand; another high-demand program puts the stack at 6.
     mockUseActivePrograms.mockReturnValue({
       data: [
-        activeProgram('up-1', '10,000 Swing Challenge', ['conditioning'], 'high'),
+        activeProgram(
+          'up-1',
+          '10,000 Swing Challenge',
+          ['conditioning'],
+          'high',
+        ),
       ],
     });
 
@@ -481,6 +486,79 @@ describe('ProgramDetailsPage', () => {
         programId: 'dfw-1',
         replaceUserProgramId: 'up-1',
         movementWeights: expect.any(Array),
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('queues instead of replacing from the at-the-cap prompt', () => {
+    enrollMutate.mockImplementation((_input, { onSuccess }) => onSuccess());
+    mockUseActivePrograms.mockReturnValue({
+      data: [
+        activeProgram('up-1', 'Least Recent'),
+        activeProgram('up-2', 'Middle'),
+        activeProgram('up-3', 'Most Recent'),
+      ],
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Queue instead' }));
+
+    // Queueing claims no slot, so nothing is displaced.
+    expect(enrollMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ programId: 'dfw-1', queue: true }),
+      expect.anything(),
+    );
+    expect(enrollMutate.mock.calls[0][0]).not.toHaveProperty(
+      'replaceUserProgramId',
+    );
+  });
+
+  it('replaces a different running program when the choice is moved', () => {
+    mockUseActivePrograms.mockReturnValue({
+      data: [
+        activeProgram('up-1', 'Least Recent'),
+        activeProgram('up-2', 'Middle'),
+        activeProgram('up-3', 'Most Recent'),
+      ],
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+    fireEvent.click(screen.getByRole('radio', { name: /Most Recent/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Replace program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ replaceUserProgramId: 'up-3' }),
+      expect.anything(),
+    );
+  });
+
+  it('switches every movement to the unit chosen once for the screen', () => {
+    renderPage();
+
+    // Radix tabs commit on pointer-down, not click.
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'lb' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start program' }));
+
+    expect(enrollMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        movementWeights: [
+          expect.objectContaining({
+            movementName: 'Double Kettlebell Press',
+            weightOneUnit: 'pounds',
+            weightTwoUnit: 'pounds',
+          }),
+          expect.objectContaining({
+            movementName: 'Kettlebell Swing',
+            weightOneUnit: 'pounds',
+            weightTwoUnit: 'pounds',
+          }),
+        ],
       }),
       expect.anything(),
     );

@@ -47,7 +47,7 @@ export const Program: Story = {
   ),
 };
 
-/** Skip in flight: both actions disabled. */
+/** Skip in flight: the CTA is disabled and the footer reports the skip. */
 export const ProgramSkipping: Story = {
   render: () => (
     <StartWorkoutHero

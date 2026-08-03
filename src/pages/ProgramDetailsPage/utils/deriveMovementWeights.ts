@@ -52,7 +52,10 @@ export const deriveMovementWeights = (
   sessions: ProgramSession[],
 ): MovementWeightControl[] => {
   const order: string[] = [];
-  const pairs = new Map<string, Map<string, { weight: StartingWeight; count: number }>>();
+  const pairs = new Map<
+    string,
+    Map<string, { weight: StartingWeight; count: number }>
+  >();
 
   for (const session of sessions) {
     for (const movement of session.workoutOptions.movements) {
@@ -78,7 +81,10 @@ export const deriveMovementWeights = (
       const oneA = a.weight.sharedWeightOneValue ?? 0;
       const oneB = b.weight.sharedWeightOneValue ?? 0;
       if (oneA !== oneB) return oneA - oneB;
-      return (a.weight.sharedWeightTwoValue ?? 0) - (b.weight.sharedWeightTwoValue ?? 0);
+      return (
+        (a.weight.sharedWeightTwoValue ?? 0) -
+        (b.weight.sharedWeightTwoValue ?? 0)
+      );
     })[0].weight;
 
     return {

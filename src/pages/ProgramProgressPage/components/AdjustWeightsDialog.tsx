@@ -148,7 +148,10 @@ export const AdjustWeightsDialog = ({
             />
           ) : (
             movementControls.map((control) => (
-              <div key={control.movementName} className="flex flex-col gap-1">
+              <div
+                key={control.movementName}
+                className="flex flex-col gap-1 border-t border-border pt-2 first:border-t-0 first:pt-0"
+              >
                 <h2 className="text-sm font-semibold">
                   {control.movementName}
                 </h2>

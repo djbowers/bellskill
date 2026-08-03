@@ -13,7 +13,6 @@
 //
 // Pure + deterministic, like patternDebt, so the scoring can be unit-tested here
 // and reused as-is if a recommender edge function ever wants it.
-
 import { Program, ProgramFocusTag, ProgramSystemicDemand } from '~/types';
 
 export type StackVerdict = 'good' | 'caution' | 'conflict';
@@ -74,9 +73,11 @@ export const assessStackFit = (
   active: Program[],
 ): StackFit | null => {
   if (active.length === 0) return null;
-  if (!candidate.systemicDemand && candidate.focusTags.length === 0) return null;
+  if (!candidate.systemicDemand && candidate.focusTags.length === 0)
+    return null;
 
-  const load = demandCost(candidate) + active.reduce((sum, p) => sum + demandCost(p), 0);
+  const load =
+    demandCost(candidate) + active.reduce((sum, p) => sum + demandCost(p), 0);
   const reasons: string[] = [];
 
   // Recovery cost. Only meaningful once every program in the stack is rated —

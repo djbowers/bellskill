@@ -6,9 +6,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   DEFAULT_MOVEMENT_OPTIONS,
   DEFAULT_WORKOUT_OPTIONS,
+  PendingProgramSession,
+  ProgramSessionContext,
+  ProgramSessionProvider,
   SessionProvider,
   WorkoutOptionsContext,
+  useProgramSession,
 } from '~/contexts';
+import { QUERIES } from '~/constants';
 import { VITE_SUPABASE_URL } from '../env';
 import { server } from '~/mocks/server';
 
@@ -151,6 +156,250 @@ describe('useLogWorkout — complex_set persistence', () => {
 
     expect(capturedBody).not.toBeNull();
     expect(capturedBody!.completed_sides).toBe(logWorkoutInput.completedSides);
+  });
+});
+
+describe('useLogWorkout — program session completion wiring (Slice 3)', () => {
+  const COMPLETE_RPC_URL = `${VITE_SUPABASE_URL}/rest/v1/rpc/complete_program_session`;
+
+  function makeProgramWrapper(programSession: PendingProgramSession | null) {
+    const workoutOptions = {
+      ...DEFAULT_WORKOUT_OPTIONS,
+      movements: [defaultMovement],
+    };
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const setProgramSession = vi.fn();
+
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(
+        QueryClientProvider,
+        { client: queryClient },
+        React.createElement(
+          SessionProvider,
+          { value: mockSession },
+          React.createElement(
+            WorkoutOptionsContext.Provider,
+            { value: [workoutOptions, () => {}] },
+            React.createElement(
+              ProgramSessionContext.Provider,
+              { value: [programSession, setProgramSession] },
+              children,
+            ),
+          ),
+        ),
+      );
+
+    return { wrapper, setProgramSession, queryClient };
+  }
+
+  beforeEach(() => {
+    server.use(
+      http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
+      http.post(MOVEMENT_LOGS_URL, () => HttpResponse.json([])),
+      http.post(WORKOUT_LOGS_URL, () => HttpResponse.json([{ id: 77 }])),
+    );
+  });
+
+  test('advances the pending program session with the new workout log id', async () => {
+    let rpcBody: Record<string, unknown> | null = null;
+
+    server.use(
+      http.post(COMPLETE_RPC_URL, async ({ request }) => {
+        rpcBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(false);
+      }),
+    );
+
+    const { wrapper } = makeProgramWrapper({
+      userProgramId: 'up-1',
+      programSessionId: 'ps-9',
+    });
+
+    const { result } = renderHook(() => useLogWorkout(), { wrapper });
+
+    act(() => {
+      result.current.mutate(logWorkoutInput);
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(rpcBody).not.toBeNull());
+
+    expect(rpcBody).toEqual({
+      p_user_program_id: 'up-1',
+      p_program_session_id: 'ps-9',
+      p_workout_log_id: 77,
+      p_status: 'completed',
+    });
+  });
+
+  test('clears the pending session so a later non-program log cannot re-attach', async () => {
+    server.use(http.post(COMPLETE_RPC_URL, () => HttpResponse.json(false)));
+
+    const { wrapper, setProgramSession } = makeProgramWrapper({
+      userProgramId: 'up-1',
+      programSessionId: 'ps-9',
+    });
+
+    const { result } = renderHook(() => useLogWorkout(), { wrapper });
+
+    act(() => {
+      result.current.mutate(logWorkoutInput);
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(setProgramSession).toHaveBeenCalledWith(null);
+  });
+
+  test('invalidates the active-program query after the RPC resolves', async () => {
+    server.use(http.post(COMPLETE_RPC_URL, () => HttpResponse.json(false)));
+
+    const { wrapper, queryClient } = makeProgramWrapper({
+      userProgramId: 'up-1',
+      programSessionId: 'ps-9',
+    });
+    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useLogWorkout(), { wrapper });
+
+    act(() => {
+      result.current.mutate(logWorkoutInput);
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() =>
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: [QUERIES.ACTIVE_PROGRAM],
+      }),
+    );
+  });
+
+  test('does not call the RPC for a non-program workout', async () => {
+    const rpc = vi.fn(() => HttpResponse.json(false));
+    server.use(http.post(COMPLETE_RPC_URL, rpc));
+
+    const { wrapper, setProgramSession } = makeProgramWrapper(null);
+
+    const { result } = renderHook(() => useLogWorkout(), { wrapper });
+
+    act(() => {
+      result.current.mutate(logWorkoutInput);
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // Give the fire-and-forget path a tick to prove it never fires.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(rpc).not.toHaveBeenCalled();
+    expect(setProgramSession).not.toHaveBeenCalled();
+  });
+
+  test('an RPC failure does not fail the workout log', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+
+    server.use(
+      http.post(COMPLETE_RPC_URL, () =>
+        HttpResponse.json({ message: 'boom' }, { status: 400 }),
+      ),
+    );
+
+    const { wrapper } = makeProgramWrapper({
+      userProgramId: 'up-1',
+      programSessionId: 'ps-9',
+    });
+
+    const { result } = renderHook(() => useLogWorkout(), { wrapper });
+
+    act(() => {
+      result.current.mutate(logWorkoutInput);
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith(
+        'Failed to advance program session',
+        expect.anything(),
+      ),
+    );
+    expect(result.current.isError).toBe(false);
+
+    consoleError.mockRestore();
+  });
+
+  test('the real provider hands the pending session through start → log → clear', async () => {
+    let rpcBody: Record<string, unknown> | null = null;
+    server.use(
+      http.post(COMPLETE_RPC_URL, async ({ request }) => {
+        rpcBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(false);
+      }),
+    );
+
+    const workoutOptions = {
+      ...DEFAULT_WORKOUT_OPTIONS,
+      movements: [defaultMovement],
+    };
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(
+        QueryClientProvider,
+        { client: queryClient },
+        React.createElement(
+          SessionProvider,
+          { value: mockSession },
+          React.createElement(
+            WorkoutOptionsContext.Provider,
+            { value: [workoutOptions, () => {}] },
+            React.createElement(ProgramSessionProvider, null, children),
+          ),
+        ),
+      );
+
+    const { result } = renderHook(
+      () => ({
+        log: useLogWorkout(),
+        programSession: useProgramSession(),
+      }),
+      { wrapper },
+    );
+
+    // The provider starts empty (every non-program start leaves it null).
+    expect(result.current.programSession[0]).toBeNull();
+
+    act(() => {
+      result.current.programSession[1]({
+        userProgramId: 'up-7',
+        programSessionId: 'ps-2',
+      });
+    });
+    expect(result.current.programSession[0]).toEqual({
+      userProgramId: 'up-7',
+      programSessionId: 'ps-2',
+    });
+
+    act(() => {
+      result.current.log.mutate(logWorkoutInput);
+    });
+
+    await waitFor(() => expect(result.current.log.isSuccess).toBe(true));
+    await waitFor(() => expect(rpcBody).not.toBeNull());
+
+    expect(rpcBody).toMatchObject({
+      p_user_program_id: 'up-7',
+      p_program_session_id: 'ps-2',
+      p_workout_log_id: 77,
+    });
+    await waitFor(() => expect(result.current.programSession[0]).toBeNull());
   });
 });
 
