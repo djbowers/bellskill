@@ -11,6 +11,7 @@ import {
   useDeleteProgram,
   useDequeueProgram,
   useEnrollProgram,
+  useFeatureFlags,
   useProgramProgress,
   usePrograms,
   useQueuedPrograms,
@@ -30,6 +31,7 @@ import {
   CreateProgramForm,
   MyProgramCard,
   QueueTimeline,
+  RecommendProgramSection,
   ReplaceProgramDialog,
   ResumeProgramDialog,
 } from './components';
@@ -50,6 +52,7 @@ export const ProgramsPage = () => {
   const { data: queuedPrograms = [] } = useQueuedPrograms();
   const dequeue = useDequeueProgram();
   const startQueued = useStartQueuedProgram();
+  const { features } = useFeatureFlags();
 
   const [showCreate, setShowCreate] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -401,6 +404,16 @@ export const ProgramsPage = () => {
             onRemove={(userProgramId) => dequeue.mutate({ userProgramId })}
           />
         </div>
+      )}
+
+      {features.recommender && (
+        <RecommendProgramSection
+          programs={programs}
+          slotsFull={slotsFull}
+          onEnrollNow={handleEnroll}
+          onQueue={(programId) => enroll.mutate({ programId, queue: true })}
+          userId={userId}
+        />
       )}
 
       {sharedPrograms.length > 0 && (

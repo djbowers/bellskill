@@ -63,6 +63,9 @@ vi.mock('~/api', () => ({
   useQueuedPrograms: mockUseQueuedPrograms,
   useDequeueProgram: mockUseDequeueProgram,
   useStartQueuedProgram: mockUseStartQueuedProgram,
+  // Recommender off: these tests cover the page's baseline surface; the
+  // recommendation section has its own suite.
+  useFeatureFlags: () => ({ features: { recommender: false }, isPending: false }),
   trackEvent: mockTrackEvent,
   AnalyticsEvent: { ProgramResumed: 'program_resumed' },
   MAX_ACTIVE_PROGRAMS: 3,
