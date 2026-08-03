@@ -254,7 +254,7 @@ describe('start workout page', () => {
       await userEvent.click(screen.getByRole('tab', { name: 'Single' }));
       await userEvent.type(
         screen.getByLabelText('Movement Input'),
-        'Single Arm Press',
+        'One-Arm Kettlebell Military Press',
       );
       await userEvent.click(screen.getByRole('button', { name: /Start/i }));
 
@@ -263,7 +263,7 @@ describe('start workout page', () => {
           movements: [
             {
               ...DEFAULT_MOVEMENT_OPTIONS,
-              movementName: 'Single Arm Press',
+              movementName: 'One-Arm Kettlebell Military Press',
               weightTwoValue: 0,
             },
           ],

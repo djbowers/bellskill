@@ -4,6 +4,8 @@ import { vi } from 'vitest';
 
 import { ProgramSession } from '~/types';
 
+import { SessionWithState } from '~/pages/ProgramDetailsPage/utils/selectWeightModalSessions';
+
 import { AdjustWeightsDialog } from './AdjustWeightsDialog';
 
 const { mockAdjustMutate, mockShowToast } = vi.hoisted(() => ({
@@ -50,6 +52,9 @@ const session = (
   weightLabel: null,
   workoutOptions: { ...bareOptions, movements: [], ...overrides },
 });
+
+const upcoming = (sessions: ProgramSession[]): SessionWithState[] =>
+  sessions.map((session) => ({ session, state: 'upcoming' as const }));
 
 const perMovementSessions: ProgramSession[] = [
   session('ps-1', {
@@ -106,7 +111,7 @@ describe('AdjustWeightsDialog', () => {
         open
         onOpenChange={vi.fn()}
         userProgramId="up-1"
-        sessions={perMovementSessions}
+        sessionItems={upcoming(perMovementSessions)}
       />,
     );
 
@@ -130,7 +135,7 @@ describe('AdjustWeightsDialog', () => {
         open
         onOpenChange={onOpenChange}
         userProgramId="up-1"
-        sessions={perMovementSessions}
+        sessionItems={upcoming(perMovementSessions)}
       />,
     );
 
@@ -171,7 +176,7 @@ describe('AdjustWeightsDialog', () => {
         open
         onOpenChange={vi.fn()}
         userProgramId="up-1"
-        sessions={complexSessions}
+        sessionItems={upcoming(complexSessions)}
       />,
     );
 
@@ -201,7 +206,7 @@ describe('AdjustWeightsDialog', () => {
         open
         onOpenChange={onOpenChange}
         userProgramId="up-1"
-        sessions={perMovementSessions}
+        sessionItems={upcoming(perMovementSessions)}
       />,
     );
 
@@ -217,7 +222,7 @@ describe('AdjustWeightsDialog', () => {
         open={false}
         onOpenChange={vi.fn()}
         userProgramId="up-1"
-        sessions={perMovementSessions}
+        sessionItems={upcoming(perMovementSessions)}
       />,
     );
 

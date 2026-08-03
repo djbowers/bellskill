@@ -8,7 +8,13 @@ import {
   useProgram,
 } from '~/api';
 import type { MovementWeight } from '~/api';
-import { ModifyCountButtons, Page, WeightUnitTabs } from '~/components';
+import {
+  ModifyCountButtons,
+  Page,
+  ProgramTags,
+  StackFitNote,
+  WeightUnitTabs,
+} from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { Label } from '~/components/ui/label';
@@ -19,17 +25,20 @@ import { ReplaceProgramDialog } from '~/pages/ProgramsPage/components/ReplacePro
 import { programSpanLabel } from '~/pages/ProgramsPage/utils';
 import { ProgramSession, WeightUnit, WorkoutGoalUnits } from '~/types';
 import {
+  WEIGHT_MODE_LABELS,
   getWeightRange,
   getWeightUnitLabel,
   programCadenceLabel,
-  WEIGHT_MODE_LABELS,
 } from '~/utils';
 
 import {
   deriveMovementWeights,
   isComplexProgram,
 } from './utils/deriveMovementWeights';
-import { deriveStartingWeight, StartingWeight } from './utils/deriveWeightGroups';
+import {
+  StartingWeight,
+  deriveStartingWeight,
+} from './utils/deriveWeightGroups';
 
 // Fallback weight/unit for the picker's initial state before the per-program
 // pre-fill from deriveWeightGroups lands. The loading mode is fixed by the
@@ -261,7 +270,8 @@ export const ProgramDetailsPage = () => {
   const movementWeightPayload: MovementWeight[] = movementControls
     .filter((control) => control.mode !== 'none')
     .map((control) => {
-      const chosen = movementWeights[control.movementName] ?? control.modalWeight;
+      const chosen =
+        movementWeights[control.movementName] ?? control.modalWeight;
       return {
         movementName: control.movementName,
         weightOneValue: chosen.sharedWeightOneValue,
@@ -384,7 +394,6 @@ export const ProgramDetailsPage = () => {
   // nothing rather than flashing a picker for a program you already configured.
   if (isOwnProgram) return null;
 
-
   const weeks = groupByWeek(data.sessions);
   const movements = programMovements(data.sessions);
   const description = data.program.description ?? '';
@@ -414,6 +423,7 @@ export const ProgramDetailsPage = () => {
               {data.program.authorName ? `${data.program.authorName} · ` : ''}
               {programCadenceLabel(data.program) ?? 'No sessions yet'}
             </p>
+            <ProgramTags tags={data.program.focusTags} />
             {description && (
               <>
                 <p
@@ -464,8 +474,7 @@ export const ProgramDetailsPage = () => {
                       className="flex max-w-full items-center gap-1 rounded-md border border-border/60 px-1.5 py-1 text-xs"
                     >
                       <span className="truncate font-medium">
-                        Day {programSession.dayNumber} ·{' '}
-                        {programSession.title}
+                        Day {programSession.dayNumber} · {programSession.title}
                       </span>
                       {goal && (
                         <span className="shrink-0 tabular-nums text-muted-foreground">
@@ -565,6 +574,15 @@ export const ProgramDetailsPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Advisory only: what this program costs on top of what's already
+          running. Silent when there's nothing worth saying. */}
+      {program && (
+        <StackFitNote
+          candidate={program}
+          active={activeEnrollments.map((a) => a.program)}
+        />
+      )}
 
       {/* One primary decision — start it. Queueing is the same commitment made
           later, so it reads as the quiet alternative rather than a peer CTA. */}

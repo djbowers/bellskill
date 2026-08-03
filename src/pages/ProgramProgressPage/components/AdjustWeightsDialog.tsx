@@ -12,7 +12,6 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog';
 import { useToast } from '~/contexts';
-import { ProgramSession } from '~/types';
 import { WEIGHT_MODE_LABELS } from '~/utils';
 
 import { WeightSlots } from '~/pages/ProgramDetailsPage/ProgramDetailsPage';
@@ -24,39 +23,60 @@ import {
   deriveStartingWeight,
   StartingWeight,
 } from '~/pages/ProgramDetailsPage/utils/deriveWeightGroups';
+import {
+  selectWeightModalSessions,
+  SessionWithState,
+} from '~/pages/ProgramDetailsPage/utils/selectWeightModalSessions';
 
 interface AdjustWeightsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** The active enrollment the new weights apply to. */
   userProgramId: string;
-  /** All of the enrollment's cloned sessions, in program order. */
-  sessions: ProgramSession[];
+  /**
+   * Clone sessions with progress state. Prefill uses the label-aware working
+   * baseline (same rule as `adjust_program_weights`), not every session.
+   */
+  sessionItems: SessionWithState[];
 }
 
 /**
  * Mid-program counterpart to the enrollment starting-weight picker: change the
  * working weight(s) of an active program for every session not yet completed.
- * Pre-fills from the clone's current weights, so what you see is what the
- * upcoming sessions carry now.
+ * Pre-fills from the clone's label-aware working baseline so heavier/lighter
+ * days keep their offsets when the RPC re-bases.
  */
 export const AdjustWeightsDialog = ({
   open,
   onOpenChange,
   userProgramId,
-  sessions,
+  sessionItems,
 }: AdjustWeightsDialogProps) => {
   const adjust = useAdjustProgramWeights();
   const { showToast } = useToast();
 
-  const complex = useMemo(() => isComplexProgram(sessions), [sessions]);
+  const modalSessions = useMemo(
+    () => selectWeightModalSessions(sessionItems),
+    [sessionItems],
+  );
+  // complexSet is a program-level property — check the full clone, not just the
+  // modal subset (week-4 A+A would otherwise look non-complex if only completed
+  // work were somehow empty and we fell through oddly).
+  const allSessions = useMemo(
+    () => sessionItems.map((item) => item.session),
+    [sessionItems],
+  );
+  const complex = useMemo(
+    () => isComplexProgram(allSessions),
+    [allSessions],
+  );
   const movementControls = useMemo(
-    () => deriveMovementWeights(sessions),
-    [sessions],
+    () => deriveMovementWeights(modalSessions),
+    [modalSessions],
   );
   const currentShared = useMemo(
-    () => deriveStartingWeight(sessions),
-    [sessions],
+    () => deriveStartingWeight(modalSessions),
+    [modalSessions],
   );
 
   // Seeded lazily from the clone's current weights; remounting the content on

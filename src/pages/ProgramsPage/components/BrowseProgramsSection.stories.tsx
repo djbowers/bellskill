@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
-import { Program } from '~/types';
+import { Program, ProgramFocusTag } from '~/types';
 
 import { BrowseProgramsSection } from './BrowseProgramsSection';
 
@@ -12,6 +12,7 @@ const shared = (
   authorName: string,
   numWeeks: number | null,
   daysPerWeek: number | null,
+  focusTags: ProgramFocusTag[],
   defaultAutoRepeat = false,
 ): Program => ({
   id,
@@ -29,14 +30,38 @@ const shared = (
   releasedAt: null,
   defaultAutoRepeat,
   stages: null,
+  focusTags,
+  systemicDemand: null,
 });
 
 const programs = [
-  shared('ss', 'Simple & Sinister', 'Pavel Tsatsouline', null, null, true),
-  shared('kb-mile', 'The Kettlebell Mile', 'Dr. Mike Prevost', 8, 1),
-  shared('easy-strength', 'Easy Strength', 'Dan John', 2, 5),
-  shared('abc', 'Armor Building Complex', 'Dan John', 5, 4),
-  shared('dfw', 'Dry Fighting Weight', 'Geoff Neupert', 5, 3),
+  shared(
+    'ss',
+    'Simple & Sinister',
+    'Pavel Tsatsouline',
+    null,
+    null,
+    ['power', 'strength', 'mobility'],
+    true,
+  ),
+  shared('kb-mile', 'The Kettlebell Mile', 'Dr. Mike Prevost', 8, 1, [
+    'endurance',
+    'conditioning',
+  ]),
+  shared('easy-strength', 'Easy Strength', 'Dan John', 2, 5, [
+    'strength',
+    'skill',
+  ]),
+  shared('abc', 'Armor Building Complex', 'Dan John', 5, 4, [
+    'hypertrophy',
+    'strength',
+    'conditioning',
+  ]),
+  shared('dfw', 'Dry Fighting Weight', 'Geoff Neupert', 5, 3, [
+    'strength',
+    'hypertrophy',
+    'conditioning',
+  ]),
 ];
 
 const meta = {
@@ -65,7 +90,9 @@ type Story = StoryObj<typeof meta>;
 export const Collapsed: Story = {
   render: (args) => {
     const [open, setOpen] = useState(false);
-    return <BrowseProgramsSection {...args} open={open} onOpenChange={setOpen} />;
+    return (
+      <BrowseProgramsSection {...args} open={open} onOpenChange={setOpen} />
+    );
   },
 };
 
@@ -73,6 +100,8 @@ export const Collapsed: Story = {
 export const Expanded: Story = {
   render: (args) => {
     const [open, setOpen] = useState(true);
-    return <BrowseProgramsSection {...args} open={open} onOpenChange={setOpen} />;
+    return (
+      <BrowseProgramsSection {...args} open={open} onOpenChange={setOpen} />
+    );
   },
 };

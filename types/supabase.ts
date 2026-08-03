@@ -374,6 +374,7 @@ export type Database = {
           days_per_week: number | null
           default_auto_repeat: boolean
           description: string | null
+          focus_tags: string[]
           id: string
           is_public: boolean
           num_weeks: number | null
@@ -382,6 +383,7 @@ export type Database = {
           slug: string | null
           source_program_id: string | null
           stages: Json | null
+          systemic_demand: string | null
           title: string
         }
         Insert: {
@@ -391,6 +393,7 @@ export type Database = {
           days_per_week?: number | null
           default_auto_repeat?: boolean
           description?: string | null
+          focus_tags?: string[]
           id?: string
           is_public?: boolean
           num_weeks?: number | null
@@ -399,6 +402,7 @@ export type Database = {
           slug?: string | null
           source_program_id?: string | null
           stages?: Json | null
+          systemic_demand?: string | null
           title: string
         }
         Update: {
@@ -408,6 +412,7 @@ export type Database = {
           days_per_week?: number | null
           default_auto_repeat?: boolean
           description?: string | null
+          focus_tags?: string[]
           id?: string
           is_public?: boolean
           num_weeks?: number | null
@@ -416,6 +421,7 @@ export type Database = {
           slug?: string | null
           source_program_id?: string | null
           stages?: Json | null
+          systemic_demand?: string | null
           title?: string
         }
         Relationships: [

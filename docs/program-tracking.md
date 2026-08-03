@@ -128,7 +128,13 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   own title, notes, goal, duration, and rest settings and completed sessions
   are never rewritten. This deliberately overwrites per-session weight offsets
   on future sessions with the edited session's weights; `adjust_program_weights`
-  is the offset-preserving counterpart for weight-only changes.
+  is the offset-preserving counterpart for weight-only changes. Its modal
+  baseline is the mode over **unlabeled working sessions** (`weight_label IS
+  NULL`): incomplete first, else completed (so A+A week-4 deload-only still
+  offsets from the last working load), else incomplete when every session is
+  labeled. That keeps authored deltas (A+A deload −8 kg, DFW test day +4 kg)
+  stable across mid-program and repeated adjusts; the Adjust Weights dialog
+  prefills via the same rule (`selectWeightModalSessions`).
 - **Stages (autoregulated progression):** a program can carry an ordered ladder
   in `programs.stages` (JSONB `ProgramStage[]`: `title`, `movements` as
   name+repScheme only, `preWorkoutNotes`, `deloadPreWorkoutNotes`), copied to
@@ -136,15 +142,21 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   `user_programs.current_stage_index` (default 0). The `set_program_stage`
   RPC (`useSetProgramStage`, StageCard on `ProgramProgressPage`) takes an
   absolute index — one function serves Advance and Go back — and rewrites
-  every session of the clone with no completion for the enrollment: title
-  (`'Deload · ' + title` on `weight_label = 'Deload weeks'` rows), movements
-  stamped with each session's OWN `sharedWeightOne/Two` (deloads stay light;
-  `adjust_program_weights` remains the sole weight authority), and
-  `preWorkoutNotes` (deload variant on deload rows). Goal/interval/rest are
-  untouched, completed sessions never rewritten. v1 assumes shared-weight
-  complexSet programs; the only shipped ladder is A+A's five stages
-  (C+J → … → C+J+C+J+C+J), seeded in `*_seed_aa_protocol_stages.sql`.
-  Backend coverage in `e2e/program-stages.spec.ts`.
+  every session of the clone with no completion for the enrollment. Weights
+  are decided per session: complexSet sessions with shared weights get every
+  stage movement stamped with the session's OWN `sharedWeightOne/Two` and the
+  stage's title (`'Deload · ' + title` on `weight_label = 'Deload weeks'`
+  rows); non-complex sessions keep their own title (day labels like
+  High/Medium/Low volume) and each stage movement inherits the weight fields
+  of the session's same-named movement (null weights if it had none). Either
+  way `adjust_program_weights` remains the sole weight authority, and
+  `preWorkoutNotes` swaps to the stage's (deload variant on deload rows).
+  Goal/interval/rest are untouched, completed sessions never rewritten.
+  Shipped ladders: A+A's five complexes (C+J → … → C+J+C+J+C+J,
+  `*_seed_aa_protocol_stages.sql`) and Strong Endurance Plan 025's six rep
+  counts (Sets of 5 → Sets of 10, `*_seed_se025_stages.sql` — uniform
+  repScheme because 025 scales its days by set count, not reps). Backend
+  coverage in `e2e/program-stages.spec.ts`.
 - **Program CRUD (PROD-237, owned programs only):** `ProgramsPage`'s "My programs"
   surface adds three actions. **Cancel** = `useCancelProgram` flips the active
   enrollment to `abandoned` (reusing the existing status — no new value), freeing

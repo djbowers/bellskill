@@ -12,6 +12,7 @@ export * from './resolveAuthSession';
 export * from './resolveMovementWeights';
 export * from './resolveSharedWeights';
 export * from './soundPreference';
+export * from './stackFit';
 export * from './timerSound';
 export * from './weightUnits';
 export * from './workoutLogToWorkoutOptions';

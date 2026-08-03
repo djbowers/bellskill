@@ -18,6 +18,8 @@ const baseProgram: Program = {
   defaultAutoRepeat: false,
   releasedAt: '2026-01-01T00:00:00Z',
   stages: null,
+  focusTags: [],
+  systemicDemand: null,
 };
 
 describe('programCadenceLabel', () => {

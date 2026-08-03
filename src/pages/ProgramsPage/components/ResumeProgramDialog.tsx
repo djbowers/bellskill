@@ -1,4 +1,4 @@
-import { MAX_ACTIVE_PROGRAMS, type ActiveProgram } from '~/api';
+import { type ActiveProgram, MAX_ACTIVE_PROGRAMS } from '~/api';
 import { Button } from '~/components/ui/button';
 import {
   Dialog,

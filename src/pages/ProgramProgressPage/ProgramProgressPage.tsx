@@ -238,8 +238,11 @@ export const ProgramProgressPage = () => {
           open={adjustingWeights}
           onOpenChange={setAdjustingWeights}
           userProgramId={enrollment.id}
-          sessions={weeks.flatMap((week) =>
-            week.sessions.map((item) => item.session),
+          sessionItems={weeks.flatMap((week) =>
+            week.sessions.map((item) => ({
+              session: item.session,
+              state: item.state,
+            })),
           )}
         />
       )}

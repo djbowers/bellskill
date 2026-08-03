@@ -79,12 +79,7 @@ describe('deriveMovementWeights', () => {
       ]),
     ]);
 
-    expect(controls.map((c) => c.mode)).toEqual([
-      'double',
-      'none',
-      '2h',
-      '1h',
-    ]);
+    expect(controls.map((c) => c.mode)).toEqual(['double', 'none', '2h', '1h']);
   });
 
   it('pre-fills a bodyweight movement with all-null weights', () => {
@@ -143,8 +138,8 @@ describe('isComplexProgram', () => {
   });
 
   it('is false when no session is a complex set', () => {
-    expect(
-      isComplexProgram([session(0, [movement('Press', 24, 24)])]),
-    ).toBe(false);
+    expect(isComplexProgram([session(0, [movement('Press', 24, 24)])])).toBe(
+      false,
+    );
   });
 });

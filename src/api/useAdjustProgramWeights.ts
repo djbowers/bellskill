@@ -32,8 +32,9 @@ export interface AdjustProgramWeightsArgs {
  * Rewrites the weights on every not-yet-completed session of an active
  * enrollment via the `adjust_program_weights` RPC — the mid-program
  * counterpart to the enrollment starting-weight picker. Authored per-session
- * offsets (test days heavier, deloads lighter) are preserved; completed
- * sessions and their logged workouts are untouched.
+ * offsets (test days heavier, deloads lighter) are preserved via a
+ * label-aware working-weight modal; completed sessions and their logged
+ * workouts are untouched.
  *
  * Returns the number of sessions rewritten.
  */

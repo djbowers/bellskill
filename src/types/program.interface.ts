@@ -15,10 +15,11 @@ export interface ProgramStageMovement {
 
 /**
  * One rung of a program's milestone-gated progression ladder (e.g. A+A's
- * C+J → C+J+C → … → 3 cleans + 3 jerks). Advancing an enrollment to a stage
- * (`set_program_stage`) rewrites every not-yet-completed session's title,
- * movements, and notes; each session keeps its own shared weights, so stages
- * author none.
+ * C+J → C+J+C → … → 3 cleans + 3 jerks, or Plan 025's Sets of 5 → Sets
+ * of 10). Advancing an enrollment to a stage (`set_program_stage`) rewrites
+ * every not-yet-completed session's movements and notes; weights come from
+ * each session (shared weights on complexSet sessions, per-movement weights —
+ * and the session's own title — otherwise), so stages author none.
  */
 export interface ProgramStage {
   title: string;
@@ -27,6 +28,30 @@ export interface ProgramStage {
   /** Notes variant for sessions in the 'Deload weeks' weight group. */
   deloadPreWorkoutNotes?: string;
 }
+
+/**
+ * What a program trains. Ordered as chips should render, so this array — not a
+ * program's own tag order — is the display source of truth.
+ */
+export const PROGRAM_FOCUS_TAGS = [
+  'strength',
+  'hypertrophy',
+  'power',
+  'conditioning',
+  'endurance',
+  'skill',
+  'mobility',
+] as const;
+
+export type ProgramFocusTag = (typeof PROGRAM_FOCUS_TAGS)[number];
+
+/**
+ * A program's recovery cost as written, not the difficulty of its movements.
+ * This is the binding constraint when stacking: two `high` programs collide even
+ * with disjoint {@link Program.focusTags}, while a `low` one stacks with almost
+ * anything.
+ */
+export type ProgramSystemicDemand = 'low' | 'moderate' | 'high';
 
 export interface Program {
   id: string;
@@ -71,4 +96,12 @@ export interface Program {
    * enrollment's position.
    */
   stages: ProgramStage[] | null;
+  /**
+   * Up to three focus tags describing what the program trains. Empty for
+   * user-authored programs, which carry no editorial categorization. Overlap
+   * between two stacked programs signals redundant work.
+   */
+  focusTags: ProgramFocusTag[];
+  /** Editorial demand rating, or `null` on user-authored programs. */
+  systemicDemand: ProgramSystemicDemand | null;
 }
