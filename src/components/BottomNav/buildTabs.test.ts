@@ -45,12 +45,12 @@ describe('buildTabs', () => {
     expect(tabs[2]).toMatchObject({ label: 'AI', to: '/recommendations' });
   });
 
-  test('promotes Explore when only explore is enabled', () => {
+  test('promotes Movements when only explore is enabled', () => {
     const { tabs } = buildTabs({ ...allOff, explore: true });
     expect(tabs.map((t) => t.key)).toEqual(['home', 'history', 'explore']);
   });
 
-  test('AI wins the promoted slot over Explore', () => {
+  test('AI wins the promoted slot over Movements', () => {
     const features = {
       ...allOff,
       premium: true,

@@ -60,8 +60,6 @@ export function DataTable<TData, TValue>({
     rowCount,
   });
 
-  const totalPages = Math.ceil(rowCount / pageSize);
-
   const handleHeaderClick = (columnId: string) => {
     if (!onSort) return;
     onSort(columnId);
@@ -135,52 +133,95 @@ export function DataTable<TData, TValue>({
         </TableBody>
       </Table>
 
-      <div className="flex items-center justify-between py-4">
-        <div className="text-sm text-muted-foreground">
-          Page {currentPage} of {totalPages} • {rowCount} total items
-        </div>
-        <div className="flex items-center space-x-2">
-          {onClickFirstPage && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClickFirstPage}
-              disabled={!hasPreviousPage || isLoading}
-            >
-              First
-            </Button>
-          )}
-          {onClickPreviousPage && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClickPreviousPage}
-              disabled={!hasPreviousPage || isLoading}
-            >
-              Previous
-            </Button>
-          )}
-          {onClickNextPage && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClickNextPage}
-              disabled={!hasNextPage || isLoading}
-            >
-              Next
-            </Button>
-          )}
-          {onClickLastPage && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClickLastPage}
-              disabled={!hasNextPage || isLoading}
-            >
-              Last
-            </Button>
-          )}
-        </div>
+      <DataTablePagination
+        currentPage={currentPage}
+        hasNextPage={hasNextPage}
+        hasPreviousPage={hasPreviousPage}
+        isLoading={isLoading}
+        onClickFirstPage={onClickFirstPage}
+        onClickLastPage={onClickLastPage}
+        onClickNextPage={onClickNextPage}
+        onClickPreviousPage={onClickPreviousPage}
+        pageSize={pageSize}
+        rowCount={rowCount}
+      />
+    </div>
+  );
+}
+
+interface DataTablePaginationProps {
+  currentPage: number;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
+  isLoading?: boolean;
+  onClickFirstPage?: () => void;
+  onClickLastPage?: () => void;
+  onClickNextPage?: () => void;
+  onClickPreviousPage?: () => void;
+  pageSize: number;
+  rowCount: number;
+}
+
+export function DataTablePagination({
+  currentPage,
+  hasNextPage,
+  hasPreviousPage,
+  isLoading = false,
+  onClickFirstPage,
+  onClickLastPage,
+  onClickNextPage,
+  onClickPreviousPage,
+  pageSize,
+  rowCount,
+}: DataTablePaginationProps) {
+  const totalPages = Math.ceil(rowCount / pageSize);
+
+  return (
+    <div className="flex items-center justify-between py-4">
+      <div className="text-sm text-muted-foreground">
+        Page {currentPage} of {totalPages} • {rowCount} total items
+      </div>
+      <div className="flex items-center space-x-2">
+        {onClickFirstPage && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClickFirstPage}
+            disabled={!hasPreviousPage || isLoading}
+          >
+            First
+          </Button>
+        )}
+        {onClickPreviousPage && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClickPreviousPage}
+            disabled={!hasPreviousPage || isLoading}
+          >
+            Previous
+          </Button>
+        )}
+        {onClickNextPage && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClickNextPage}
+            disabled={!hasNextPage || isLoading}
+          >
+            Next
+          </Button>
+        )}
+        {onClickLastPage && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClickLastPage}
+            disabled={!hasNextPage || isLoading}
+          >
+            Last
+          </Button>
+        )}
       </div>
     </div>
   );
