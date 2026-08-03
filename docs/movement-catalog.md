@@ -9,11 +9,13 @@ columns / enum wall were removed). The controlled fields (`Primary Equipment`,
 Postgres enums — so `~/types` defines `Equipment` / `MuscleGroup` /
 `DifficultyLevel` as hand-authored unions, not `Supabase['...']['Enums']`.
 
-- **Source of truth:** `scripts/data/movements.csv` (7 authored columns; `id` is
-  generated). `scripts/ingest-movements.mjs` validates every row against the app
-  vocabularies + Kettlebell weight-mode reachability
-  (`src/utils/movementWeightModeFilter.ts`) and recognized pattern-debt patterns
-  (`pattern_debt_window` CASE). Run `npm run movements:check`.
+- **Source of truth:** `scripts/data/movements.csv` (8 authored columns incl.
+  `Pattern Credits`; `id` is generated). `scripts/ingest-movements.mjs` validates
+  every row against the app vocabularies + Kettlebell weight-mode reachability
+  (`src/utils/movementWeightModeFilter.ts`) and the pattern-debt rules: legal
+  `Movement Pattern #1`, well-formed non-empty credits, and credits ⊇
+  coarse(primary) (see docs/pattern-debt-scoring-model.md). Run
+  `npm run movements:check`.
 - **How it loads:** the migration `*_slim_movements_catalog.sql` reloads the
   whole catalog (its INSERT block is regenerated with `npm run movements:emit-sql`),
   so it is reproducible on `supabase db reset` and auto-deploys. There is **no**
