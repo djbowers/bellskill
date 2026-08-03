@@ -914,6 +914,7 @@ export type Database = {
         }
         Returns: number
       }
+      array_distinct_count: { Args: { arr: string[] }; Returns: number }
       complete_program_session: {
         Args: {
           p_program_session_id: string

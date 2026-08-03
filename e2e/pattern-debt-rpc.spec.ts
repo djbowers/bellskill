@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test';
 // REST API (no browser), then calls the RPC and asserts the per-movement
 // aggregation and volume-normalization rules documented in
 // docs/pattern-debt-scoring-model.md and
-// supabase/migrations/20260803193001_create_pattern_debt_movements.sql.
+// supabase/migrations/20260804150001_create_pattern_debt_movements.sql.
 //
 // Auth + REST conventions mirror e2e/program-armor-building-complex.spec.ts
 // (throwaway signup) and e2e/workout-flow.spec.ts (fetch-based REST helpers).
