@@ -1,9 +1,16 @@
 // recommend-session (PROD-87): shared types + the structured-output JSON schema.
 //
 // RecommenderInputs is the typed snapshot fed to the LLM and persisted verbatim
-// into session_recommendations.inputs. pattern_debt / unlocked_weights are present
-// but empty stubs for now (PROD-75 / PROD-78 deferred) so they can be populated
-// later without reshaping the prompt or the table.
+// into session_recommendations.inputs. unlocked_weights is still an empty stub
+// (PROD-78 deferred) so it can be populated later without reshaping the prompt
+// or the table.
+
+import type {
+  DebtBand,
+  OverallBalance,
+  Pattern,
+  PatternRpe,
+} from '../../../src/utils/patternDebt.ts';
 
 /** One movement in the user's library — the candidate set the LLM may choose from. */
 export interface CandidateMovement {
@@ -24,6 +31,26 @@ export interface WorkoutHistoryEntry {
   }>;
 }
 
+/**
+ * One pattern's scored debt, serialized (dates as ISO strings) for the inputs
+ * JSONB snapshot and the prompt. Derived from the shared scoring model
+ * (src/utils/patternDebt.ts, PROD-155).
+ */
+export interface PatternDebtEntry {
+  pattern: Pattern;
+  days_since_last_trained: number | null;
+  recent_volume_kg: number;
+  baseline_volume_kg: number | null;
+  debt_score: number;
+  band: DebtBand;
+  hardest_rpe: PatternRpe | null;
+}
+
+export interface PatternDebtInput {
+  overall_balance: OverallBalance;
+  patterns: PatternDebtEntry[];
+}
+
 /** Everything the recommender reasons over. Snapshotted into inputs JSONB. */
 export interface RecommenderInputs {
   training_goal: string | null;
@@ -31,9 +58,10 @@ export interface RecommenderInputs {
   days_since_last_workout: number | null;
   recent_history: WorkoutHistoryEntry[];
   candidates: CandidateMovement[];
-  // Reserved, populated later (PROD-75 / PROD-78). Kept in the snapshot so the
-  // prompt and the logged inputs are forward-compatible.
-  pattern_debt: never[];
+  /** Null when the pattern_debt_window RPC fails — never blocks a recommendation. */
+  pattern_debt: PatternDebtInput | null;
+  // Reserved, populated later (PROD-78). Kept in the snapshot so the prompt and
+  // the logged inputs are forward-compatible.
   unlocked_weights: Record<string, never>;
 }
 
