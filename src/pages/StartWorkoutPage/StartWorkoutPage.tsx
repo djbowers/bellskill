@@ -37,6 +37,7 @@ import {
   WorkoutOptions,
 } from '~/types';
 import {
+  WEIGHT_MODE_LABELS,
   applySharedWeights,
   getWeightRange,
   getWeightTabValue,
@@ -87,6 +88,15 @@ const INCREMENT_DURATION: number = 1; // minutes
 const INCREMENT_INTERVAL_TIMER: number = 5; // seconds
 const INCREMENT_REST_TIMER: number = 5; // seconds
 const TIMER_BOUNDS = { min: 5, max: 300 }; // seconds
+
+type BuilderSectionId = 'goal' | 'notes' | 'interval' | 'rest' | 'sharedWeight';
+const ALL_BUILDER_SECTIONS: BuilderSectionId[] = [
+  'goal',
+  'notes',
+  'interval',
+  'rest',
+  'sharedWeight',
+];
 const DEFAULT_VOLUME: number = 1000; // kg
 const DEFAULT_MINUTES: number = 10; // minutes
 const DEFAULT_ROUNDS: number = 10; // rounds
@@ -351,6 +361,9 @@ export const StartWorkoutPage = ({
   const [collapsedMovements, setCollapsedMovements] = useState<Set<number>>(
     () => new Set(),
   );
+  const [collapsedSections, setCollapsedSections] = useState<
+    Set<BuilderSectionId>
+  >(() => new Set());
   const [title, setTitle] = useState<string | null>(workoutOptions.title);
   const [preWorkoutNotes, setPreWorkoutNotes] = useState<string | null>(
     workoutOptions.preWorkoutNotes,
@@ -382,6 +395,8 @@ export const StartWorkoutPage = ({
   // can review/edit before starting. Defined ahead of the gate so the nav-start
   // effect below can reuse it without a temporal-dead-zone hazard.
   const loadIntoBuilder = (options: Omit<WorkoutOptions, 'startedAt'>) => {
+    setCollapsedSections(new Set());
+    setCollapsedMovements(new Set());
     setMovements(options.movements);
     setWorkoutGoal(options.workoutGoal);
     setWorkoutGoalUnits(options.workoutGoalUnits);
@@ -407,6 +422,12 @@ export const StartWorkoutPage = ({
     programTitle: string,
   ) => {
     loadIntoBuilder(session.workoutOptions);
+    // Program options arrive prefilled, so fold everything down to summaries —
+    // the user is confirming, not building.
+    setCollapsedSections(new Set(ALL_BUILDER_SECTIONS));
+    setCollapsedMovements(
+      new Set(session.workoutOptions.movements.map((_, index) => index)),
+    );
     setTitle(composeProgramSessionTitle(programTitle, session));
     setStartSource('program');
     setStartSourceProps({
@@ -492,11 +513,28 @@ export const StartWorkoutPage = ({
     setPreWorkoutNotes(notesRef.current?.value ?? '');
   };
 
+  const handleToggleSection = (id: BuilderSectionId) =>
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const expandSection = (id: BuilderSectionId) =>
+    setCollapsedSections((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+
   const handleToggleNotes = () => {
     if (preWorkoutNotes !== null) {
       setPreWorkoutNotes(null);
     } else {
       setPreWorkoutNotes('');
+      expandSection('notes');
     }
   };
 
@@ -505,6 +543,7 @@ export const StartWorkoutPage = ({
       setIntervalTimer(0);
     } else {
       handleIncrementInterval();
+      expandSection('interval');
     }
   };
 
@@ -513,6 +552,7 @@ export const StartWorkoutPage = ({
       setRestTimer(0);
     } else {
       handleIncrementRest();
+      expandSection('rest');
     }
   };
 
@@ -520,6 +560,7 @@ export const StartWorkoutPage = ({
   // movement before the next. They describe opposite arrangements, so turning
   // either on clears the other.
   const handleToggleComplex = () => {
+    if (!complexSet) expandSection('sharedWeight');
     setComplexSet((prev) => !prev);
     setStraightSets(false);
   };
@@ -885,6 +926,20 @@ export const StartWorkoutPage = ({
     .filter((load): load is SummaryLoad => (load.value ?? 0) > 0)
     .map((load) => ({ value: load.value as number, unit: load.unit }));
 
+  const goalSummary = `${workoutGoal} ${
+    workoutGoalUnits === 'kilograms' ? 'kg' : workoutGoalUnits
+  }`;
+  const sharedWeightSummary = [
+    WEIGHT_MODE_LABELS[sharedWeightTabValue],
+    sharedWeightOneValue !== null &&
+      `${sharedWeightOneValue} ${getWeightUnitLabel(sharedWeightOneUnit)}`,
+    sharedWeightTwoValue !== null &&
+      sharedWeightTwoValue > 0 &&
+      `${sharedWeightTwoValue} ${getWeightUnitLabel(sharedWeightTwoUnit)}`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   // Held below every hook so the pending→resolved gate transition can't change
   // the hook count between renders (Rules of Hooks / React #310). The mode above
   // is still derived from a forced `showBrowse` until the gate settles, so
@@ -981,6 +1036,10 @@ export const StartWorkoutPage = ({
           <Card>
             <Section
               title="Goal"
+              collapsible
+              collapsed={collapsedSections.has('goal')}
+              onToggle={() => handleToggleSection('goal')}
+              summary={goalSummary}
               actions={
                 <Tabs
                   value={workoutGoalUnits}
@@ -1085,7 +1144,13 @@ export const StartWorkoutPage = ({
 
           {preWorkoutNotes !== null && (
             <Card>
-              <Section title="Pre-workout notes">
+              <Section
+                title="Pre-workout notes"
+                collapsible
+                collapsed={collapsedSections.has('notes')}
+                onToggle={() => handleToggleSection('notes')}
+                summary={preWorkoutNotes || 'No notes'}
+              >
                 <Textarea
                   autoFocus
                   className="w-full"
@@ -1101,7 +1166,13 @@ export const StartWorkoutPage = ({
 
           {intervalTimer > 0 && (
             <Card>
-              <Section title="Interval Timer">
+              <Section
+                title="Interval Timer"
+                collapsible
+                collapsed={collapsedSections.has('interval')}
+                onToggle={() => handleToggleSection('interval')}
+                summary={`${intervalTimer} sec`}
+              >
                 <ModifyCountButtons
                   {...TIMER_BOUNDS}
                   step={INCREMENT_INTERVAL_TIMER}
@@ -1117,7 +1188,13 @@ export const StartWorkoutPage = ({
 
           {restTimer > 0 && (
             <Card>
-              <Section title="Rest Timer">
+              <Section
+                title="Rest Timer"
+                collapsible
+                collapsed={collapsedSections.has('rest')}
+                onToggle={() => handleToggleSection('rest')}
+                summary={`${restTimer} sec`}
+              >
                 <ModifyCountButtons
                   {...TIMER_BOUNDS}
                   step={INCREMENT_REST_TIMER}
@@ -1133,7 +1210,13 @@ export const StartWorkoutPage = ({
 
           {features.complexMode && complexSet && (
             <Card>
-              <Section title="Shared Weight">
+              <Section
+                title="Shared Weight"
+                collapsible
+                collapsed={collapsedSections.has('sharedWeight')}
+                onToggle={() => handleToggleSection('sharedWeight')}
+                summary={sharedWeightSummary}
+              >
                 <p className="text-xs text-muted-foreground">
                   Complete all movements before setting the weight down.
                 </p>
