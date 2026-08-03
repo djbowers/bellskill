@@ -8,6 +8,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
+  daysBetweenCalendarDays,
+  parseLocalDateString,
+} from '../../../src/utils/dateOnly.ts';
+import {
   type Pattern,
   type PatternAggregate,
   computePatternBalance,
@@ -38,6 +42,7 @@ function formatGoal(goal: number, units: string): string {
  */
 async function gatherPatternDebt(
   authClient: SupabaseClient,
+  today: Date,
 ): Promise<PatternDebtInput | null> {
   try {
     const { data, error } = await authClient.rpc('pattern_debt_window');
@@ -56,7 +61,7 @@ async function gatherPatternDebt(
       }),
     );
 
-    const balance = computePatternBalance(aggregates);
+    const balance = computePatternBalance(aggregates, today);
     return {
       overall_balance: balance.overallBalance,
       patterns: Object.values(balance.patterns).map((p) => ({
@@ -82,12 +87,27 @@ export async function gatherInputs(
   admin: SupabaseClient,
   authClient: SupabaseClient,
   userId: string,
-  body: { readiness?: unknown },
+  body: { readiness?: unknown; client_today?: unknown },
 ): Promise<RecommenderInputs> {
   const readiness =
     typeof body.readiness === 'string' && body.readiness.trim()
       ? body.readiness.trim()
       : null;
+
+  // "Today" must be the caller's local calendar date: this function runs in a
+  // Deno edge runtime with no timezone of its own, and a server-clock `Date.now()`
+  // both floats on UTC boundaries and can't distinguish "0 days elapsed" from
+  // "worked out yesterday evening" — see docs/pattern-debt-scoring-model.md.
+  const parsedClientToday =
+    typeof body.client_today === 'string'
+      ? parseLocalDateString(body.client_today)
+      : null;
+  if (parsedClientToday === null) {
+    console.warn(
+      'recommend-session: missing/invalid client_today, falling back to server clock',
+    );
+  }
+  const clientToday = parsedClientToday ?? new Date();
 
   // Candidate movements: the user's own library.
   const { data: userMovements, error: umErr } = await admin
@@ -149,12 +169,10 @@ export async function gatherInputs(
 
   const days_since_last_workout =
     logs && logs.length > 0
-      ? Math.floor(
-          (Date.now() - new Date(logs[0].completed_at).getTime()) / 86_400_000,
-        )
+      ? daysBetweenCalendarDays(new Date(logs[0].completed_at), clientToday)
       : null;
 
-  const pattern_debt = await gatherPatternDebt(authClient);
+  const pattern_debt = await gatherPatternDebt(authClient, clientToday);
 
   return {
     training_goal: profile?.training_goal ?? null,

@@ -117,4 +117,15 @@ describe('computePatternBalance', () => {
     // Backfilled (untrained) patterns carry no rating.
     expect(patterns.carry.hardestRpe).toBeNull();
   });
+
+  test('days-since is a calendar-day count, not raw elapsed hours', () => {
+    // Trained yesterday evening; "now" is this morning, less than 24h later.
+    const now = new Date(2026, 5, 24, 8, 0, 0);
+    const trainedYesterdayEvening = new Date(2026, 5, 23, 20, 0, 0).toISOString();
+    const { patterns } = computePatternBalance(
+      [agg({ pattern: 'pull', last_trained_at: trainedYesterdayEvening })],
+      now,
+    );
+    expect(patterns.pull.daysSinceLastTrained).toBe(1);
+  });
 });
