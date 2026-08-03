@@ -3,19 +3,8 @@
 // Kept separate from transport (llm.ts) so prompt quality can be iterated in
 // PROD-88 without touching the API plumbing.
 
-import type { PatternDebtEntry, RecommenderInputs } from './types.ts';
-
-function formatPatternLine(p: PatternDebtEntry): string {
-  const lastTrained =
-    p.days_since_last_trained == null
-      ? 'not trained recently'
-      : `last trained ${p.days_since_last_trained}d ago`;
-  const volume =
-    p.baseline_volume_kg && p.baseline_volume_kg > 0
-      ? `volume ${Math.round((p.recent_volume_kg / p.baseline_volume_kg) * 100)}% of baseline`
-      : `recent volume ${p.recent_volume_kg}kg (no baseline)`;
-  return `- ${p.pattern}: debt ${p.debt_score} (${p.band}) · ${lastTrained} · ${volume}`;
-}
+import type { RecommenderInputs } from './types.ts';
+import { formatPatternLine } from '../_shared/patternDebtPrompt.ts';
 
 export function buildSystemPrompt(): string {
   return [
@@ -34,6 +23,8 @@ export function buildSystemPrompt(): string {
     '  the red- and yellow-band (highest-debt) patterns, and say so in the',
     '  rationale when it drives your selection. Readiness, recent RPE, and the',
     "  lifter's goal still take precedence when they conflict.",
+    "- Patterns marked \"new\" have no training history yet — treat them as",
+    '  neutral, not overdue; do not count them toward pattern debt.',
     '- Give a short, concrete rationale a thoughtful coach would give — tie it to',
     '  their goal, recent history, and readiness. Avoid generic filler.',
   ].join('\n');
@@ -67,7 +58,10 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
         `Pattern balance (higher debt = more under-trained; overall: ${inputs.pattern_debt.overall_balance}):`,
         ...inputs.pattern_debt.patterns
           .slice()
-          .sort((a, b) => b.debt_score - a.debt_score)
+          .sort((a, b) => {
+            if (a.is_new !== b.is_new) return a.is_new ? 1 : -1;
+            return b.debt_score - a.debt_score;
+          })
           .map(formatPatternLine),
       ]
     : [];

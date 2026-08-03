@@ -181,6 +181,7 @@ export type Database = {
           id: string
           Movement: string
           "Movement Pattern #1": string | null
+          pattern_credits: string[]
           "Primary Equipment": string | null
           "Single or Double Arm": string | null
           "Target Muscle Group": string | null
@@ -191,6 +192,7 @@ export type Database = {
           id?: string
           Movement: string
           "Movement Pattern #1"?: string | null
+          pattern_credits: string[]
           "Primary Equipment"?: string | null
           "Single or Double Arm"?: string | null
           "Target Muscle Group"?: string | null
@@ -201,6 +203,7 @@ export type Database = {
           id?: string
           Movement?: string
           "Movement Pattern #1"?: string | null
+          pattern_credits?: string[]
           "Primary Equipment"?: string | null
           "Single or Double Arm"?: string | null
           "Target Muscle Group"?: string | null
@@ -911,6 +914,7 @@ export type Database = {
         }
         Returns: number
       }
+      array_distinct_count: { Args: { arr: string[] }; Returns: number }
       complete_program_session: {
         Args: {
           p_program_session_id: string
@@ -954,6 +958,20 @@ export type Database = {
         }[]
       }
       has_premium_access: { Args: { user_id: string }; Returns: boolean }
+      pattern_debt_movements: {
+        Args: { p_baseline_days?: number; p_window_days?: number }
+        Returns: {
+          baseline_volume_kg: number
+          hardest_rpe: Database["public"]["Enums"]["RPE"]
+          last_trained_at: string
+          movement_id: string
+          movement_name: string
+          pattern_credits: string[]
+          set_count: number
+          total_reps: number
+          total_volume_kg: number
+        }[]
+      }
       pattern_debt_window: {
         Args: { p_baseline_days?: number; p_window_days?: number }
         Returns: {

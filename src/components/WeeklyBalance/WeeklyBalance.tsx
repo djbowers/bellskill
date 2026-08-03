@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 
 import { Loading } from '~/components/Loading';
+import { Badge } from '~/components/ui/badge';
+import { Button } from '~/components/ui/button';
 import {
   Card,
   CardContent,
@@ -30,6 +32,8 @@ export interface WeeklyBalanceProps {
   /** Number of workouts the user has logged — gates the cold-start state. */
   workoutCount: number;
   isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
 }
 
 /**
@@ -40,6 +44,8 @@ export const WeeklyBalance = ({
   balance,
   workoutCount,
   isLoading = false,
+  isError = false,
+  onRetry,
 }: WeeklyBalanceProps) => {
   const [expanded, setExpanded] = useState<Pattern | null>(null);
   // Gauges start empty and fill to their charge on mount — the panel's one
@@ -55,6 +61,26 @@ export const WeeklyBalance = ({
         </CardHeader>
         <CardContent className="flex justify-center py-3">
           <Loading />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Weekly Balance</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-between gap-x-2">
+          <p className="text-sm text-muted-foreground">
+            Balance couldn&apos;t load
+          </p>
+          {onRetry && (
+            <Button variant="ghost" size="sm" onClick={onRetry}>
+              Retry
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
@@ -125,7 +151,7 @@ const PatternRow = ({
   const label = PATTERN_LABELS[debt.pattern];
   // A full bar is a pattern you've kept charged; it drains toward empty as the
   // pattern goes stale. Inverse of the debt score the model reasons over.
-  const readiness = 100 - debt.debtScore;
+  const balanceValue = 100 - debt.debtScore;
 
   return (
     <div>
@@ -133,59 +159,90 @@ const PatternRow = ({
         type="button"
         onClick={onToggle}
         aria-expanded={isExpanded}
-        aria-label={`${label}: ${BAND_LABEL[debt.band]}, ${lastTrainedLabel(debt.lastTrained)}${
-          debt.hardestRpe
-            ? `, felt ${RPE_DOT_LABEL[debt.hardestRpe].toLowerCase()}`
-            : ''
-        }`}
-        className="flex w-full items-center gap-x-1.5 rounded-sm py-0.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={
+          debt.isNew
+            ? `${label}: new, not trained yet`
+            : `${label}: ${BAND_LABEL[debt.band]}, ${lastTrainedLabel(debt.lastTrained)}${
+                debt.hardestRpe
+                  ? `, felt ${RPE_DOT_LABEL[debt.hardestRpe].toLowerCase()}`
+                  : ''
+              }`
+        }
+        className="flex min-h-[44px] w-full items-center gap-x-1.5 rounded-sm text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span className="w-7 shrink-0 text-sm font-medium">{label}</span>
-        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-          <span
-            className={cn(
-              'block h-full rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none',
-              BAND_BAR_CLASS[debt.band],
-            )}
-            style={{
-              width: `${mounted ? readiness : 0}%`,
-              transitionDelay: `${index * 40}ms`,
-            }}
-          />
-        </span>
         <span
-          aria-hidden
           className={cn(
-            'h-2 w-2 shrink-0 rounded-full',
-            debt.hardestRpe ? RPE_DOT_CLASS[debt.hardestRpe] : 'bg-transparent',
+            'h-1.5 flex-1 overflow-hidden rounded-full',
+            debt.isNew ? 'border border-dashed border-muted-foreground/40 bg-transparent' : 'bg-muted',
           )}
-        />
+        >
+          {!debt.isNew && (
+            <span
+              className={cn(
+                'block h-full rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none',
+                BAND_BAR_CLASS[debt.band],
+              )}
+              style={{
+                width: `${mounted ? balanceValue : 0}%`,
+                transitionDelay: `${index * 40}ms`,
+              }}
+            />
+          )}
+        </span>
+        {debt.isNew ? (
+          <Badge variant="secondary" className="shrink-0">
+            New
+          </Badge>
+        ) : (
+          <span
+            aria-hidden
+            className={cn(
+              'h-2 w-2 shrink-0 rounded-full',
+              debt.hardestRpe
+                ? RPE_DOT_CLASS[debt.hardestRpe]
+                : 'bg-transparent',
+            )}
+          />
+        )}
         <span className="w-5 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-          {recencyShort(debt)}
+          {debt.isNew ? '—' : recencyShort(debt)}
         </span>
       </button>
 
       {isExpanded && (
-        <dl className="mt-0.5 grid grid-cols-2 gap-x-2 gap-y-0.5 rounded-sm bg-muted/50 p-1 text-xs text-muted-foreground">
-          <Detail term="Last trained" value={lastTrainedLabel(debt.lastTrained)} />
-          <Detail
-            term="Effort"
-            value={debt.hardestRpe ? RPE_DOT_LABEL[debt.hardestRpe] : '—'}
-          />
-          <Detail term="Readiness" value={`${readiness}/100`} />
-          <Detail
-            term="Recent volume"
-            value={formatVolume(debt.recentVolume)}
-          />
-          <Detail
-            term="Baseline"
-            value={
-              debt.baselineVolume == null
-                ? 'No baseline yet'
-                : formatVolume(debt.baselineVolume)
-            }
-          />
-        </dl>
+        <>
+          {debt.isNew ? (
+            <p className="mt-0.5 rounded-sm bg-muted/50 p-1 text-xs text-muted-foreground">
+              Not trained yet — log any {label.toLowerCase()} movement to
+              start tracking.
+            </p>
+          ) : (
+            <dl className="mt-0.5 grid grid-cols-2 gap-x-2 gap-y-0.5 rounded-sm bg-muted/50 p-1 text-xs text-muted-foreground">
+              <Detail
+                term="Last trained"
+                value={lastTrainedLabel(debt.lastTrained)}
+              />
+              <Detail
+                term="Effort"
+                value={debt.hardestRpe ? RPE_DOT_LABEL[debt.hardestRpe] : '—'}
+              />
+              <Detail term="Balance" value={`${balanceValue}/100`} />
+              <Detail
+                term="Recent volume"
+                value={formatVolume(debt.recentVolume)}
+              />
+              <Detail
+                term="Baseline"
+                value={
+                  debt.baselineVolume == null
+                    ? 'No baseline yet'
+                    : formatVolume(debt.baselineVolume)
+                }
+              />
+            </dl>
+          )}
+        </>
       )}
     </div>
   );

@@ -19,6 +19,7 @@ export const PATTERN_ORDER: Pattern[] = [
   'pull',
   'carry',
   'rotation',
+  'core',
   'get_up',
 ];
 
@@ -29,6 +30,7 @@ export const PATTERN_LABELS: Record<Pattern, string> = {
   pull: 'Pull',
   carry: 'Carry',
   rotation: 'Rotation',
+  core: 'Core',
   get_up: 'Get-up',
 };
 
@@ -66,19 +68,33 @@ export const RPE_DOT_LABEL: Record<PatternRpe, string> = {
 
 /**
  * Rows ordered by what needs work: most-neglected (highest debt) first, so the
- * pattern to train next sits on top. The anatomical order breaks ties, keeping
- * the sort stable when scores are equal.
+ * pattern to train next sits on top. New (grace-state) patterns are visible
+ * but not alarm-ranked — rather than sorting into the debt-desc order, each
+ * is reinserted at its anatomical (PATTERN_ORDER) index, clamped to the list
+ * length, so it reads as "here, unstarted" rather than "most overdue."
  */
-export const patternsByNeglect = (balance: PatternBalance): PatternDebt[] =>
-  PATTERN_ORDER.map((pattern) => balance.patterns[pattern]).sort(
-    (a, b) =>
-      b.debtScore - a.debtScore ||
-      PATTERN_ORDER.indexOf(a.pattern) - PATTERN_ORDER.indexOf(b.pattern),
-  );
+export const patternsByNeglect = (balance: PatternBalance): PatternDebt[] => {
+  const scored = PATTERN_ORDER.map((pattern) => balance.patterns[pattern]);
+  const ranked = scored
+    .filter((debt) => !debt.isNew)
+    .sort(
+      (a, b) =>
+        b.debtScore - a.debtScore ||
+        PATTERN_ORDER.indexOf(a.pattern) - PATTERN_ORDER.indexOf(b.pattern),
+    );
+
+  const result = [...ranked];
+  for (const debt of scored) {
+    if (!debt.isNew) continue;
+    const index = Math.min(PATTERN_ORDER.indexOf(debt.pattern), result.length);
+    result.splice(index, 0, debt);
+  }
+  return result;
+};
 
 /** The card's thesis: name the pattern most in need, or confirm all-clear. */
 export const nextFocusLabel = (balance: PatternBalance): string => {
-  const [top] = patternsByNeglect(balance);
+  const [top] = patternsByNeglect(balance).filter((debt) => !debt.isNew);
   if (!top || top.band === 'green') return "You're on track";
   return `${PATTERN_LABELS[top.pattern]} needs work`;
 };

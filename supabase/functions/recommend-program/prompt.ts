@@ -4,6 +4,7 @@
 // without touching the API plumbing.
 
 import type { RecommenderInputs } from './types.ts';
+import { formatPatternLine } from '../_shared/patternDebtPrompt.ts';
 
 export function buildSystemPrompt(): string {
   return [
@@ -17,7 +18,8 @@ export function buildSystemPrompt(): string {
     '- Choose ONLY from the candidate list, using its exact program_id. Never',
     '  invent an id, and never pick a program that is already active or queued.',
     '- Prefer candidates whose focus tags pay down the undertrained movement',
-    '  patterns named in the pattern-debt balance.',
+    '  patterns named in the pattern-debt balance. Patterns marked "new" have',
+    '  no training history yet — treat them as neutral, not undertrained.',
     '- Respect the precomputed stack-fit verdicts: mode "concurrent" is allowed',
     '  only when slots_available > 0 AND that candidate\'s stack-fit verdict is',
     '  not "conflict". Otherwise use mode "queue".',
@@ -42,12 +44,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
     ? inputs.queued_programs.map((p) => `- ${p.title}`).join('\n')
     : '- (queue is empty)';
 
-  const debtLines = inputs.pattern_debt.patterns
-    .map(
-      (p) =>
-        `- ${p.pattern}: debt ${p.debt_score} (${p.band})${p.days_since_last_trained !== null ? `, last trained ${p.days_since_last_trained}d ago` : ', not trained recently'}`,
-    )
-    .join('\n');
+  const debtLines = inputs.pattern_debt.patterns.map(formatPatternLine).join('\n');
 
   const candidateLines = inputs.candidates
     .map((c) => {

@@ -2,7 +2,7 @@
 //
 // Uses the service-role client (bypasses RLS) but every query is scoped to the
 // authenticated user_id — except pattern debt, which goes through the caller's
-// JWT client because pattern_debt_window is SECURITY INVOKER and filters on
+// JWT client because pattern_debt_movements is SECURITY INVOKER and filters on
 // auth.uid(). unlocked_weights is still stubbed empty (PROD-78).
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -12,8 +12,7 @@ import {
   parseLocalDateString,
 } from '../../../src/utils/dateOnly.ts';
 import {
-  type Pattern,
-  type PatternAggregate,
+  type MovementAggregate,
   computePatternBalance,
 } from '../../../src/utils/patternDebt.ts';
 import type {
@@ -45,19 +44,25 @@ async function gatherPatternDebt(
   today: Date,
 ): Promise<PatternDebtInput | null> {
   try {
-    const { data, error } = await authClient.rpc('pattern_debt_window');
+    // Generated DB types don't yet know this function — cast at the RPC
+    // boundary only (mirrors src/api/usePatternDebt.ts).
+    const { data, error } = await authClient.rpc(
+      'pattern_debt_movements' as never,
+    );
     if (error) throw error;
 
-    const aggregates: PatternAggregate[] = (data ?? []).map(
+    const aggregates: MovementAggregate[] = (data ?? []).map(
       (row: Record<string, unknown>) => ({
-        pattern: row.pattern as Pattern,
+        movement_id: (row.movement_id ?? null) as string | null,
+        movement_name: row.movement_name as string,
+        pattern_credits: (row.pattern_credits ?? null) as string[] | null,
         last_trained_at: row.last_trained_at as string | null,
         set_count: Number(row.set_count),
         total_reps: Number(row.total_reps),
         total_volume_kg: Number(row.total_volume_kg),
         baseline_volume_kg:
           row.baseline_volume_kg == null ? null : Number(row.baseline_volume_kg),
-        hardest_rpe: (row.hardest_rpe ?? null) as PatternAggregate['hardest_rpe'],
+        hardest_rpe: (row.hardest_rpe ?? null) as MovementAggregate['hardest_rpe'],
       }),
     );
 
@@ -75,6 +80,7 @@ async function gatherPatternDebt(
         debt_score: p.debtScore,
         band: p.band,
         hardest_rpe: p.hardestRpe,
+        is_new: p.isNew,
       })),
     };
   } catch (err) {

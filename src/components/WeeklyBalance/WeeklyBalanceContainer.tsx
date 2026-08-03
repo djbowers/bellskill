@@ -8,7 +8,12 @@ import { WeeklyBalance } from './WeeklyBalance';
  * presentational component.
  */
 export const WeeklyBalanceContainer = () => {
-  const { data: balance, isLoading: balanceLoading } = usePatternDebt();
+  const {
+    data: balance,
+    isLoading: balanceLoading,
+    isError,
+    refetch,
+  } = usePatternDebt();
   const { data: workoutLogs, isLoading: logsLoading } = useWorkoutLogs();
 
   return (
@@ -16,6 +21,8 @@ export const WeeklyBalanceContainer = () => {
       balance={balance}
       workoutCount={workoutLogs?.length ?? 0}
       isLoading={balanceLoading || logsLoading}
+      isError={isError}
+      onRetry={() => refetch()}
     />
   );
 };
