@@ -6,6 +6,8 @@
 // minimal local types). Keep the constants and formulas in sync with the
 // source modules and docs/pattern-debt-scoring-model.md.
 
+import { daysBetweenCalendarDays } from '../../../src/utils/dateOnly.ts';
+
 // ---------------------------------------------------------------------------
 // Pattern debt (src/utils/patternDebt.ts)
 // ---------------------------------------------------------------------------
@@ -109,11 +111,7 @@ export function computePatternBalance(
       baseline_volume_kg: null,
     };
     const daysSince = agg.last_trained_at
-      ? Math.max(
-          0,
-          (now.getTime() - new Date(agg.last_trained_at).getTime()) /
-            86_400_000,
-        )
+      ? Math.max(0, daysBetweenCalendarDays(new Date(agg.last_trained_at), now))
       : null;
     const debtScore = computeDebtScore(
       daysSince,

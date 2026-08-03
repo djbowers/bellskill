@@ -7,6 +7,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
+  daysBetweenCalendarDays,
+  parseLocalDateString,
+} from '../../../src/utils/dateOnly.ts';
+import {
   assessStackFit,
   computePatternBalance,
   type PatternAggregate,
@@ -44,7 +48,23 @@ export async function gatherInputs(
   admin: SupabaseClient,
   userClient: SupabaseClient,
   userId: string,
+  body: { client_today?: unknown } = {},
 ): Promise<RecommenderInputs> {
+  // "Today" must be the caller's local calendar date: this function runs in a
+  // Deno edge runtime with no timezone of its own, and a server-clock `Date.now()`
+  // both floats on UTC boundaries and can't distinguish "0 days elapsed" from
+  // "worked out yesterday evening" — see docs/pattern-debt-scoring-model.md.
+  const parsedClientToday =
+    typeof body.client_today === 'string'
+      ? parseLocalDateString(body.client_today)
+      : null;
+  if (parsedClientToday === null) {
+    console.warn(
+      'recommend-program: missing/invalid client_today, falling back to server clock',
+    );
+  }
+  const clientToday = parsedClientToday ?? new Date();
+
   // Live enrollments: what's running plus what's queued.
   const { data: enrollments, error: enrErr } = await admin
     .from('user_programs')
@@ -185,6 +205,7 @@ export async function gatherInputs(
   if (debtErr) throw debtErr;
   const pattern_debt = computePatternBalance(
     (debtRows ?? []) as PatternAggregate[],
+    clientToday,
   );
 
   // Recent workout history + persistent training goal.
@@ -220,9 +241,7 @@ export async function gatherInputs(
 
   const days_since_last_workout =
     logs && logs.length > 0
-      ? Math.floor(
-          (Date.now() - new Date(logs[0].completed_at).getTime()) / 86_400_000,
-        )
+      ? daysBetweenCalendarDays(new Date(logs[0].completed_at), clientToday)
       : null;
 
   const { data: profile, error: profErr } = await admin
