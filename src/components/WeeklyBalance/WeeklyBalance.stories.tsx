@@ -1,5 +1,5 @@
 import {
-  PatternAggregate,
+  MovementAggregate,
   Pattern,
   PatternRpe,
   computePatternBalance,
@@ -20,8 +20,10 @@ const agg = (
   volume: number,
   baseline: number | null,
   rpe: PatternRpe | null = null,
-): PatternAggregate => ({
-  pattern,
+): MovementAggregate => ({
+  movement_id: `${pattern}-movement`,
+  movement_name: `${pattern} movement`,
+  pattern_credits: [pattern],
   last_trained_at: daysSince === null ? null : daysAgo(daysSince),
   set_count: volume > 0 ? 9 : 0,
   total_reps: volume > 0 ? 45 : 0,
@@ -37,6 +39,7 @@ const balanced = computePatternBalance([
   agg('pull', 4, 850, 1000, 'easy'),
   agg('carry', 3, 700, 800, 'ideal'),
   agg('rotation', 5, 300, 350, 'easy'),
+  agg('core', 4, 400, 450, 'ideal'),
   agg('get_up', 4, 200, 220, 'hard'),
 ]);
 
@@ -46,8 +49,6 @@ const hingeHeavy = computePatternBalance([
   agg('push', 11, 200, 1000, 'easy'),
   agg('pull', 13, 150, 1000, 'hard'),
   agg('carry', null, 0, 600),
-  agg('rotation', null, 0, null),
-  agg('get_up', null, 0, null),
 ]);
 
 export const Balanced = {
@@ -58,10 +59,21 @@ export const HingeHeavy = {
   args: { balance: hingeHeavy, workoutCount: 8 },
 };
 
+export const NewUser = {
+  args: {
+    balance: computePatternBalance([agg('hinge', 1, 1000, 1000, 'ideal')]),
+    workoutCount: 5,
+  },
+};
+
 export const ColdStart = {
   args: { balance: balanced, workoutCount: 1 },
 };
 
 export const Loading = {
   args: { workoutCount: 0, isLoading: true },
+};
+
+export const ErrorState = {
+  args: { workoutCount: 0, isError: true, onRetry: () => {} },
 };
