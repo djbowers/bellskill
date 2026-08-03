@@ -172,6 +172,17 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   reindex + constraint-safety, and the PROD-237 cancel/delete-cascade/archive-filter
   - owner-only guarantees in `e2e/program-crud.spec.ts`) are covered by Playwright
     e2e against the local Supabase (`e2e/program-*.spec.ts`), not MSW.
+- **Catalog release gate (PROD-246):** shared catalog programs (`owner_id NULL`,
+  `is_public`) carry a nullable `programs.released_at`; only released programs
+  are visible to non-owners (enforced in the SELECT RLS policy, which also
+  exempts the app owner account — `OWNER_EMAILS` in `src/config/features.ts`).
+  Because catalog programs have no owner, the normal owner-UPDATE policy can't
+  flip the column from the app, so `set_program_released` (`p_program_id`,
+  `p_released`) is a `SECURITY DEFINER` RPC gated to the same owner email that
+  sets or clears `released_at`. `useSetProgramReleased` calls it and invalidates
+  `QUERIES.PROGRAMS`; `BrowseProgramsList` renders a Release/Unrelease toggle in
+  place of the old read-only "Released" badge when `showReleasedBadge` is set
+  (owner view only).
 - **Error feedback (PROD-220):** program mutations surface failures through one
   reusable toast — `ToastProvider`/`useToast` (`~/contexts/ToastContext`, mounted
   app-wide in `App.tsx`; presentational `Toast` in `~/components/ui/toast`). Each
