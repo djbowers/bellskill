@@ -64,7 +64,7 @@ test coverage.
 - **Entry point:** finishing a workout started from a program card (any of flows 1–5).
 - **Key files:** `src/api/useLogWorkout.ts` — reads `useProgramSession()` (from `ProgramSessionContext`) and on success calls `completeProgramSession` (`src/api/useCompleteProgramSession.ts`), which invokes the `complete_program_session` RPC. Skip path: `handleSkipProgram` in `StartWorkoutPage.tsx` (writes a skipped completion, no `workout_logs` row). Auto-repeat restart and queue promotion are implemented **inside the SQL function itself**, not in client code — `useLogWorkout.ts` only forwards the call and contains no auto-repeat/queue branching.
 - **Traceability:**
-  - **No unit-layer coverage of the completion hand-off**: `src/api/useLogWorkout.test.ts` has no program-related mocks or assertions — the `useLogWorkout` → `completeProgramSession` wiring is untested at the unit level.
+  - Unit: `useLogWorkout.test.ts` (completion-wiring describe block: RPC payload with the real log id, context clear, `ACTIVE_PROGRAM` invalidation, non-program no-op, RPC-failure isolation, full `ProgramSessionProvider` round-trip), `useCompleteProgramSession.test.ts` (skip payload + invalidation semantics), `ProgramSessionContext.test.tsx`, `StartWorkoutPage.parallelPrograms.test.jsx` (start stashes the selected program's session in context).
   - e2e: `e2e/program-next-workout.spec.ts` (advance, skip, terminal completion, idempotent duplicate completion), `e2e/program-queue.spec.ts` (auto-repeat vs queue promotion, FIFO queue), `e2e/program-parallel.spec.ts`.
 
 ## 7. Lifecycle
@@ -78,4 +78,4 @@ test coverage.
 
 ## Notes on gaps found while verifying
 
-- No unit test exists for: `useProgram.ts`, `useResumeProgram.ts`, `useAdjustProgramWeights.ts`, `useUpdateProgramSessionsForward.ts`, `AdjustWeightsDialog.tsx` (standalone), and — most notably — the `useLogWorkout` → `completeProgramSession` wiring. These are covered only by the e2e suite listed above (or, for the RPC-only logic, not covered at the unit layer at all since the logic lives in SQL).
+- The gaps originally listed here (`useProgram.ts`, `useResumeProgram.ts`, `useAdjustProgramWeights.ts`, `useUpdateProgramSessionsForward.ts`, standalone `AdjustWeightsDialog.tsx`, `program.ts` mappers, `programCadenceLabel.ts`, and the `useLogWorkout` → `completeProgramSession` wiring) now have colocated unit tests. Auto-repeat restart and queue promotion remain SQL-only logic inside `complete_program_session`, exercised by the e2e suite rather than unit tests.
