@@ -6,6 +6,7 @@ const ALL_ON = {
   explore: true,
   premium: true,
   programs: true,
+  spotify: true,
   weeklyBalance: true,
 };
 

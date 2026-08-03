@@ -543,6 +543,47 @@ export type Database = {
           },
         ]
       }
+      spotify_connections: {
+        Row: {
+          access_token: string | null
+          access_token_expires_at: string | null
+          created_at: string
+          refresh_token: string
+          scopes: string | null
+          spotify_user_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          access_token_expires_at?: string | null
+          created_at?: string
+          refresh_token: string
+          scopes?: string | null
+          spotify_user_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          access_token_expires_at?: string | null
+          created_at?: string
+          refresh_token?: string
+          scopes?: string | null
+          spotify_user_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spotify_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_movements: {
         Row: {
           canonical_name: string
@@ -903,6 +944,13 @@ export type Database = {
         Returns: {
           flag_key: string
           variant: string
+        }[]
+      }
+      get_spotify_connection_status: {
+        Args: never
+        Returns: {
+          connected: boolean
+          spotify_user_id: string
         }[]
       }
       has_premium_access: { Args: { user_id: string }; Returns: boolean }
