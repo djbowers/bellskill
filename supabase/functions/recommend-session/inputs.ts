@@ -1,13 +1,20 @@
 // recommend-session (PROD-87): assemble the standalone RecommenderInputs.
 //
 // Uses the service-role client (bypasses RLS) but every query is scoped to the
-// authenticated user_id. pattern_debt / unlocked_weights are stubbed empty here
-// (PROD-75 / PROD-78).
+// authenticated user_id — except pattern debt, which goes through the caller's
+// JWT client because pattern_debt_window is SECURITY INVOKER and filters on
+// auth.uid(). unlocked_weights is still stubbed empty (PROD-78).
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import {
+  type Pattern,
+  type PatternAggregate,
+  computePatternBalance,
+} from '../../../src/utils/patternDebt.ts';
 import type {
   CandidateMovement,
+  PatternDebtInput,
   RecommenderInputs,
   WorkoutHistoryEntry,
 } from './types.ts';
@@ -25,8 +32,55 @@ function formatGoal(goal: number, units: string): string {
   return `${goal} ${units}`;
 }
 
+/**
+ * Fetch and score the caller's pattern-debt balance. Best-effort: any failure
+ * degrades to null so a recommendation is never blocked on it.
+ */
+async function gatherPatternDebt(
+  authClient: SupabaseClient,
+): Promise<PatternDebtInput | null> {
+  try {
+    const { data, error } = await authClient.rpc('pattern_debt_window');
+    if (error) throw error;
+
+    const aggregates: PatternAggregate[] = (data ?? []).map(
+      (row: Record<string, unknown>) => ({
+        pattern: row.pattern as Pattern,
+        last_trained_at: row.last_trained_at as string | null,
+        set_count: Number(row.set_count),
+        total_reps: Number(row.total_reps),
+        total_volume_kg: Number(row.total_volume_kg),
+        baseline_volume_kg:
+          row.baseline_volume_kg == null ? null : Number(row.baseline_volume_kg),
+        hardest_rpe: (row.hardest_rpe ?? null) as PatternAggregate['hardest_rpe'],
+      }),
+    );
+
+    const balance = computePatternBalance(aggregates);
+    return {
+      overall_balance: balance.overallBalance,
+      patterns: Object.values(balance.patterns).map((p) => ({
+        pattern: p.pattern,
+        days_since_last_trained:
+          p.daysSinceLastTrained == null
+            ? null
+            : Math.floor(p.daysSinceLastTrained),
+        recent_volume_kg: p.recentVolume,
+        baseline_volume_kg: p.baselineVolume,
+        debt_score: p.debtScore,
+        band: p.band,
+        hardest_rpe: p.hardestRpe,
+      })),
+    };
+  } catch (err) {
+    console.error('recommend-session pattern_debt fetch failed:', err);
+    return null;
+  }
+}
+
 export async function gatherInputs(
   admin: SupabaseClient,
+  authClient: SupabaseClient,
   userId: string,
   body: { readiness?: unknown },
 ): Promise<RecommenderInputs> {
@@ -100,13 +154,15 @@ export async function gatherInputs(
         )
       : null;
 
+  const pattern_debt = await gatherPatternDebt(authClient);
+
   return {
     training_goal: profile?.training_goal ?? null,
     readiness,
     days_since_last_workout,
     recent_history,
     candidates,
-    pattern_debt: [],
+    pattern_debt,
     unlocked_weights: {},
   };
 }

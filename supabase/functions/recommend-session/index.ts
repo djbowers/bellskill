@@ -61,7 +61,7 @@ Deno.serve(async (req: Request) => {
 
     // (4) Assemble inputs.
     const body = await req.json().catch(() => ({}));
-    const inputs = await gatherInputs(admin, user.id, body);
+    const inputs = await gatherInputs(admin, authClient, user.id, body);
 
     if (inputs.candidates.length === 0) {
       // Nothing to recommend from — a user-state issue, not an LLM error, so it
