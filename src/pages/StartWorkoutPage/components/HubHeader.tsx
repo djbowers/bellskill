@@ -1,3 +1,5 @@
+import { daysBetweenCalendarDays } from '~/utils/dateOnly';
+
 export interface HubHeaderProps {
   /** Most recent workout date, or null for a user who hasn't trained yet. */
   lastWorkoutAt: Date | null;
@@ -11,23 +13,15 @@ const greetingForHour = (hour: number): string => {
   return 'Good evening';
 };
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
 const lastTrainedLabel = (lastWorkoutAt: Date | null, now: Date): string => {
   if (!lastWorkoutAt) return "Let's get your first workout in.";
 
-  const days = Math.floor(
-    (startOfDay(now).getTime() - startOfDay(lastWorkoutAt).getTime()) /
-      MS_PER_DAY,
-  );
+  const days = daysBetweenCalendarDays(lastWorkoutAt, now);
 
   if (days <= 0) return 'You already trained today. Nice.';
   if (days === 1) return 'Last trained yesterday.';
   return `Last trained ${days} days ago.`;
 };
-
-const startOfDay = (date: Date): Date =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
 /**
  * The hub's identity strip: a time-of-day greeting over a quiet "last trained"

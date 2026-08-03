@@ -7,6 +7,8 @@
 // Pure + deterministic so it can be unit-tested here and reused verbatim by the
 // recommender edge functions. See docs/pattern-debt-scoring-model.md.
 
+import { daysBetweenCalendarDays } from './dateOnly.ts';
+
 export const PATTERNS = [
   'hinge',
   'squat',
@@ -144,9 +146,6 @@ export const computeDebtScore = (
   return Math.round(100 * (W_RECENCY * recency + W_VOLUME * deficit));
 };
 
-const daysBetween = (from: Date, to: Date): number =>
-  (to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24);
-
 interface PatternAccumulator {
   lastTrained: Date | null;
   recentVolume: number;
@@ -169,7 +168,7 @@ const scorePattern = (
   now: Date,
 ): PatternDebt => {
   const daysSinceLastTrained = acc.lastTrained
-    ? Math.max(0, daysBetween(acc.lastTrained, now))
+    ? Math.max(0, daysBetweenCalendarDays(acc.lastTrained, now))
     : null;
   const debtScore = computeDebtScore(
     daysSinceLastTrained,

@@ -17,7 +17,7 @@ import { ValidationError, validateRecommendation } from './validate.ts';
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = 'claude-haiku-4-5';
 const MAX_TOKENS = 1024;
 
 /** Transport/parse-level failure (API down, bad JSON) — distinct from ValidationError. */

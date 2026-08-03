@@ -264,6 +264,17 @@ describe('computePatternBalance', () => {
       NOW,
     );
     expect(patterns.squat.lastTrained).toBeInstanceOf(Date);
-    expect(patterns.squat.daysSinceLastTrained).toBeCloseTo(3, 5);
+    expect(patterns.squat.daysSinceLastTrained).toBe(3);
+  });
+
+  test('days-since is a calendar-day count, not raw elapsed hours', () => {
+    // Trained yesterday evening; "now" is this morning, less than 24h later.
+    const now = new Date(2026, 5, 24, 8, 0, 0);
+    const trainedYesterdayEvening = new Date(2026, 5, 23, 20, 0, 0).toISOString();
+    const { patterns } = computePatternBalance(
+      [mov({ pattern_credits: ['pull'], last_trained_at: trainedYesterdayEvening })],
+      now,
+    );
+    expect(patterns.pull.daysSinceLastTrained).toBe(1);
   });
 });

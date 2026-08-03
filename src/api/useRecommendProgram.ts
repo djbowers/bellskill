@@ -2,6 +2,7 @@ import { FunctionsHttpError } from '@supabase/supabase-js';
 import { useMutation } from '@tanstack/react-query';
 
 import { supabase } from '../supabaseClient';
+import { localDateString } from '~/utils/dateOnly';
 import type { RecommendProgramResponse } from '~/types';
 
 /** Stable codes for the failure modes the UI messages differently. */
@@ -21,10 +22,13 @@ export class RecommendProgramError extends Error {
 }
 
 const recommendProgram = async (): Promise<RecommendProgramResponse> => {
+  // client_today anchors the recommender's "days since last workout" and
+  // pattern-debt calculation to the user's local calendar date — the edge
+  // function runs in UTC and has no notion of the caller's timezone otherwise.
   const { data, error } =
     await supabase.functions.invoke<RecommendProgramResponse>(
       'recommend-program',
-      { body: {} },
+      { body: { client_today: localDateString() } },
     );
 
   if (error) {
