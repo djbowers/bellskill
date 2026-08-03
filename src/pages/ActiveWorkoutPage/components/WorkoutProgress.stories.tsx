@@ -9,6 +9,7 @@ const meta = {
     completedVolume: 0,
     formattedTimeRemaining: '10:00',
     handleClickPause: () => {},
+    onClickCancel: () => {},
     remainingMilliseconds: 600000,
     workoutGoal: 1000,
     workoutGoalUnits: 'kilograms',

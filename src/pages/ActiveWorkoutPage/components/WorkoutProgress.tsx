@@ -1,4 +1,4 @@
-import { PauseIcon } from '@radix-ui/react-icons';
+import { Cross2Icon, PauseIcon } from '@radix-ui/react-icons';
 
 import { Button } from '~/components/ui/button';
 
@@ -9,6 +9,7 @@ interface WorkoutProgressProps {
   completedVolume: number;
   formattedTimeRemaining: string;
   handleClickPause: () => void;
+  onClickCancel: () => void;
   remainingMilliseconds: number;
   workoutGoal: number;
   workoutGoalUnits: string;
@@ -20,6 +21,7 @@ export const WorkoutProgress = ({
   completedVolume,
   formattedTimeRemaining,
   handleClickPause,
+  onClickCancel,
   remainingMilliseconds,
   workoutGoal,
   workoutGoalUnits,
@@ -59,6 +61,17 @@ export const WorkoutProgress = ({
 
   return (
     <div className="flex w-full items-center gap-1">
+      <div>
+        <Button
+          aria-label="Cancel workout"
+          onClick={onClickCancel}
+          size="icon"
+          variant="ghost"
+        >
+          <Cross2Icon className="h-3 w-3" />
+        </Button>
+      </div>
+
       <ProgressBar
         completedPercentage={workoutGoal > 0 ? completedPercentage : 0}
         description={workoutGoal > 0 ? progressBarDescription : undefined}

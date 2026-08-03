@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useLogWorkout } from '~/api';
+import { AnalyticsEvent, trackEvent, useLogWorkout } from '~/api';
 import { Page } from '~/components';
-import { useWorkoutOptions } from '~/contexts';
+import { ConfirmDialog } from '~/components/ConfirmDialog';
+import { useProgramSession, useSession, useWorkoutOptions } from '~/contexts';
 import { useCountdownTimer } from '~/hooks';
 import { playDing, playStartCue, unlockAudio } from '~/utils';
 
@@ -52,6 +53,10 @@ export const ActiveWorkoutPage = ({
 
   const navigate = useNavigate();
   const requestWakeLock = useRequestWakeLock();
+  const [, setProgramSession] = useProgramSession();
+  const session = useSession();
+  const userId = session?.user?.id;
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const hasTimedMovements = movements.some((movement) => movement.timedRungs);
 
@@ -470,6 +475,26 @@ export const ActiveWorkoutPage = ({
     });
   };
 
+  const cancelWorkout = () => {
+    pauseWorkout();
+    setProgramSession(null);
+    if (userId) {
+      void trackEvent({
+        event: AnalyticsEvent.WorkoutCancelled,
+        userId,
+        properties: {
+          completedReps,
+          completedRounds,
+          completedVolume: Math.round(completedVolume),
+          elapsedSeconds: startedAt
+            ? Math.round((Date.now() - startedAt.getTime()) / 1000)
+            : 0,
+        },
+      });
+    }
+    navigate('/');
+  };
+
   const handleClickContinue = () => {
     unlockAudio();
     setIsEffectActive(true);
@@ -589,6 +614,7 @@ export const ActiveWorkoutPage = ({
   return (
     <Page>
       <WorkoutProgress
+        onClickCancel={() => setCancelDialogOpen(true)}
         completedRounds={completedRounds}
         completedVolume={completedVolume}
         formattedTimeRemaining={formattedTimeRemaining}
@@ -662,6 +688,18 @@ export const ActiveWorkoutPage = ({
         logWorkoutLoading={logWorkoutLoading}
         onClickFinish={handleClickFinish}
         startedAt={startedAt ?? new Date()}
+      />
+
+      <ConfirmDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        title="Cancel this workout?"
+        description="Your progress won't be saved."
+        confirmLabel="Discard workout"
+        confirmVariant="destructive"
+        dismissLabel="Keep going"
+        onConfirm={cancelWorkout}
+        onDismiss={() => setCancelDialogOpen(false)}
       />
     </Page>
   );
