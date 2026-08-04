@@ -1,5 +1,6 @@
 import { ChangeEventHandler, useActionState, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 
 import {
   SubscriptionState,
@@ -25,6 +26,7 @@ import { isSoundEnabled, setSoundEnabled } from '~/utils';
 
 export const AccountPage = () => {
   const session = useSession();
+  const navigate = useNavigate();
   const {
     isPremium,
     isTrialing,
@@ -156,6 +158,17 @@ export const AccountPage = () => {
           <SubmitButton />
         </div>
       </form>
+
+      <div className="flex flex-col gap-1 border-t pt-2">
+        <Label>My Equipment</Label>
+        <p className="text-xs text-muted-foreground">
+          Tell Bellskill which kettlebells you own so session and program
+          recommendations prescribe weights you can actually load.
+        </p>
+        <Button variant="outline" onClick={() => navigate('/account/equipment')}>
+          Manage equipment
+        </Button>
+      </div>
 
       <div className="flex flex-col gap-1 border-t pt-2">
         <Label>Sound</Label>

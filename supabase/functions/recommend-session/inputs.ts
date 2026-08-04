@@ -3,10 +3,11 @@
 // Uses the service-role client (bypasses RLS) but every query is scoped to the
 // authenticated user_id — except pattern debt, which goes through the caller's
 // JWT client because pattern_debt_movements is SECURITY INVOKER and filters on
-// auth.uid(). unlocked_weights is still stubbed empty (PROD-78).
+// auth.uid(). unlocked_weights comes from the user's declared equipment (PROD-78).
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { gatherEquipment } from '../_shared/equipmentInput.ts';
 import {
   daysBetweenCalendarDays,
   parseLocalDateString,
@@ -212,6 +213,7 @@ export async function gatherInputs(
       : null;
 
   const pattern_debt = await gatherPatternDebt(authClient, clientToday);
+  const equipment = await gatherEquipment(admin, userId);
 
   // Balance mode's deterministic targets. Degrades to [] (default behavior)
   // when debt is unavailable or nothing red is coverable from the library.
@@ -237,6 +239,6 @@ export async function gatherInputs(
     recent_history,
     candidates,
     pattern_debt,
-    unlocked_weights: {},
+    unlocked_weights: equipment ?? {},
   };
 }

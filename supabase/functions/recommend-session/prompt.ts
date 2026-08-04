@@ -4,6 +4,7 @@
 // PROD-88 without touching the API plumbing.
 
 import type { RecommendMode, RecommenderInputs } from './types.ts';
+import { formatEquipmentSection } from '../_shared/equipmentInput.ts';
 import { formatPatternLine } from '../_shared/patternDebtPrompt.ts';
 
 export function buildSystemPrompt(mode: RecommendMode = 'default'): string {
@@ -97,6 +98,13 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
       ]
     : [];
 
+  const equipmentText = formatEquipmentSection(
+    'available_weights' in inputs.unlocked_weights
+      ? inputs.unlocked_weights
+      : null,
+  );
+  const equipmentSection = equipmentText ? ['', equipmentText] : [];
+
   return [
     `Training goal: ${inputs.training_goal ?? '(none provided)'}`,
     `How they feel today: ${inputs.readiness ?? '(not provided)'}`,
@@ -106,6 +114,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
     historyLines,
     ...patternDebtSection,
     ...targetSection,
+    ...equipmentSection,
     '',
     'Candidate movements (choose only from these):',
     candidateLines,
