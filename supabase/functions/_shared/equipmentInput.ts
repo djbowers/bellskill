@@ -51,21 +51,43 @@ export function formatEquipmentSection(
 ): string {
   if (!summary) return '';
 
-  const singles = summary.available_weights
-    .map((w) => `${w.weight_kg}kg`)
-    .join(', ');
-  const doubles = summary.available_weights
-    .filter((w) => w.doubles)
-    .map((w) => `${w.weight_kg}kg`)
-    .join(', ');
+  const lines = ['AVAILABLE EQUIPMENT', `Owns: ${summary.description}`];
 
-  return [
-    'AVAILABLE EQUIPMENT',
-    `Owns: ${summary.description}`,
-    `Loadable weights: ${singles}`,
-    doubles
-      ? `Doubles possible at: ${doubles}`
-      : 'Doubles possible at: none — only single-bell work',
-    'Prescribe only weights from the loadable list. Prescribe double-bell work only at weights marked as doubles.',
-  ].join('\n');
+  if (summary.fixed_weights.length > 0) {
+    const fixed = summary.fixed_weights
+      .map((w) => `${w.weight_kg}kg${w.doubles ? ' (pair — doubles OK)' : ''}`)
+      .join(', ');
+    lines.push(
+      `Fixed bells, usable at any point in the session: ${fixed}`,
+      'Fixed bells can be swapped freely between blocks.',
+    );
+  } else {
+    lines.push('Fixed bells: none.');
+  }
+
+  if (summary.adjustable_bells.length > 0) {
+    const count = summary.adjustable_bell_count;
+    lines.push(
+      `Adjustable bells: ${count}. Each can be set to any of ${summary.adjustable_bells
+        .map((g) => g.settings_kg.map((s) => `${s}kg`).join(', '))
+        .join(' / ')}.`,
+      // The whole point of the split: re-plating takes minutes, so an adjustable
+      // bell's weight is a per-session decision, not a per-block one.
+      'An adjustable bell holds ONE setting for the entire session — changing it takes several minutes, so it is never done mid-workout.',
+      `Choose each adjustable bell's weight up front and reuse it for every block that needs it. Use at most ${count} distinct adjustable ${count === 1 ? 'weight' : 'weights'} in a session, and never prescribe two different weights from the same adjustable bell.`,
+    );
+    if (count >= 2) {
+      lines.push(
+        'Double-bell work on adjustable bells requires both bells at the same setting, which uses up both.',
+      );
+    } else {
+      lines.push(
+        'With one adjustable bell, double-bell work is only possible using fixed pairs.',
+      );
+    }
+  }
+
+  lines.push('Never prescribe a weight outside the lists above.');
+
+  return lines.join('\n');
 }

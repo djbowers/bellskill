@@ -1,6 +1,6 @@
 import type { UserEquipment } from '~/api';
 import { Card, CardContent } from '~/components/ui/card';
-import { EquipmentSummary, getBellColor } from '~/utils';
+import { EquipmentSummary, allLoadableWeights, getBellColor } from '~/utils';
 
 interface LoadableWeightsCardProps {
   items: UserEquipment[];
@@ -21,7 +21,7 @@ export const LoadableWeightsCard = ({
   items,
   summary,
 }: LoadableWeightsCardProps) => {
-  const weights = summary.available_weights;
+  const weights = allLoadableWeights(summary);
   const low = weights[0].weight_kg;
   const high = weights[weights.length - 1].weight_kg;
   const span = high - low;
@@ -36,7 +36,7 @@ export const LoadableWeightsCard = ({
       end: position(toKg(item.maxWeight!, item.unit)),
     }));
 
-  const doublesCount = weights.filter((w) => w.doubles).length;
+  const bellCount = summary.adjustable_bell_count;
 
   return (
     <Card>
@@ -96,10 +96,9 @@ export const LoadableWeightsCard = ({
           {weights.length === 1
             ? '1 loadable weight'
             : `${weights.length} loadable weights`}
-          {doublesCount > 0
-            ? ` · doubles at ${doublesCount} of them`
-            : ' · no doubles'}
           . Recommendations only prescribe these.
+          {bellCount > 0 &&
+            ` Your ${bellCount === 1 ? 'adjustable bell keeps one weight' : `${bellCount} adjustable bells each keep one weight`} for a whole session — you'll never be asked to re-plate mid-workout.`}
         </p>
       </CardContent>
     </Card>

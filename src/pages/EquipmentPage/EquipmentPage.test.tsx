@@ -84,8 +84,9 @@ describe('equipment page', () => {
     renderPage([fixedBell, adjustableBell]);
 
     expect(await screen.findByText('Your loadable weights')).toBeInTheDocument();
+    expect(screen.getByText(/11 loadable weights/)).toBeInTheDocument();
     expect(
-      screen.getByText(/11 loadable weights · doubles at 1 of them/),
+      screen.getByText(/adjustable bell keeps one weight for a whole session/),
     ).toBeInTheDocument();
   });
 

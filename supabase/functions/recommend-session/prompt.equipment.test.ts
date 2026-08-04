@@ -26,16 +26,34 @@ describe('recommend-session prompt equipment section', () => {
     const prompt = buildUserPrompt({
       ...baseInputs,
       unlocked_weights: {
-        available_weights: [
-          { weight_kg: 16, doubles: true },
-          { weight_kg: 24, doubles: false },
+        fixed_weights: [
+          { weight_kg: 16, count: 2, doubles: true },
+          { weight_kg: 24, count: 1, doubles: false },
         ],
+        adjustable_bells: [],
+        adjustable_bell_count: 0,
         description: '16 kg (pair), 24 kg',
       },
     });
 
     expect(prompt).toContain('AVAILABLE EQUIPMENT');
-    expect(prompt).toContain('Loadable weights: 16kg, 24kg');
-    expect(prompt).toContain('Doubles possible at: 16kg');
+    expect(prompt).toContain(
+      'Fixed bells, usable at any point in the session: 16kg (pair — doubles OK), 24kg',
+    );
+  });
+
+  it('tells the recommender an adjustable bell is set once per session', () => {
+    const prompt = buildUserPrompt({
+      ...baseInputs,
+      unlocked_weights: {
+        fixed_weights: [],
+        adjustable_bells: [{ count: 2, settings_kg: [12, 16, 20] }],
+        adjustable_bell_count: 2,
+        description: 'adjustable 12–20 kg (×2, 4 kg steps)',
+      },
+    });
+
+    expect(prompt).toContain('holds ONE setting for the entire session');
+    expect(prompt).toContain('Use at most 2 distinct adjustable weights');
   });
 });

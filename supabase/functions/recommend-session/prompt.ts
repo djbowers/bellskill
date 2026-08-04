@@ -99,9 +99,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
     : [];
 
   const equipmentText = formatEquipmentSection(
-    'available_weights' in inputs.unlocked_weights
-      ? inputs.unlocked_weights
-      : null,
+    'description' in inputs.unlocked_weights ? inputs.unlocked_weights : null,
   );
   const equipmentSection = equipmentText ? ['', equipmentText] : [];
 
