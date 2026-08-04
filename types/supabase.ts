@@ -972,18 +972,6 @@ export type Database = {
           total_volume_kg: number
         }[]
       }
-      pattern_debt_window: {
-        Args: { p_baseline_days?: number; p_window_days?: number }
-        Returns: {
-          baseline_volume_kg: number
-          hardest_rpe: Database["public"]["Enums"]["RPE"]
-          last_trained_at: string
-          pattern: string
-          set_count: number
-          total_reps: number
-          total_volume_kg: number
-        }[]
-      }
       reorder_program_sessions: {
         Args: { p_ordered_ids: string[]; p_program_id: string }
         Returns: undefined
