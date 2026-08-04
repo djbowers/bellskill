@@ -92,7 +92,7 @@ describe('BottomNav', () => {
   });
 
   test('More sheet rows carry their resolved row classes', () => {
-    // AI wins the promoted slot, so Explore is the one that overflows.
+    // AI wins the promoted slot, so Movements is the one that overflows.
     mockedUseFeatures.mockReturnValue(
       featuresWith({ premium: true, explore: true }),
     );
@@ -102,7 +102,7 @@ describe('BottomNav', () => {
     // Regression: routing these through `DialogClose asChild` forwarded
     // NavLink's function className to the anchor as a stringified arrow, so the
     // rows rendered with no styling at all.
-    for (const name of [/Account/, /Explore/]) {
+    for (const name of [/Account/, /Movements/]) {
       expect(screen.getByRole('link', { name })).toHaveClass(
         'flex',
         'items-center',
@@ -123,10 +123,10 @@ describe('BottomNav', () => {
       featuresWith({ premium: true, explore: true }),
     );
     renderNav();
-    // AI is promoted into the bar; Explore overflows into More.
+    // AI is promoted into the bar; Movements overflows into More.
     expect(screen.getByRole('link', { name: 'AI' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));
-    expect(screen.getByRole('link', { name: /Explore/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Movements/ })).toBeInTheDocument();
   });
 
   test('hides while a text input is focused (mobile keyboard)', () => {

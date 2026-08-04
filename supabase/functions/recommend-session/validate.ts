@@ -4,7 +4,14 @@
 // the schema can't express — movement ids must be real candidates, and reps and
 // weights must be sane. A failure here drives the single retry in llm.ts.
 
+import type { Pattern } from '../../../src/utils/patternDebt.ts';
 import type { Recommendation } from './types.ts';
+
+/** Balance-mode coverage requirement: targets plus each candidate's credits. */
+export interface CoverageRequirement {
+  targets: Pattern[];
+  creditsById: Map<string, readonly string[] | null>;
+}
 
 export class ValidationError extends Error {
   reasons: string[];
@@ -21,6 +28,7 @@ const MAX_REP = 100;
 export function validateRecommendation(
   rec: Recommendation,
   candidateIds: Set<string>,
+  coverage?: CoverageRequirement,
 ): void {
   const reasons: string[] = [];
 
@@ -51,6 +59,25 @@ export function validateRecommendation(
       )
     ) {
       reasons.push(`${where} has invalid rep counts`);
+    }
+  }
+
+  // Balance mode: the chosen movements' combined credits must cover every
+  // target pattern (the deterministic coverage invariant).
+  if (coverage && coverage.targets.length > 0) {
+    const covered = new Set<string>();
+    for (const block of rec.blocks) {
+      for (const credit of coverage.creditsById.get(block.user_movement_id) ??
+        []) {
+        covered.add(credit);
+      }
+    }
+    for (const target of coverage.targets) {
+      if (!covered.has(target)) {
+        reasons.push(
+          `the session does not train the "${target}" pattern — include at least one candidate whose pays list covers ${target}`,
+        );
+      }
     }
   }
 

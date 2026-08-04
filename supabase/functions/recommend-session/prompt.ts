@@ -3,10 +3,19 @@
 // Kept separate from transport (llm.ts) so prompt quality can be iterated in
 // PROD-88 without touching the API plumbing.
 
-import type { RecommenderInputs } from './types.ts';
+import type { RecommendMode, RecommenderInputs } from './types.ts';
 import { formatPatternLine } from '../_shared/patternDebtPrompt.ts';
 
-export function buildSystemPrompt(): string {
+export function buildSystemPrompt(mode: RecommendMode = 'default'): string {
+  const balanceRules =
+    mode === 'balance'
+      ? [
+          '- BALANCE MODE: the request lists "Target patterns". Your session MUST',
+          "  include, for every target pattern, at least one movement whose pays",
+          '  list covers it. Multi-pattern movements may cover several targets at',
+          '  once. Name the patterns you are catching up in the rationale.',
+        ]
+      : [];
   return [
     'You are an expert kettlebell programming coach. You know the Big 6 (swing,',
     'clean, press, snatch, squat, get-up) and common protocols (Simple & Sinister,',
@@ -25,8 +34,10 @@ export function buildSystemPrompt(): string {
     "  lifter's goal still take precedence when they conflict.",
     "- Patterns marked \"new\" have no training history yet — treat them as",
     '  neutral, not overdue; do not count them toward pattern debt.',
+    ...balanceRules,
     '- Give a short, concrete rationale a thoughtful coach would give — tie it to',
-    '  their goal, recent history, and readiness. Avoid generic filler.',
+    '  their goal, recent history, and readiness. Avoid generic filler. Never use',
+    '  the word "debt" — say a pattern is due, overdue, or needs attention.',
   ].join('\n');
 }
 
@@ -34,7 +45,11 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
   const candidateLines = inputs.candidates
     .map(
       (c) =>
-        `- ${c.name}${c.is_big_6 ? ' (Big 6)' : ''} [user_movement_id: ${c.user_movement_id}]`,
+        `- ${c.name}${c.is_big_6 ? ' (Big 6)' : ''}${
+          c.pattern_credits?.length
+            ? ` · pays: ${c.pattern_credits.join(', ')}`
+            : ''
+        } [user_movement_id: ${c.user_movement_id}]`,
     )
     .join('\n');
 
@@ -66,6 +81,13 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
       ]
     : [];
 
+  const targetSection = inputs.balance_targets.length
+    ? [
+        '',
+        `Target patterns (every one MUST be trained by at least one movement): ${inputs.balance_targets.join(', ')}`,
+      ]
+    : [];
+
   return [
     `Training goal: ${inputs.training_goal ?? '(none provided)'}`,
     `How they feel today: ${inputs.readiness ?? '(not provided)'}`,
@@ -74,6 +96,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
     'Recent workouts (most recent first):',
     historyLines,
     ...patternDebtSection,
+    ...targetSection,
     '',
     'Candidate movements (choose only from these):',
     candidateLines,

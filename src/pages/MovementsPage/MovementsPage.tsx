@@ -8,9 +8,10 @@ import {
 } from 'use-query-params';
 
 import { useMovements } from '~/api';
-import { Page } from '~/components';
+import { Loading, Page } from '~/components';
 import { Button } from '~/components/ui/button';
-import { DataTable } from '~/components/ui/data-table';
+import { Card } from '~/components/ui/card';
+import { DataTable, DataTablePagination } from '~/components/ui/data-table';
 import { Input } from '~/components/ui/input';
 import {
   Select,
@@ -22,12 +23,15 @@ import {
 import { useDebouncedCallback } from '~/hooks/useDebouncedCallback';
 import { DifficultyLevel, Equipment, Movement, MuscleGroup } from '~/types';
 
+import { MovementRow } from './components';
+
 export const MovementsPage = () => {
   const [queryParams, setQueryParams] = useQueryParams({
     page: withDefault(NumberParam, 1),
     muscleGroup: withDefault(StringParam, undefined),
     equipment: withDefault(StringParam, undefined),
     difficultyLevel: withDefault(StringParam, undefined),
+    movementPattern: withDefault(StringParam, undefined),
     orderBy: withDefault(StringParam, 'Movement'),
     order: withDefault(StringParam, 'ASC'),
     search: withDefault(StringParam, undefined),
@@ -39,6 +43,7 @@ export const MovementsPage = () => {
     queryParams.muscleGroup !== undefined ||
     queryParams.equipment !== undefined ||
     queryParams.difficultyLevel !== undefined ||
+    queryParams.movementPattern !== undefined ||
     queryParams.search !== undefined ||
     queryParams.orderBy !== 'Movement' ||
     queryParams.order !== 'ASC';
@@ -56,6 +61,7 @@ export const MovementsPage = () => {
       difficultyLevel: queryParams.difficultyLevel as DifficultyLevel,
       equipment: queryParams.equipment as Equipment,
       movementName: queryParams.search,
+      movementPattern: queryParams.movementPattern,
       muscleGroup: queryParams.muscleGroup as MuscleGroup,
     },
   });
@@ -86,6 +92,9 @@ export const MovementsPage = () => {
   const handleFilterByDifficulty = (value: string | undefined) => {
     setQueryParams({ difficultyLevel: value, page: undefined });
   };
+  const handleFilterByPattern = (value: string | undefined) => {
+    setQueryParams({ movementPattern: value, page: undefined });
+  };
   const handleSearch = useCallback(
     (value: string) => {
       setSearchInput(value);
@@ -108,6 +117,7 @@ export const MovementsPage = () => {
     setQueryParams({
       difficultyLevel: undefined,
       equipment: undefined,
+      movementPattern: undefined,
       muscleGroup: undefined,
       order: undefined,
       orderBy: undefined,
@@ -119,8 +129,9 @@ export const MovementsPage = () => {
 
   return (
     <Page title="Movements" width="full">
-      <div className="mb-2 flex items-center gap-2">
+      <div className="mb-2 grid grid-cols-2 gap-1 md:flex md:items-center md:gap-2">
         <Input
+          className="col-span-2 md:col-auto"
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search movements..."
           value={searchInput}
@@ -180,30 +191,84 @@ export const MovementsPage = () => {
           </SelectContent>
         </Select>
 
+        <Select
+          value={queryParams.movementPattern || ''}
+          onValueChange={handleFilterByPattern}
+          showReset={!!queryParams.movementPattern}
+          onReset={() => handleFilterByPattern(undefined)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Pattern" />
+          </SelectTrigger>
+          <SelectContent>
+            {MOVEMENT_PATTERNS.map((pattern) => (
+              <SelectItem key={pattern} value={pattern}>
+                {pattern}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         {hasActiveFilters && (
-          <Button variant="ghost" onClick={handleResetFilters}>
+          <Button
+            className="col-span-2 md:col-auto"
+            variant="ghost"
+            onClick={handleResetFilters}
+          >
             Reset Filters
           </Button>
         )}
       </div>
 
-      <DataTable
-        columns={COLUMNS}
-        currentPage={queryParams.page}
-        data={movements}
-        hasNextPage={hasNextPage}
-        hasPreviousPage={hasPreviousPage}
-        isLoading={isLoading}
-        onClickFirstPage={handleClickFirstPage}
-        onClickLastPage={handleClickLastPage}
-        onClickNextPage={handleClickNextPage}
-        onClickPreviousPage={handleClickPreviousPage}
-        onSort={handleSort}
-        order={queryParams.order as 'ASC' | 'DESC'}
-        orderBy={queryParams.orderBy}
-        pageSize={PAGE_SIZE}
-        rowCount={rowCount}
-      />
+      <div className="hidden md:block">
+        <DataTable
+          columns={COLUMNS}
+          currentPage={queryParams.page}
+          data={movements}
+          hasNextPage={hasNextPage}
+          hasPreviousPage={hasPreviousPage}
+          isLoading={isLoading}
+          onClickFirstPage={handleClickFirstPage}
+          onClickLastPage={handleClickLastPage}
+          onClickNextPage={handleClickNextPage}
+          onClickPreviousPage={handleClickPreviousPage}
+          onSort={handleSort}
+          order={queryParams.order as 'ASC' | 'DESC'}
+          orderBy={queryParams.orderBy}
+          pageSize={PAGE_SIZE}
+          rowCount={rowCount}
+        />
+      </div>
+
+      <div className="md:hidden">
+        {isLoading ? (
+          <div className="flex justify-center py-3">
+            <Loading />
+          </div>
+        ) : movements.length === 0 ? (
+          <div className="py-3 text-center text-muted-foreground">
+            No results.
+          </div>
+        ) : (
+          <Card>
+            <div className="divide-y">
+              {movements.map((movement) => (
+                <MovementRow key={movement.id} movement={movement} />
+              ))}
+            </div>
+          </Card>
+        )}
+        <DataTablePagination
+          currentPage={queryParams.page}
+          hasNextPage={hasNextPage}
+          hasPreviousPage={hasPreviousPage}
+          isLoading={isLoading}
+          onClickNextPage={handleClickNextPage}
+          onClickPreviousPage={handleClickPreviousPage}
+          pageSize={PAGE_SIZE}
+          rowCount={rowCount}
+        />
+      </div>
     </Page>
   );
 };
@@ -213,6 +278,11 @@ const COLUMNS: ColumnDef<Movement>[] = [
     header: 'Movement',
     accessorKey: 'movementName',
     id: 'Movement',
+  },
+  {
+    header: 'Pattern',
+    accessorKey: 'movementPattern1',
+    id: 'Movement Pattern #1',
   },
   {
     header: 'Target Muscle Group',
@@ -257,3 +327,17 @@ const DIFFICULTY_LEVELS: DifficultyLevel[] = [
 ];
 
 const EQUIPMENT_TYPES: Equipment[] = ['Bodyweight', 'Kettlebell'];
+
+const MOVEMENT_PATTERNS: string[] = [
+  'Anti-Extension',
+  'Anti-Rotation',
+  'Hip Extension',
+  'Hip Hinge',
+  'Horizontal Pull',
+  'Horizontal Push',
+  'Knee Dominant',
+  'Loaded Carry',
+  'Rotational',
+  'Vertical Pull',
+  'Vertical Push',
+];

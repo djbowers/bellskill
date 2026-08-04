@@ -13,11 +13,14 @@ import {
 } from '../../../src/utils/dateOnly.ts';
 import {
   type MovementAggregate,
+  attributeMovement,
   computePatternBalance,
+  selectBalanceTargets,
 } from '../../../src/utils/patternDebt.ts';
 import type {
   CandidateMovement,
   PatternDebtInput,
+  RecommendMode,
   RecommenderInputs,
   WorkoutHistoryEntry,
 } from './types.ts';
@@ -93,8 +96,9 @@ export async function gatherInputs(
   admin: SupabaseClient,
   authClient: SupabaseClient,
   userId: string,
-  body: { readiness?: unknown; client_today?: unknown },
+  body: { readiness?: unknown; client_today?: unknown; mode?: unknown },
 ): Promise<RecommenderInputs> {
+  const mode: RecommendMode = body.mode === 'balance' ? 'balance' : 'default';
   const readiness =
     typeof body.readiness === 'string' && body.readiness.trim()
       ? body.readiness.trim()
@@ -115,18 +119,47 @@ export async function gatherInputs(
   }
   const clientToday = parsedClientToday ?? new Date();
 
-  // Candidate movements: the user's own library.
+  // Candidate movements: the user's own library, with catalog pattern credits
+  // joined for the prompt annotations and balance-mode coverage validation.
   const { data: userMovements, error: umErr } = await admin
     .from('user_movements')
-    .select('id, canonical_name, is_big_6')
+    .select('id, canonical_name, is_big_6, functional_movement_id')
     .eq('user_id', userId);
   if (umErr) throw umErr;
 
-  const candidates: CandidateMovement[] = (userMovements ?? []).map((m) => ({
-    user_movement_id: m.id,
-    name: m.canonical_name,
-    is_big_6: Boolean(m.is_big_6),
-  }));
+  const catalogIds = [
+    ...new Set(
+      (userMovements ?? [])
+        .map((m) => m.functional_movement_id)
+        .filter((id): id is string => id != null),
+    ),
+  ];
+  const creditsByCatalogId = new Map<string, string[]>();
+  if (catalogIds.length > 0) {
+    const { data: catalogRows, error: catErr } = await admin
+      .from('movements')
+      .select('id, pattern_credits')
+      .in('id', catalogIds);
+    if (catErr) throw catErr;
+    for (const row of catalogRows ?? []) {
+      creditsByCatalogId.set(row.id, row.pattern_credits);
+    }
+  }
+
+  const candidates: CandidateMovement[] = (userMovements ?? []).map((m) => {
+    // attributeMovement applies the shared unlinked-movement policy (get-up
+    // name fallback) and filters credits to the known coarse patterns.
+    const credited = attributeMovement(
+      creditsByCatalogId.get(m.functional_movement_id ?? '') ?? null,
+      m.canonical_name,
+    );
+    return {
+      user_movement_id: m.id,
+      name: m.canonical_name,
+      is_big_6: Boolean(m.is_big_6),
+      pattern_credits: credited.length > 0 ? credited : null,
+    };
+  });
 
   // Persistent training goal.
   const { data: profile, error: profErr } = await admin
@@ -180,7 +213,24 @@ export async function gatherInputs(
 
   const pattern_debt = await gatherPatternDebt(authClient, clientToday);
 
+  // Balance mode's deterministic targets. Degrades to [] (default behavior)
+  // when debt is unavailable or nothing red is coverable from the library.
+  const balance_targets =
+    mode === 'balance' && pattern_debt
+      ? selectBalanceTargets(
+          pattern_debt.patterns.map((p) => ({
+            pattern: p.pattern,
+            band: p.band,
+            debtScore: p.debt_score,
+            isNew: p.is_new,
+          })),
+          candidates.map((c) => c.pattern_credits),
+        )
+      : [];
+
   return {
+    mode,
+    balance_targets,
     training_goal: profile?.training_goal ?? null,
     readiness,
     days_since_last_workout,

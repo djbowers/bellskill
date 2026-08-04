@@ -9,6 +9,7 @@ interface MovementFilters {
   difficultyLevel?: DifficultyLevel;
   equipment?: Equipment;
   movementName?: string;
+  movementPattern?: string;
   muscleGroup?: MuscleGroup;
 }
 
@@ -40,6 +41,11 @@ export const useMovements = (
     ...queryOptions,
   });
 
+// PostgREST stops parsing unquoted identifiers at `#`, so columns like
+// "Movement Pattern #1" must be double-quoted in order/filter params.
+const quoteSpecialColumn = (column: string) =>
+  column.includes('#') ? `"${column}"` : column;
+
 const fetchMovements = async ({
   page = 1,
   limit = 25,
@@ -51,7 +57,9 @@ const fetchMovements = async ({
   const to = from + limit - 1;
 
   let query = supabase.from('movements').select('*', { count: 'exact' });
-  query = query.order(orderBy, { ascending: order === 'ASC' });
+  query = query.order(quoteSpecialColumn(orderBy), {
+    ascending: order === 'ASC',
+  });
 
   if (where?.difficultyLevel) {
     query = query.eq('Difficulty Level', where.difficultyLevel);
@@ -61,6 +69,9 @@ const fetchMovements = async ({
   }
   if (where?.movementName) {
     query = query.ilike('Movement', `%${where.movementName}%`);
+  }
+  if (where?.movementPattern) {
+    query = query.filter('"Movement Pattern #1"', 'eq', where.movementPattern);
   }
   if (where?.muscleGroup) {
     query = query.eq('Target Muscle Group', where.muscleGroup);
