@@ -18,7 +18,7 @@ export interface BuiltTabs {
  *   1. Home        (always)
  *   2. Programs    (reserved; `programs` flag)
  *   3. History     (always)
- *   4. one promoted feature, AI → Explore (first enabled wins)
+ *   4. one promoted feature, AI → Movements (first enabled wins)
  *   5. More        (always; rendered by the component, not part of `tabs`)
  *
  * Pure and side-effect free so every flag combination is cheap to unit-test.

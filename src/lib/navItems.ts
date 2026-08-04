@@ -57,7 +57,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     key: 'explore',
-    label: 'Explore',
+    label: 'Movements',
     to: '/movements',
     icon: MagnifyingGlassIcon,
     activeIcon: MagnifyingGlassSolidIcon,
