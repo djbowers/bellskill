@@ -54,7 +54,13 @@ export async function generateRecommendation(
   const candidateIds = new Set(
     inputs.candidates.map((c) => c.user_movement_id),
   );
-  const system = buildSystemPrompt();
+  const coverage = {
+    targets: inputs.balance_targets,
+    creditsById: new Map(
+      inputs.candidates.map((c) => [c.user_movement_id, c.pattern_credits]),
+    ),
+  };
+  const system = buildSystemPrompt(inputs.mode);
   const messages: Message[] = [
     { role: 'user', content: buildUserPrompt(inputs) },
   ];
@@ -63,7 +69,7 @@ export async function generateRecommendation(
   for (let attempt = 0; attempt < 2; attempt++) {
     const rec = await callModel(apiKey, system, messages);
     try {
-      validateRecommendation(rec, candidateIds);
+      validateRecommendation(rec, candidateIds, coverage);
       return rec;
     } catch (err) {
       if (!(err instanceof ValidationError) || attempt === 1) throw err;

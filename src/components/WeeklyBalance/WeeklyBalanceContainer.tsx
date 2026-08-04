@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 import { usePatternDebt, useWorkoutLogs } from '~/api';
 
 import { WeeklyBalance } from './WeeklyBalance';
@@ -15,6 +17,7 @@ export const WeeklyBalanceContainer = () => {
     refetch,
   } = usePatternDebt();
   const { data: workoutLogs, isLoading: logsLoading } = useWorkoutLogs();
+  const navigate = useNavigate();
 
   return (
     <WeeklyBalance
@@ -23,6 +26,7 @@ export const WeeklyBalanceContainer = () => {
       isLoading={balanceLoading || logsLoading}
       isError={isError}
       onRetry={() => refetch()}
+      onBalanceMe={() => navigate('/', { state: { recommendMode: 'balance' } })}
     />
   );
 };

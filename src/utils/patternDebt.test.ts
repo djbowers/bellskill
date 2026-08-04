@@ -1,4 +1,6 @@
 import {
+  BALANCE_TARGET_LIMIT,
+  type BalanceTargetPattern,
   MovementAggregate,
   OVERDUE_DAYS,
   TARGET_CADENCE_DAYS,
@@ -7,6 +9,7 @@ import {
   computeDebtScore,
   computeOverallBalance,
   computePatternBalance,
+  selectBalanceTargets,
 } from './patternDebt';
 
 const NOW = new Date('2026-06-24T12:00:00Z');
@@ -276,5 +279,74 @@ describe('computePatternBalance', () => {
       now,
     );
     expect(patterns.pull.daysSinceLastTrained).toBe(1);
+  });
+});
+
+describe('selectBalanceTargets', () => {
+  const scored = (
+    pattern: BalanceTargetPattern['pattern'],
+    debtScore: number,
+    over: Partial<BalanceTargetPattern> = {},
+  ): BalanceTargetPattern => ({
+    pattern,
+    debtScore,
+    band: debtScore >= 66 ? 'red' : debtScore >= 33 ? 'yellow' : 'green',
+    isNew: false,
+    ...over,
+  });
+
+  const allCredits = [['hinge', 'squat', 'push', 'pull', 'carry', 'rotation', 'core', 'get_up']];
+
+  test('caps at BALANCE_TARGET_LIMIT highest-debt red patterns', () => {
+    const targets = selectBalanceTargets(
+      [
+        scored('hinge', 90),
+        scored('squat', 80),
+        scored('push', 70),
+        scored('pull', 68),
+        scored('carry', 20),
+      ],
+      allCredits,
+    );
+    expect(targets).toEqual(['hinge', 'squat', 'push']);
+    expect(targets).toHaveLength(BALANCE_TARGET_LIMIT);
+  });
+
+  test('ties break on canonical PATTERNS order', () => {
+    const targets = selectBalanceTargets(
+      [scored('core', 90), scored('hinge', 90), scored('pull', 90), scored('squat', 90)],
+      allCredits,
+    );
+    expect(targets).toEqual(['hinge', 'squat', 'pull']);
+  });
+
+  test('excludes yellow and green bands', () => {
+    expect(
+      selectBalanceTargets([scored('hinge', 65), scored('squat', 30)], allCredits),
+    ).toEqual([]);
+  });
+
+  test('excludes New patterns even when red-scored', () => {
+    expect(
+      selectBalanceTargets([scored('carry', 100, { isNew: true })], allCredits),
+    ).toEqual([]);
+  });
+
+  test('excludes patterns no candidate can cover', () => {
+    const targets = selectBalanceTargets(
+      [scored('hinge', 90), scored('carry', 100)],
+      [['hinge'], null],
+    );
+    expect(targets).toEqual(['hinge']);
+  });
+
+  test('returns fewer than the cap when fewer qualify', () => {
+    expect(
+      selectBalanceTargets([scored('rotation', 70)], allCredits),
+    ).toEqual(['rotation']);
+  });
+
+  test('empty inputs yield empty targets', () => {
+    expect(selectBalanceTargets([], [])).toEqual([]);
   });
 });

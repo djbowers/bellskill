@@ -4,10 +4,12 @@ import { useState } from 'react';
 import {
   AnalyticsEvent,
   RecommendSessionError,
+  type RecommendSessionMode,
   trackEvent,
   useRecommendSession,
 } from '~/api';
 import { Button } from '~/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { useEntitlement } from '~/contexts';
 import type { Recommendation, RecommendSessionResponse } from '~/types';
 
@@ -19,6 +21,8 @@ interface RecommendSessionSectionProps {
   onAccept: (recommendation: Recommendation, recommendationId: string) => void;
   /** Authenticated user id, for analytics (fire-and-forget). */
   userId?: string;
+  /** Preselects the mode toggle — set to 'balance' by the Weekly Balance CTA. */
+  initialMode?: RecommendSessionMode;
 }
 
 /**
@@ -30,21 +34,23 @@ interface RecommendSessionSectionProps {
 export const RecommendSessionSection = ({
   onAccept,
   userId,
+  initialMode = 'default',
 }: RecommendSessionSectionProps) => {
   const { effectiveAccess, isLoading: entitlementLoading } = useEntitlement();
   const isPremium = !entitlementLoading && effectiveAccess === 'premium';
 
   const mutation = useRecommendSession();
+  const [mode, setMode] = useState<RecommendSessionMode>(initialMode);
   const [result, setResult] = useState<RecommendSessionResponse | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   const track = (event: AnalyticsEvent, properties = {}) => {
-    if (userId) void trackEvent({ event, userId, properties });
+    if (userId) void trackEvent({ event, userId, properties: { mode, ...properties } });
   };
 
   const fetchRecommendation = (event: AnalyticsEvent) => {
     track(event);
-    mutation.mutate(undefined, {
+    mutation.mutate(mode, {
       onSuccess: (data) => setResult(data),
       onError: (err) => {
         // A stale free-tier client could still get gated server-side; fall back
@@ -121,15 +127,28 @@ export const RecommendSessionSection = ({
           }
         />
       ) : (
-        <Button
-          className="w-full"
-          variant="secondary"
-          loading={mutation.isPending}
-          onClick={handleRecommend}
-        >
-          <SparklesIcon className="mr-1 h-2.5 w-2.5" />
-          Recommend my next session
-        </Button>
+        <>
+          <Tabs
+            value={mode}
+            onValueChange={(value) => setMode(value as RecommendSessionMode)}
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="default">Coach&apos;s pick</TabsTrigger>
+              <TabsTrigger value="balance">Balance focus</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Button
+            className="w-full"
+            variant="secondary"
+            loading={mutation.isPending}
+            onClick={handleRecommend}
+          >
+            <SparklesIcon className="mr-1 h-2.5 w-2.5" />
+            {mode === 'balance'
+              ? 'Balance me out'
+              : 'Recommend my next session'}
+          </Button>
+        </>
       )}
 
       {errorMessage && (
