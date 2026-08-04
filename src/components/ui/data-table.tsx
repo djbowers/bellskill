@@ -28,6 +28,7 @@ interface DataTableProps<TData, TValue> {
   onClickLastPage?: () => void;
   onClickNextPage?: () => void;
   onClickPreviousPage?: () => void;
+  onRowClick?: (row: TData) => void;
   onSort?: (columnId: string) => void;
   order?: 'ASC' | 'DESC';
   orderBy?: string;
@@ -46,6 +47,7 @@ export function DataTable<TData, TValue>({
   onClickLastPage,
   onClickNextPage,
   onClickPreviousPage,
+  onRowClick,
   onSort,
   order,
   orderBy,
@@ -115,6 +117,15 @@ export function DataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && 'selected'}
+                className={onRowClick ? 'cursor-pointer' : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                onClick={onRowClick && (() => onRowClick(row.original))}
+                onKeyDown={
+                  onRowClick &&
+                  ((event) => {
+                    if (event.key === 'Enter') onRowClick(row.original);
+                  })
+                }
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>

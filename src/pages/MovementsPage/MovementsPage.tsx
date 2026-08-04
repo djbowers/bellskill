@@ -1,5 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   NumberParam,
   StringParam,
@@ -26,6 +27,7 @@ import { DifficultyLevel, Equipment, Movement, MuscleGroup } from '~/types';
 import { MovementRow } from './components';
 
 export const MovementsPage = () => {
+  const navigate = useNavigate();
   const [queryParams, setQueryParams] = useQueryParams({
     page: withDefault(NumberParam, 1),
     muscleGroup: withDefault(StringParam, undefined),
@@ -232,6 +234,7 @@ export const MovementsPage = () => {
           onClickLastPage={handleClickLastPage}
           onClickNextPage={handleClickNextPage}
           onClickPreviousPage={handleClickPreviousPage}
+          onRowClick={(movement) => navigate(`/movements/${movement.id}`)}
           onSort={handleSort}
           order={queryParams.order as 'ASC' | 'DESC'}
           orderBy={queryParams.orderBy}
@@ -253,7 +256,9 @@ export const MovementsPage = () => {
           <Card>
             <div className="divide-y">
               {movements.map((movement) => (
-                <MovementRow key={movement.id} movement={movement} />
+                <Link key={movement.id} to={`/movements/${movement.id}`}>
+                  <MovementRow movement={movement} />
+                </Link>
               ))}
             </div>
           </Card>

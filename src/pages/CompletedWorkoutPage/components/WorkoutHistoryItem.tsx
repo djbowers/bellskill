@@ -1,5 +1,8 @@
+import { Link } from 'react-router-dom';
+
 import { Loading } from '~/components';
 import { Badge } from '~/components/ui/badge';
+import { useFeatures } from '~/hooks/useFeatures';
 import {
   Card,
   CardContent,
@@ -56,6 +59,7 @@ export const WorkoutHistoryItem = ({
   workoutGoalUnits,
   workoutLogId,
 }: WorkoutHistoryItemProps) => {
+  const { explore } = useFeatures();
   const displayDate = getDisplayDate(completedAt);
   const timeRange = getTimeRange(startedAt, completedAt);
   const isComplexSet = complexSet === true;
@@ -143,7 +147,16 @@ export const WorkoutHistoryItem = ({
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <CardDescription>Movement #{index + 1}</CardDescription>
                   <div className="flex flex-col gap-0.5">
-                    <div>{movement.movementName}</div>
+                    {explore && movement.functionalMovementId !== null ? (
+                      <Link
+                        to={`/movements/${movement.functionalMovementId}`}
+                        className="underline-offset-4 hover:underline"
+                      >
+                        {movement.movementName}
+                      </Link>
+                    ) : (
+                      <div>{movement.movementName}</div>
+                    )}
                     <div className="flex gap-1">
                       {movement.functionalMovementId !== null ? (
                         <CatalogedBadge

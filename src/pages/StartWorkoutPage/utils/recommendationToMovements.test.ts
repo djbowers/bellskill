@@ -19,6 +19,7 @@ const catalogRow = (fields: Partial<Movement>): Movement => ({
   targetMuscleGroup: null,
   difficultyLevel: null,
   movementPattern1: null,
+  patternCredits: [],
   ...fields,
 });
 

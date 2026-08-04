@@ -1,5 +1,6 @@
 import { Meta, StoryObj } from '@storybook/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 
 import { SessionProvider } from '~/contexts';
 
@@ -66,13 +67,15 @@ const meta = {
   },
   decorators: [
     (Story) => (
-      <QueryClientProvider client={queryClient}>
-        <SessionProvider value={mockSession}>
-          <div className="max-w-sm">
-            <Story />
-          </div>
-        </SessionProvider>
-      </QueryClientProvider>
+      <MemoryRouter>
+        <QueryClientProvider client={queryClient}>
+          <SessionProvider value={mockSession}>
+            <div className="max-w-sm">
+              <Story />
+            </div>
+          </SessionProvider>
+        </QueryClientProvider>
+      </MemoryRouter>
     ),
   ],
 } satisfies Meta<WorkoutHistoryItemProps>;

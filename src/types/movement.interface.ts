@@ -16,4 +16,5 @@ export interface Movement {
   targetMuscleGroup: MuscleGroup | null;
   difficultyLevel: DifficultyLevel | null;
   movementPattern1: string | null;
+  patternCredits: string[];
 }
