@@ -1,3 +1,4 @@
+import { summarizeEquipment } from '../../../src/utils/equipment.ts';
 import type { Recommendation } from './types.ts';
 import { ValidationError, validateRecommendation } from './validate.ts';
 
@@ -152,5 +153,75 @@ describe('validateRecommendation — shared runnability rules', () => {
 
   test('an implausible weight is a warning, not a retry', () => {
     expect(() => pass(rec([{ weight_kg: 150 }]))).not.toThrow();
+  });
+});
+
+describe('validateRecommendation — equipment', () => {
+  const owned = summarizeEquipment([
+    {
+      kind: 'fixed',
+      weight: 16,
+      minWeight: null,
+      maxWeight: null,
+      stepWeight: null,
+      unit: 'kilograms',
+      quantity: 2,
+    },
+    {
+      kind: 'adjustable',
+      weight: null,
+      minWeight: 12,
+      maxWeight: 32,
+      stepWeight: 2,
+      unit: 'kilograms',
+      quantity: 1,
+    },
+  ]);
+
+  test('skips the check entirely when no equipment is recorded', () => {
+    const r = rec([{ weight_kg: 27.5 }]);
+    expect(() =>
+      validateRecommendation(r, idsOf(r), undefined, null),
+    ).not.toThrow();
+  });
+
+  test('accepts a session that keeps the adjustable bell at one setting', () => {
+    const r = { ...rec([{ weight_kg: 16 }, { weight_kg: 28 }]), adjustable_settings_kg: [28] };
+    expect(() =>
+      validateRecommendation(r, idsOf(r), undefined, owned),
+    ).not.toThrow();
+  });
+
+  test('rejects a session that re-plates the adjustable bell mid-workout', () => {
+    // 12kg and 28kg are both settings of the one adjustable bell, but reaching
+    // both in one session means changing it between blocks.
+    const r = {
+      ...rec([{ weight_kg: 12 }, { weight_kg: 28 }]),
+      adjustable_settings_kg: [12, 28],
+    };
+
+    try {
+      validateRecommendation(r, idsOf(r), undefined, owned);
+      throw new Error('expected ValidationError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ValidationError);
+      expect((err as ValidationError).reasons).toEqual([
+        'the session sets 2 adjustable weights but the lifter owns only 1 adjustable bell(s) — each bell holds one setting for the whole session',
+      ]);
+    }
+  });
+
+  test('rejects an undeclared adjustable weight', () => {
+    const r = { ...rec([{ weight_kg: 24 }]), adjustable_settings_kg: [] };
+
+    try {
+      validateRecommendation(r, idsOf(r), undefined, owned);
+      throw new Error('expected ValidationError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ValidationError);
+      expect((err as ValidationError).reasons[0]).toContain(
+        'only reachable by re-plating an adjustable bell mid-session',
+      );
+    }
   });
 });

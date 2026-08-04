@@ -89,5 +89,13 @@ export function formatEquipmentSection(
 
   lines.push('Never prescribe a weight outside the lists above.');
 
+  if (summary.adjustable_bells.length > 0) {
+    lines.push(
+      'Declare your plan in adjustable_settings_kg: the weight each adjustable bell is set to for this session, one entry per bell you use. Every block weight must be a fixed bell or one of those declared settings.',
+    );
+  } else {
+    lines.push('Return an empty adjustable_settings_kg — there is nothing to set.');
+  }
+
   return lines.join('\n');
 }

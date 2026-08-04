@@ -95,6 +95,12 @@ export interface Recommendation {
   format: 'EMOM' | 'AMRAP' | 'Circuit' | 'Ladder' | 'Straight Sets';
   confidence: 'high' | 'medium' | 'low';
   blocks: RecommendationBlock[];
+  /**
+   * The weight each adjustable bell is set to before the session starts, one
+   * entry per bell used. Optional here only so recommendations persisted before
+   * this field existed still parse; the schema requires it for new output.
+   */
+  adjustable_settings_kg?: number[];
 }
 
 // JSON schema for Anthropic structured outputs (output_config.format). Structured
@@ -113,6 +119,7 @@ export const RECOMMENDATION_SCHEMA = {
       enum: ['EMOM', 'AMRAP', 'Circuit', 'Ladder', 'Straight Sets'],
     },
     confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+    adjustable_settings_kg: { type: 'array', items: { type: 'number' } },
     blocks: {
       type: 'array',
       items: {
@@ -135,5 +142,12 @@ export const RECOMMENDATION_SCHEMA = {
       },
     },
   },
-  required: ['rationale', 'duration_minutes', 'format', 'confidence', 'blocks'],
+  required: [
+    'rationale',
+    'duration_minutes',
+    'format',
+    'confidence',
+    'adjustable_settings_kg',
+    'blocks',
+  ],
 } as const;

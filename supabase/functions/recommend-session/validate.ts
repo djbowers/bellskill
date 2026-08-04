@@ -11,6 +11,10 @@
 //   - The LLM contract ("did the model follow instructions?") stays local:
 //     candidate-id membership and balance-mode pattern coverage.
 
+import {
+  type EquipmentSummary,
+  validateSessionWeights,
+} from '../../../src/utils/equipment.ts';
 import type { Pattern } from '../../../src/utils/patternDebt.ts';
 import { recommendationToDraft } from '../../../src/utils/recommendationDraft.ts';
 import { validateWorkout } from '../../../src/utils/validateWorkout.ts';
@@ -41,6 +45,7 @@ export function validateRecommendation(
   rec: Recommendation,
   candidateIds: Set<string>,
   coverage?: CoverageRequirement,
+  equipment?: EquipmentSummary | null,
 ): void {
   const reasons: string[] = [];
 
@@ -82,6 +87,18 @@ export function validateRecommendation(
         );
       }
     }
+  }
+
+  // Equipment: only checked when the lifter has recorded some. Weights must be
+  // loadable *without re-plating mid-session* — see validateSessionWeights.
+  if (equipment) {
+    reasons.push(
+      ...validateSessionWeights(
+        equipment,
+        rec.blocks.map((b) => b.weight_kg),
+        rec.adjustable_settings_kg ?? [],
+      ),
+    );
   }
 
   if (reasons.length > 0) throw new ValidationError(reasons);

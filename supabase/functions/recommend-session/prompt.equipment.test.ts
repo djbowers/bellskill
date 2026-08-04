@@ -4,6 +4,8 @@ import { buildUserPrompt } from './prompt.ts';
 import type { RecommenderInputs } from './types.ts';
 
 const baseInputs: RecommenderInputs = {
+  mode: 'default',
+  balance_targets: [],
   training_goal: 'strength',
   readiness: 'fresh',
   days_since_last_workout: 2,

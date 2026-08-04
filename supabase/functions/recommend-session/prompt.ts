@@ -128,7 +128,8 @@ export function buildCorrectionPrompt(reasons: string[]): string {
     ...reasons.map((r) => `- ${r}`),
     '',
     'Produce a corrected recommendation that uses only candidate user_movement_ids,',
-    'positive integer reps and weights, and rung counts that match across every',
-    'block unless the format is "Straight Sets".',
+    'positive integer reps and weights, rung counts that match across every block',
+    'unless the format is "Straight Sets", and only weights the lifter owns — an',
+    'adjustable bell keeps one setting for the whole session.',
   ].join('\n');
 }

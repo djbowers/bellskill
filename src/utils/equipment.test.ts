@@ -4,6 +4,7 @@ import {
   EquipmentRow,
   allLoadableWeights,
   summarizeEquipment,
+  validateSessionWeights,
 } from './equipment';
 
 const fixed = (weight: number, overrides: Partial<EquipmentRow> = {}) => ({
@@ -142,5 +143,87 @@ describe('allLoadableWeights', () => {
       { weight_kg: 16, doubles: true },
       { weight_kg: 20, doubles: false },
     ]);
+  });
+});
+
+describe('validateSessionWeights', () => {
+  const summary = (rows: EquipmentRow[]) => summarizeEquipment(rows)!;
+
+  it('accepts fixed weights with no adjustable settings declared', () => {
+    const owned = summary([fixed(16, { quantity: 2 }), fixed(24)]);
+
+    expect(validateSessionWeights(owned, [16, 24, 16], [])).toEqual([]);
+  });
+
+  it('rejects a weight the lifter does not own', () => {
+    const owned = summary([fixed(16)]);
+
+    expect(validateSessionWeights(owned, [16, 20], [])).toEqual([
+      '20kg is not a weight the lifter owns',
+    ]);
+  });
+
+  it('rejects an adjustable weight that was never declared', () => {
+    const owned = summary([adjustable(12, 32, 2)]);
+
+    expect(validateSessionWeights(owned, [24], [])).toEqual([
+      '24kg is only reachable by re-plating an adjustable bell mid-session — either declare it as an adjustable setting for the whole session or use a weight already in use',
+    ]);
+  });
+
+  it('accepts blocks that all use the declared adjustable setting', () => {
+    const owned = summary([adjustable(12, 32, 2)]);
+
+    expect(validateSessionWeights(owned, [24, 24, 24], [24])).toEqual([]);
+  });
+
+  it('rejects declaring more settings than the lifter has bells', () => {
+    const owned = summary([adjustable(12, 32, 2)]);
+
+    expect(validateSessionWeights(owned, [16, 24], [16, 24])).toEqual([
+      'the session sets 2 adjustable weights but the lifter owns only 1 adjustable bell(s) — each bell holds one setting for the whole session',
+    ]);
+  });
+
+  it('lets two adjustable bells hold two different settings', () => {
+    const owned = summary([adjustable(12, 32, 2, { quantity: 2 })]);
+
+    expect(validateSessionWeights(owned, [16, 24], [16, 24])).toEqual([]);
+  });
+
+  it('lets both adjustable bells sit at the same weight for doubles', () => {
+    const owned = summary([adjustable(12, 32, 2, { quantity: 2 })]);
+
+    expect(validateSessionWeights(owned, [24], [24, 24])).toEqual([]);
+  });
+
+  it('rejects a setting no single bell can reach', () => {
+    const owned = summary([adjustable(12, 20, 4), adjustable(24, 32, 4)]);
+
+    expect(validateSessionWeights(owned, [36], [36])).toEqual([
+      "the adjustable settings (36kg) cannot all be set on the lifter's adjustable bells at once",
+    ]);
+  });
+
+  it('rejects spanning two bells to reach one weight', () => {
+    // 12–20 and 24–32 are separate bells; neither reaches 22kg.
+    const owned = summary([adjustable(12, 20, 4), adjustable(24, 32, 4)]);
+
+    expect(validateSessionWeights(owned, [22], [])).toEqual([
+      '22kg is not a weight the lifter owns',
+    ]);
+  });
+
+  it('matches settings to the bells that can hold them, not just the first', () => {
+    // A greedy pass could hand 20kg to the wide bell and strand 28kg.
+    const owned = summary([adjustable(12, 32, 4), adjustable(16, 20, 4)]);
+
+    expect(validateSessionWeights(owned, [20, 28], [20, 28])).toEqual([]);
+  });
+
+  it('mixes fixed bells with a declared adjustable setting', () => {
+    const owned = summary([fixed(16, { quantity: 2 }), adjustable(12, 32, 2)]);
+
+    expect(validateSessionWeights(owned, [16, 28, 16], [28])).toEqual([]);
   });
 });

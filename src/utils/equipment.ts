@@ -146,6 +146,76 @@ export const summarizeEquipment = (
 };
 
 /**
+ * Can each declared setting be handed to its own adjustable bell? Small inputs
+ * (a handful of bells), so exact backtracking beats a greedy guess that can fail
+ * on a legal plan — e.g. one wide-range bell and one narrow one.
+ */
+const canAssignSettings = (
+  settings: number[],
+  capacity: { left: number; options: Set<number> }[],
+): boolean => {
+  if (settings.length === 0) return true;
+  const [first, ...rest] = settings;
+
+  for (const bell of capacity) {
+    if (bell.left > 0 && bell.options.has(first)) {
+      bell.left -= 1;
+      const ok = canAssignSettings(rest, capacity);
+      bell.left += 1;
+      if (ok) return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * Enforces the within-session equipment contract: every prescribed weight is
+ * either a fixed bell (free to pick up at any time) or one of the settings the
+ * session declared up front for its adjustable bells. Returns human-readable
+ * reasons, empty when the plan is loadable as written.
+ */
+export const validateSessionWeights = (
+  summary: EquipmentSummary,
+  blockWeightsKg: number[],
+  adjustableSettingsKg: number[],
+): string[] => {
+  const reasons: string[] = [];
+
+  const capacity = summary.adjustable_bells.map((group) => ({
+    left: group.count,
+    options: new Set(group.settings_kg),
+  }));
+
+  if (adjustableSettingsKg.length > summary.adjustable_bell_count) {
+    reasons.push(
+      `the session sets ${adjustableSettingsKg.length} adjustable weights but the lifter owns only ${summary.adjustable_bell_count} adjustable bell(s) — each bell holds one setting for the whole session`,
+    );
+  } else if (!canAssignSettings(adjustableSettingsKg, capacity)) {
+    reasons.push(
+      `the adjustable settings (${adjustableSettingsKg.map((s) => `${s}kg`).join(', ')}) cannot all be set on the lifter's adjustable bells at once`,
+    );
+  }
+
+  const fixed = new Set(summary.fixed_weights.map((w) => w.weight_kg));
+  const declared = new Set(adjustableSettingsKg);
+
+  for (const weight of new Set(blockWeightsKg)) {
+    if (fixed.has(weight) || declared.has(weight)) continue;
+
+    const onSomeBell = summary.adjustable_bells.some((group) =>
+      group.settings_kg.includes(weight),
+    );
+    reasons.push(
+      onSomeBell
+        ? `${weight}kg is only reachable by re-plating an adjustable bell mid-session — either declare it as an adjustable setting for the whole session or use a weight already in use`
+        : `${weight}kg is not a weight the lifter owns`,
+    );
+  }
+
+  return reasons;
+};
+
+/**
  * Every weight the lifter can load across sessions. Useful for showing coverage,
  * but never a within-session menu — see EquipmentSummary.
  */
