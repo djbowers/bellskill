@@ -26,6 +26,9 @@ export interface CoverageRequirement {
   creditsById: Map<string, readonly string[] | null>;
 }
 
+/** Catalog answer to "is this a two-bell movement?", null when unlinked. */
+export type DoublesById = Map<string, boolean | null>;
+
 export class ValidationError extends Error {
   reasons: string[];
   constructor(reasons: string[]) {
@@ -46,6 +49,7 @@ export function validateRecommendation(
   candidateIds: Set<string>,
   coverage?: CoverageRequirement,
   equipment?: EquipmentSummary | null,
+  doublesById?: DoublesById,
 ): void {
   const reasons: string[] = [];
 
@@ -66,6 +70,22 @@ export function validateRecommendation(
     if (!candidateIds.has(block.user_movement_id)) {
       reasons.push(
         `${describeBlock(rec, i)} uses user_movement_id "${block.user_movement_id}", which is not in the candidate list`,
+      );
+    }
+
+    // Bell count is an LLM-contract check, not runnability: the shared verifier
+    // has no concept of how many bells a block uses.
+    const bells = block.bells ?? 1;
+    if (!Number.isInteger(bells) || bells < 1 || bells > 2) {
+      reasons.push(`${describeBlock(rec, i)} claims ${bells} bells — use 1 or 2`);
+    } else if (
+      bells === 2 &&
+      doublesById?.get(block.user_movement_id) === false
+    ) {
+      // Only when the catalog positively says it is a one-bell movement; an
+      // unlinked movement (null) stays the lifter's call.
+      reasons.push(
+        `${describeBlock(rec, i)} is not a double-bell movement — prescribe it with 1 bell`,
       );
     }
   }
@@ -95,7 +115,7 @@ export function validateRecommendation(
     reasons.push(
       ...validateSessionWeights(
         equipment,
-        rec.blocks.map((b) => b.weight_kg),
+        rec.blocks.map((b) => ({ weight_kg: b.weight_kg, bells: b.bells ?? 1 })),
         rec.adjustable_settings_kg ?? [],
       ),
     );

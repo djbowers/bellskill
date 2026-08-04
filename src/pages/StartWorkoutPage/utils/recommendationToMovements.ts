@@ -38,17 +38,23 @@ export const buildRecommendationCatalog = (
   return new Map(entries);
 };
 
-// Fills the second weight slot from catalog metadata so the builder opens in the
-// loading mode the movement implies (getWeightTabValue): a genuine two-bell
-// movement carries the prescribed load (Double), a single-arm movement pins it
-// to 0 (1H), and everything else stays unset (2H, the pre-catalog default).
+// Fills the second weight slot so the builder opens in the loading mode the
+// block implies (getWeightTabValue). The recommender declares how many bells a
+// block uses, which settles Double; the catalog only decides how a single bell
+// is held — single-arm pins the slot to 0 (1H), anything else stays unset (2H).
+// Blocks from before `bells` existed fall back to inferring Double from the
+// catalog, which is what the mapper always did.
 const inferSecondWeight = (
   fields: MovementWeightModeFields | undefined,
   weightKg: number,
+  bells: number | undefined,
 ): Pick<MovementOptions, 'weightTwoUnit' | 'weightTwoValue'> => {
-  if (fields && movementMatchesWeightMode(fields, 'double')) {
-    return { weightTwoUnit: 'kilograms', weightTwoValue: weightKg };
-  }
+  const isDouble =
+    bells === undefined
+      ? Boolean(fields && movementMatchesWeightMode(fields, 'double'))
+      : bells === 2;
+
+  if (isDouble) return { weightTwoUnit: 'kilograms', weightTwoValue: weightKg };
   if (fields && movementMatchesWeightMode(fields, '1h')) {
     return { weightTwoUnit: null, weightTwoValue: 0 };
   }
@@ -70,7 +76,11 @@ export const recommendationToMovements = (
     repScheme: block.rep_scheme,
     weightOneUnit: 'kilograms',
     weightOneValue: block.weight_kg,
-    ...inferSecondWeight(catalog?.get(block.movement_name), block.weight_kg),
+    ...inferSecondWeight(
+      catalog?.get(block.movement_name),
+      block.weight_kg,
+      block.bells,
+    ),
   }));
 
 /**

@@ -225,3 +225,89 @@ describe('validateRecommendation — equipment', () => {
     }
   });
 });
+
+describe('validateRecommendation — bell count', () => {
+  const pairOf16 = summarizeEquipment([
+    {
+      kind: 'fixed',
+      weight: 16,
+      minWeight: null,
+      maxWeight: null,
+      stepWeight: null,
+      unit: 'kilograms',
+      quantity: 2,
+    },
+    {
+      kind: 'fixed',
+      weight: 24,
+      minWeight: null,
+      maxWeight: null,
+      stepWeight: null,
+      unit: 'kilograms',
+      quantity: 1,
+    },
+  ]);
+
+  test('rejects a bell count outside 1–2', () => {
+    const r = rec([{ bells: 3 }]);
+    try {
+      validateRecommendation(r, idsOf(r));
+      throw new Error('expected ValidationError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ValidationError);
+      expect((err as ValidationError).reasons[0]).toContain(
+        'claims 3 bells — use 1 or 2',
+      );
+    }
+  });
+
+  test('rejects a double on a movement the catalog says is single-bell', () => {
+    const r = rec([{ user_movement_id: 'goblet', bells: 2 }]);
+    try {
+      validateRecommendation(
+        r,
+        idsOf(r),
+        undefined,
+        null,
+        new Map([['goblet', false]]),
+      );
+      throw new Error('expected ValidationError');
+    } catch (err) {
+      expect((err as ValidationError).reasons[0]).toContain(
+        'not a double-bell movement',
+      );
+    }
+  });
+
+  test('allows a double when the catalog does not know the movement', () => {
+    const r = rec([{ user_movement_id: 'custom', bells: 2 }]);
+    expect(() =>
+      validateRecommendation(
+        r,
+        idsOf(r),
+        undefined,
+        null,
+        new Map([['custom', null]]),
+      ),
+    ).not.toThrow();
+  });
+
+  test('rejects a double at a weight the lifter owns only one of', () => {
+    const r = { ...rec([{ weight_kg: 24, bells: 2 }]), adjustable_settings_kg: [] };
+    try {
+      validateRecommendation(r, idsOf(r), undefined, pairOf16);
+      throw new Error('expected ValidationError');
+    } catch (err) {
+      expect((err as ValidationError).reasons).toEqual([
+        'double-bell work at 24kg needs 2 bells at that weight but the lifter has 1',
+      ]);
+    }
+  });
+
+  test('accepts a double at a weight the lifter owns a pair of', () => {
+    const r = { ...rec([{ weight_kg: 16, bells: 2 }]), adjustable_settings_kg: [] };
+    expect(() =>
+      validateRecommendation(r, idsOf(r), undefined, pairOf16),
+    ).not.toThrow();
+  });
+});

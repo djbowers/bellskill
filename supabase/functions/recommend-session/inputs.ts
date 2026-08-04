@@ -136,14 +136,16 @@ export async function gatherInputs(
     ),
   ];
   const creditsByCatalogId = new Map<string, string[]>();
+  const doublesByCatalogId = new Map<string, boolean>();
   if (catalogIds.length > 0) {
     const { data: catalogRows, error: catErr } = await admin
       .from('movements')
-      .select('id, pattern_credits')
+      .select('id, pattern_credits, "# Primary Items"')
       .in('id', catalogIds);
     if (catErr) throw catErr;
     for (const row of catalogRows ?? []) {
       creditsByCatalogId.set(row.id, row.pattern_credits);
+      doublesByCatalogId.set(row.id, row['# Primary Items'] === 2);
     }
   }
 
@@ -159,6 +161,8 @@ export async function gatherInputs(
       name: m.canonical_name,
       is_big_6: Boolean(m.is_big_6),
       pattern_credits: credited.length > 0 ? credited : null,
+      supports_doubles:
+        doublesByCatalogId.get(m.functional_movement_id ?? '') ?? null,
     };
   });
 

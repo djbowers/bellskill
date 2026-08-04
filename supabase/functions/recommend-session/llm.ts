@@ -62,6 +62,9 @@ export async function generateRecommendation(
   };
   const equipment =
     'description' in inputs.unlocked_weights ? inputs.unlocked_weights : null;
+  const doublesById = new Map(
+    inputs.candidates.map((c) => [c.user_movement_id, c.supports_doubles]),
+  );
   const system = buildSystemPrompt(inputs.mode);
   const messages: Message[] = [
     { role: 'user', content: buildUserPrompt(inputs) },
@@ -71,7 +74,7 @@ export async function generateRecommendation(
   for (let attempt = 0; attempt < 2; attempt++) {
     const rec = await callModel(apiKey, system, messages);
     try {
-      validateRecommendation(rec, candidateIds, coverage, equipment);
+      validateRecommendation(rec, candidateIds, coverage, equipment, doublesById);
       return rec;
     } catch (err) {
       if (!(err instanceof ValidationError) || attempt === 1) throw err;

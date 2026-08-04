@@ -168,15 +168,22 @@ const canAssignSettings = (
   return false;
 };
 
+/** One prescribed block's load: the weight, and how many bells are held at once. */
+export interface SessionBlockLoad {
+  weight_kg: number;
+  bells: number;
+}
+
 /**
  * Enforces the within-session equipment contract: every prescribed weight is
  * either a fixed bell (free to pick up at any time) or one of the settings the
- * session declared up front for its adjustable bells. Returns human-readable
- * reasons, empty when the plan is loadable as written.
+ * session declared up front for its adjustable bells, and enough bells exist at
+ * that weight to cover double-bell work. Returns human-readable reasons, empty
+ * when the plan is loadable as written.
  */
 export const validateSessionWeights = (
   summary: EquipmentSummary,
-  blockWeightsKg: number[],
+  blocks: SessionBlockLoad[],
   adjustableSettingsKg: number[],
 ): string[] => {
   const reasons: string[] = [];
@@ -196,20 +203,44 @@ export const validateSessionWeights = (
     );
   }
 
-  const fixed = new Set(summary.fixed_weights.map((w) => w.weight_kg));
-  const declared = new Set(adjustableSettingsKg);
+  // Bells standing at a given weight for the whole session: the fixed ones plus
+  // every adjustable bell declared at it. Blocks are sequential, so a bell is
+  // reusable across blocks — the requirement is per block, not cumulative.
+  const availableAt = new Map<number, number>();
+  for (const fixed of summary.fixed_weights) {
+    availableAt.set(fixed.weight_kg, fixed.count);
+  }
+  for (const setting of adjustableSettingsKg) {
+    availableAt.set(setting, (availableAt.get(setting) ?? 0) + 1);
+  }
 
-  for (const weight of new Set(blockWeightsKg)) {
-    if (fixed.has(weight) || declared.has(weight)) continue;
+  const neededAt = new Map<number, number>();
+  for (const block of blocks) {
+    const bells = Math.max(1, block.bells);
+    neededAt.set(
+      block.weight_kg,
+      Math.max(neededAt.get(block.weight_kg) ?? 0, bells),
+    );
+  }
 
-    const onSomeBell = summary.adjustable_bells.some((group) =>
-      group.settings_kg.includes(weight),
-    );
-    reasons.push(
-      onSomeBell
-        ? `${weight}kg is only reachable by re-plating an adjustable bell mid-session — either declare it as an adjustable setting for the whole session or use a weight already in use`
-        : `${weight}kg is not a weight the lifter owns`,
-    );
+  for (const [weight, needed] of neededAt) {
+    const available = availableAt.get(weight) ?? 0;
+    if (available >= needed) continue;
+
+    if (available === 0) {
+      const onSomeBell = summary.adjustable_bells.some((group) =>
+        group.settings_kg.includes(weight),
+      );
+      reasons.push(
+        onSomeBell
+          ? `${weight}kg is only reachable by re-plating an adjustable bell mid-session — either declare it as an adjustable setting for the whole session or use a weight already in use`
+          : `${weight}kg is not a weight the lifter owns`,
+      );
+    } else {
+      reasons.push(
+        `double-bell work at ${weight}kg needs ${needed} bells at that weight but the lifter has ${available}`,
+      );
+    }
   }
 
   return reasons;

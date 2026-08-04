@@ -87,6 +87,17 @@ export function formatEquipmentSection(
     }
   }
 
+  const pairs = summary.fixed_weights.filter((w) => w.doubles);
+  if (pairs.length > 0) {
+    lines.push(
+      `Blocks with bells=2 are only possible at: ${pairs.map((w) => `${w.weight_kg}kg`).join(', ')}${summary.adjustable_bell_count >= 2 ? ', or any weight both adjustable bells are set to' : ''}.`,
+    );
+  } else if (summary.adjustable_bell_count < 2) {
+    lines.push(
+      'The lifter has no two bells of the same weight — every block must use bells=1.',
+    );
+  }
+
   lines.push('Never prescribe a weight outside the lists above.');
 
   if (summary.adjustable_bells.length > 0) {

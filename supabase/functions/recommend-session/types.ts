@@ -23,6 +23,11 @@ export interface CandidateMovement {
   is_big_6: boolean;
   /** Coarse patterns this movement pays credit toward; null when unlinked with no fallback. */
   pattern_credits: Pattern[] | null;
+  /**
+   * Whether the catalog says this movement is done with two bells. Null when the
+   * movement is unlinked and we simply do not know — never enforced in that case.
+   */
+  supports_doubles: boolean | null;
 }
 
 /** A compact summary of one past workout, for history context. */
@@ -86,6 +91,12 @@ export interface RecommendationBlock {
   weight_kg: number;
   rep_scheme: number[];
   notes: string;
+  /**
+   * Kettlebells held at once for this block: 1, or 2 for genuine double-bell
+   * work. Optional here only so recommendations persisted before this field
+   * existed still parse; the schema requires it for new output.
+   */
+  bells?: number;
 }
 
 /** The validated LLM output. Persisted into session_recommendations.output. */
@@ -129,6 +140,7 @@ export const RECOMMENDATION_SCHEMA = {
           user_movement_id: { type: 'string' },
           movement_name: { type: 'string' },
           weight_kg: { type: 'number' },
+          bells: { type: 'integer' },
           rep_scheme: { type: 'array', items: { type: 'integer' } },
           notes: { type: 'string' },
         },
@@ -136,6 +148,7 @@ export const RECOMMENDATION_SCHEMA = {
           'user_movement_id',
           'movement_name',
           'weight_kg',
+          'bells',
           'rep_scheme',
           'notes',
         ],

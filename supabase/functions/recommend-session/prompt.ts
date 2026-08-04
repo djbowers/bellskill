@@ -29,6 +29,9 @@ export function buildSystemPrompt(mode: RecommendMode = 'default'): string {
     '  today. When they are tired, sore, or short on time, scale volume down.',
     '- Prescribe weights in kilograms (whole or half kg) and rep schemes as a list',
     '  of positive integers (one entry per rung/set).',
+    '- Set each block\'s "bells" to how many kettlebells are held at once: 1, or 2',
+    '  only for movements marked "double-bell". weight_kg is the weight of ONE',
+    '  bell, so a double at 24kg means two 24kg bells, not 12kg each.',
     '- When a pattern-balance section is provided, prefer movements that train',
     '  the red- and yellow-band (highest-debt) patterns, and say so in the',
     '  rationale when it drives your selection. Readiness, recent RPE, and the',
@@ -59,7 +62,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
           c.pattern_credits?.length
             ? ` · pays: ${c.pattern_credits.join(', ')}`
             : ''
-        } [user_movement_id: ${c.user_movement_id}]`,
+        }${c.supports_doubles ? ' · double-bell' : ''} [user_movement_id: ${c.user_movement_id}]`,
     )
     .join('\n');
 
