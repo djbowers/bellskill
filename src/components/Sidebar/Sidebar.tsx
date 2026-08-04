@@ -20,8 +20,7 @@ const activeClasses = 'bg-primary/10 text-primary';
 
 /**
  * Desktop-only left navigation rail. Hidden below `lg` (`hidden lg:flex`), where
- * the `BottomNav` thumb bar takes over. Rendered by `Root` only when the
- * `bottomNav` feature flag is on; the flag-off path keeps the top `Header`.
+ * the `BottomNav` thumb bar takes over.
  */
 export const Sidebar = () => {
   const features = useFeatures();

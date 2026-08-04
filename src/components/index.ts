@@ -1,6 +1,5 @@
 export * from './BottomNav';
 export * from './ConfirmDialog';
-export * from './Header';
 export * from './KettlebellGlyph';
 export * from './Loading';
 export * from './LoadingScreen';

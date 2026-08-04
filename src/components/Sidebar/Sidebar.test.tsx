@@ -14,7 +14,6 @@ vi.mock('~/hooks', () => ({
 const mockedUseFeatures = useFeatures as unknown as Mock;
 
 const featuresWith = (overrides: Partial<Features> = {}): Features => ({
-  bottomNav: true,
   explore: false,
   premium: false,
   programs: false,
