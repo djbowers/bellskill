@@ -5,7 +5,7 @@ import type { WorkoutGoalUnits, WorkoutOptions } from '~/types';
 // `~/examples` is imported by components, so a runtime import here would put
 // contexts inside that cycle. Fixtures stay leaf modules.
 const BARE_SESSION_OPTIONS: Omit<WorkoutOptions, 'startedAt'> = {
-  complexSet: false,
+  workoutMode: 'circuit',
   intervalTimer: 0,
   movements: [],
   restTimer: 0,

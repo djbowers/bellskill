@@ -34,6 +34,7 @@ import {
   Recommendation,
   WeightUnit,
   WorkoutGoalUnits,
+  WorkoutMode,
   WorkoutOptions,
 } from '~/types';
 import {
@@ -61,6 +62,7 @@ import {
   StartWorkoutHero,
   WeightModeTabs,
   WeightUnitTabs,
+  WorkoutModeTabs,
 } from './components';
 import type { SummaryLoad } from './components';
 import { useRecommendedWorkouts } from './hooks';
@@ -372,11 +374,8 @@ export const StartWorkoutPage = ({
     workoutOptions.intervalTimer,
   );
   const [restTimer, setRestTimer] = useState<number>(workoutOptions.restTimer);
-  const [complexSet, setComplexSet] = useState<boolean>(
-    workoutOptions.complexSet,
-  );
-  const [straightSets, setStraightSets] = useState<boolean>(
-    workoutOptions.straightSets ?? false,
+  const [workoutMode, setWorkoutMode] = useState<WorkoutMode>(
+    workoutOptions.workoutMode,
   );
   const [sharedWeightOneValue, setSharedWeightOneValue] = useState<
     number | null
@@ -404,8 +403,7 @@ export const StartWorkoutPage = ({
     setPreWorkoutNotes(options.preWorkoutNotes);
     setIntervalTimer(options.intervalTimer);
     setRestTimer(options.restTimer);
-    setComplexSet(options.complexSet);
-    setStraightSets(options.straightSets ?? false);
+    setWorkoutMode(options.workoutMode);
     setSharedWeightOneValue(options.sharedWeightOneValue);
     setSharedWeightOneUnit(options.sharedWeightOneUnit);
     setSharedWeightTwoValue(options.sharedWeightTwoValue);
@@ -556,18 +554,9 @@ export const StartWorkoutPage = ({
     }
   };
 
-  // Complex holds one bell through every movement; straight sets finishes one
-  // movement before the next. They describe opposite arrangements, so turning
-  // either on clears the other.
-  const handleToggleComplex = () => {
-    if (!complexSet) expandSection('sharedWeight');
-    setComplexSet((prev) => !prev);
-    setStraightSets(false);
-  };
-
-  const handleToggleStraightSets = () => {
-    setStraightSets((prev) => !prev);
-    setComplexSet(false);
+  const handleChangeWorkoutMode = (mode: WorkoutMode) => {
+    if (mode === 'complex') expandSection('sharedWeight');
+    setWorkoutMode(mode);
   };
 
   const handleChangeMovementName = (index: number, value: string) =>
@@ -842,7 +831,7 @@ export const StartWorkoutPage = ({
   const handleClickStart = () => {
     startWorkout(
       applySharedWeights({
-        complexSet,
+        workoutMode,
         intervalTimer,
         movements,
         restTimer,
@@ -850,7 +839,6 @@ export const StartWorkoutPage = ({
         sharedWeightOneValue,
         sharedWeightTwoUnit,
         sharedWeightTwoValue,
-        straightSets,
         title: title?.trim() || null,
         preWorkoutNotes: preWorkoutNotes?.trim() || null,
         workoutGoal,
@@ -872,7 +860,7 @@ export const StartWorkoutPage = ({
   const handleSaveSession = () => {
     programSaveMode?.onSave(
       applySharedWeights({
-        complexSet,
+        workoutMode,
         intervalTimer,
         movements,
         restTimer,
@@ -880,7 +868,6 @@ export const StartWorkoutPage = ({
         sharedWeightOneValue,
         sharedWeightTwoUnit,
         sharedWeightTwoValue,
-        straightSets,
         title: null,
         preWorkoutNotes: preWorkoutNotes?.trim() || null,
         workoutGoal,
@@ -898,7 +885,7 @@ export const StartWorkoutPage = ({
   // Only the rotating order needs matching ladders — it walks every movement with
   // one shared rung pointer. Straight sets gives each movement its own ladder.
   const isDifferentRepSchemes =
-    !straightSets &&
+    workoutMode !== 'straightSets' &&
     movements.length > 1 &&
     movements.some(
       (movement) => movement.repScheme.length !== movements[0].repScheme.length,
@@ -913,7 +900,7 @@ export const StartWorkoutPage = ({
   // Every bell in play, for the footer's at-a-glance load range. Complex sets
   // load one shared bell (or two), so they read from the shared weights instead.
   const summaryLoads: SummaryLoad[] = (
-    complexSet
+    workoutMode === 'complex'
       ? [
           { value: sharedWeightOneValue, unit: sharedWeightOneUnit },
           { value: sharedWeightTwoValue, unit: sharedWeightTwoUnit },
@@ -1076,6 +1063,11 @@ export const StartWorkoutPage = ({
             </Section>
           </Card>
 
+          <WorkoutModeTabs
+            value={workoutMode}
+            onValueChange={handleChangeWorkoutMode}
+          />
+
           <MovementsHeader count={movements.length} />
 
           {movements.map((movement, index) => (
@@ -1083,7 +1075,7 @@ export const StartWorkoutPage = ({
               key={index}
               index={index}
               movement={movement}
-              complexSet={complexSet}
+              workoutMode={workoutMode}
               sharedWeightTabValue={sharedWeightTabValue}
               sharedWeights={{
                 sharedWeightOneUnit,
@@ -1097,7 +1089,7 @@ export const StartWorkoutPage = ({
               onRemove={() => handleClickRemoveMovement(index)}
               onChangeName={(name) => handleChangeMovementName(index, name)}
               onChangeWeightTab={(mode) =>
-                complexSet
+                workoutMode === 'complex'
                   ? handleChangeSharedWeightTab(mode)
                   : handleChangeWeightTab(index, mode)
               }
@@ -1134,18 +1126,13 @@ export const StartWorkoutPage = ({
           )}
 
           <AddToWorkoutSection
-            complexSet={complexSet}
             hasNotes={preWorkoutNotes !== null}
             hasInterval={intervalTimer > 0}
             hasRest={restTimer > 0}
             hasTimedMovements={movements.some((m) => m.timedRungs)}
-            showComplex={features.complexMode}
-            straightSets={straightSets}
-            onToggleComplex={handleToggleComplex}
             onToggleInterval={handleToggleInterval}
             onToggleNotes={handleToggleNotes}
             onToggleRest={handleToggleRest}
-            onToggleStraightSets={handleToggleStraightSets}
           />
 
           {preWorkoutNotes !== null && (
@@ -1214,7 +1201,7 @@ export const StartWorkoutPage = ({
             </Card>
           )}
 
-          {features.complexMode && complexSet && (
+          {workoutMode === 'complex' && (
             <Card>
               <Section
                 title="Shared Weight"

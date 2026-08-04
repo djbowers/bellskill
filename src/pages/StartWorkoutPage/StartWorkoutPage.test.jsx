@@ -103,6 +103,9 @@ const enterBuildMode = async () =>
     await screen.findByRole('button', { name: /build a workout/i }),
   );
 
+const selectMode = (name) =>
+  userEvent.click(screen.getByRole('tab', { name }));
+
 describe('start workout page', () => {
   let startWorkout;
 
@@ -643,10 +646,11 @@ describe('Complex Mode', () => {
     await enterBuildMode();
   });
 
-  test('Add to workout row includes Complex toggle off by default', () => {
-    expect(
-      screen.getByRole('button', { name: 'Complex, off' }),
-    ).toBeInTheDocument();
+  test('Circuit is selected by default and no shared weight section is shown', () => {
+    expect(screen.getByRole('tab', { name: 'Circuit' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
     expect(
       screen.queryByText(
         'Complete all movements before setting the weight down.',
@@ -657,8 +661,25 @@ describe('Complex Mode', () => {
     ).not.toBeInTheDocument();
   });
 
+  test('exactly one mode is selected at a time', async () => {
+    const selected = () =>
+      ['Circuit', 'Straight Sets', 'Complex'].filter(
+        (name) =>
+          screen.getByRole('tab', { name }).getAttribute('aria-selected') ===
+          'true',
+      );
+
+    expect(selected()).toEqual(['Circuit']);
+
+    await selectMode('Straight Sets');
+    expect(selected()).toEqual(['Straight Sets']);
+
+    await selectMode('Complex');
+    expect(selected()).toEqual(['Complex']);
+  });
+
   test('selecting Complex reveals shared weight section with all four weight-type options', async () => {
-    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
+    await selectMode('Complex');
 
     expect(
       screen.getByText(
@@ -678,19 +699,19 @@ describe('Complex Mode', () => {
     await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
     expect(screen.getAllByText('Load')).toHaveLength(2);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
+    await selectMode('Complex');
 
     expect(screen.queryAllByText('Load')).toHaveLength(0);
     expect(screen.getAllByText('Rep scheme')).toHaveLength(2);
   });
 
-  test('toggling Complex off hides shared weight section and restores per-movement weight sections', async () => {
-    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
+  test('leaving Complex hides shared weight section and restores per-movement weight sections', async () => {
+    await selectMode('Complex');
     expect(
       screen.getByRole('heading', { name: 'Shared Weight' }),
     ).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Complex, on' }));
+    await selectMode('Circuit');
 
     expect(
       screen.queryByRole('heading', { name: 'Shared Weight' }),
@@ -698,14 +719,14 @@ describe('Complex Mode', () => {
     expect(screen.getByText('Load')).toBeInTheDocument();
   });
 
-  test('startWorkout is called with complexSet: true and shared weight fields when Complex is active', async () => {
-    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
+  test("startWorkout is called with workoutMode: 'complex' and shared weight fields when Complex is active", async () => {
+    await selectMode('Complex');
     await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
     await userEvent.click(screen.getByRole('button', { name: /Start/i }));
 
     expect(startWorkout).toHaveBeenCalledWith(
       expect.objectContaining({
-        complexSet: true,
+        workoutMode: 'complex',
         sharedWeightOneValue: DEFAULT_MOVEMENT_OPTIONS.weightOneValue,
         sharedWeightOneUnit: DEFAULT_MOVEMENT_OPTIONS.weightOneUnit,
         sharedWeightTwoValue: null,
@@ -716,7 +737,7 @@ describe('Complex Mode', () => {
   });
 
   test('propagates an edited shared weight onto every movement at start', async () => {
-    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
+    await selectMode('Complex');
     await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
     await userEvent.click(screen.getByLabelText('+ kg'));
     await userEvent.click(screen.getByRole('button', { name: /Start/i }));
@@ -742,19 +763,19 @@ describe('Complex Mode', () => {
     const ownWeight = `${DEFAULT_MOVEMENT_OPTIONS.weightOneValue} kg (2h)`;
     expect(screen.getByText(ownWeight)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
+    await selectMode('Complex');
     await userEvent.click(screen.getByLabelText('+ kg'));
 
     const sharedWeight = screen.getByText(/kg \(2h\)/).textContent;
     expect(sharedWeight).not.toBe(ownWeight);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Complex, on' }));
+    await selectMode('Circuit');
 
     expect(screen.getByText(ownWeight)).toBeInTheDocument();
   });
 
-  test('complex mode toggle is preserved when adding movements', async () => {
-    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
+  test('complex mode is preserved when adding movements', async () => {
+    await selectMode('Complex');
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
 
     await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
@@ -765,9 +786,9 @@ describe('Complex Mode', () => {
     ).toBeInTheDocument();
   });
 
-  test('complex mode toggle is preserved when removing movements', async () => {
+  test('complex mode is preserved when removing movements', async () => {
     await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
+    await selectMode('Complex');
     expect(screen.queryAllByRole('heading', { name: 'Load' })).toHaveLength(0);
 
     const removeButtons = screen.getAllByRole('button', {
@@ -792,41 +813,14 @@ describe('Straight Sets', () => {
     await enterBuildMode();
   });
 
-  test('Add to workout row includes a Straight Sets toggle, off by default', () => {
-    expect(
-      screen.getByRole('button', { name: 'Straight Sets, off' }),
-    ).toBeInTheDocument();
-  });
-
-  test('startWorkout is called with straightSets: true when the toggle is on', async () => {
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Straight Sets, off' }),
-    );
+  test("startWorkout is called with workoutMode: 'straightSets' when that segment is picked", async () => {
+    await selectMode('Straight Sets');
     await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
     await userEvent.click(screen.getByRole('button', { name: /Start/i }));
 
     expect(startWorkout).toHaveBeenCalledWith(
-      expect.objectContaining({ straightSets: true, complexSet: false }),
+      expect.objectContaining({ workoutMode: 'straightSets' }),
     );
-  });
-
-  test('Straight Sets and Complex clear each other', async () => {
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Straight Sets, off' }),
-    );
-    await userEvent.click(screen.getByRole('button', { name: 'Complex, off' }));
-
-    expect(
-      screen.getByRole('button', { name: 'Straight Sets, off' }),
-    ).toBeInTheDocument();
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Straight Sets, off' }),
-    );
-
-    expect(
-      screen.getByRole('button', { name: 'Complex, off' }),
-    ).toBeInTheDocument();
   });
 
   test('uneven rep schemes are rejected in the rotating order but allowed in straight sets', async () => {
@@ -846,9 +840,7 @@ describe('Straight Sets', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Start/i })).toBeDisabled();
 
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Straight Sets, off' }),
-    );
+    await selectMode('Straight Sets');
 
     expect(
       screen.queryByText(/Rep schemes must contain the same number of rungs/i),

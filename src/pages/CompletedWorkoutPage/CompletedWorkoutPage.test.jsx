@@ -89,7 +89,7 @@ describe('completed workout page', () => {
 
     expect(updateWorkoutOptions).toHaveBeenCalledWith(
       expect.objectContaining({
-        complexSet: true,
+        workoutMode: 'complex',
         sharedWeightOneUnit: 'kilograms',
         sharedWeightOneValue: 20,
         sharedWeightTwoUnit: 'kilograms',

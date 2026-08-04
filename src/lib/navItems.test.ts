@@ -4,7 +4,6 @@ import { getNavItems, navItemByKey } from './navItems';
 
 const allOff: Features = {
   bottomNav: true,
-  complexMode: false,
   explore: false,
   premium: false,
   programs: false,

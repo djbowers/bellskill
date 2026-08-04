@@ -44,7 +44,7 @@ export interface EnrollProgramArgs {
   replaceUserProgramId?: string | null;
   /**
    * Per-movement starting weights, one entry per distinct non-bodyweight
-   * movement. Omit for complexSet programs (which use the shared weight above)
+   * movement. Omit for complex programs (which use the shared weight above)
    * or to clone verbatim.
    */
   movementWeights?: MovementWeight[];

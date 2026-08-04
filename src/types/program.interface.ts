@@ -18,7 +18,7 @@ export interface ProgramStageMovement {
  * C+J → C+J+C → … → 3 cleans + 3 jerks, or Plan 025's Sets of 5 → Sets
  * of 10). Advancing an enrollment to a stage (`set_program_stage`) rewrites
  * every not-yet-completed session's movements and notes; weights come from
- * each session (shared weights on complexSet sessions, per-movement weights —
+ * each session (shared weights on complex sessions, per-movement weights —
  * and the session's own title — otherwise), so stages author none.
  */
 export interface ProgramStage {

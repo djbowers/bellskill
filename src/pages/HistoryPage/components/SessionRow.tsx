@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { cn } from '~/lib/utils';
 import { WorkoutLog } from '~/types';
-import { formatVolume } from '~/utils';
+import { WORKOUT_MODE_LABELS, formatVolume } from '~/utils';
 
 import { getDuration } from '../../CompletedWorkoutPage/utils';
 import {
@@ -20,12 +20,11 @@ export const SessionRow = ({ workoutLog }: SessionRowProps) => {
   const {
     completedReps,
     completedVolume,
-    complexSet,
     id,
     movements,
     rpe,
     startedAt,
-    straightSets,
+    workoutMode,
   } = workoutLog;
 
   const movementsLine = movements.join(' · ');
@@ -38,8 +37,8 @@ export const SessionRow = ({ workoutLog }: SessionRowProps) => {
 
   const meta = [
     getRowDateLabel(startedAt),
-    complexSet === true ? 'Complex' : null,
-    straightSets === true ? 'Straight Sets' : null,
+    // Circuit is the default arrangement, so it stays unlabeled.
+    workoutMode === 'circuit' ? null : WORKOUT_MODE_LABELS[workoutMode],
     // Already the headline when the session went unnamed.
     title === movementsLine ? null : movementsLine,
   ].filter(Boolean);

@@ -172,9 +172,6 @@ describe('StartWorkoutPage recommendations', () => {
       expect(updateWorkoutOptions).toHaveBeenCalledTimes(1);
       expect(updateWorkoutOptions).toHaveBeenCalledWith({
         ...CURATED_WORKOUTS[0].workoutOptions,
-        // Curated workouts predate the traversal-order flag, so the builder
-        // supplies the default (rotating) order for them.
-        straightSets: false,
         startedAt,
       });
       expect(screen.getByText('active workout page')).toBeInTheDocument();

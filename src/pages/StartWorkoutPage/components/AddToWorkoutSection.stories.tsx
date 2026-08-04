@@ -20,88 +20,48 @@ type Story = StoryObj<typeof AddToWorkoutSection>;
 
 export const AllOff: Story = {
   args: {
-    complexSet: false,
     hasNotes: false,
     hasInterval: false,
     hasRest: false,
-    showComplex: true,
-    straightSets: false,
-    onToggleComplex: () => {},
     onToggleInterval: () => {},
     onToggleNotes: () => {},
     onToggleRest: () => {},
-    onToggleStraightSets: () => {},
   },
 };
 
 export const AllOn: Story = {
   args: {
-    complexSet: true,
+    ...AllOff.args,
     hasNotes: true,
     hasInterval: true,
     hasRest: true,
-    showComplex: true,
-    straightSets: false,
-    onToggleComplex: () => {},
-    onToggleInterval: () => {},
-    onToggleNotes: () => {},
-    onToggleRest: () => {},
-    onToggleStraightSets: () => {},
   },
 };
 
-export const StraightSets: Story = {
+export const IntervalBlockedByTimedMovements: Story = {
   args: {
     ...AllOff.args,
-    straightSets: true,
+    hasTimedMovements: true,
   },
 };
 
-export const WithoutComplexToggle: Story = {
-  args: {
-    ...AllOff.args,
-    showComplex: false,
-  },
-};
-
-const InteractiveTemplate = ({
-  showComplex,
-}: {
-  showComplex: boolean;
-}) => {
-  const [complexSet, setComplexSet] = useState(false);
+const InteractiveTemplate = () => {
   const [hasNotes, setHasNotes] = useState(false);
   const [hasInterval, setHasInterval] = useState(false);
   const [hasRest, setHasRest] = useState(false);
-  const [straightSets, setStraightSets] = useState(false);
 
   return (
     <AddToWorkoutSection
-      complexSet={complexSet}
       hasNotes={hasNotes}
       hasInterval={hasInterval}
       hasRest={hasRest}
-      showComplex={showComplex}
-      straightSets={straightSets}
-      onToggleComplex={() => {
-        setComplexSet((prev) => !prev);
-        setStraightSets(false);
-      }}
       onToggleNotes={() => setHasNotes((prev) => !prev)}
       onToggleInterval={() => setHasInterval((prev) => !prev)}
       onToggleRest={() => setHasRest((prev) => !prev)}
-      onToggleStraightSets={() => {
-        setStraightSets((prev) => !prev);
-        setComplexSet(false);
-      }}
     />
   );
 };
 
 export const Interactive: Story = {
-  render: () => <InteractiveTemplate showComplex />,
-};
-
-export const InteractiveWithoutComplex: Story = {
-  render: () => <InteractiveTemplate showComplex={false} />,
+  render: () => <InteractiveTemplate />,
 };

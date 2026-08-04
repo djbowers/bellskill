@@ -2,6 +2,8 @@ import type {
   Movement,
   MovementOptions,
   Recommendation,
+  RecommendationFormat,
+  WorkoutMode,
   WorkoutOptions,
 } from '~/types';
 import {
@@ -73,15 +75,30 @@ export const recommendationToMovements = (
   }));
 
 /**
+ * The arrangement the recommender already declared, mapped onto the builder's
+ * modes. Only Straight Sets exempts a session from the equal-rungs rule, so
+ * discarding this (as the mapper used to) made every unequal-ladder
+ * recommendation unstartable. Complex is never inferred — it needs a shared bell
+ * the recommender doesn't prescribe.
+ */
+const FORMAT_MODES: Record<RecommendationFormat, WorkoutMode> = {
+  'Straight Sets': 'straightSets',
+  Circuit: 'circuit',
+  EMOM: 'circuit',
+  AMRAP: 'circuit',
+  Ladder: 'circuit',
+};
+
+/**
  * Maps a recommendation onto a full set of workout options ready to load into
- * the builder. Duration becomes a time goal; timers, complex mode, and shared
- * weights default off for the user to add if they want.
+ * the builder. Duration becomes a time goal; timers and shared weights default
+ * off for the user to add if they want.
  */
 export const recommendationToWorkoutOptions = (
   recommendation: Recommendation,
   catalog?: RecommendationCatalog,
 ): Omit<WorkoutOptions, 'startedAt'> => ({
-  complexSet: false,
+  workoutMode: FORMAT_MODES[recommendation.format] ?? 'circuit',
   intervalTimer: 0,
   movements: recommendationToMovements(recommendation, catalog),
   restTimer: 0,

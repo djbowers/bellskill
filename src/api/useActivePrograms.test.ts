@@ -67,7 +67,7 @@ const sessionRow = (
   title,
   notes: null,
   workout_options: {
-    complexSet: false,
+    workoutMode: 'circuit',
     intervalTimer: 0,
     movements: [],
     restTimer: 0,

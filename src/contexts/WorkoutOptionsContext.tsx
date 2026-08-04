@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 
-import { MovementOptions, WorkoutOptions } from '~/types';
+import { DEFAULT_WORKOUT_MODE, MovementOptions, WorkoutOptions } from '~/types';
 
 // eslint-disable-next-line react-refresh/only-export-components -- default-options constant is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const DEFAULT_MOVEMENT_OPTIONS: MovementOptions = {
@@ -14,7 +14,7 @@ export const DEFAULT_MOVEMENT_OPTIONS: MovementOptions = {
 
 // eslint-disable-next-line react-refresh/only-export-components -- default-options constant is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const DEFAULT_WORKOUT_OPTIONS: WorkoutOptions = {
-  complexSet: false,
+  workoutMode: DEFAULT_WORKOUT_MODE,
   intervalTimer: 0,
   movements: [{ ...DEFAULT_MOVEMENT_OPTIONS }],
   restTimer: 0,
@@ -22,7 +22,6 @@ export const DEFAULT_WORKOUT_OPTIONS: WorkoutOptions = {
   sharedWeightOneValue: DEFAULT_MOVEMENT_OPTIONS.weightOneValue,
   sharedWeightTwoUnit: null,
   sharedWeightTwoValue: null,
-  straightSets: false,
   title: null,
   preWorkoutNotes: null,
   workoutGoal: 10,

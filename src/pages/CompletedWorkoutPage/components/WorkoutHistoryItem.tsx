@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import { MovementLog, WeightUnit } from '~/types';
+import { MovementLog, WeightUnit, WorkoutMode } from '~/types';
 
 import {
   getDisplayDate,
@@ -24,7 +24,7 @@ import { LinkMovementDialog } from './LinkMovementDialog';
 
 export interface WorkoutHistoryItemProps {
   completedAt: Date;
-  complexSet?: boolean | null;
+  workoutMode: WorkoutMode;
   intervalTimer: number;
   movementLogs: MovementLog[];
   movementLogsLoading: boolean;
@@ -43,7 +43,7 @@ export interface WorkoutHistoryItemProps {
 
 export const WorkoutHistoryItem = ({
   completedAt,
-  complexSet,
+  workoutMode,
   intervalTimer,
   movementLogs,
   movementLogsLoading,
@@ -62,7 +62,7 @@ export const WorkoutHistoryItem = ({
   const { explore } = useFeatures();
   const displayDate = getDisplayDate(completedAt);
   const timeRange = getTimeRange(startedAt, completedAt);
-  const isComplexSet = complexSet === true;
+  const isComplexSet = workoutMode === 'complex';
   const sharedWeights = resolveSharedWeights(
     sharedWeightOneValue,
     sharedWeightOneUnit,
@@ -168,7 +168,7 @@ export const WorkoutHistoryItem = ({
                           workoutLogId={workoutLogId}
                           movementLog={movement}
                           movementIndex={index}
-                          complexSet={isComplexSet}
+                          workoutMode={workoutMode}
                           sharedWeights={sharedWeights}
                         />
                       )}

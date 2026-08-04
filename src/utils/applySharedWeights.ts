@@ -17,7 +17,7 @@ export const applySharedWeights = <
 >(
   options: T,
 ): T => {
-  if (!options.complexSet) return options;
+  if (options.workoutMode !== 'complex') return options;
 
   return {
     ...options,

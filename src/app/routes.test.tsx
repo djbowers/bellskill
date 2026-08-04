@@ -9,7 +9,6 @@ import { createRoutes } from './routes';
 
 const flagsOff: Features = {
   bottomNav: false,
-  complexMode: false,
   explore: false,
   premium: false,
   programs: false,

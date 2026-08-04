@@ -3,6 +3,8 @@ import {
   mapProgramSessionCompletionRow,
   mapProgramSessionRow,
   mapUserProgramRow,
+  parseSessionWorkoutOptions,
+  serializeSessionWorkoutOptions,
 } from './program';
 
 describe('mapProgramRow', () => {
@@ -69,9 +71,10 @@ describe('mapProgramRow', () => {
 });
 
 describe('mapProgramSessionRow', () => {
-  it('maps a raw program_sessions row to camelCase and passes workoutOptions through verbatim', () => {
+  it('maps a raw program_sessions row to camelCase, reading the stored booleans as a workout mode', () => {
     const workoutOptions = {
       complexSet: false,
+      straightSets: true,
       movements: [{ movementName: 'Kettlebell Swing' }],
     };
     const row = {
@@ -93,7 +96,10 @@ describe('mapProgramSessionRow', () => {
       weekNumber: 1,
       dayNumber: 1,
       title: 'Week 1 Day 1',
-      workoutOptions,
+      workoutOptions: {
+        movements: workoutOptions.movements,
+        workoutMode: 'straightSets',
+      },
       notes: 'Go easy on the swings.',
       weightLabel: 'Deload weeks',
     });
@@ -193,4 +199,47 @@ describe('mapUserProgramRow', () => {
     expect(mapUserProgramRow(row).config).toEqual({ someKey: 'someValue' });
     expect(mapUserProgramRow(row).queuePosition).toBe(3);
   });
+});
+
+describe('program session workout_options JSONB', () => {
+  const baseOptions = {
+    intervalTimer: 0,
+    movements: [],
+    restTimer: 0,
+    sharedWeightOneUnit: null,
+    sharedWeightOneValue: null,
+    sharedWeightTwoUnit: null,
+    sharedWeightTwoValue: null,
+    title: null,
+    preWorkoutNotes: null,
+    workoutGoal: 20,
+    workoutGoalUnits: 'minutes' as const,
+  };
+
+  it.each([
+    [{ complexSet: true, straightSets: false }, 'complex'],
+    [{ complexSet: false, straightSets: true }, 'straightSets'],
+    [{ complexSet: false, straightSets: false }, 'circuit'],
+    // Sessions seeded before the flag existed carry neither key.
+    [{}, 'circuit'],
+  ] as const)('%o loads as %s', (stored, workoutMode) => {
+    expect(
+      parseSessionWorkoutOptions({ ...baseOptions, ...stored }).workoutMode,
+    ).toBe(workoutMode);
+  });
+
+  it.each(['circuit', 'straightSets', 'complex'] as const)(
+    '%s is written back as the original boolean pair',
+    (workoutMode) => {
+      const stored = serializeSessionWorkoutOptions({
+        ...baseOptions,
+        workoutMode,
+      }) as Record<string, unknown>;
+
+      expect(stored.workoutMode).toBeUndefined();
+      expect(stored.complexSet).toBe(workoutMode === 'complex');
+      expect(stored.straightSets).toBe(workoutMode === 'straightSets');
+      expect(parseSessionWorkoutOptions(stored).workoutMode).toBe(workoutMode);
+    },
+  );
 });

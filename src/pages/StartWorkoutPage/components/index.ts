@@ -16,6 +16,7 @@ export * from './RecommendedWorkoutsSection';
 export * from './StartProgramCard';
 export * from './StartWorkoutHero';
 export * from './WorkoutAddonToggle';
+export * from './WorkoutModeTabs';
 export * from './MovementAutocomplete';
 export * from './RecommendationCard';
 export * from './RecommendationPreviewDialog';

@@ -19,7 +19,7 @@ const session = (
   notes: null,
   weightLabel,
   workoutOptions: {
-    complexSet: true,
+    workoutMode: 'complex',
     intervalTimer: 30,
     restTimer: 0,
     title: null,

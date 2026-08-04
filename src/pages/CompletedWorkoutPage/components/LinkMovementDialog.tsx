@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '~/components/ui/dialog';
-import { MovementLog, WeightTabValue } from '~/types';
+import { MovementLog, WeightTabValue, WorkoutMode } from '~/types';
 import { WEIGHT_MODE_LABELS, getWeightTabValue } from '~/utils';
 
 import type { SharedWeights } from '../utils/resolveSharedWeights';
@@ -26,16 +26,16 @@ export interface LinkMovementDialogProps {
   workoutLogId: number;
   movementLog: MovementLog;
   movementIndex: number;
-  complexSet?: boolean | null;
+  workoutMode: WorkoutMode;
   sharedWeights: SharedWeights;
 }
 
 const getMovementWeightMode = (
   movementLog: MovementLog,
-  complexSet: boolean,
+  isComplexSet: boolean,
   sharedWeights: SharedWeights,
 ): WeightTabValue => {
-  if (complexSet) {
+  if (isComplexSet) {
     return getWeightTabValue(sharedWeights);
   }
   return getWeightTabValue(movementLog);
@@ -45,10 +45,10 @@ export const LinkMovementDialog = ({
   workoutLogId,
   movementLog,
   movementIndex,
-  complexSet = false,
+  workoutMode,
   sharedWeights,
 }: LinkMovementDialogProps) => {
-  const isComplexSet = complexSet === true;
+  const isComplexSet = workoutMode === 'complex';
   const weightMode = getMovementWeightMode(
     movementLog,
     isComplexSet,

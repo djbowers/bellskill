@@ -32,6 +32,8 @@ interface WorkoutLogRow {
   completed_reps: number;
   completed_rungs: number;
   completed_volume: number;
+  complex_set: boolean;
+  straight_sets: boolean;
 }
 
 // ── Auth helpers ─────────────────────────────────────────────────────────────
@@ -139,14 +141,15 @@ async function deleteWorkoutLog(
 test.describe('full workout flow', () => {
   let authSession: AuthSession;
   let createdWorkoutLogId: number | null = null;
+  let straightSetsWorkoutLogId: number | null = null;
 
   test.beforeAll(async () => {
     authSession = await signInWithPassword(TEST_EMAIL, TEST_PASSWORD);
   });
 
   test.afterAll(async () => {
-    if (createdWorkoutLogId !== null) {
-      await deleteWorkoutLog(createdWorkoutLogId, authSession.access_token);
+    for (const id of [createdWorkoutLogId, straightSetsWorkoutLogId]) {
+      if (id !== null) await deleteWorkoutLog(id, authSession.access_token);
     }
   });
 
@@ -239,5 +242,67 @@ test.describe('full workout flow', () => {
     expect(workoutLog!.completed_reps).toBe(5); // repScheme=[5]
     expect(workoutLog!.completed_rungs).toBe(1);
     expect(workoutLog!.completed_volume).toBe(80); // 16 kg × 5 reps
+    // Circuit is the default arrangement — neither persisted flag is set.
+    expect(workoutLog!.complex_set).toBe(false);
+    expect(workoutLog!.straight_sets).toBe(false);
+  });
+
+  test('a straight-sets workout traverses and persists as straight sets', async ({
+    page,
+  }) => {
+    await injectAuthSession(page, authSession);
+    await page.goto('/');
+
+    const buildWorkoutButton = page.getByRole('button', {
+      name: /build a workout/i,
+    });
+    await expect(buildWorkoutButton).toBeVisible({ timeout: 10_000 });
+    await buildWorkoutButton.click();
+
+    const startWorkoutButton = page.getByRole('button', {
+      name: 'Start workout',
+    });
+    await expect(startWorkoutButton).toBeVisible({ timeout: 10_000 });
+
+    await page.getByRole('tab', { name: 'Straight Sets' }).click();
+    await expect(page.getByRole('tab', { name: 'Straight Sets' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+
+    await page.getByRole('tab', { name: 'Rounds' }).click();
+    const minusRoundsButton = page.getByRole('button', { name: '- rounds' });
+    for (let i = 0; i < 9; i++) {
+      await minusRoundsButton.click();
+    }
+
+    await page.getByLabel('Movement Input').fill('Kettlebell Swing');
+
+    await expect(startWorkoutButton).toBeEnabled();
+    await startWorkoutButton.click();
+    await expect(page).toHaveURL(/\/active$/);
+
+    const continueButton = page.getByRole('button', { name: 'Continue' });
+    await expect(continueButton).toBeVisible();
+    await continueButton.click();
+
+    await expect(page).toHaveURL(/\/history\/\d+$/, { timeout: 10_000 });
+    const match = page.url().match(/\/history\/(\d+)$/);
+    const workoutLogId = parseInt(match![1], 10);
+    straightSetsWorkoutLogId = workoutLogId;
+
+    const workoutLog = await queryWorkoutLog(
+      workoutLogId,
+      authSession.access_token,
+    );
+
+    expect(workoutLog!.straight_sets).toBe(true);
+    expect(workoutLog!.complex_set).toBe(false);
+
+    // History labels the arrangement, so the mode survives the round trip.
+    await page.goto('/history');
+    await expect(page.getByText('Straight Sets').first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });

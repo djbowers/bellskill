@@ -31,7 +31,6 @@ vi.mock('~/hooks', async (importOriginal) => ({
 
 const BASE_FEATURES = {
   bottomNav: false,
-  complexMode: false,
   explore: false,
   premium: false,
   programs: true,

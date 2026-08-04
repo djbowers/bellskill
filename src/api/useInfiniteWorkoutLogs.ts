@@ -2,6 +2,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { WorkoutLog } from '~/types';
+import { toWorkoutMode } from '~/utils';
 
 import { supabase } from '../supabaseClient';
 
@@ -51,7 +52,6 @@ const fetchWorkoutLogsPage = async ({
       completedRungs: workoutLog.completed_rungs,
       completedSides: workoutLog.completed_sides,
       completedVolume: workoutLog.completed_volume,
-      complexSet: workoutLog.complex_set,
       id: workoutLog.id,
       intervalTimer: workoutLog.interval_timer,
       movements: workoutLog.movements,
@@ -62,7 +62,10 @@ const fetchWorkoutLogsPage = async ({
       sharedWeightTwoUnit: workoutLog.shared_weight_two_unit,
       sharedWeightTwoValue: workoutLog.shared_weight_two_value,
       startedAt: new Date(workoutLog.started_at),
-      straightSets: workoutLog.straight_sets,
+      workoutMode: toWorkoutMode(
+        workoutLog.complex_set,
+        workoutLog.straight_sets,
+      ),
       title: workoutLog.title,
       preWorkoutNotes: workoutLog.pre_workout_notes,
       workoutGoal: workoutLog.workout_goal,

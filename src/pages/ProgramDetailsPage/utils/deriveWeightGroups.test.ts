@@ -45,7 +45,7 @@ const firstMovementSession = (
   notes: null,
   weightLabel: extras.weightLabel ?? null,
   workoutOptions: {
-    complexSet: false,
+    workoutMode: 'circuit',
     intervalTimer: 0,
     restTimer: 0,
     title: null,

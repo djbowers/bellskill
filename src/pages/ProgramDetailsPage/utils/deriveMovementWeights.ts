@@ -36,7 +36,7 @@ const movementWeight = (movement: {
  *  for the whole complex, so enrollment offers a single shared weight rather
  *  than a control per movement. */
 export const isComplexProgram = (sessions: ProgramSession[]): boolean =>
-  sessions.some((session) => session.workoutOptions.complexSet);
+  sessions.some((session) => session.workoutOptions.workoutMode === 'complex');
 
 /**
  * One weight control per distinct movement (by name), in first-appearance order.

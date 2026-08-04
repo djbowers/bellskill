@@ -2,9 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { WorkoutOptions } from '~/types';
+import { fromWorkoutMode } from '~/utils';
 
 import type { Json } from '../../types/supabase';
 import { supabase } from '../supabaseClient';
+import { serializeSessionWorkoutOptions } from './program';
 import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
 export interface UpdateProgramSessionsForwardInput {
@@ -18,7 +20,7 @@ export interface UpdateProgramSessionsForwardInput {
 /**
  * "This and all future sessions": rewrites the edited session in full (same as
  * useUpdateProgramSession), then propagates only its movement prescription —
- * movements, shared weights, complexSet — onto every later not-yet-completed
+ * movements, shared weights, workout mode — onto every later not-yet-completed
  * session via the `update_program_sessions_forward` RPC. Each later session
  * keeps its own title, notes, goal, duration, and rest settings.
  *
@@ -36,7 +38,7 @@ export const useUpdateProgramSessionsForward = () => {
         .from('program_sessions')
         .update({
           title: input.title,
-          workout_options: input.workoutOptions as unknown as Json,
+          workout_options: serializeSessionWorkoutOptions(input.workoutOptions),
         })
         .eq('id', input.sessionId);
       if (updateError) throw updateError;
@@ -48,7 +50,7 @@ export const useUpdateProgramSessionsForward = () => {
         sharedWeightOneUnit: options.sharedWeightOneUnit,
         sharedWeightTwoValue: options.sharedWeightTwoValue,
         sharedWeightTwoUnit: options.sharedWeightTwoUnit,
-        complexSet: options.complexSet,
+        ...fromWorkoutMode(options.workoutMode),
       };
 
       const { data, error } = await supabase.rpc(

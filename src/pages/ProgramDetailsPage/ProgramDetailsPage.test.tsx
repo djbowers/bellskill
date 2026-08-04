@@ -79,7 +79,7 @@ const session = (
   day: number,
   title: string,
   movements: ReturnType<typeof movement>[],
-  { complexSet = false }: { complexSet?: boolean } = {},
+  { complex = false }: { complex?: boolean } = {},
 ) => ({
   id: `s-${seq}`,
   programId: 'p-1',
@@ -90,7 +90,7 @@ const session = (
   notes: null,
   weightLabel: null,
   workoutOptions: {
-    complexSet,
+    workoutMode: complex ? ('complex' as const) : ('circuit' as const),
     intervalTimer: 0,
     restTimer: 0,
     title: null,
@@ -386,7 +386,7 @@ describe('ProgramDetailsPage', () => {
               movement('Double Kettlebell Military Press', 24, 24),
               movement('Double Kettlebell Front Squat', 24, 24),
             ],
-            { complexSet: true },
+            { complex: true },
           ),
         ],
       },

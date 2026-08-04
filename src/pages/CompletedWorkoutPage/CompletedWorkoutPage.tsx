@@ -133,7 +133,7 @@ export const CompletedWorkoutPage = () => {
 
         <WorkoutHistoryItem
           completedAt={workoutLog.completedAt}
-          complexSet={workoutLog.complexSet}
+          workoutMode={workoutLog.workoutMode}
           intervalTimer={workoutLog.intervalTimer}
           movementLogs={movementLogs}
           movementLogsLoading={movementLogsLoading}
