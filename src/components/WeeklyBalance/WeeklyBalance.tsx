@@ -34,6 +34,8 @@ export interface WeeklyBalanceProps {
   isLoading?: boolean;
   isError?: boolean;
   onRetry?: () => void;
+  /** Shown when any pattern is Due/Overdue — jumps into the balance-focused recommender. */
+  onBalanceMe?: () => void;
 }
 
 /**
@@ -46,6 +48,7 @@ export const WeeklyBalance = ({
   isLoading = false,
   isError = false,
   onRetry,
+  onBalanceMe,
 }: WeeklyBalanceProps) => {
   const [expanded, setExpanded] = useState<Pattern | null>(null);
   // Gauges start empty and fill to their charge on mount — the panel's one
@@ -128,6 +131,18 @@ export const WeeklyBalance = ({
             }
           />
         ))}
+        {onBalanceMe &&
+          Object.values(balance.patterns).some(
+            (p) => !p.isNew && p.band !== 'green',
+          ) && (
+            <Button
+              className="mt-1 w-full"
+              variant="secondary"
+              onClick={onBalanceMe}
+            >
+              Balance me out
+            </Button>
+          )}
       </CardContent>
     </Card>
   );

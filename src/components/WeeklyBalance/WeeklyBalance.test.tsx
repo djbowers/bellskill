@@ -125,3 +125,35 @@ describe('WeeklyBalance', () => {
     expect(screen.getByText('Hard')).toBeInTheDocument();
   });
 });
+
+describe('WeeklyBalance — Balance me out CTA', () => {
+  test('shown when a pattern is Due/Overdue and fires the callback', () => {
+    const onBalanceMe = vi.fn();
+    render(
+      <WeeklyBalance
+        balance={mixedBalance}
+        workoutCount={5}
+        onBalanceMe={onBalanceMe}
+      />,
+    );
+    const cta = screen.getByRole('button', { name: /balance me out/i });
+    fireEvent.click(cta);
+    expect(onBalanceMe).toHaveBeenCalledTimes(1);
+  });
+
+  test('hidden when every trained pattern is On track', () => {
+    render(
+      <WeeklyBalance balance={balance} workoutCount={5} onBalanceMe={vi.fn()} />,
+    );
+    expect(
+      screen.queryByRole('button', { name: /balance me out/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  test('hidden when no handler is provided', () => {
+    render(<WeeklyBalance balance={mixedBalance} workoutCount={5} />);
+    expect(
+      screen.queryByRole('button', { name: /balance me out/i }),
+    ).not.toBeInTheDocument();
+  });
+});

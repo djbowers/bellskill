@@ -146,6 +146,43 @@ export const computeDebtScore = (
   return Math.round(100 * (W_RECENCY * recency + W_VOLUME * deficit));
 };
 
+/** Balance-mode coverage cap: the recommender targets at most this many patterns. */
+export const BALANCE_TARGET_LIMIT = 3;
+
+/** The fields target selection needs from a scored pattern (camelCase or serialized). */
+export interface BalanceTargetPattern {
+  pattern: Pattern;
+  band: DebtBand;
+  debtScore: number;
+  isNew: boolean;
+}
+
+/**
+ * Deterministic target selection for the recommender's balance mode: the
+ * highest-debt red-band patterns (non-New) that at least one candidate
+ * movement's credits can cover, capped at BALANCE_TARGET_LIMIT. Ties break on
+ * canonical PATTERNS order so results are stable.
+ */
+export const selectBalanceTargets = (
+  patterns: BalanceTargetPattern[],
+  candidateCredits: Array<readonly string[] | null>,
+  limit: number = BALANCE_TARGET_LIMIT,
+): Pattern[] => {
+  const coverable = new Set<string>();
+  for (const credits of candidateCredits) {
+    for (const credit of credits ?? []) coverable.add(credit);
+  }
+  return patterns
+    .filter((p) => p.band === 'red' && !p.isNew && coverable.has(p.pattern))
+    .sort(
+      (a, b) =>
+        b.debtScore - a.debtScore ||
+        PATTERNS.indexOf(a.pattern) - PATTERNS.indexOf(b.pattern),
+    )
+    .slice(0, limit)
+    .map((p) => p.pattern);
+};
+
 interface PatternAccumulator {
   lastTrained: Date | null;
   recentVolume: number;
