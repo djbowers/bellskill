@@ -3,9 +3,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERIES } from '~/constants';
 import { ProgramSession, WorkoutOptions } from '~/types';
 
-import type { Json } from '../../types/supabase';
 import { supabase } from '../supabaseClient';
-import { mapProgramSessionRow } from './program';
+import {
+  mapProgramSessionRow,
+  serializeSessionWorkoutOptions,
+} from './program';
 import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
 export interface UpdateProgramSessionInput {
@@ -36,7 +38,7 @@ export const useUpdateProgramSession = () => {
         .from('program_sessions')
         .update({
           title: input.title,
-          workout_options: input.workoutOptions as unknown as Json,
+          workout_options: serializeSessionWorkoutOptions(input.workoutOptions),
           ...(input.notes !== undefined ? { notes: input.notes } : {}),
         })
         .eq('id', input.sessionId)

@@ -11,7 +11,9 @@ import {
   WorkoutOptions,
 } from '~/types';
 
-import type { Database } from '../../types/supabase';
+import { fromWorkoutMode, toWorkoutMode } from '~/utils';
+
+import type { Database, Json } from '../../types/supabase';
 
 type ProgramRow = Database['public']['Tables']['programs']['Row'];
 type ProgramSessionRow =
@@ -41,10 +43,40 @@ export const mapProgramRow = (row: ProgramRow): Program => ({
   systemicDemand: row.systemic_demand as ProgramSystemicDemand | null,
 });
 
+/** The builder's options as they load into and out of a program session. */
+export type SessionWorkoutOptions = Omit<WorkoutOptions, 'startedAt'>;
+
+/**
+ * `program_sessions.workout_options` as stored: the builder's shape, except the
+ * arrangement is still the original `complexSet` / `straightSets` pair rather
+ * than `workoutMode`. Rewriting the JSONB is deliberately deferred, so these two
+ * mappers are the only translation.
+ */
+type StoredWorkoutOptions = Omit<SessionWorkoutOptions, 'workoutMode'> & {
+  complexSet?: boolean | null;
+  straightSets?: boolean | null;
+};
+
+/** Read stored session options into the builder's shape. */
+export const parseSessionWorkoutOptions = (
+  stored: unknown,
+): SessionWorkoutOptions => {
+  const { complexSet, straightSets, ...rest } = stored as StoredWorkoutOptions;
+  return { ...rest, workoutMode: toWorkoutMode(complexSet, straightSets) };
+};
+
+/** Write the builder's options back out in the stored JSONB shape. */
+export const serializeSessionWorkoutOptions = (
+  options: SessionWorkoutOptions,
+): Json => {
+  const { workoutMode, ...rest } = options;
+  return { ...rest, ...fromWorkoutMode(workoutMode) } as unknown as Json;
+};
+
 /**
  * camelCase mapper for a raw `program_sessions` row. `workout_options` is stored
- * verbatim as the builder's {@link WorkoutOptions} shape (minus `startedAt`), so
- * it round-trips with no field mapping.
+ * as the builder's {@link WorkoutOptions} shape (minus `startedAt`), so only the
+ * workout mode needs translating.
  */
 export const mapProgramSessionRow = (
   row: ProgramSessionRow,
@@ -55,10 +87,7 @@ export const mapProgramSessionRow = (
   weekNumber: row.week_number,
   dayNumber: row.day_number,
   title: row.title,
-  workoutOptions: row.workout_options as unknown as Omit<
-    WorkoutOptions,
-    'startedAt'
-  >,
+  workoutOptions: parseSessionWorkoutOptions(row.workout_options),
   notes: row.notes,
   weightLabel: row.weight_label,
 });

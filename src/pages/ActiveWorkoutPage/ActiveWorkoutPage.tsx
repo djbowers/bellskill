@@ -30,7 +30,7 @@ export const ActiveWorkoutPage = ({
 
   const [
     {
-      complexSet,
+      workoutMode,
       intervalTimer,
       movements,
       restTimer,
@@ -39,7 +39,6 @@ export const ActiveWorkoutPage = ({
       sharedWeightTwoUnit,
       sharedWeightTwoValue,
       startedAt,
-      straightSets,
       title,
       preWorkoutNotes,
       workoutGoal,
@@ -247,8 +246,10 @@ export const ActiveWorkoutPage = ({
       totalRungMilliseconds) *
     100;
 
+  const isComplex = workoutMode === 'complex';
+
   // Complex mode: round completes when the longest movement's final rung is done
-  const maxMovementRungs = complexSet
+  const maxMovementRungs = isComplex
     ? Math.max(...movements.map((m) => m.repScheme.length))
     : currentMovementRungs;
 
@@ -258,7 +259,7 @@ export const ActiveWorkoutPage = ({
   // (double) are excluded, keeping the two-hand and double-bell complexes on
   // their existing no-side-switch path.
   const isSingleArmComplex =
-    complexSet &&
+    isComplex &&
     movements.every(
       (m) =>
         m.weightOneValue !== null &&
@@ -380,7 +381,9 @@ export const ActiveWorkoutPage = ({
   };
 
   const advanceMovement = () =>
-    straightSets ? goToNextRungStraight() : goToNextMovement();
+    workoutMode === 'straightSets'
+      ? goToNextRungStraight()
+      : goToNextMovement();
 
   const goToNextSide = () => {
     if (isMirrorSet) {
@@ -429,7 +432,7 @@ export const ActiveWorkoutPage = ({
   const continueWorkout = () => {
     requestWakeLock();
     incrementSides(); // each continue completes one side of work
-    if (complexSet) {
+    if (isComplex) {
       incrementRepsComplex();
       incrementVolumeComplex();
       if (isSingleArmComplex) {
@@ -627,7 +630,7 @@ export const ActiveWorkoutPage = ({
         workoutTimerPaused={workoutTimerPaused}
       />
 
-      {complexSet ? (
+      {isComplex ? (
         <ComplexMovementDisplay
           currentRound={currentRound}
           currentSide={currentSide}
@@ -653,7 +656,9 @@ export const ActiveWorkoutPage = ({
           rightWeightUnit={rightWeightUnit}
           rightWeightValue={rightWeightValue}
           rungIndex={currentMovementRungIndex}
-          totalRungs={straightSets ? currentMovementRungs : undefined}
+          totalRungs={
+            workoutMode === 'straightSets' ? currentMovementRungs : undefined
+          }
           totalSides={totalSides}
           title={title}
           preWorkoutNotes={preWorkoutNotes}
@@ -671,7 +676,7 @@ export const ActiveWorkoutPage = ({
           formattedRungRemaining={formattedRungRemaining}
           intervalCompletedPercentage={intervalCompletedPercentage}
           intervalTimer={intervalTimer}
-          isComplexMode={complexSet}
+          isComplexMode={isComplex}
           isCountdownActive={isCountdownActive}
           isEffectActive={isEffectActive}
           isRestActive={isRestActive}

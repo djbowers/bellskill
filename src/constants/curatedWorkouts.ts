@@ -18,7 +18,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
     subtitle: 'Power from the hips — 50 swings to learn the hinge.',
     estimatedMinutes: 10,
     workoutOptions: {
-      complexSet: false,
+      workoutMode: 'circuit',
       intervalTimer: 0,
       restTimer: 60,
       movements: [
@@ -47,7 +47,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
     subtitle: 'Build overhead pressing strength, one arm at a time.',
     estimatedMinutes: 8,
     workoutOptions: {
-      complexSet: false,
+      workoutMode: 'circuit',
       intervalTimer: 0,
       restTimer: 60,
       movements: [
@@ -77,7 +77,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
     subtitle: 'Grease the squat holding the bell at your chest.',
     estimatedMinutes: 8,
     workoutOptions: {
-      complexSet: false,
+      workoutMode: 'circuit',
       intervalTimer: 0,
       restTimer: 60,
       movements: [

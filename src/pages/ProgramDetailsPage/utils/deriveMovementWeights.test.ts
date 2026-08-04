@@ -26,7 +26,7 @@ const movement = (
 const session = (
   seq: number,
   movements: MovementOptions[],
-  { complexSet = false }: { complexSet?: boolean } = {},
+  { complex = false }: { complex?: boolean } = {},
 ): ProgramSession => ({
   id: `s-${seq}`,
   programId: 'p',
@@ -37,7 +37,7 @@ const session = (
   notes: null,
   weightLabel: null,
   workoutOptions: {
-    complexSet,
+    workoutMode: complex ? ('complex' as const) : ('circuit' as const),
     intervalTimer: 0,
     restTimer: 0,
     title: null,
@@ -132,7 +132,7 @@ describe('isComplexProgram', () => {
   it('is true when any session is a complex set', () => {
     expect(
       isComplexProgram([
-        session(0, [movement('Clean', 24, 24)], { complexSet: true }),
+        session(0, [movement('Clean', 24, 24)], { complex: true }),
       ]),
     ).toBe(true);
   });

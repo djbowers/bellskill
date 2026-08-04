@@ -24,7 +24,6 @@ vi.mock('~/hooks', async (importOriginal) => ({
 
 const allFlagsOff = {
   bottomNav: false,
-  complexMode: false,
   explore: false,
   premium: false,
   programs: false,

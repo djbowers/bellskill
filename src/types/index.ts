@@ -16,4 +16,5 @@ export * from './weight-tab.type';
 export * from './weight-unit.type';
 export * from './workout-goal-units.type';
 export * from './workout-log.interface';
+export * from './workout-mode.type';
 export * from './workout-options.interface';

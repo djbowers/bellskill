@@ -16,7 +16,7 @@ const nextSession: NextProgramSession = {
     notes: null,
     weightLabel: null,
     workoutOptions: {
-      complexSet: false,
+      workoutMode: 'circuit',
       intervalTimer: 0,
       movements: [],
       restTimer: 0,
@@ -31,7 +31,7 @@ const nextSession: NextProgramSession = {
     },
   },
   workoutOptions: {
-    complexSet: false,
+    workoutMode: 'circuit',
     intervalTimer: 0,
     movements: [],
     restTimer: 0,

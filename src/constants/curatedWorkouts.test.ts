@@ -35,7 +35,7 @@ describe('CURATED_WORKOUTS', () => {
       const { workoutOptions } = workout;
 
       // Beginner-friendly: simple, no complex sets.
-      expect(workoutOptions.complexSet).toBe(false);
+      expect(workoutOptions.workoutMode).toBe('circuit');
       expect(workoutOptions.sharedWeightOneValue).toBeNull();
       expect(workoutOptions.intervalTimer).toBe(0);
       expect(workoutOptions.workoutGoal).toBeGreaterThan(0);
@@ -93,7 +93,7 @@ describe('CURATED_WORKOUTS', () => {
     );
 
     expect(swing?.workoutOptions).toEqual({
-      complexSet: false,
+      workoutMode: 'circuit',
       intervalTimer: 0,
       restTimer: 60,
       movements: [

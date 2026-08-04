@@ -9,7 +9,6 @@ const baseWorkoutLog = (overrides: Partial<WorkoutLog> = {}): WorkoutLog => ({
   completedRungs: 5,
   completedSides: null,
   completedVolume: null,
-  complexSet: false,
   id: 1,
   intervalTimer: 0,
   movements: [],
@@ -20,7 +19,7 @@ const baseWorkoutLog = (overrides: Partial<WorkoutLog> = {}): WorkoutLog => ({
   sharedWeightTwoUnit: null,
   sharedWeightTwoValue: null,
   startedAt: new Date('2026-01-01T10:00:00.000Z'),
-  straightSets: false,
+  workoutMode: 'circuit',
   title: 'Morning swings',
   preWorkoutNotes: null,
   workoutGoal: 5,
@@ -49,7 +48,7 @@ describe('workoutLogToWorkoutOptions', () => {
     ]);
 
     expect(result).toEqual({
-      complexSet: false,
+      workoutMode: 'circuit',
       intervalTimer: 0,
       restTimer: 60,
       movements: [
@@ -67,7 +66,6 @@ describe('workoutLogToWorkoutOptions', () => {
       sharedWeightOneValue: null,
       sharedWeightTwoUnit: null,
       sharedWeightTwoValue: null,
-      straightSets: false,
       title: 'Morning swings',
       preWorkoutNotes: null,
       workoutGoal: 5,
@@ -94,18 +92,20 @@ describe('workoutLogToWorkoutOptions', () => {
     expect(result.workoutGoalUnits).toBe('kilograms');
   });
 
-  test('carries the straight-sets order through a repeat', () => {
-    const result = workoutLogToWorkoutOptions(
-      baseWorkoutLog({ straightSets: true }),
-      [movementLog()],
-    );
-    expect(result.straightSets).toBe(true);
-  });
+  test.each(['circuit', 'straightSets', 'complex'] as const)(
+    'carries the %s arrangement through a repeat',
+    (workoutMode) => {
+      const result = workoutLogToWorkoutOptions(baseWorkoutLog({ workoutMode }), [
+        movementLog(),
+      ]);
+      expect(result.workoutMode).toBe(workoutMode);
+    },
+  );
 
   test('applies shared weights to every movement for complex workouts', () => {
     const result = workoutLogToWorkoutOptions(
       baseWorkoutLog({
-        complexSet: true,
+        workoutMode: 'complex',
         sharedWeightOneUnit: 'kilograms',
         sharedWeightOneValue: 24,
       }),
@@ -115,7 +115,7 @@ describe('workoutLogToWorkoutOptions', () => {
       ],
     );
 
-    expect(result.complexSet).toBe(true);
+    expect(result.workoutMode).toBe('complex');
     expect(result.sharedWeightOneValue).toBe(24);
     expect(result.movements).toEqual([
       expect.objectContaining({

@@ -3,9 +3,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERIES } from '~/constants';
 import { ProgramSession } from '~/types';
 
-import type { Json } from '../../types/supabase';
 import { supabase } from '../supabaseClient';
-import { mapProgramSessionRow } from './program';
+import {
+  mapProgramSessionRow,
+  serializeSessionWorkoutOptions,
+} from './program';
 import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler';
 
 export interface DuplicateProgramSessionInput {
@@ -38,7 +40,7 @@ const sessionInsert = (
   week_number: weekNumber,
   day_number: dayNumber,
   title: session.title,
-  workout_options: session.workoutOptions as unknown as Json,
+  workout_options: serializeSessionWorkoutOptions(session.workoutOptions),
   notes: session.notes,
   // A duplicate runs at the same weight, so it belongs to the same weight group.
   weight_label: session.weightLabel,

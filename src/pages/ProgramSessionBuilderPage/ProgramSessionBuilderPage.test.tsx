@@ -95,7 +95,7 @@ const session = {
   title: 'Ladders 1-2-3',
   notes: null,
   workoutOptions: {
-    complexSet: false,
+    workoutMode: 'circuit',
     intervalTimer: 0,
     restTimer: 0,
     title: null,

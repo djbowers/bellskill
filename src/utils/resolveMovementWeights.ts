@@ -1,7 +1,7 @@
-import { MovementOptions, WeightUnit } from '~/types';
+import { MovementOptions, WeightUnit, WorkoutMode } from '~/types';
 
 export interface SharedWeightOptions {
-  complexSet: boolean;
+  workoutMode: WorkoutMode;
   sharedWeightOneUnit: WeightUnit | null;
   sharedWeightOneValue: number | null;
   sharedWeightTwoUnit: WeightUnit | null;
@@ -17,7 +17,7 @@ export const resolveMovementWeights = <T extends MovementOptions>(
   movement: T,
   options: SharedWeightOptions,
 ): T => {
-  if (!options.complexSet) return movement;
+  if (options.workoutMode !== 'complex') return movement;
 
   return {
     ...movement,

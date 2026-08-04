@@ -1,14 +1,12 @@
 import { MovementOptions } from './movement-options.interface';
 import { WeightUnit } from './weight-unit.type';
 import { WorkoutGoalUnits } from './workout-goal-units.type';
+import { WorkoutMode } from './workout-mode.type';
 
 export interface WorkoutOptions {
-  complexSet: boolean;
   intervalTimer: number; // seconds
   movements: MovementOptions[];
-  // Traversal order: when true, every rung of a movement is completed before the
-  // next movement starts. Absent/false rotates through the movements each rung.
-  straightSets?: boolean;
+  workoutMode: WorkoutMode;
   restTimer: number; // seconds
   sharedWeightOneUnit: WeightUnit | null;
   sharedWeightOneValue: number | null;

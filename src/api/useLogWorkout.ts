@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERIES } from '~/constants';
 import { useProgramSession, useSession, useWorkoutOptions } from '~/contexts';
 import { WorkoutLog, WorkoutOptions } from '~/types';
+import { fromWorkoutMode } from '~/utils';
 
 import { supabase } from '../supabaseClient';
 import { AnalyticsEvent, trackEvent } from './analytics';
@@ -100,6 +101,15 @@ export const useLogWorkout = () => {
   });
 };
 
+/**
+ * The two persisted mode columns. `workout_logs` still stores the arrangement as
+ * `complex_set` / `straight_sets`; this is the only write-side translation.
+ */
+const toWorkoutLogModeColumns = (mode: WorkoutOptions['workoutMode']) => {
+  const { complexSet, straightSets } = fromWorkoutMode(mode);
+  return { complex_set: complexSet, straight_sets: straightSets };
+};
+
 const logWorkout = async ({
   completedReps,
   completedRounds,
@@ -118,7 +128,7 @@ const logWorkout = async ({
   workoutOptions: WorkoutOptions;
 }) => {
   const {
-    complexSet,
+    workoutMode,
     intervalTimer,
     movements,
     restTimer,
@@ -127,7 +137,6 @@ const logWorkout = async ({
     sharedWeightTwoUnit,
     sharedWeightTwoValue,
     startedAt,
-    straightSets,
     title,
     preWorkoutNotes,
     workoutGoal,
@@ -156,7 +165,7 @@ const logWorkout = async ({
       completed_rungs: completedRungs,
       completed_sides: completedSides,
       completed_volume: completedVolume,
-      complex_set: complexSet,
+      ...toWorkoutLogModeColumns(workoutMode),
       interval_timer: intervalTimer,
       movements: movements.map((movement) => movement.movementName),
       rest_timer: restTimer,
@@ -165,7 +174,6 @@ const logWorkout = async ({
       shared_weight_two_unit: sharedWeightTwoUnit,
       shared_weight_two_value: sharedWeightTwoValue,
       started_at: (startedAt ?? new Date()).toISOString(),
-      straight_sets: straightSets ?? false,
       user_id: userId,
       title,
       pre_workout_notes: preWorkoutNotes,

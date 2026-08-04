@@ -29,7 +29,7 @@ const mockSession = {
 };
 
 const workoutOptions = {
-  complexSet: false,
+  workoutMode: 'circuit' as const,
   intervalTimer: 0,
   restTimer: 0,
   title: null,

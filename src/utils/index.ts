@@ -16,3 +16,4 @@ export * from './stackFit';
 export * from './timerSound';
 export * from './weightUnits';
 export * from './workoutLogToWorkoutOptions';
+export * from './workoutMode';

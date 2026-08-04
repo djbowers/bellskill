@@ -7,7 +7,12 @@ import {
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { getWeightsDisplayValue } from '~/pages/CompletedWorkoutPage/utils/displayValues';
-import { MovementOptions, WeightTabValue, WeightUnit } from '~/types';
+import {
+  MovementOptions,
+  WeightTabValue,
+  WeightUnit,
+  WorkoutMode,
+} from '~/types';
 import {
   SharedWeightOptions,
   WEIGHT_MODE_LABELS,
@@ -28,11 +33,11 @@ import { WeightUnitTabs } from './WeightUnitTabs';
 export interface MovementCardProps {
   index: number;
   movement: MovementOptions;
-  complexSet: boolean;
+  workoutMode: WorkoutMode;
   /** For complex sets the whole card reflects the shared-weight mode. */
   sharedWeightTabValue: WeightTabValue;
   /** The complex set's shared weight, displayed in place of the movement's own. */
-  sharedWeights: Omit<SharedWeightOptions, 'complexSet'>;
+  sharedWeights: Omit<SharedWeightOptions, 'workoutMode'>;
   expanded: boolean;
   /** The interval timer is on, so timed rungs must be disabled. */
   intervalActive: boolean;
@@ -53,7 +58,7 @@ export interface MovementCardProps {
 export const MovementCard = ({
   index,
   movement,
-  complexSet,
+  workoutMode,
   sharedWeightTabValue,
   sharedWeights,
   expanded,
@@ -71,11 +76,12 @@ export const MovementCard = ({
   onAddRung,
   onToggleTimed,
 }: MovementCardProps) => {
+  const isComplex = workoutMode === 'complex';
   const weightTabValue = getWeightTabValue(movement);
-  const activeWeightMode = complexSet ? sharedWeightTabValue : weightTabValue;
+  const activeWeightMode = isComplex ? sharedWeightTabValue : weightTabValue;
   const named = movement.movementName.length > 0;
   const displayedMovement = resolveMovementWeights(movement, {
-    complexSet,
+    workoutMode,
     ...sharedWeights,
   });
   const weightSummary = named
@@ -86,7 +92,7 @@ export const MovementCard = ({
         displayedMovement.weightTwoUnit,
       )
     : null;
-  const showLoad = !complexSet && weightTabValue !== 'none';
+  const showLoad = !isComplex && weightTabValue !== 'none';
 
   return (
     <Card className="overflow-hidden">
@@ -107,7 +113,7 @@ export const MovementCard = ({
               onWeightModeChange={onChangeWeightTab}
               showWeightModeTabs={false}
               weightModeHint={
-                complexSet
+                isComplex
                   ? `Using shared weight: ${WEIGHT_MODE_LABELS[sharedWeightTabValue]}`
                   : null
               }
@@ -167,7 +173,7 @@ export const MovementCard = ({
         <div className="flex flex-col gap-1.5 px-1.5 pb-1.5">
           <div className="h-px bg-border" />
 
-          {!complexSet && (
+          {!isComplex && (
             <div>
               <FieldLabel className="mb-0.5">Weight</FieldLabel>
               <WeightModeTabs

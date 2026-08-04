@@ -1,3 +1,5 @@
+import { WorkoutMode } from '~/types';
+
 import { resolveMovementWeights } from './resolveMovementWeights';
 
 const movement = (overrides = {}) => ({
@@ -11,7 +13,7 @@ const movement = (overrides = {}) => ({
 });
 
 const shared = (overrides = {}) => ({
-  complexSet: true,
+  workoutMode: 'complex' as WorkoutMode,
   sharedWeightOneUnit: 'kilograms' as const,
   sharedWeightOneValue: 28,
   sharedWeightTwoUnit: null,
@@ -32,12 +34,13 @@ describe('resolveMovementWeights', () => {
     expect(result.weightTwoValue).toBe(35);
   });
 
-  test('leaves the movement untouched when not complex', () => {
-    const input = movement();
-    expect(resolveMovementWeights(input, shared({ complexSet: false }))).toBe(
-      input,
-    );
-  });
+  test.each(['circuit', 'straightSets'] as const)(
+    'leaves the movement untouched in %s mode',
+    (workoutMode) => {
+      const input = movement();
+      expect(resolveMovementWeights(input, shared({ workoutMode }))).toBe(input);
+    },
+  );
 
   test('null shared weights read as bodyweight', () => {
     const result = resolveMovementWeights(

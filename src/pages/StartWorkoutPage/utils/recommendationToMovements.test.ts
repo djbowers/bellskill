@@ -151,6 +151,34 @@ describe('recommendationToWorkoutOptions', () => {
     expect(options.workoutGoal).toBe(20);
     expect(options.workoutGoalUnits).toBe('minutes');
   });
+
+  test.each([
+    ['Straight Sets', 'straightSets'],
+    ['Circuit', 'circuit'],
+    ['EMOM', 'circuit'],
+    ['AMRAP', 'circuit'],
+    ['Ladder', 'circuit'],
+  ] as const)('a %s recommendation loads as %s', (format, workoutMode) => {
+    const options = recommendationToWorkoutOptions({
+      ...recommendation([[TWO_HAND_SWING, 24]]),
+      format,
+    });
+
+    expect(options.workoutMode).toBe(workoutMode);
+  });
+
+  test('a straight-sets recommendation with unequal rungs is exempt from the equal-rungs rule', () => {
+    const rec = recommendation([
+      [TWO_HAND_SWING, 24],
+      [DOUBLE_KB_FRONT_SQUAT, 24],
+    ]);
+    rec.blocks[0].rep_scheme = [5, 4, 3, 2];
+    rec.blocks[1].rep_scheme = [5, 5, 5];
+
+    const options = recommendationToWorkoutOptions(rec);
+
+    expect(options.workoutMode).toBe('straightSets');
+  });
 });
 
 describe('buildRecommendationCatalog', () => {

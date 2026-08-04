@@ -1,3 +1,5 @@
+import { WorkoutMode } from '~/types';
+
 import { applySharedWeights } from './applySharedWeights';
 
 const movement = (overrides = {}) => ({
@@ -11,7 +13,7 @@ const movement = (overrides = {}) => ({
 });
 
 const options = (overrides = {}) => ({
-  complexSet: true,
+  workoutMode: 'complex' as WorkoutMode,
   movements: [movement(), movement({ movementName: 'Jerk' })],
   sharedWeightOneUnit: 'kilograms' as const,
   sharedWeightOneValue: 28,
@@ -37,11 +39,14 @@ describe('applySharedWeights', () => {
     });
   });
 
-  test('leaves non-complex options untouched', () => {
-    const input = options({ complexSet: false });
-    expect(applySharedWeights(input)).toBe(input);
-    expect(input.movements[0].weightOneValue).toBe(24);
-  });
+  test.each(['circuit', 'straightSets'] as const)(
+    'leaves %s options untouched',
+    (workoutMode) => {
+      const input = options({ workoutMode });
+      expect(applySharedWeights(input)).toBe(input);
+      expect(input.movements[0].weightOneValue).toBe(24);
+    },
+  );
 
   test('null shared weights clear per-movement weights (bodyweight complex)', () => {
     const result = applySharedWeights(

@@ -23,7 +23,6 @@ const mockedUseFeatures = vi.mocked(useFeatures);
 
 const allOff = {
   bottomNav: true,
-  complexMode: false,
   explore: false,
   premium: false,
   programs: false,

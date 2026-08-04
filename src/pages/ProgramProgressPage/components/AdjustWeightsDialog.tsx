@@ -59,7 +59,7 @@ export const AdjustWeightsDialog = ({
     () => selectWeightModalSessions(sessionItems),
     [sessionItems],
   );
-  // complexSet is a program-level property — check the full clone, not just the
+  // Complex is a program-level property — check the full clone, not just the
   // modal subset (week-4 A+A would otherwise look non-complex if only completed
   // work were somehow empty and we fell through oddly).
   const allSessions = useMemo(

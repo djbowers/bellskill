@@ -25,7 +25,7 @@ export const workoutLogToWorkoutOptions = (
       ? workoutLog.completedVolume
       : undefined;
 
-  const isComplexSet = workoutLog.complexSet === true;
+  const isComplexSet = workoutLog.workoutMode === 'complex';
   const sharedWeights = resolveSharedWeights(
     workoutLog.sharedWeightOneValue,
     workoutLog.sharedWeightOneUnit,
@@ -35,7 +35,7 @@ export const workoutLogToWorkoutOptions = (
   );
 
   return applySharedWeights({
-    complexSet: isComplexSet,
+    workoutMode: workoutLog.workoutMode,
     intervalTimer: workoutLog.intervalTimer,
     movements: movementLogs.map((movementLog) => ({
       movementName: movementLog.movementName,
@@ -51,7 +51,6 @@ export const workoutLogToWorkoutOptions = (
     sharedWeightOneValue: isComplexSet ? sharedWeights.weightOneValue : null,
     sharedWeightTwoUnit: isComplexSet ? sharedWeights.weightTwoUnit : null,
     sharedWeightTwoValue: isComplexSet ? sharedWeights.weightTwoValue : null,
-    straightSets: workoutLog.straightSets === true,
     title: workoutLog.title,
     preWorkoutNotes: workoutLog.preWorkoutNotes,
     workoutGoal: workoutLog.workoutGoal,

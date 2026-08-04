@@ -2,7 +2,6 @@ import { Session } from '@supabase/supabase-js';
 
 export type FeatureName =
   | 'bottomNav'
-  | 'complexMode'
   | 'explore'
   | 'premium'
   | 'programs'
@@ -22,7 +21,6 @@ export type Features = Record<FeatureName, boolean>;
  */
 const baseFeatures: Features = {
   bottomNav: import.meta.env.VITE_FEATURE_BOTTOMNAV === 'true',
-  complexMode: import.meta.env.VITE_FEATURE_COMPLEX_MODE === 'true',
   explore: import.meta.env.VITE_FEATURE_EXPLORE === 'true',
   premium: import.meta.env.VITE_FEATURE_PREMIUM === 'true',
   programs: import.meta.env.VITE_FEATURE_PROGRAMS === 'true',
@@ -93,7 +91,6 @@ export const getFeatures = (session?: Session | null): Features => {
   if (isDeployPreview() || isPreviewingAllFeatures(session)) {
     return {
       bottomNav: true,
-      complexMode: true,
       explore: true,
       premium: true,
       programs: true,

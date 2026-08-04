@@ -342,7 +342,7 @@ describe('ProgramProgressPage', () => {
           session: {
             ...item.session,
             workoutOptions: {
-              complexSet: false,
+              workoutMode: 'circuit',
               sharedWeightOneValue: null,
               sharedWeightOneUnit: null,
               sharedWeightTwoValue: null,

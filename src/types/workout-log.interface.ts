@@ -1,6 +1,7 @@
 import { RpeOptions } from './rpe-options.type';
 import { WeightUnit } from './weight-unit.type';
 import { WorkoutGoalUnits } from './workout-goal-units.type';
+import { WorkoutMode } from './workout-mode.type';
 
 export interface WorkoutLog {
   completedAt: Date;
@@ -9,7 +10,6 @@ export interface WorkoutLog {
   completedRungs: number;
   completedSides: number | null;
   completedVolume: number | null;
-  complexSet: boolean | null;
   id: number;
   intervalTimer: number;
   movements: string[];
@@ -20,7 +20,7 @@ export interface WorkoutLog {
   sharedWeightTwoUnit: WeightUnit | null;
   sharedWeightTwoValue: number | null;
   startedAt: Date;
-  straightSets: boolean | null;
+  workoutMode: WorkoutMode;
   title: string | null;
   preWorkoutNotes: string | null;
   workoutGoal: number;

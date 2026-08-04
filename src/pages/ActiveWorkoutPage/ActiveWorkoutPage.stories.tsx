@@ -253,7 +253,7 @@ export const AAProtocolPlanASession: Story = {
     workoutOptions: {
       intervalTimer: 30,
       restTimer: 0,
-      complexSet: false,
+      workoutMode: 'circuit',
       workoutGoal: 30,
       workoutGoalUnits: 'minutes',
       movements: [
@@ -280,7 +280,7 @@ export const AAProtocolPlanASession: Story = {
 export const SingleArmComplexEMOM: Story = {
   parameters: {
     workoutOptions: {
-      complexSet: true,
+      workoutMode: 'complex',
       intervalTimer: 30,
       restTimer: 0,
       workoutGoal: 30,
@@ -324,7 +324,7 @@ export const KettlebellMileSession: Story = {
     workoutOptions: {
       intervalTimer: 0,
       restTimer: 0,
-      complexSet: false,
+      workoutMode: 'circuit',
       workoutGoal: 3,
       workoutGoalUnits: 'rounds',
       movements: [
@@ -751,7 +751,7 @@ export const DecimalVolumeCalculation: Story = {
 export const ComplexMode: Story = {
   parameters: {
     workoutOptions: {
-      complexSet: true,
+      workoutMode: 'complex',
       sharedWeightOneValue: 24,
       sharedWeightOneUnit: 'kilograms',
       movements: [
@@ -790,7 +790,7 @@ export const ComplexMode: Story = {
 export const ComplexModeDoubleBells: Story = {
   parameters: {
     workoutOptions: {
-      complexSet: true,
+      workoutMode: 'complex',
       sharedWeightOneValue: 20,
       sharedWeightOneUnit: 'kilograms',
       sharedWeightTwoValue: 16,
@@ -822,7 +822,7 @@ export const ComplexModeDoubleBells: Story = {
 export const ComplexModeDifferentRepSchemes: Story = {
   parameters: {
     workoutOptions: {
-      complexSet: true,
+      workoutMode: 'complex',
       sharedWeightOneValue: 16,
       sharedWeightOneUnit: 'kilograms',
       movements: [
@@ -888,7 +888,7 @@ const ARMOR_BUILDING_COMPLEX_MOVEMENTS = [
 export const ArmorBuildingComplex: Story = {
   parameters: {
     workoutOptions: {
-      complexSet: true,
+      workoutMode: 'complex',
       restTimer: 30,
       workoutGoal: 5,
       workoutGoalUnits: 'rounds',
@@ -906,7 +906,7 @@ export const ArmorBuildingComplex: Story = {
 export const ArmorBuildingComplexContinuous: Story = {
   parameters: {
     workoutOptions: {
-      complexSet: true,
+      workoutMode: 'complex',
       restTimer: 0,
       workoutGoal: 5,
       workoutGoalUnits: 'rounds',
@@ -941,7 +941,7 @@ const EASY_STRENGTH_MOVEMENTS = [
 export const StraightSets: Story = {
   parameters: {
     workoutOptions: {
-      straightSets: true,
+      workoutMode: 'straightSets',
       workoutGoal: 1,
       workoutGoalUnits: 'rounds',
       movements: EASY_STRENGTH_MOVEMENTS,
@@ -954,7 +954,7 @@ export const StraightSets: Story = {
 export const StraightSetsUnevenLadders: Story = {
   parameters: {
     workoutOptions: {
-      straightSets: true,
+      workoutMode: 'straightSets',
       workoutGoal: 1,
       workoutGoalUnits: 'rounds',
       movements: [

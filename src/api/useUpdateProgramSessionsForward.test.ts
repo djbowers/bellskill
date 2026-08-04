@@ -50,8 +50,14 @@ const makeWrapper = () => {
     );
 };
 
+const omitWorkoutMode = (options: Omit<WorkoutOptions, 'startedAt'>) => {
+  const stored: Partial<Omit<WorkoutOptions, 'startedAt'>> = { ...options };
+  delete stored.workoutMode;
+  return stored;
+};
+
 const workoutOptions: Omit<WorkoutOptions, 'startedAt'> = {
-  complexSet: false,
+  workoutMode: 'circuit',
   intervalTimer: 0,
   movements: [
     {
@@ -109,7 +115,12 @@ describe('useUpdateProgramSessionsForward', () => {
     expect(patchUrl).toContain('id=eq.ps-1');
     expect(patchBody).toEqual({
       title: 'Week 2 Day 1',
-      workout_options: workoutOptions,
+      // The JSONB keeps the original boolean pair, not the app's workoutMode.
+      workout_options: {
+        ...omitWorkoutMode(workoutOptions),
+        complexSet: false,
+        straightSets: false,
+      },
     });
 
     expect(rpcBody).toEqual({
@@ -120,7 +131,10 @@ describe('useUpdateProgramSessionsForward', () => {
         sharedWeightOneUnit: workoutOptions.sharedWeightOneUnit,
         sharedWeightTwoValue: workoutOptions.sharedWeightTwoValue,
         sharedWeightTwoUnit: workoutOptions.sharedWeightTwoUnit,
-        complexSet: workoutOptions.complexSet,
+        // The RPC still merges the persisted booleans, so the mode is
+        // translated on the way out.
+        complexSet: false,
+        straightSets: false,
       },
     });
   });

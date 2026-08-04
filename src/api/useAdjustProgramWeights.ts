@@ -13,7 +13,7 @@ export interface AdjustProgramWeightsArgs {
   /** The active enrollment whose upcoming sessions get the new weights. */
   userProgramId: string;
   /**
-   * New shared bell pair for complexSet programs, mirroring workout_options'
+   * New shared bell pair for complex programs, mirroring workout_options'
    * sharedWeightOne/Two value+unit shape. Provide either these or
    * `movementWeights`, matching the enrollment picker for the program.
    */

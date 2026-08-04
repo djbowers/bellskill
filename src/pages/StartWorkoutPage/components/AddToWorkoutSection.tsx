@@ -1,31 +1,21 @@
 import { WorkoutAddonToggle } from './WorkoutAddonToggle';
 
 export const AddToWorkoutSection = ({
-  complexSet,
   hasNotes,
   hasInterval,
   hasRest,
   hasTimedMovements = false,
-  onToggleComplex,
   onToggleInterval,
   onToggleNotes,
   onToggleRest,
-  onToggleStraightSets,
-  showComplex,
-  straightSets,
 }: {
-  complexSet: boolean;
   hasNotes: boolean;
   hasInterval: boolean;
   hasRest: boolean;
   hasTimedMovements?: boolean;
-  onToggleComplex: () => void;
   onToggleInterval: () => void;
   onToggleNotes: () => void;
   onToggleRest: () => void;
-  onToggleStraightSets: () => void;
-  showComplex: boolean;
-  straightSets: boolean;
 }) => {
   return (
     <section aria-label="Add to workout">
@@ -53,20 +43,6 @@ export const AddToWorkoutSection = ({
           isOn={hasRest}
           onToggle={onToggleRest}
         />
-        <WorkoutAddonToggle
-          id="straight-sets"
-          label="Straight Sets"
-          isOn={straightSets}
-          onToggle={onToggleStraightSets}
-        />
-        {showComplex && (
-          <WorkoutAddonToggle
-            id="complex"
-            label="Complex"
-            isOn={complexSet}
-            onToggle={onToggleComplex}
-          />
-        )}
       </div>
     </section>
   );

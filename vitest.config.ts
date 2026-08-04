@@ -15,7 +15,6 @@ export default mergeConfig(
       // runs are identical on every machine and in CI.
       env: {
         VITE_FEATURE_BOTTOMNAV: 'false',
-        VITE_FEATURE_COMPLEX_MODE: 'true',
         VITE_FEATURE_EXPLORE: 'true',
         VITE_FEATURE_PREMIUM: 'false',
         VITE_FEATURE_PROGRAMS: 'true',

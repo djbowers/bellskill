@@ -14,6 +14,7 @@ import {
   useProgramSession,
 } from '~/contexts';
 import { QUERIES } from '~/constants';
+import { WorkoutMode } from '~/types';
 import { VITE_SUPABASE_URL } from '../env';
 import { server } from '~/mocks/server';
 
@@ -43,10 +44,10 @@ const defaultMovement = {
   movementName: 'Kettlebell Swing',
 };
 
-function makeWrapper(complexSet: boolean) {
+function makeWrapper(workoutMode: WorkoutMode = 'circuit') {
   const workoutOptions = {
     ...DEFAULT_WORKOUT_OPTIONS,
-    complexSet,
+    workoutMode,
     movements: [defaultMovement],
   };
 
@@ -78,7 +79,7 @@ const logWorkoutInput = {
   completedVolume: 120,
 };
 
-describe('useLogWorkout — complex_set persistence', () => {
+describe('useLogWorkout — workout mode persistence', () => {
   beforeEach(() => {
     server.use(
       http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
@@ -86,7 +87,11 @@ describe('useLogWorkout — complex_set persistence', () => {
     );
   });
 
-  test('sends complex_set: true when complexSet is true', async () => {
+  test.each([
+    ['circuit', { complex_set: false, straight_sets: false }],
+    ['straightSets', { complex_set: false, straight_sets: true }],
+    ['complex', { complex_set: true, straight_sets: false }],
+  ] as const)('%s mode writes the matching columns', async (mode, columns) => {
     let capturedBody: Record<string, unknown> | null = null;
 
     server.use(
@@ -97,7 +102,7 @@ describe('useLogWorkout — complex_set persistence', () => {
     );
 
     const { result } = renderHook(() => useLogWorkout(), {
-      wrapper: makeWrapper(true),
+      wrapper: makeWrapper(mode),
     });
 
     act(() => {
@@ -107,31 +112,8 @@ describe('useLogWorkout — complex_set persistence', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(capturedBody).not.toBeNull();
-    expect(capturedBody!.complex_set).toBe(true);
-  });
-
-  test('sends complex_set: false when complexSet is false', async () => {
-    let capturedBody: Record<string, unknown> | null = null;
-
-    server.use(
-      http.post(WORKOUT_LOGS_URL, async ({ request }) => {
-        capturedBody = (await request.json()) as Record<string, unknown>;
-        return HttpResponse.json([{ id: 1 }]);
-      }),
-    );
-
-    const { result } = renderHook(() => useLogWorkout(), {
-      wrapper: makeWrapper(false),
-    });
-
-    act(() => {
-      result.current.mutate(logWorkoutInput);
-    });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(capturedBody).not.toBeNull();
-    expect(capturedBody!.complex_set).toBe(false);
+    expect(capturedBody!.complex_set).toBe(columns.complex_set);
+    expect(capturedBody!.straight_sets).toBe(columns.straight_sets);
   });
 
   test('persists completed_sides from the log input', async () => {
@@ -145,7 +127,7 @@ describe('useLogWorkout — complex_set persistence', () => {
     );
 
     const { result } = renderHook(() => useLogWorkout(), {
-      wrapper: makeWrapper(false),
+      wrapper: makeWrapper(),
     });
 
     act(() => {
@@ -425,7 +407,7 @@ describe('useLogWorkout — activation funnel analytics (PROD-157)', () => {
     // The wrapper's query client never seeds WORKOUT_LOGS, so the cache is cold:
     // is_first_workout is unknown and must be null rather than a misleading false.
     const { result } = renderHook(() => useLogWorkout(), {
-      wrapper: makeWrapper(false),
+      wrapper: makeWrapper(),
     });
 
     act(() => {
