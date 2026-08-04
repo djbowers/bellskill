@@ -4,6 +4,7 @@ export * from './CheckoutCancelPage';
 export * from './CheckoutSuccessPage';
 export * from './CompletedWorkoutPage';
 export * from './HistoryPage';
+export * from './MovementDetailsPage';
 export * from './MovementsPage';
 export * from './NotFoundPage';
 export * from './PaywallPage';

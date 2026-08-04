@@ -2,6 +2,7 @@ import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { DifficultyLevel, Equipment, Movement, MuscleGroup } from '~/types';
+import { Supabase } from '~/types/supabase';
 
 import { supabase } from '../supabaseClient';
 
@@ -45,6 +46,22 @@ export const useMovements = (
 // "Movement Pattern #1" must be double-quoted in order/filter params.
 const quoteSpecialColumn = (column: string) =>
   column.includes('#') ? `"${column}"` : column;
+
+type MovementRow = Supabase['public']['Tables']['movements']['Row'];
+
+export const mapMovementRow = (movement: MovementRow): Movement => ({
+  id: movement['id'],
+  difficultyLevel: movement['Difficulty Level'] as DifficultyLevel | null,
+  movementName: movement['Movement'],
+  movementPattern1: movement['Movement Pattern #1'],
+  patternCredits: movement['pattern_credits'] ?? [],
+  primaryEquipment: movement['Primary Equipment'] as Equipment | null,
+  primaryItemCount: movement['# Primary Items'],
+  singleOrDoubleArm: movement[
+    'Single or Double Arm'
+  ] as Movement['singleOrDoubleArm'],
+  targetMuscleGroup: movement['Target Muscle Group'] as MuscleGroup | null,
+});
 
 const fetchMovements = async ({
   page = 1,
@@ -101,24 +118,6 @@ const fetchMovements = async ({
     count: totalCount,
     hasNextPage,
     hasPreviousPage,
-    movements:
-      movements.map(
-        (movement): Movement => ({
-          id: movement['id'],
-          difficultyLevel: movement[
-            'Difficulty Level'
-          ] as DifficultyLevel | null,
-          movementName: movement['Movement'],
-          movementPattern1: movement['Movement Pattern #1'],
-          primaryEquipment: movement['Primary Equipment'] as Equipment | null,
-          primaryItemCount: movement['# Primary Items'],
-          singleOrDoubleArm: movement[
-            'Single or Double Arm'
-          ] as Movement['singleOrDoubleArm'],
-          targetMuscleGroup: movement[
-            'Target Muscle Group'
-          ] as MuscleGroup | null,
-        }),
-      ) ?? [],
+    movements: movements.map(mapMovementRow) ?? [],
   };
 };

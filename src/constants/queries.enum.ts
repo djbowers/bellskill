@@ -2,6 +2,8 @@ export enum QUERIES {
   ACTIVE_PROGRAM = 'activeProgram',
   ENTITLEMENT = 'entitlement',
   FEATURE_FLAGS = 'featureFlags',
+  MOVEMENT = 'movement',
+  MOVEMENT_HISTORY = 'movementHistory',
   MOVEMENT_LOGS = 'movementLogs',
   MOVEMENTS = 'movements',
   PATTERN_DEBT = 'patternDebt',

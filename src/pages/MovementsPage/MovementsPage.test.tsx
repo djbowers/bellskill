@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { QueryParamProvider } from 'use-query-params';
 import { ReactRouter6Adapter } from 'use-query-params/adapters/react-router-6';
 
@@ -36,6 +36,11 @@ const MOVEMENT_ROWS = [
 
 const requestUrls: URL[] = [];
 
+const DetailsProbe = () => {
+  const { id } = useParams();
+  return <div>movement details {id}</div>;
+};
+
 const renderPage = () => {
   requestUrls.length = 0;
   server.use(
@@ -58,7 +63,13 @@ const renderPage = () => {
     <MemoryRouter>
       <QueryParamProvider adapter={ReactRouter6Adapter}>
         <QueryClientProvider client={new QueryClient()}>
-          <MovementsPage />
+          <Routes>
+            <Route path="/" element={<MovementsPage />} />
+            <Route
+              path="/movements/:id"
+              element={<DetailsProbe />}
+            />
+          </Routes>
         </QueryClientProvider>
       </QueryParamProvider>
     </MemoryRouter>,
@@ -97,6 +108,23 @@ describe('movements page', () => {
     await waitFor(() =>
       expect(screen.queryAllByText('Goblet Squat')).toHaveLength(0),
     );
+  });
+
+  test('clicking a table row navigates to the movement details page', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const [tableCell] = await screen.findAllByText('Kettlebell Swing');
+    await user.click(tableCell.closest('tr')!);
+
+    expect(await screen.findByText('movement details 1')).toBeInTheDocument();
+  });
+
+  test('mobile rows link to the movement details page', async () => {
+    renderPage();
+
+    const [, mobileRow] = await screen.findAllByText('Kettlebell Swing');
+    expect(mobileRow.closest('a')).toHaveAttribute('href', '/movements/1');
   });
 
   test('reset filters clears the pattern filter', async () => {

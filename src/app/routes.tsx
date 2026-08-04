@@ -8,6 +8,7 @@ import {
   CheckoutSuccessPage,
   CompletedWorkoutPage,
   HistoryPage,
+  MovementDetailsPage,
   MovementsPage,
   NotFoundPage,
   PaywallPage,
@@ -69,7 +70,10 @@ export const createRoutes = (flags: Features = features): RouteObject[] => [
         ? [{ path: 'spotify/callback', element: <SpotifyCallbackPage /> }]
         : []),
       ...(flags.explore
-        ? [{ path: 'movements', element: <MovementsPage /> }]
+        ? [
+            { path: 'movements', element: <MovementsPage /> },
+            { path: 'movements/:id', element: <MovementDetailsPage /> },
+          ]
         : []),
       ...(flags.premium
         ? [{ path: 'recommendations', element: <RecommendationsPage /> }]

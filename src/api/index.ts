@@ -7,6 +7,8 @@ export * from './useFeatureFlags';
 export * from './useLinkMovementLog';
 export * from './useUnlinkMovementLog';
 export * from './useLogWorkout';
+export * from './useMovement';
+export * from './useMovementHistory';
 export * from './useMovementLogs';
 export * from './useMovements';
 export * from './usePatternDebt';
