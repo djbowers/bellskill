@@ -2,7 +2,7 @@ import { MovementOptions, ProgramSession, WeightUnit } from '~/types';
 
 import {
   deriveMovementWeights,
-  isComplexProgram,
+  isSharedBellProgram,
 } from './deriveMovementWeights';
 
 const kg = (value: number | null): WeightUnit | null =>
@@ -26,7 +26,10 @@ const movement = (
 const session = (
   seq: number,
   movements: MovementOptions[],
-  { complex = false }: { complex?: boolean } = {},
+  {
+    complex = false,
+    sharedBell = false,
+  }: { complex?: boolean; sharedBell?: boolean } = {},
 ): ProgramSession => ({
   id: `s-${seq}`,
   programId: 'p',
@@ -38,6 +41,7 @@ const session = (
   weightLabel: null,
   workoutOptions: {
     workoutMode: complex ? ('complex' as const) : ('circuit' as const),
+    sharedBell,
     intervalTimer: 0,
     restTimer: 0,
     title: null,
@@ -128,17 +132,25 @@ describe('deriveMovementWeights', () => {
   });
 });
 
-describe('isComplexProgram', () => {
+describe('isSharedBellProgram', () => {
+  it('is true when a circuit session runs off a shared bell', () => {
+    expect(
+      isSharedBellProgram([
+        session(0, [movement('Swing', 24, null)], { sharedBell: true }),
+      ]),
+    ).toBe(true);
+  });
+
   it('is true when any session is a complex set', () => {
     expect(
-      isComplexProgram([
+      isSharedBellProgram([
         session(0, [movement('Clean', 24, 24)], { complex: true }),
       ]),
     ).toBe(true);
   });
 
-  it('is false when no session is a complex set', () => {
-    expect(isComplexProgram([session(0, [movement('Press', 24, 24)])])).toBe(
+  it('is false when every session carries its own weights', () => {
+    expect(isSharedBellProgram([session(0, [movement('Press', 24, 24)])])).toBe(
       false,
     );
   });

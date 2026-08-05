@@ -35,7 +35,7 @@ const meta = {
   args: {
     index: 0,
     movement: swing,
-    workoutMode: 'circuit',
+    sharedBell: false,
     sharedWeightTabValue: 'none',
     sharedWeights: {
       sharedWeightOneValue: null,
@@ -69,7 +69,7 @@ export const Collapsed: Story = { args: { expanded: false } };
 
 /** In a complex set the card shows the shared 24 kg, not the movement's own 16 kg. */
 const complexArgs = {
-  workoutMode: 'complex',
+  sharedBell: true,
   sharedWeightTabValue: '2h',
   sharedWeights: {
     sharedWeightOneValue: 24,

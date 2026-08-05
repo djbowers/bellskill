@@ -17,6 +17,7 @@ const nextSession: NextProgramSession = {
     weightLabel: null,
     workoutOptions: {
       workoutMode: 'circuit',
+      sharedBell: false,
       intervalTimer: 0,
       movements: [],
       restTimer: 0,
@@ -32,6 +33,7 @@ const nextSession: NextProgramSession = {
   },
   workoutOptions: {
     workoutMode: 'circuit',
+    sharedBell: false,
     intervalTimer: 0,
     movements: [],
     restTimer: 0,

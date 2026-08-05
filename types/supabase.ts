@@ -718,6 +718,7 @@ export type Database = {
           rep_scheme: number[]
           rest_timer: number
           rpe: Database["public"]["Enums"]["RPE"] | null
+          shared_bell: boolean | null
           shared_weight_one_unit:
             | Database["public"]["Enums"]["weight_unit"]
             | null
@@ -733,6 +734,7 @@ export type Database = {
           user_id: string
           workout_goal: number
           workout_goal_units: Database["public"]["Enums"]["workout_goal_units"]
+          workout_mode: string | null
         }
         Insert: {
           bells?: number[]
@@ -752,6 +754,7 @@ export type Database = {
           rep_scheme?: number[]
           rest_timer?: number
           rpe?: Database["public"]["Enums"]["RPE"] | null
+          shared_bell?: boolean | null
           shared_weight_one_unit?:
             | Database["public"]["Enums"]["weight_unit"]
             | null
@@ -767,6 +770,7 @@ export type Database = {
           user_id: string
           workout_goal: number
           workout_goal_units?: Database["public"]["Enums"]["workout_goal_units"]
+          workout_mode?: string | null
         }
         Update: {
           bells?: number[]
@@ -786,6 +790,7 @@ export type Database = {
           rep_scheme?: number[]
           rest_timer?: number
           rpe?: Database["public"]["Enums"]["RPE"] | null
+          shared_bell?: boolean | null
           shared_weight_one_unit?:
             | Database["public"]["Enums"]["weight_unit"]
             | null
@@ -801,6 +806,7 @@ export type Database = {
           user_id?: string
           workout_goal?: number
           workout_goal_units?: Database["public"]["Enums"]["workout_goal_units"]
+          workout_mode?: string | null
         }
         Relationships: [
           {
@@ -1004,6 +1010,7 @@ export type Database = {
         Args: { p_forward_options: Json; p_session_id: string }
         Returns: number
       }
+      uses_shared_bell: { Args: { p_workout_options: Json }; Returns: boolean }
     }
     Enums: {
       RPE: "noEffort" | "easy" | "ideal" | "hard" | "maxEffort"

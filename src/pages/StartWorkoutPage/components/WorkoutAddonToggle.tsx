@@ -2,6 +2,7 @@ import {
   ClockIcon,
   DocumentTextIcon,
   PauseIcon,
+  ScaleIcon,
 } from '@heroicons/react/24/outline';
 import { ComponentType, SVGProps } from 'react';
 
@@ -11,6 +12,7 @@ const ICONS = {
   notes: DocumentTextIcon,
   interval: ClockIcon,
   rest: PauseIcon,
+  'shared-bell': ScaleIcon,
 } as const;
 
 export type WorkoutAddonId = keyof typeof ICONS;
@@ -45,7 +47,8 @@ export const WorkoutAddonToggle = ({
         isOn
           ? 'border-primary/40 bg-secondary ring-1 ring-primary/30'
           : 'border-border',
-        disabled && 'cursor-not-allowed opacity-40',
+        disabled && 'cursor-not-allowed',
+        disabled && !isOn && 'opacity-40',
       )}
     >
       <Icon className="h-2.5 w-2.5 shrink-0 text-foreground" aria-hidden />

@@ -134,6 +134,7 @@ export const CompletedWorkoutPage = () => {
         <WorkoutHistoryItem
           completedAt={workoutLog.completedAt}
           workoutMode={workoutLog.workoutMode}
+          sharedBell={workoutLog.sharedBell}
           intervalTimer={workoutLog.intervalTimer}
           movementLogs={movementLogs}
           movementLogsLoading={movementLogsLoading}

@@ -26,6 +26,7 @@ vi.mock('~/contexts', () => ({
 
 const bareOptions = {
   workoutMode: 'circuit' as const,
+  sharedBell: false,
   intervalTimer: 0,
   restTimer: 0,
   sharedWeightOneUnit: null,
@@ -82,6 +83,7 @@ const perMovementSessions: ProgramSession[] = [
 const complexSessions: ProgramSession[] = [
   session('ps-1', {
     workoutMode: 'complex',
+    sharedBell: false,
     sharedWeightOneValue: 20,
     sharedWeightOneUnit: 'kilograms',
     sharedWeightTwoValue: null,

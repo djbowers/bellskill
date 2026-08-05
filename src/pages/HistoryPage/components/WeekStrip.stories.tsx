@@ -26,6 +26,7 @@ const sessionOn = (date: Date, rpe: RpeOptions | null): WorkoutLog => ({
   sharedWeightTwoValue: null,
   startedAt: date,
   workoutMode: 'circuit',
+  sharedBell: false,
   title: 'The Giant 3.0 W1D2',
   preWorkoutNotes: null,
   workoutGoal: 20,

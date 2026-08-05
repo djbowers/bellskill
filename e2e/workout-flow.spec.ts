@@ -34,6 +34,9 @@ interface WorkoutLogRow {
   completed_volume: number;
   complex_set: boolean;
   straight_sets: boolean;
+  workout_mode: string | null;
+  shared_bell: boolean | null;
+  shared_weight_one_value: number | null;
 }
 
 // ── Auth helpers ─────────────────────────────────────────────────────────────
@@ -116,6 +119,29 @@ async function queryWorkoutLog(
   return rows[0] ?? null;
 }
 
+async function queryMovementLogs(
+  workoutLogId: number,
+  accessToken: string,
+): Promise<
+  { weight_one_value: number | null; weight_one_unit: string | null }[]
+> {
+  const url = `${SUPABASE_URL}/rest/v1/movement_logs?workout_log_id=eq.${workoutLogId}&select=weight_one_value,weight_one_unit`;
+
+  const res = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`movement_logs query failed (${res.status}): ${text}`);
+  }
+
+  return res.json();
+}
+
 async function deleteWorkoutLog(
   id: number,
   accessToken: string,
@@ -142,13 +168,18 @@ test.describe('full workout flow', () => {
   let authSession: AuthSession;
   let createdWorkoutLogId: number | null = null;
   let straightSetsWorkoutLogId: number | null = null;
+  let sharedBellWorkoutLogId: number | null = null;
 
   test.beforeAll(async () => {
     authSession = await signInWithPassword(TEST_EMAIL, TEST_PASSWORD);
   });
 
   test.afterAll(async () => {
-    for (const id of [createdWorkoutLogId, straightSetsWorkoutLogId]) {
+    for (const id of [
+      createdWorkoutLogId,
+      straightSetsWorkoutLogId,
+      sharedBellWorkoutLogId,
+    ]) {
       if (id !== null) await deleteWorkoutLog(id, authSession.access_token);
     }
   });
@@ -242,7 +273,10 @@ test.describe('full workout flow', () => {
     expect(workoutLog!.completed_reps).toBe(5); // repScheme=[5]
     expect(workoutLog!.completed_rungs).toBe(1);
     expect(workoutLog!.completed_volume).toBe(80); // 16 kg × 5 reps
-    // Circuit is the default arrangement — neither persisted flag is set.
+    // Circuit is the default arrangement, with per-movement weights.
+    expect(workoutLog!.workout_mode).toBe('circuit');
+    expect(workoutLog!.shared_bell).toBe(false);
+    // The legacy pair stays in sync until cached clients cycle.
     expect(workoutLog!.complex_set).toBe(false);
     expect(workoutLog!.straight_sets).toBe(false);
   });
@@ -296,6 +330,8 @@ test.describe('full workout flow', () => {
       authSession.access_token,
     );
 
+    expect(workoutLog!.workout_mode).toBe('straightSets');
+    expect(workoutLog!.shared_bell).toBe(false);
     expect(workoutLog!.straight_sets).toBe(true);
     expect(workoutLog!.complex_set).toBe(false);
 
@@ -304,5 +340,75 @@ test.describe('full workout flow', () => {
     await expect(page.getByText('Straight Sets').first()).toBeVisible({
       timeout: 10_000,
     });
+  });
+
+  test('a circuit can run off one shared bell', async ({ page }) => {
+    await injectAuthSession(page, authSession);
+    await page.goto('/');
+
+    const buildWorkoutButton = page.getByRole('button', {
+      name: /build a workout/i,
+    });
+    await expect(buildWorkoutButton).toBeVisible({ timeout: 10_000 });
+    await buildWorkoutButton.click();
+
+    const startWorkoutButton = page.getByRole('button', {
+      name: 'Start workout',
+    });
+    await expect(startWorkoutButton).toBeVisible({ timeout: 10_000 });
+
+    // Circuit stays selected; the shared bell is now an independent axis.
+    await expect(page.getByRole('tab', { name: 'Circuit' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await page.getByRole('button', { name: /^Shared Bell,/ }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Shared Weight' }),
+    ).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Rounds' }).click();
+    const minusRoundsButton = page.getByRole('button', { name: '- rounds' });
+    for (let i = 0; i < 9; i++) {
+      await minusRoundsButton.click();
+    }
+
+    await page.getByLabel('Movement Input').fill('Kettlebell Swing');
+
+    await expect(startWorkoutButton).toBeEnabled();
+    await startWorkoutButton.click();
+    await expect(page).toHaveURL(/\/active$/);
+
+    const continueButton = page.getByRole('button', { name: 'Continue' });
+    await expect(continueButton).toBeVisible();
+    await continueButton.click();
+
+    await expect(page).toHaveURL(/\/history\/\d+$/, { timeout: 10_000 });
+    const workoutLogId = parseInt(page.url().match(/\/history\/(\d+)$/)![1], 10);
+    sharedBellWorkoutLogId = workoutLogId;
+
+    const workoutLog = await queryWorkoutLog(
+      workoutLogId,
+      authSession.access_token,
+    );
+
+    // The combination that was inexpressible before: shared bell, no complex.
+    expect(workoutLog!.workout_mode).toBe('circuit');
+    expect(workoutLog!.shared_bell).toBe(true);
+    expect(workoutLog!.complex_set).toBe(false);
+    expect(workoutLog!.shared_weight_one_value).not.toBeNull();
+
+    // The shared weight is copied onto each movement, so volume accumulation
+    // and movement_logs can't disagree.
+    const movementLogs = await queryMovementLogs(
+      workoutLogId,
+      authSession.access_token,
+    );
+    expect(movementLogs.length).toBeGreaterThan(0);
+    for (const movementLog of movementLogs) {
+      expect(movementLog.weight_one_value).toBe(
+        workoutLog!.shared_weight_one_value,
+      );
+    }
   });
 });

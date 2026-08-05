@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { WorkoutOptions } from '~/types';
-import { fromWorkoutMode } from '~/utils';
+import { fromWorkoutMode, usesSharedBell } from '~/utils';
 
 import type { Json } from '../../types/supabase';
 import { supabase } from '../supabaseClient';
@@ -50,6 +50,8 @@ export const useUpdateProgramSessionsForward = () => {
         sharedWeightOneUnit: options.sharedWeightOneUnit,
         sharedWeightTwoValue: options.sharedWeightTwoValue,
         sharedWeightTwoUnit: options.sharedWeightTwoUnit,
+        workoutMode: options.workoutMode,
+        sharedBell: usesSharedBell(options),
         ...fromWorkoutMode(options.workoutMode),
       };
 

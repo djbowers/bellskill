@@ -17,7 +17,7 @@ import { WEIGHT_MODE_LABELS } from '~/utils';
 import { WeightSlots } from '~/pages/ProgramDetailsPage/ProgramDetailsPage';
 import {
   deriveMovementWeights,
-  isComplexProgram,
+  isSharedBellProgram,
 } from '~/pages/ProgramDetailsPage/utils/deriveMovementWeights';
 import {
   deriveStartingWeight,
@@ -60,14 +60,14 @@ export const AdjustWeightsDialog = ({
     [sessionItems],
   );
   // Complex is a program-level property — check the full clone, not just the
-  // modal subset (week-4 A+A would otherwise look non-complex if only completed
+  // modal subset (week-4 A+A would otherwise look per-movement if only completed
   // work were somehow empty and we fell through oddly).
   const allSessions = useMemo(
     () => sessionItems.map((item) => item.session),
     [sessionItems],
   );
-  const complex = useMemo(
-    () => isComplexProgram(allSessions),
+  const sharedBell = useMemo(
+    () => isSharedBellProgram(allSessions),
     [allSessions],
   );
   const movementControls = useMemo(
@@ -105,7 +105,7 @@ export const AdjustWeightsDialog = ({
     adjust.mutate(
       {
         userProgramId,
-        ...(complex
+        ...(sharedBell
           ? {
               sharedWeightOneValue: sharedWeight.sharedWeightOneValue,
               sharedWeightOneUnit: sharedWeight.sharedWeightOneUnit,
@@ -140,7 +140,7 @@ export const AdjustWeightsDialog = ({
         {/* min-w-0: the weight strip's intrinsic width must not stretch the
             dialog's grid column past its max width. */}
         <div className="flex min-w-0 flex-col gap-2">
-          {complex ? (
+          {sharedBell ? (
             <WeightSlots
               weight={sharedWeight}
               onChange={setSharedWeight}

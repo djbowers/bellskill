@@ -14,6 +14,8 @@ export class ExampleWorkoutLog implements WorkoutLog {
   completed_sides: number | null;
   completed_volume: number | null;
   complex_set: boolean;
+  workout_mode: string | null;
+  shared_bell: boolean | null;
   id: number;
   interval_timer: number;
   movements: string[];
@@ -50,6 +52,8 @@ export class ExampleWorkoutLog implements WorkoutLog {
     completed_sides = null,
     completed_volume = 0,
     complex_set = false,
+    workout_mode,
+    shared_bell,
     interval_timer = 0,
     movements = [],
     rest_timer = 0,
@@ -79,6 +83,12 @@ export class ExampleWorkoutLog implements WorkoutLog {
     this.completed_sides = completed_sides;
     this.completed_volume = completed_volume;
     this.complex_set = complex_set;
+    // Mirrors the sync_workout_log_mode trigger, so a fixture that sets only the
+    // legacy pair still reads as the mode and weight model it means.
+    this.workout_mode =
+      workout_mode ??
+      (complex_set ? 'complex' : straight_sets ? 'straightSets' : 'circuit');
+    this.shared_bell = shared_bell ?? complex_set;
     this.id = id;
     this.interval_timer = interval_timer;
     this.movements = movements;

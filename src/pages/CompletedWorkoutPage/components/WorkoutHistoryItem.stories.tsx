@@ -60,6 +60,7 @@ const meta = {
     movementLogsLoading: false,
     restTimer: 0,
     workoutMode: 'circuit',
+    sharedBell: false,
     startedAt: new Date('2024-01-01T12:00:00'),
     title: 'The Giant 3.0 W1D2',
     preWorkoutNotes: null,
@@ -185,6 +186,7 @@ export const Loading: Story = {
 export const ComplexSet: Story = {
   args: {
     workoutMode: 'complex',
+    sharedBell: true,
     sharedWeightOneUnit: 'kilograms',
     sharedWeightOneValue: 24,
     sharedWeightTwoUnit: null,
