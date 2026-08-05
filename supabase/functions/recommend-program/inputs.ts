@@ -6,6 +6,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { gatherEquipment } from '../_shared/equipmentInput.ts';
 import {
   daysBetweenCalendarDays,
   parseLocalDateString,
@@ -290,5 +291,6 @@ export async function gatherInputs(
     candidates,
     pattern_debt,
     recent_history,
+    equipment: await gatherEquipment(admin, userId),
   };
 }

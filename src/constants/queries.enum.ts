@@ -13,6 +13,7 @@ export enum QUERIES {
   QUEUED_PROGRAMS = 'queuedPrograms',
   SPOTIFY_CONNECTION = 'spotifyConnection',
   SPOTIFY_NOW_PLAYING = 'spotifyNowPlaying',
+  USER_EQUIPMENT = 'userEquipment',
   USER_MOVEMENTS = 'userMovements',
   WORKOUT_LOG = 'workoutLog',
   WORKOUT_LOGS = 'workoutLogs',

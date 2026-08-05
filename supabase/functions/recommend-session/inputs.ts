@@ -3,10 +3,11 @@
 // Uses the service-role client (bypasses RLS) but every query is scoped to the
 // authenticated user_id — except pattern debt, which goes through the caller's
 // JWT client because pattern_debt_movements is SECURITY INVOKER and filters on
-// auth.uid(). unlocked_weights is still stubbed empty (PROD-78).
+// auth.uid(). unlocked_weights comes from the user's declared equipment (PROD-78).
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { gatherEquipment } from '../_shared/equipmentInput.ts';
 import {
   daysBetweenCalendarDays,
   parseLocalDateString,
@@ -135,14 +136,16 @@ export async function gatherInputs(
     ),
   ];
   const creditsByCatalogId = new Map<string, string[]>();
+  const doublesByCatalogId = new Map<string, boolean>();
   if (catalogIds.length > 0) {
     const { data: catalogRows, error: catErr } = await admin
       .from('movements')
-      .select('id, pattern_credits')
+      .select('id, pattern_credits, "# Primary Items"')
       .in('id', catalogIds);
     if (catErr) throw catErr;
     for (const row of catalogRows ?? []) {
       creditsByCatalogId.set(row.id, row.pattern_credits);
+      doublesByCatalogId.set(row.id, row['# Primary Items'] === 2);
     }
   }
 
@@ -158,6 +161,8 @@ export async function gatherInputs(
       name: m.canonical_name,
       is_big_6: Boolean(m.is_big_6),
       pattern_credits: credited.length > 0 ? credited : null,
+      supports_doubles:
+        doublesByCatalogId.get(m.functional_movement_id ?? '') ?? null,
     };
   });
 
@@ -212,6 +217,7 @@ export async function gatherInputs(
       : null;
 
   const pattern_debt = await gatherPatternDebt(authClient, clientToday);
+  const equipment = await gatherEquipment(admin, userId);
 
   // Balance mode's deterministic targets. Degrades to [] (default behavior)
   // when debt is unavailable or nothing red is coverable from the library.
@@ -237,6 +243,6 @@ export async function gatherInputs(
     recent_history,
     candidates,
     pattern_debt,
-    unlocked_weights: {},
+    unlocked_weights: equipment ?? {},
   };
 }

@@ -3,6 +3,7 @@
 // RecommenderInputs is the typed snapshot fed to the LLM and persisted verbatim
 // into program_recommendations.inputs.
 
+import type { EquipmentSummary } from '../../../src/utils/equipment.ts';
 import type {
   DebtBand,
   OverallBalance,
@@ -78,6 +79,8 @@ export interface RecommenderInputs {
   candidates: CandidateProgram[];
   pattern_debt: PatternDebtInput;
   recent_history: WorkoutSummary[];
+  /** Null when the user has recorded no equipment — the prompt then omits the section. */
+  equipment: EquipmentSummary | null;
 }
 
 /** The validated LLM output. Persisted into program_recommendations.output. */
