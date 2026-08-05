@@ -208,37 +208,17 @@ describe('StartWorkoutHero', () => {
   });
 
   describe('quick-start variant', () => {
-    it('builds a custom workout and repeats the last one', () => {
+    it('builds a custom workout', () => {
       const onBuildCustom = vi.fn();
-      const onRepeatLast = vi.fn();
 
       render(
-        <StartWorkoutHero
-          variant="quickStart"
-          onBuildCustom={onBuildCustom}
-          onRepeatLast={onRepeatLast}
-        />,
+        <StartWorkoutHero variant="quickStart" onBuildCustom={onBuildCustom} />,
       );
 
       expect(screen.getByText('Start a workout')).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole('button', { name: 'Build a workout' }));
       expect(onBuildCustom).toHaveBeenCalledTimes(1);
-
-      fireEvent.click(
-        screen.getByRole('button', { name: /repeat last workout/i }),
-      );
-      expect(onRepeatLast).toHaveBeenCalledTimes(1);
-    });
-
-    it('omits the repeat action when there is nothing to repeat', () => {
-      render(
-        <StartWorkoutHero variant="quickStart" onBuildCustom={vi.fn()} />,
-      );
-
-      expect(
-        screen.queryByRole('button', { name: /repeat last workout/i }),
-      ).not.toBeInTheDocument();
     });
   });
 });

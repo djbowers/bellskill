@@ -21,7 +21,7 @@ export * from './WorkoutModeTabs';
 export * from './MovementAutocomplete';
 export * from './RecommendationCard';
 export * from './RecommendationPreviewDialog';
-export * from './RecommendSessionSection';
+export * from './RecommendSection';
 export * from './Section';
 export * from './WeightModeTabs';
 export * from './WeightUnitTabs';

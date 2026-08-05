@@ -3,12 +3,15 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import {
   AnalyticsEvent,
+  MAX_ACTIVE_PROGRAMS,
   RepeatableWorkout,
   trackEvent,
   useActivePrograms,
   useCompleteProgramSession,
+  useEnrollProgram,
   useFeatureFlags,
   useMovements,
+  usePrograms,
   useWorkoutLogs,
 } from '~/api';
 import { Page, PageLoading } from '~/components';
@@ -58,7 +61,7 @@ import {
   MovementCard,
   MovementsHeader,
   ProgramSwitcherTabs,
-  RecommendSessionSection,
+  RecommendSection,
   RecommendedWorkoutsSection,
   Section,
   StartProgramCard,
@@ -233,6 +236,18 @@ export const StartWorkoutPage = ({
     experimentFeatures.repeatPrevious && population === 'returning';
   const showRecommender =
     experimentFeatures.recommender && population === 'returning';
+
+  // Program scope of the hub recommender: the catalog to resolve a recommended
+  // id, plus an enroll mutation. Queries are gated so they only fire when the
+  // program scope can actually render.
+  const showProgramScope = showRecommender && features.programs;
+  const programsQuery = usePrograms({ enabled: showProgramScope });
+  const allPrograms = programsQuery.data ?? [];
+  const enrollProgram = useEnrollProgram();
+  const activeEnrollments = activePrograms.filter(
+    (p) => p.enrollment.status === 'active',
+  );
+  const slotsFull = activeEnrollments.length >= MAX_ACTIVE_PROGRAMS;
 
   // The recommender prescribes a single weight per movement; the catalog's
   // primary-item count + arm split tell us whether that load means two-hand,
@@ -795,6 +810,14 @@ export const StartWorkoutPage = ({
     setBuilderOverride(true);
   };
 
+  // Accept a program recommendation. `handleEnrollRecommended` only ever fires
+  // with a free slot — a full stack already degraded the recommendation to
+  // queue — so there's no replace flow here (that lives on the Programs page).
+  const handleEnrollRecommended = (programId: string) =>
+    enrollProgram.mutate({ programId });
+  const handleQueueRecommended = (programId: string) =>
+    enrollProgram.mutate({ programId, queue: true });
+
   const handleClickBuildCustom = () => {
     loadIntoBuilder(DEFAULT_WORKOUT_OPTIONS);
     setStartSource('builder');
@@ -1003,11 +1026,6 @@ export const StartWorkoutPage = ({
             <StartWorkoutHero
               variant="quickStart"
               onBuildCustom={handleClickBuildCustom}
-              onRepeatLast={
-                recentRepeats.length > 0
-                  ? () => handleSelectRepeat(recentRepeats[0])
-                  : undefined
-              }
             />
           )}
 
@@ -1015,20 +1033,26 @@ export const StartWorkoutPage = ({
             curated={showCurated ? curated : []}
             recentRepeats={showRepeat ? recentRepeats : []}
             isFirstWorkout={isFirstWorkout}
+            repeatsDefaultOpen={!primaryProgram}
             onSelectCurated={handleSelectCurated}
             onSelectRepeat={handleSelectRepeat}
           />
 
           {showRecommender && (
-            <RecommendSessionSection
+            <RecommendSection
               userId={userId}
-              onAccept={handleAcceptRecommendation}
+              onAcceptSession={handleAcceptRecommendation}
               initialMode={
                 (location.state as { recommendMode?: 'balance' } | null)
                   ?.recommendMode === 'balance'
                   ? 'balance'
                   : 'default'
               }
+              showPrograms={features.programs}
+              programs={allPrograms}
+              slotsFull={slotsFull}
+              onEnrollNow={handleEnrollRecommended}
+              onQueue={handleQueueRecommended}
             />
           )}
 
