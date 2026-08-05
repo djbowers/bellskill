@@ -14,7 +14,6 @@ vi.mock('~/hooks', () => ({
 const mockedUseFeatures = useFeatures as unknown as Mock;
 
 const featuresWith = (overrides: Partial<Features> = {}): Features => ({
-  bottomNav: true,
   explore: false,
   premium: false,
   programs: false,
@@ -35,12 +34,6 @@ beforeEach(() => {
 });
 
 describe('BottomNav', () => {
-  test('renders nothing when the bottomNav flag is off', () => {
-    mockedUseFeatures.mockReturnValue(featuresWith({ bottomNav: false }));
-    const { container } = renderNav();
-    expect(container).toBeEmptyDOMElement();
-  });
-
   test('renders Home, History and More by default', () => {
     mockedUseFeatures.mockReturnValue(featuresWith());
     renderNav();

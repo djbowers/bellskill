@@ -22,7 +22,6 @@ const { Default } = composeStories(stories);
 const mockedUseFeatures = vi.mocked(useFeatures);
 
 const allOff = {
-  bottomNav: true,
   explore: false,
   premium: false,
   programs: false,

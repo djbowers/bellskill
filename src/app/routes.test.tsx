@@ -8,7 +8,6 @@ import { RouteErrorBoundary } from './RouteErrorBoundary';
 import { createRoutes } from './routes';
 
 const flagsOff: Features = {
-  bottomNav: false,
   explore: false,
   premium: false,
   programs: false,

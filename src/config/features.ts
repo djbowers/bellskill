@@ -1,7 +1,6 @@
 import { Session } from '@supabase/supabase-js';
 
 export type FeatureName =
-  | 'bottomNav'
   | 'explore'
   | 'premium'
   | 'programs'
@@ -20,7 +19,6 @@ export type Features = Record<FeatureName, boolean>;
  * `useFeatureFlags` hook. They are resolved per user at runtime, not here.
  */
 const baseFeatures: Features = {
-  bottomNav: import.meta.env.VITE_FEATURE_BOTTOMNAV === 'true',
   explore: import.meta.env.VITE_FEATURE_EXPLORE === 'true',
   premium: import.meta.env.VITE_FEATURE_PREMIUM === 'true',
   programs: import.meta.env.VITE_FEATURE_PROGRAMS === 'true',
@@ -90,7 +88,6 @@ export const isPreviewingAllFeatures = (session?: Session | null): boolean =>
 export const getFeatures = (session?: Session | null): Features => {
   if (isDeployPreview() || isPreviewingAllFeatures(session)) {
     return {
-      bottomNav: true,
       explore: true,
       premium: true,
       programs: true,
