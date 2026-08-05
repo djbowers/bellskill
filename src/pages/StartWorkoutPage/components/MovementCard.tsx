@@ -6,6 +6,7 @@ import {
 
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
+import { cn } from '~/lib/utils';
 import { getWeightsDisplayValue } from '~/pages/CompletedWorkoutPage/utils/displayValues';
 import {
   MovementOptions,
@@ -41,6 +42,8 @@ export interface MovementCardProps {
   expanded: boolean;
   /** The interval timer is on, so timed rungs must be disabled. */
   intervalActive: boolean;
+  /** This movement is the subject of a blocking issue listed above Start. */
+  hasError?: boolean;
   onToggleExpanded: () => void;
   onRemove: () => void;
   onChangeName: (name: string) => void;
@@ -63,6 +66,7 @@ export const MovementCard = ({
   sharedWeights,
   expanded,
   intervalActive,
+  hasError = false,
   onToggleExpanded,
   onRemove,
   onChangeName,
@@ -95,7 +99,10 @@ export const MovementCard = ({
   const showLoad = !isComplex && weightTabValue !== 'none';
 
   return (
-    <Card className="overflow-hidden">
+    <Card
+      className={cn('overflow-hidden', hasError && 'border-destructive')}
+      aria-invalid={hasError || undefined}
+    >
       <div className="flex items-start gap-1 p-1.5">
         <div
           className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground shadow"

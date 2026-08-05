@@ -69,7 +69,7 @@ describe('validateRecommendation — coverage invariant', () => {
     ).toThrow(ValidationError);
   });
 
-  test('existing id/weight/reps checks still run alongside coverage', () => {
+  test('id and runnability checks still run alongside coverage', () => {
     const r = rec([{ user_movement_id: 'rogue', weight_kg: -1 }]);
     try {
       validateRecommendation(r, new Set(['known']), {
@@ -83,5 +83,74 @@ describe('validateRecommendation — coverage invariant', () => {
       expect(reasons.some((x) => x.includes('non-positive weight'))).toBe(true);
       expect(reasons.some((x) => x.includes('"squat"'))).toBe(true);
     }
+  });
+});
+
+// Runnability now comes from the shared verifier (src/utils/validateWorkout.ts),
+// which owns the rule-by-rule unit tests. These cover the seam: that its errors
+// reach `reasons` with enough context for the model to act on, and that its
+// warnings never trigger a retry.
+describe('validateRecommendation — shared runnability rules', () => {
+  const pass = (r: Recommendation) =>
+    validateRecommendation(r, idsOf(r));
+
+  const reasonsFor = (r: Recommendation): string[] => {
+    try {
+      validateRecommendation(r, idsOf(r));
+    } catch (err) {
+      return (err as ValidationError).reasons;
+    }
+    throw new Error('expected ValidationError');
+  };
+
+  test('a sound recommendation passes', () => {
+    expect(() => pass(rec([{}, {}]))).not.toThrow();
+  });
+
+  test('the 2026-08-04 bug is now caught: 4/3/3 rungs in a Circuit', () => {
+    const reasons = reasonsFor(
+      rec([
+        { rep_scheme: [1, 2, 3, 4] },
+        { rep_scheme: [5, 5, 5] },
+        { rep_scheme: [5, 5, 5] },
+      ]),
+    );
+    expect(reasons).toHaveLength(1);
+    expect(reasons[0]).toContain('Rep schemes differ across movements');
+  });
+
+  test('the same rungs declared as Straight Sets pass', () => {
+    const r: Recommendation = {
+      ...rec([{ rep_scheme: [1, 2, 3, 4] }, { rep_scheme: [5, 5, 5] }]),
+      format: 'Straight Sets',
+    };
+    expect(() => validateRecommendation(r, idsOf(r))).not.toThrow();
+  });
+
+  test('a zero duration is rejected', () => {
+    const r: Recommendation = { ...rec([{}]), duration_minutes: 0 };
+    expect(reasonsFor(r).join(' ')).toContain('goal greater than zero');
+  });
+
+  test('reasons name the offending block', () => {
+    const reasons = reasonsFor(rec([{}, { rep_scheme: [], movement_name: 'Snatch' }]));
+    expect(reasons.some((x) => x.includes('block 2 (Snatch)'))).toBe(true);
+  });
+
+  test('an empty session reports against the session, not a block', () => {
+    expect(reasonsFor(rec([])).join(' ')).toContain('the session');
+  });
+
+  test.each([[0], [-1], [2.5], [101]])(
+    'a rung of %p is rejected',
+    (rung: number) => {
+      expect(reasonsFor(rec([{ rep_scheme: [5, rung] }])).join(' ')).toContain(
+        'invalid rep counts',
+      );
+    },
+  );
+
+  test('an implausible weight is a warning, not a retry', () => {
+    expect(() => pass(rec([{ weight_kg: 150 }]))).not.toThrow();
   });
 });
