@@ -7,6 +7,7 @@ import {
   CheckoutCancelPage,
   CheckoutSuccessPage,
   CompletedWorkoutPage,
+  EquipmentPage,
   HistoryPage,
   MovementDetailsPage,
   MovementsPage,
@@ -45,6 +46,10 @@ export const createRoutes = (flags: Features = features): RouteObject[] => [
       {
         path: 'account',
         element: <AccountPage />,
+      },
+      {
+        path: 'account/equipment',
+        element: <EquipmentPage />,
       },
       {
         path: 'history',

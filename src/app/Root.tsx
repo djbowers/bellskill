@@ -3,14 +3,12 @@ import { Outlet } from 'react-router-dom';
 import { QueryParamProvider } from 'use-query-params';
 import { ReactRouter6Adapter } from 'use-query-params/adapters/react-router-6';
 
-import { BottomNav, Header, Sidebar, useBottomNavVisible } from '~/components';
-import { useFeatures } from '~/hooks';
+import { BottomNav, Sidebar, useBottomNavVisible } from '~/components';
 
-// Rendered only when the `bottomNav` flag is on so the keyboard subscription in
-// `useBottomNavVisible` never mounts for flag-off sessions, and its focus/blur
-// re-renders stay scoped to the nav chrome and this wrapper instead of all of
-// `Root`. Lays out the two coordinated nav surfaces: the desktop `Sidebar` rail
-// (`lg` and up) and the mobile `BottomNav` thumb bar (below `lg`).
+// Keeps the keyboard subscription in `useBottomNavVisible` — and the focus/blur
+// re-renders it triggers — scoped to the nav chrome and this wrapper instead of
+// all of `Root`. Lays out the two coordinated nav surfaces: the desktop
+// `Sidebar` rail (`lg` and up) and the mobile `BottomNav` thumb bar (below `lg`).
 const NavLayout = ({ children }: { children: ReactNode }) => {
   const bottomNavVisible = useBottomNavVisible();
 
@@ -31,22 +29,10 @@ const NavLayout = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const Root = () => {
-  const features = useFeatures();
-
-  return (
-    <QueryParamProvider adapter={ReactRouter6Adapter}>
-      {features.bottomNav ? (
-        // The Sidebar (desktop) + BottomNav (mobile) own navigation; no top Header.
-        <NavLayout>
-          <Outlet />
-        </NavLayout>
-      ) : (
-        <>
-          <Header />
-          <Outlet />
-        </>
-      )}
-    </QueryParamProvider>
-  );
-};
+export const Root = () => (
+  <QueryParamProvider adapter={ReactRouter6Adapter}>
+    <NavLayout>
+      <Outlet />
+    </NavLayout>
+  </QueryParamProvider>
+);

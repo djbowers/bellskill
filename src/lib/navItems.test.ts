@@ -3,7 +3,6 @@ import { Features } from '~/config/features';
 import { getNavItems, navItemByKey } from './navItems';
 
 const allOff: Features = {
-  bottomNav: true,
   explore: false,
   premium: false,
   programs: false,

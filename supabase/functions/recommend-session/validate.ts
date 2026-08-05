@@ -1,10 +1,23 @@
 // recommend-session (PROD-87): validation of the LLM output.
 //
 // Structured outputs guarantee the JSON *shape*; this enforces the *semantics*
-// the schema can't express — movement ids must be real candidates, and reps and
-// weights must be sane. A failure here drives the single retry in llm.ts.
+// the schema can't express. A failure here drives the single retry in llm.ts.
+//
+// Two kinds of check live here, and only one of them belongs to this file:
+//
+//   - Runnability ("could a lifter actually do this session?") comes from the
+//     shared verifier, so the builder enforces the same rules (PROD-240). Its
+//     errors become retry reasons; its warnings are logged, never retried on.
+//   - The LLM contract ("did the model follow instructions?") stays local:
+//     candidate-id membership and balance-mode pattern coverage.
 
+import {
+  type EquipmentSummary,
+  validateSessionWeights,
+} from '../../../src/utils/equipment.ts';
 import type { Pattern } from '../../../src/utils/patternDebt.ts';
+import { recommendationToDraft } from '../../../src/utils/recommendationDraft.ts';
+import { validateWorkout } from '../../../src/utils/validateWorkout.ts';
 import type { Recommendation } from './types.ts';
 
 /** Balance-mode coverage requirement: targets plus each candidate's credits. */
@@ -12,6 +25,9 @@ export interface CoverageRequirement {
   targets: Pattern[];
   creditsById: Map<string, readonly string[] | null>;
 }
+
+/** Catalog answer to "is this a two-bell movement?", null when unlinked. */
+export type DoublesById = Map<string, boolean | null>;
 
 export class ValidationError extends Error {
   reasons: string[];
@@ -22,43 +38,55 @@ export class ValidationError extends Error {
   }
 }
 
-const MAX_WEIGHT_KG = 100; // generous ceiling; guards against absurd hallucinations
-const MAX_REP = 100;
+/** `block 3 (Swing)`, or `the session` for a whole-session issue. */
+const describeBlock = (rec: Recommendation, index?: number) =>
+  index === undefined
+    ? 'the session'
+    : `block ${index + 1} (${rec.blocks[index]?.movement_name ?? 'unnamed'})`;
 
 export function validateRecommendation(
   rec: Recommendation,
   candidateIds: Set<string>,
   coverage?: CoverageRequirement,
+  equipment?: EquipmentSummary | null,
+  doublesById?: DoublesById,
 ): void {
   const reasons: string[] = [];
 
-  if (rec.blocks.length === 0) {
-    reasons.push('the session has no movement blocks');
+  // Runnability: reps, weights, rung equality, empty blocks, zero duration.
+  const { errors, warnings } = validateWorkout(recommendationToDraft(rec));
+  for (const issue of errors) {
+    reasons.push(`${describeBlock(rec, issue.movementIndex)} — ${issue.message}`);
+  }
+  if (warnings.length > 0) {
+    console.warn(
+      'recommend-session: runnability warnings',
+      warnings.map((w) => `${describeBlock(rec, w.movementIndex)} — ${w.message}`),
+    );
   }
 
+  // LLM contract: every block must name a movement from the candidate list.
   for (const [i, block] of rec.blocks.entries()) {
-    const where = `block ${i + 1} (${block.movement_name})`;
-
     if (!candidateIds.has(block.user_movement_id)) {
       reasons.push(
-        `${where} uses user_movement_id "${block.user_movement_id}", which is not in the candidate list`,
+        `${describeBlock(rec, i)} uses user_movement_id "${block.user_movement_id}", which is not in the candidate list`,
       );
     }
 
-    if (!Number.isFinite(block.weight_kg) || block.weight_kg <= 0) {
-      reasons.push(`${where} has a non-positive weight`);
-    } else if (block.weight_kg > MAX_WEIGHT_KG) {
-      reasons.push(`${where} has an implausible weight (${block.weight_kg} kg)`);
-    }
-
-    if (block.rep_scheme.length === 0) {
-      reasons.push(`${where} has an empty rep scheme`);
+    // Bell count is an LLM-contract check, not runnability: the shared verifier
+    // has no concept of how many bells a block uses.
+    const bells = block.bells ?? 1;
+    if (!Number.isInteger(bells) || bells < 1 || bells > 2) {
+      reasons.push(`${describeBlock(rec, i)} claims ${bells} bells — use 1 or 2`);
     } else if (
-      block.rep_scheme.some(
-        (r) => !Number.isInteger(r) || r <= 0 || r > MAX_REP,
-      )
+      bells === 2 &&
+      doublesById?.get(block.user_movement_id) === false
     ) {
-      reasons.push(`${where} has invalid rep counts`);
+      // Only when the catalog positively says it is a one-bell movement; an
+      // unlinked movement (null) stays the lifter's call.
+      reasons.push(
+        `${describeBlock(rec, i)} is not a double-bell movement — prescribe it with 1 bell`,
+      );
     }
   }
 
@@ -79,6 +107,18 @@ export function validateRecommendation(
         );
       }
     }
+  }
+
+  // Equipment: only checked when the lifter has recorded some. Weights must be
+  // loadable *without re-plating mid-session* — see validateSessionWeights.
+  if (equipment) {
+    reasons.push(
+      ...validateSessionWeights(
+        equipment,
+        rec.blocks.map((b) => ({ weight_kg: b.weight_kg, bells: b.bells ?? 1 })),
+        rec.adjustable_settings_kg ?? [],
+      ),
+    );
   }
 
   if (reasons.length > 0) throw new ValidationError(reasons);

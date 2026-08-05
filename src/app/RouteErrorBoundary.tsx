@@ -7,7 +7,8 @@ import { Button } from '~/components/ui/button';
  * `errorElement` for the root route. Catches errors thrown while rendering a
  * route or from a loader/action and renders a friendly fallback in place of the
  * raw React Router dev error page. Because it replaces the root element, it does
- * not render the `Root` shell (Header etc.) — it is intentionally self-contained.
+ * not render the `Root` nav shell (Sidebar / BottomNav) — it is intentionally
+ * self-contained.
  */
 export const RouteErrorBoundary = () => {
   const navigate = useNavigate();

@@ -23,7 +23,6 @@ vi.mock('~/hooks', async (importOriginal) => ({
 }));
 
 const allFlagsOff = {
-  bottomNav: false,
   explore: false,
   premium: false,
   programs: false,

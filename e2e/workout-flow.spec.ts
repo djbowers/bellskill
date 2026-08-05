@@ -342,6 +342,73 @@ test.describe('full workout flow', () => {
     });
   });
 
+  // The 2026-08-04 bug: unequal rungs loaded into circuit mode left a red error
+  // and a dead Start button with no way forward but hand-editing.
+  test('unequal rungs block circuit, and the one-tap fix starts the workout', async ({
+    page,
+  }) => {
+    await injectAuthSession(page, authSession);
+    await page.goto('/');
+
+    const buildWorkoutButton = page.getByRole('button', {
+      name: /build a workout/i,
+    });
+    await expect(buildWorkoutButton).toBeVisible({ timeout: 10_000 });
+    await buildWorkoutButton.click();
+
+    const startWorkoutButton = page.getByRole('button', {
+      name: 'Start workout',
+    });
+    await expect(startWorkoutButton).toBeVisible({ timeout: 10_000 });
+
+    await page.getByRole('tab', { name: 'Rounds' }).click();
+    const minusRoundsButton = page.getByRole('button', { name: '- rounds' });
+    for (let i = 0; i < 9; i++) {
+      await minusRoundsButton.click();
+    }
+
+    await page.getByLabel('Movement Input').fill('Kettlebell Swing');
+    // The autocomplete's dismiss layer eats the next click, so close it first.
+    await page.getByLabel('Movement Input').last().blur();
+    await page.getByRole('button', { name: '+ Movement' }).click();
+    await page.getByLabel('Movement Input').nth(1).fill('Goblet Squat');
+    await page.getByLabel('Movement Input').last().blur();
+
+    // Give the second movement a longer ladder than the first.
+    await page.getByRole('button', { name: 'Add rung' }).nth(1).click();
+
+    await expect(
+      page.getByText(/Rep schemes differ across movements/i),
+    ).toBeVisible();
+    await expect(startWorkoutButton).toBeDisabled();
+
+    await page.getByRole('button', { name: 'Switch to Straight Sets' }).click();
+
+    await expect(
+      page.getByText(/Rep schemes differ across movements/i),
+    ).toBeHidden();
+    await expect(startWorkoutButton).toBeEnabled();
+    await startWorkoutButton.click();
+    await expect(page).toHaveURL(/\/active$/);
+
+    // Straight sets runs each movement's own ladder — 1 rung then 2 — so the
+    // session advances rung by rung rather than in one step.
+    const continueButton = page.getByRole('button', { name: 'Continue' });
+    await expect(continueButton).toBeVisible();
+    for (let rung = 0; rung < 3 && !/\/history\//.test(page.url()); rung++) {
+      await continueButton.click();
+    }
+
+    await expect(page).toHaveURL(/\/history\/\d+$/, { timeout: 10_000 });
+    const workoutLogId = parseInt(page.url().match(/\/history\/(\d+)$/)![1], 10);
+
+    const workoutLog = await queryWorkoutLog(
+      workoutLogId,
+      authSession.access_token,
+    );
+    expect(workoutLog!.straight_sets).toBe(true);
+  });
+
   test('a circuit can run off one shared bell', async ({ page }) => {
     await injectAuthSession(page, authSession);
     await page.goto('/');

@@ -1,7 +1,6 @@
 import { features, getFeatures, isDeployPreview } from './features';
 
 const ALL_ON = {
-  bottomNav: true,
   explore: true,
   premium: true,
   programs: true,

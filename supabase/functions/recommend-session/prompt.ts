@@ -4,6 +4,7 @@
 // PROD-88 without touching the API plumbing.
 
 import type { RecommendMode, RecommenderInputs } from './types.ts';
+import { formatEquipmentSection } from '../_shared/equipmentInput.ts';
 import { formatPatternLine } from '../_shared/patternDebtPrompt.ts';
 
 export function buildSystemPrompt(mode: RecommendMode = 'default'): string {
@@ -28,6 +29,9 @@ export function buildSystemPrompt(mode: RecommendMode = 'default'): string {
     '  today. When they are tired, sore, or short on time, scale volume down.',
     '- Prescribe weights in kilograms (whole or half kg) and rep schemes as a list',
     '  of positive integers (one entry per rung/set).',
+    '- Set each block\'s "bells" to how many kettlebells are held at once: 1, or 2',
+    '  only for movements marked "double-bell". weight_kg is the weight of ONE',
+    '  bell, so a double at 24kg means two 24kg bells, not 12kg each.',
     '- When a pattern-balance section is provided, prefer movements that train',
     '  the red- and yellow-band (highest-debt) patterns, and say so in the',
     '  rationale when it drives your selection. Readiness, recent RPE, and the',
@@ -38,6 +42,15 @@ export function buildSystemPrompt(mode: RecommendMode = 'default'): string {
     '- Give a short, concrete rationale a thoughtful coach would give — tie it to',
     '  their goal, recent history, and readiness. Avoid generic filler. Never use',
     '  the word "debt" — say a pattern is due, overdue, or needs attention.',
+    '',
+    'Runnability (these are checked, and a violation is rejected):',
+    '- Every movement needs the SAME number of rungs, unless you declare the format',
+    '  "Straight Sets". Every other format rotates through the movements one rung at',
+    '  a time, so a shorter ladder runs out mid-round. Either match the rung counts',
+    '  across every block or declare "Straight Sets".',
+    '- No rep scheme is empty, and every rep is a whole number from 1 to 100.',
+    '- Every weight is a positive number of kilograms, no heavier than 100.',
+    '- duration_minutes is greater than zero.',
   ].join('\n');
 }
 
@@ -49,7 +62,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
           c.pattern_credits?.length
             ? ` · pays: ${c.pattern_credits.join(', ')}`
             : ''
-        } [user_movement_id: ${c.user_movement_id}]`,
+        }${c.supports_doubles ? ' · double-bell' : ''} [user_movement_id: ${c.user_movement_id}]`,
     )
     .join('\n');
 
@@ -88,6 +101,11 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
       ]
     : [];
 
+  const equipmentText = formatEquipmentSection(
+    'description' in inputs.unlocked_weights ? inputs.unlocked_weights : null,
+  );
+  const equipmentSection = equipmentText ? ['', equipmentText] : [];
+
   return [
     `Training goal: ${inputs.training_goal ?? '(none provided)'}`,
     `How they feel today: ${inputs.readiness ?? '(not provided)'}`,
@@ -97,6 +115,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
     historyLines,
     ...patternDebtSection,
     ...targetSection,
+    ...equipmentSection,
     '',
     'Candidate movements (choose only from these):',
     candidateLines,
@@ -111,7 +130,9 @@ export function buildCorrectionPrompt(reasons: string[]): string {
     'Your previous response was rejected for these reasons:',
     ...reasons.map((r) => `- ${r}`),
     '',
-    'Produce a corrected recommendation that uses only candidate user_movement_ids',
-    'and positive integer reps and weights.',
+    'Produce a corrected recommendation that uses only candidate user_movement_ids,',
+    'positive integer reps and weights, rung counts that match across every block',
+    'unless the format is "Straight Sets", and only weights the lifter owns — an',
+    'adjustable bell keeps one setting for the whole session.',
   ].join('\n');
 }

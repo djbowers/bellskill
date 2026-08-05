@@ -43,8 +43,11 @@ import {
   getWeightRange,
   getWeightTabValue,
   getWeightUnitLabel,
+  resolveMovementWeights,
   usesSharedBell,
+  validateWorkout,
 } from '~/utils';
+import type { IssueSuggestion } from '~/utils';
 
 import {
   AddToWorkoutSection,
@@ -63,6 +66,7 @@ import {
   StartWorkoutHero,
   WeightModeTabs,
   WeightUnitTabs,
+  WorkoutIssueList,
   WorkoutModeTabs,
 } from './components';
 import type { SummaryLoad } from './components';
@@ -906,20 +910,56 @@ export const StartWorkoutPage = ({
     weightTwoValue: sharedWeightTwoValue,
   });
 
-  // Only the rotating order needs matching ladders — it walks every movement with
-  // one shared rung pointer. Straight sets gives each movement its own ladder.
-  const isDifferentRepSchemes =
-    workoutMode !== 'straightSets' &&
-    movements.length > 1 &&
-    movements.some(
-      (movement) => movement.repScheme.length !== movements[0].repScheme.length,
-    );
+  // One rule set for every producer — the builder, repeat-workout, program
+  // sessions, curated workouts, and the recommender all land here (PROD-240).
+  // A shared-bell workout is validated at its resolved weights, since that is
+  // the load actually lifted — and that now includes a circuit or straight sets
+  // running off one bell, not just a complex.
+  const { errors: workoutErrors, warnings: workoutWarnings } = validateWorkout({
+    workoutMode,
+    workoutGoal,
+    intervalTimer,
+    movements: movements.map((movement) =>
+      resolveMovementWeights(movement, {
+        sharedBell: sharedBellActive,
+        sharedWeightOneUnit,
+        sharedWeightOneValue,
+        sharedWeightTwoUnit,
+        sharedWeightTwoValue,
+      }),
+    ),
+  });
 
-  const startDisabled =
-    movements.length === 0 ||
-    movements.some((movement) => movement.movementName.length === 0) ||
-    isDifferentRepSchemes ||
-    workoutGoal <= 0;
+  const startDisabled = workoutErrors.length > 0;
+  const erroredMovementIndexes = new Set(
+    workoutErrors
+      .map((issue) => issue.movementIndex)
+      .filter((index): index is number => index !== undefined),
+  );
+
+  const handleApplySuggestion = (suggestion: IssueSuggestion) => {
+    if (suggestion.kind === 'switchMode') {
+      handleChangeWorkoutMode(suggestion.mode);
+      return;
+    }
+    // Repeat each short movement's last rung up to the longest ladder, so the
+    // padding matches the shape the user already chose.
+    setMovements((prev) =>
+      prev.map((movement) => {
+        const missing = suggestion.targetRungs - movement.repScheme.length;
+        if (missing <= 0) return movement;
+        const lastRung = movement.repScheme.at(-1);
+        if (lastRung === undefined) return movement;
+        return {
+          ...movement,
+          repScheme: [
+            ...movement.repScheme,
+            ...Array.from({ length: missing }, () => lastRung),
+          ],
+        };
+      }),
+    );
+  };
 
   // Every bell in play, for the footer's at-a-glance load range. A shared-bell
   // workout carries one bell (or two), so it reads the shared weights instead.
@@ -1111,6 +1151,7 @@ export const StartWorkoutPage = ({
               intervalActive={intervalTimer > 0}
               onToggleExpanded={() => handleToggleMovementExpanded(index)}
               onRemove={() => handleClickRemoveMovement(index)}
+              hasError={erroredMovementIndexes.has(index)}
               onChangeName={(name) => handleChangeMovementName(index, name)}
               onChangeWeightTab={(mode) =>
                 sharedBellActive
@@ -1142,12 +1183,13 @@ export const StartWorkoutPage = ({
             + Movement
           </Button>
 
-          {isDifferentRepSchemes && (
-            <div className="text-sm text-destructive">
-              Rep schemes must contain the same number of rungs for each
-              movement.
-            </div>
-          )}
+          <WorkoutIssueList
+            errors={workoutErrors}
+            warnings={workoutWarnings}
+            movementNames={movements.map((movement) => movement.movementName)}
+            onApplySuggestion={handleApplySuggestion}
+          />
+
 
           <AddToWorkoutSection
             hasNotes={preWorkoutNotes !== null}

@@ -2,9 +2,6 @@ import { ArrowUpTrayIcon } from '@heroicons/react/20/solid';
 import { DevicePhoneMobileIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 
-import { useFeatures } from '~/hooks';
-import { cn } from '~/lib/utils';
-
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
   readonly userChoice: Promise<{
@@ -15,7 +12,6 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PWAInstallPrompt() {
-  const features = useFeatures();
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -110,17 +106,11 @@ export function PWAInstallPrompt() {
 
   return (
     <div
-      className={cn(
-        'fixed left-4 right-4 z-50 mx-auto max-w-sm',
-        // Lift above the fixed bottom nav when it is enabled; the bar is hidden
-        // at `lg` (where the sidebar takes over), so restore the default offset
-        // there and not a breakpoint earlier. 80px is the 64px bar height plus
-        // ~16px of intentional breathing room above it, not an off-by-one
-        // against the bar.
-        features.bottomNav
-          ? 'bottom-[calc(80px+env(safe-area-inset-bottom,0))] lg:bottom-4'
-          : 'bottom-4',
-      )}
+      // Lifted above the fixed bottom nav; the bar is hidden at `lg` (where the
+      // sidebar takes over), so the default offset returns there and not a
+      // breakpoint earlier. 80px is the 64px bar height plus ~16px of
+      // intentional breathing room above it, not an off-by-one against the bar.
+      className="fixed left-4 right-4 z-50 mx-auto max-w-sm bottom-[calc(80px+env(safe-area-inset-bottom,0))] lg:bottom-4"
     >
       <div className="relative rounded-lg border border-border bg-card p-3 shadow-lg">
         <button

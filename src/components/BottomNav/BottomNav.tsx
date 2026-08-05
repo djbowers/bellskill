@@ -36,9 +36,9 @@ const sheetActiveClasses = 'bg-primary/10 text-primary';
 
 /**
  * Fixed bottom "thumb" navigation for mobile viewports. Hidden on desktop
- * (`lg:hidden`) where the `Sidebar` rail takes over. Gated behind the
- * `bottomNav` feature flag, and suppressed on immersive routes and while a text
- * input is focused (mobile keyboard). See the thumb-nav design plan.
+ * (`lg:hidden`) where the `Sidebar` rail takes over. Suppressed on immersive
+ * routes and while a text input is focused (mobile keyboard). See the thumb-nav
+ * design plan.
  */
 export const BottomNav = () => {
   const features = useFeatures();

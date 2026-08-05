@@ -3,6 +3,7 @@ export * from './ActiveWorkoutPage';
 export * from './CheckoutCancelPage';
 export * from './CheckoutSuccessPage';
 export * from './CompletedWorkoutPage';
+export * from './EquipmentPage';
 export * from './HistoryPage';
 export * from './MovementDetailsPage';
 export * from './MovementsPage';

@@ -4,6 +4,7 @@
 // without touching the API plumbing.
 
 import type { RecommenderInputs } from './types.ts';
+import { formatEquipmentSection } from '../_shared/equipmentInput.ts';
 import { formatPatternLine } from '../_shared/patternDebtPrompt.ts';
 
 export function buildSystemPrompt(): string {
@@ -64,6 +65,9 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
         .join('\n')
     : '- (no recent workouts logged)';
 
+  const equipmentText = formatEquipmentSection(inputs.equipment);
+  const equipmentSection = equipmentText ? ['', equipmentText] : [];
+
   return [
     `Training goal: ${inputs.training_goal ?? '(none provided)'}`,
     `Days since last workout: ${inputs.days_since_last_workout ?? '(unknown)'}`,
@@ -80,6 +84,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
     '',
     'Recent workouts (most recent first):',
     historyLines,
+    ...equipmentSection,
     '',
     'Candidate programs (choose exactly one, by program_id):',
     candidateLines,

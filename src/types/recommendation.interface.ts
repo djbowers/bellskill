@@ -18,6 +18,8 @@ export interface RecommendationBlock {
   weight_kg: number;
   rep_scheme: number[];
   notes: string;
+  /** Bells held at once (1, or 2 for double-bell). Absent on older recommendations. */
+  bells?: number;
 }
 
 export interface Recommendation {
@@ -26,6 +28,8 @@ export interface Recommendation {
   format: RecommendationFormat;
   confidence: RecommendationConfidence;
   blocks: RecommendationBlock[];
+  /** Weight each adjustable bell is set to for the session. Absent on older recommendations. */
+  adjustable_settings_kg?: number[];
 }
 
 /** Success payload from `recommend-session`. */

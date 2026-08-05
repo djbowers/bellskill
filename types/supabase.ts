@@ -587,6 +587,53 @@ export type Database = {
           },
         ]
       }
+      user_equipment: {
+        Row: {
+          created_at: string | null
+          id: string
+          kind: Database["public"]["Enums"]["equipment_kind"]
+          max_weight: number | null
+          min_weight: number | null
+          quantity: number
+          step_weight: number | null
+          unit: Database["public"]["Enums"]["weight_unit"]
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["equipment_kind"]
+          max_weight?: number | null
+          min_weight?: number | null
+          quantity?: number
+          step_weight?: number | null
+          unit?: Database["public"]["Enums"]["weight_unit"]
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["equipment_kind"]
+          max_weight?: number | null
+          min_weight?: number | null
+          quantity?: number
+          step_weight?: number | null
+          unit?: Database["public"]["Enums"]["weight_unit"]
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_equipment_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_movements: {
         Row: {
           canonical_name: string
@@ -1013,6 +1060,7 @@ export type Database = {
       uses_shared_bell: { Args: { p_workout_options: Json }; Returns: boolean }
     }
     Enums: {
+      equipment_kind: "fixed" | "adjustable"
       RPE: "noEffort" | "easy" | "ideal" | "hard" | "maxEffort"
       weight_unit: "kilograms" | "pounds"
       workout_goal_units: "minutes" | "rounds" | "kilograms"
@@ -1143,6 +1191,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      equipment_kind: ["fixed", "adjustable"],
       RPE: ["noEffort", "easy", "ideal", "hard", "maxEffort"],
       weight_unit: ["kilograms", "pounds"],
       workout_goal_units: ["minutes", "rounds", "kilograms"],

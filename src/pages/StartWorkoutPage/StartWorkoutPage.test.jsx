@@ -876,15 +876,163 @@ describe('Straight Sets', () => {
     await userEvent.click(addRungButtons[1]);
 
     expect(
-      screen.getByText(/Rep schemes must contain the same number of rungs/i),
+      screen.getByText(/Rep schemes differ across movements/i),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Start/i })).toBeDisabled();
 
     await selectMode('Straight Sets');
 
     expect(
-      screen.queryByText(/Rep schemes must contain the same number of rungs/i),
+      screen.queryByText(/Rep schemes differ across movements/i),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
+  });
+});
+
+describe('workout issues', () => {
+  beforeEach(async () => {
+    render(<Default />);
+    await enterBuildMode();
+  });
+
+  /** Two movements with 1 and 2 rungs, which circuit mode can't run. */
+  const buildUnequalRungs = async () => {
+    await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
+    await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
+    await userEvent.type(
+      screen.getAllByLabelText('Movement Input')[1],
+      'Swing',
+    );
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'Add rung' })[1],
+    );
+  };
+
+  test('Switch to Straight Sets clears the error and enables Start', async () => {
+    await buildUnequalRungs();
+    expect(screen.getByRole('button', { name: /Start/i })).toBeDisabled();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Switch to Straight Sets' }),
+    );
+
+    expect(
+      screen.queryByText(/Rep schemes differ across movements/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
+  });
+
+  test('Pad to 2 rungs clears the error by repeating the last rung', async () => {
+    await buildUnequalRungs();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Pad to 2 rungs' }));
+
+    expect(
+      screen.queryByText(/Rep schemes differ across movements/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
+    // Both movements now run two rungs; the short one repeated its last value.
+    expect(screen.getAllByLabelText(/Rung \d/)).toHaveLength(4);
+  });
+
+  test('an unnamed movement blocks Start and flags its own card', async () => {
+    expect(screen.getByRole('button', { name: /Start/i })).toBeDisabled();
+    expect(screen.getByText(/This movement needs a name/i)).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
+
+    expect(
+      screen.queryByText(/This movement needs a name/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
+  });
+
+});
+
+// The builder is the only backstop for workouts it didn't build: repeat-workout,
+// program sessions, and curated workouts all seed its state the same way. These
+// load through the context the way those producers do.
+describe('workout issues from a loaded workout', () => {
+  // `editWorkout` nav state is the route history's "Repeat" takes, and it opens
+  // the builder straight onto the loaded options instead of a blank build.
+  const loadWorkout = async (over) => {
+    render(
+      <QueryClientProvider client={makeQueryClient()}>
+        <MemoryRouter
+          initialEntries={[{ pathname: '/', state: { editWorkout: true } }]}
+        >
+          <SessionProvider value={mockSession}>
+            <EntitlementContext.Provider value={freeEntitlement}>
+              <WorkoutOptionsContext.Provider
+                value={[
+                  {
+                    ...DEFAULT_WORKOUT_OPTIONS,
+                    movements: [
+                      { ...DEFAULT_MOVEMENT_OPTIONS, movementName: 'Swing' },
+                    ],
+                    ...over,
+                  },
+                  vi.fn(),
+                ]}
+              >
+                <StartWorkoutPage />
+              </WorkoutOptionsContext.Provider>
+            </EntitlementContext.Provider>
+          </SessionProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await screen.findByRole('button', { name: /Start/i });
+  };
+
+  test('a warning surfaces without blocking Start', async () => {
+    // The builder disables the timed toggle while an interval runs, so this pair
+    // is only reachable for data authored somewhere else.
+    await loadWorkout({
+      intervalTimer: 60,
+      movements: [
+        { ...DEFAULT_MOVEMENT_OPTIONS, movementName: 'Plank', timedRungs: true },
+      ],
+    });
+
+    expect(screen.getByText(/both drive the set clock/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
+  });
+
+  test('an unrunnable program session surfaces the same error and fixes', async () => {
+    await loadWorkout({
+      workoutMode: 'circuit',
+      movements: [
+        { ...DEFAULT_MOVEMENT_OPTIONS, movementName: 'A', repScheme: [1, 2, 3, 4] },
+        { ...DEFAULT_MOVEMENT_OPTIONS, movementName: 'B', repScheme: [5, 5, 5] },
+        { ...DEFAULT_MOVEMENT_OPTIONS, movementName: 'C', repScheme: [5, 5, 5] },
+      ],
+    });
+
+    expect(
+      screen.getByText(/Rep schemes differ across movements/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start/i })).toBeDisabled();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Pad to 4 rungs' }),
+    );
+
+    expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
+  });
+
+  test('a bodyweight movement is runnable', async () => {
+    await loadWorkout({
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Push-Up',
+          weightOneUnit: null,
+          weightOneValue: null,
+        },
+      ],
+    });
+
     expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
   });
 });

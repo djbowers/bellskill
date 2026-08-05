@@ -223,3 +223,60 @@ describe('buildRecommendationCatalog', () => {
     expect(warn).not.toHaveBeenCalled();
   });
 });
+
+describe('recommendationToMovements — declared bell count', () => {
+  const withBells = (
+    movementName: string,
+    weightKg: number,
+    bells?: number,
+  ): Recommendation => ({
+    rationale: 'test',
+    duration_minutes: 20,
+    format: 'Straight Sets',
+    confidence: 'high',
+    blocks: [
+      {
+        ...block(movementName, weightKg),
+        ...(bells === undefined ? {} : { bells }),
+      },
+    ],
+  });
+
+  test('bells: 2 opens the builder as Double, carrying the prescribed load', () => {
+    const [movement] = recommendationToMovements(
+      withBells(TWO_HAND_SWING, 24, 2),
+      catalog,
+    );
+
+    expect(movement.weightOneValue).toBe(24);
+    expect(movement.weightTwoValue).toBe(24);
+    expect(getWeightTabValue(movement)).toBe('double');
+  });
+
+  test('bells: 1 overrides a catalog double — the recommender is authoritative', () => {
+    const [movement] = recommendationToMovements(
+      withBells(DOUBLE_KB_FRONT_SQUAT, 24, 1),
+      catalog,
+    );
+
+    expect(getWeightTabValue(movement)).toBe('2h');
+  });
+
+  test('bells: 1 still pins a single-arm movement to 1H', () => {
+    const [movement] = recommendationToMovements(
+      withBells(SINGLE_ARM_PRESS, 24, 1),
+      catalog,
+    );
+
+    expect(getWeightTabValue(movement)).toBe('1h');
+  });
+
+  test('blocks from before bells existed keep inferring Double from the catalog', () => {
+    const [movement] = recommendationToMovements(
+      withBells(DOUBLE_KB_FRONT_SQUAT, 24, undefined),
+      catalog,
+    );
+
+    expect(getWeightTabValue(movement)).toBe('double');
+  });
+});
