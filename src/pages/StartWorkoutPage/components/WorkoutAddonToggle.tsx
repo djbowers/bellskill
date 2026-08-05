@@ -33,12 +33,15 @@ export const WorkoutAddonToggle = ({
   onToggle: () => void;
 }) => {
   const Icon = ICONS[id] as ComponentType<SVGProps<SVGSVGElement>>;
+  // A forced-on addon reads as 'locked', not 'on': the dimming that marks the
+  // other disabled chips would misread as off, and `title` never fires on touch.
+  const state = disabled && isOn ? 'locked' : isOn ? 'on' : 'off';
 
   return (
     <button
       type="button"
       aria-pressed={isOn}
-      aria-label={`${label}, ${isOn ? 'on' : 'off'}`}
+      aria-label={`${label}, ${state}`}
       disabled={disabled}
       title={disabled ? disabledReason : undefined}
       onClick={onToggle}
@@ -56,7 +59,7 @@ export const WorkoutAddonToggle = ({
         {label}
       </span>
       <span className="text-[10px] leading-tight text-muted-foreground">
-        {isOn ? 'on' : 'off'}
+        {state}
       </span>
     </button>
   );

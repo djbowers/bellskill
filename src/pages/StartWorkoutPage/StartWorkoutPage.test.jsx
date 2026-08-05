@@ -736,6 +736,10 @@ describe('Complex Mode', () => {
 
     expect(sharedBellToggle()).toBeDisabled();
     expect(sharedBellToggle()).toHaveAttribute('aria-pressed', 'true');
+    // Reads as locked, not merely on — there is no hover affordance on touch.
+    expect(
+      screen.getByRole('button', { name: 'Shared Bell, locked' }),
+    ).toBeInTheDocument();
   });
 
   test('a circuit can run off one shared bell', async () => {
