@@ -36,8 +36,6 @@ interface ProgramHeroProps {
 
 interface QuickStartHeroProps {
   onBuildCustom: () => void;
-  /** Repeat the most recent workout in one tap. Omitted → no repeat action. */
-  onRepeatLast?: () => void;
 }
 
 const estimatedDuration = (
@@ -80,7 +78,7 @@ const primaryCta =
 
 export const StartWorkoutHero = (props: StartWorkoutHeroProps) => {
   if (props.variant === 'quickStart') {
-    const { onBuildCustom, onRepeatLast } = props;
+    const { onBuildCustom } = props;
     return (
       <HeroShell>
         <div className="flex flex-col gap-0.5">
@@ -99,15 +97,6 @@ export const StartWorkoutHero = (props: StartWorkoutHeroProps) => {
         >
           Build a workout
         </Button>
-        {onRepeatLast && (
-          <button
-            type="button"
-            onClick={onRepeatLast}
-            className="self-start text-xs font-medium text-primary-foreground/80 hover:text-primary-foreground hover:underline"
-          >
-            Repeat last workout →
-          </button>
-        )}
       </HeroShell>
     );
   }
