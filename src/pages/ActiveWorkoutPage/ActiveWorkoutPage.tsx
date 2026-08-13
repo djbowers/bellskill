@@ -719,6 +719,8 @@ export const ActiveWorkoutPage = ({
         completedReps={completedReps}
         completedRounds={completedRounds}
         completedVolume={completedVolume}
+        roundsGoal={workoutGoalUnits === 'rounds' ? workoutGoal : undefined}
+        roundsLabel={isStraightSets ? 'Sets' : 'Rounds'}
         logWorkoutLoading={logWorkoutLoading}
         onClickFinish={handleClickFinish}
         startedAt={startedAt ?? new Date()}

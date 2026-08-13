@@ -1651,6 +1651,20 @@ describe('active workout page (circuit progress)', () => {
     expect(position).toHaveTextContent('Movement 2 of 3');
   });
 
+  test('tallies rounds against the goal, which the sets bar no longer shows', async () => {
+    render(<CircuitMultipleMovements />);
+
+    const summary = screen.getByTestId('completed-section');
+    expect(summary).toHaveTextContent('Rounds');
+    expect(summary).toHaveTextContent('0/2');
+
+    // A round closes after all three movements.
+    await clickContinue();
+    await clickContinue();
+    await clickContinue();
+    expect(summary).toHaveTextContent('1/2');
+  });
+
   test('counts sets, so the bar moves on every movement instead of once per lap', async () => {
     render(<CircuitMultipleMovements />);
 
@@ -1753,6 +1767,18 @@ describe('active workout page (straight sets)', () => {
 
     await clickContinue();
     expect(position).toHaveTextContent('Movement 2 of 5');
+  });
+
+  test('tallies sets, not rounds — straight sets logs one per set', async () => {
+    render(<StraightSets />);
+
+    const summary = screen.getByTestId('completed-section');
+    expect(summary).toHaveTextContent('Sets');
+    expect(summary).not.toHaveTextContent('Rounds');
+    expect(summary).toHaveTextContent('0/10');
+
+    await clickContinue();
+    expect(summary).toHaveTextContent('1/10');
   });
 
   test('shows no round badge — straight sets has no rounds', () => {
