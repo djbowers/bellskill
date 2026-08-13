@@ -26,3 +26,4 @@ export * from './Section';
 export * from './WeightModeTabs';
 export * from './WeightUnitTabs';
 export * from './WorkoutSummaryBar';
+export * from './WeightModeIndicator';

@@ -13,6 +13,7 @@ import {
   tokenizeMovementSearchQuery,
 } from '~/utils';
 
+import { WeightModeIndicator } from './WeightModeIndicator';
 import { WeightModeTabs } from './WeightModeTabs';
 
 export interface MovementAutocompleteProps {
@@ -22,7 +23,7 @@ export interface MovementAutocompleteProps {
   onWeightModeChange: (mode: WeightTabValue) => void;
   weightSummary?: string | null;
   showWeightModeTabs?: boolean;
-  /** The movement's mode comes from the catalog — show it, don't let it be fought. */
+  /** The catalog settled this movement's mode — read it out instead of offering a choice. */
   weightModeLocked?: boolean;
   weightModeHint?: string | null;
   className?: string;
@@ -217,14 +218,16 @@ export const MovementAutocomplete = ({
         <p className="mt-1 text-xs text-muted-foreground">{weightSummary}</p>
       )}
 
-      {showWeightModeTabs && (
-        <WeightModeTabs
-          value={weightMode}
-          onValueChange={handleWeightModeChange}
-          disabled={weightModeLocked}
-          className="mt-1"
-        />
-      )}
+      {showWeightModeTabs &&
+        (weightModeLocked ? (
+          <WeightModeIndicator mode={weightMode} className="mt-1" />
+        ) : (
+          <WeightModeTabs
+            value={weightMode}
+            onValueChange={handleWeightModeChange}
+            className="mt-1"
+          />
+        ))}
 
       {weightModeHint && (
         <p className="mt-1 text-xs text-muted-foreground">{weightModeHint}</p>

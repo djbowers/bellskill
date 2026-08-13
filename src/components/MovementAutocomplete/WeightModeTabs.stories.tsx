@@ -35,12 +35,3 @@ export const Double: StoryObj = { render: () => <Interactive initial="double" />
 export const NarrowPhone: StoryObj = {
   render: () => <Interactive initial="2h" widthClassName="w-[300px]" />,
 };
-
-/** Read-only: the catalog already settled how this movement is held. */
-export const Locked: StoryObj = {
-  render: () => (
-    <div className="max-w-md">
-      <WeightModeTabs value="1h" onValueChange={() => {}} disabled />
-    </div>
-  ),
-};

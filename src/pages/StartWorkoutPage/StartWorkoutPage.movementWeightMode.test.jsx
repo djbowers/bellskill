@@ -109,6 +109,12 @@ const enterBuildMode = async () => {
 };
 
 const tab = (name) => screen.getByRole('tab', { name });
+// A catalog-linked movement reads its mode out as a chip; only a custom one
+// still gets the tablist.
+const readOutMode = () =>
+  screen.queryByRole('tab', { name: 'Bodyweight' })
+    ? null
+    : screen.getByText(/^(Bodyweight|Two-Hand|Single|Double)$/).textContent;
 
 describe('builder weight mode follows the picked movement', () => {
   beforeEach(() => {
@@ -124,8 +130,7 @@ describe('builder weight mode follows the picked movement', () => {
 
     await userEvent.type(await enterBuildMode(), 'Kettlebell Swing');
 
-    await waitFor(() => expect(tab('Two-Hand')).toBeDisabled());
-    expect(tab('Two-Hand')).toHaveAttribute('data-state', 'active');
+    await waitFor(() => expect(readOutMode()).toBe('Two-Hand'));
   });
 
   test('a single-arm movement selects Single', async () => {
@@ -133,8 +138,7 @@ describe('builder weight mode follows the picked movement', () => {
 
     await userEvent.type(await enterBuildMode(), 'One-Arm Kettlebell Swing');
 
-    await waitFor(() => expect(tab('Single')).toHaveAttribute('data-state', 'active'));
-    expect(tab('Single')).toBeDisabled();
+    await waitFor(() => expect(readOutMode()).toBe('Single'));
   });
 
   test('a double movement selects Double and mirrors the load', async () => {
@@ -142,9 +146,7 @@ describe('builder weight mode follows the picked movement', () => {
 
     await userEvent.type(await enterBuildMode(), 'Double Kettlebell Swing');
 
-    await waitFor(() =>
-      expect(tab('Double')).toHaveAttribute('data-state', 'active'),
-    );
+    await waitFor(() => expect(readOutMode()).toBe('Double'));
     expect(screen.getAllByRole('button', { name: '+ kg' })).toHaveLength(2);
     expect(screen.getAllByDisplayValue('16')).toHaveLength(2);
   });
@@ -171,9 +173,7 @@ describe('builder weight mode follows the picked movement', () => {
     await userEvent.clear(input);
     await userEvent.type(input, 'Double Kettlebell Swing');
 
-    await waitFor(() =>
-      expect(tab('Double')).toHaveAttribute('data-state', 'active'),
-    );
+    await waitFor(() => expect(readOutMode()).toBe('Double'));
     expect(screen.getAllByDisplayValue('17')).toHaveLength(2);
   });
 });

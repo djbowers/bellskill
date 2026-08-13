@@ -7,7 +7,6 @@ import {
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { cn } from '~/lib/utils';
-import { getWeightsDisplayValue } from '~/pages/CompletedWorkoutPage/utils/displayValues';
 import {
   MovementOptions,
   WeightTabValue,
@@ -22,11 +21,14 @@ import {
   resolveMovementWeights,
 } from '~/utils';
 
+import { loadSummary } from '../utils/loadSummary';
+
 import { FieldLabel } from './FieldLabel';
 import { LadderRepScheme } from './LadderRepScheme';
 import { ModifyCountButtons } from './ModifyCountButtons';
 import { MovementAutocomplete } from './MovementAutocomplete';
 import { MovementSummaryChips } from './MovementSummaryChips';
+import { WeightModeIndicator } from './WeightModeIndicator';
 import { WeightModeTabs } from './WeightModeTabs';
 import { WeightUnitTabs } from './WeightUnitTabs';
 
@@ -92,22 +94,26 @@ export const MovementCard = ({
     sharedBell,
     ...sharedWeights,
   });
-  const weightSummary = named
-    ? getWeightsDisplayValue(
-        displayedMovement.weightOneValue,
-        displayedMovement.weightOneUnit,
-        displayedMovement.weightTwoValue,
-        displayedMovement.weightTwoUnit,
-      )
-    : null;
   const showLoad = !sharedBell && weightTabValue !== 'none';
 
-  // One movement's metadata shouldn't reshape a workout-level decision, so the
-  // shared bell wins outright — the hint just names the discrepancy.
+  // The mode is a fact, not a choice, when the catalog settled it or the shared
+  // bell overrode it — either way there is nothing here to pick.
+  const weightModeReadOnly = sharedBell || catalogWeightMode !== null;
+
+  // Expanded, the Weight and Load rows below already state the mode and the
+  // load, so a summary line would only repeat them. Under a shared bell both
+  // rows are gone, so this is the one place the movement's load appears — and
+  // the mode indicator carries the mode, leaving the deviation to name itself.
   const sharedWeightHint = sharedBell
-    ? catalogWeightMode && catalogWeightMode !== sharedWeightTabValue
-      ? `Using shared weight: ${WEIGHT_MODE_LABELS[sharedWeightTabValue]} (this movement is usually ${WEIGHT_MODE_LABELS[catalogWeightMode]})`
-      : `Using shared weight: ${WEIGHT_MODE_LABELS[sharedWeightTabValue]}`
+    ? [
+        'Shared bell',
+        named ? loadSummary(displayedMovement) : null,
+        catalogWeightMode && catalogWeightMode !== sharedWeightTabValue
+          ? `usually ${WEIGHT_MODE_LABELS[catalogWeightMode]}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' · ')
     : null;
 
   return (
@@ -132,7 +138,6 @@ export const MovementCard = ({
               onWeightModeChange={onChangeWeightTab}
               showWeightModeTabs={false}
               weightModeHint={sharedWeightHint}
-              weightSummary={weightSummary}
             />
           ) : (
             <button
@@ -188,13 +193,17 @@ export const MovementCard = ({
         <div className="flex flex-col gap-1.5 px-1.5 pb-1.5">
           <div className="h-px bg-border" />
 
-          {!sharedBell && (
+          {weightModeReadOnly ? (
+            <div className="flex items-center gap-1">
+              <FieldLabel>Weight</FieldLabel>
+              <WeightModeIndicator mode={activeWeightMode} />
+            </div>
+          ) : (
             <div>
               <FieldLabel className="mb-0.5">Weight</FieldLabel>
               <WeightModeTabs
                 value={activeWeightMode}
                 onValueChange={onChangeWeightTab}
-                disabled={catalogWeightMode !== null}
               />
             </div>
           )}

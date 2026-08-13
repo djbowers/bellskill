@@ -152,18 +152,11 @@ describe('MovementAutocomplete', () => {
     expect(onWeightModeChange).toHaveBeenCalledWith('1h');
   });
 
-  test('renders the tabs as a read-only indicator when the mode is locked', async () => {
-    const onWeightModeChange = vi.fn();
-    renderAutocomplete({ weightModeLocked: true, onWeightModeChange });
+  test('reads the mode out instead of offering tabs when it is locked', () => {
+    renderAutocomplete({ weightModeLocked: true });
 
-    expect(screen.getByRole('tab', { name: 'Single' })).toBeDisabled();
-    expect(screen.getByRole('tab', { name: 'Two-Hand' })).toHaveAttribute(
-      'data-state',
-      'active',
-    );
-
-    await userEvent.click(screen.getByRole('tab', { name: 'Single' }));
-    expect(onWeightModeChange).not.toHaveBeenCalled();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(screen.getByText('Two-Hand')).toBeInTheDocument();
   });
 
   test('keeps dropdown open while focus moves to the weight-mode tabs', async () => {
