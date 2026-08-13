@@ -15,6 +15,8 @@ const WINDOW_RADIUS = 12;
 interface ValueCarouselProps {
   /** Return a color to chip a value with, or null to leave it uncoded. */
   chipColor?: (value: number) => string | null;
+  /** Render a value as a symbol instead of a numeral; null keeps the numeral. */
+  formatValue?: (value: number) => string | null;
   max: number;
   min: number;
   onChange: (value: number) => void;
@@ -32,6 +34,7 @@ interface ValueCarouselProps {
  */
 export const ValueCarousel = ({
   chipColor,
+  formatValue,
   max,
   min,
   onChange,
@@ -100,7 +103,7 @@ export const ValueCarousel = ({
                     : 'text-muted-foreground',
                 )}
               >
-                {current}
+                {formatValue?.(current) ?? current}
               </span>
               {chipColor &&
                 (color ? (

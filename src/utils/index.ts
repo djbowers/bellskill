@@ -3,6 +3,7 @@ export * from './applyWeightMode';
 export * from './bellColors';
 export * from './equipment';
 export * from './formatRungDuration';
+export * from './maxRung';
 export * from './formatVolume';
 export * from './movementSearch';
 export * from './movementWeightModeFilter';

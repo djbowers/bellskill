@@ -4,15 +4,22 @@ import { useState } from 'react';
 import { Button } from '~/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { cn } from '~/lib/utils';
-import { formatRungDuration } from '~/utils';
+import {
+  MAX_RUNG,
+  MAX_RUNG_SYMBOL,
+  describeRungValue,
+  formatRungValue,
+  isMaxRung,
+} from '~/utils';
 
 import { FieldLabel } from './FieldLabel';
 import { ModifyCountButtons } from './ModifyCountButtons';
 
 // Rung magnitudes. Reps step by one; timed rungs (carries, planks) step by five
-// because nudging a two-minute carry a second at a time is unusable.
-const REPS_RANGE = { min: 1, max: 50, step: 1 };
-const TIMED_RANGE = { min: 5, max: 300, step: 5 };
+// because nudging a two-minute carry a second at a time is unusable. Both bottom
+// out at MAX_RUNG, which reads as "to failure" rather than as a magnitude.
+const REPS_RANGE = { min: MAX_RUNG, max: 50, step: 1 };
+const TIMED_RANGE = { min: MAX_RUNG, max: 300, step: 5 };
 
 const MAX_RUNGS = 10;
 
@@ -20,6 +27,10 @@ const MAX_RUNGS = 10;
  * A movement's rep scheme as a ladder: each rung is a chip you tap to focus,
  * then set its value on the caliper picker below. Replaces a stack of one picker
  * per rung — the ladder reads at a glance and stays short as rungs grow.
+ *
+
+ * Winding a rung down past its smallest value lands on Max, so a ladder can run
+ * up to failure — [1, 2, 3, 4, 5, Max] or [0:15, 0:30, 0:45, Max].
  *
  * Straight sets reads the same list as plain sets rather than a ladder, so the
  * labels follow `unitNoun`.
@@ -50,8 +61,8 @@ export const LadderRepScheme = ({
   // Adding/removing rungs can leave the focus past the end; clamp on render.
   const focused = Math.min(focusedRung, repScheme.length - 1);
   const range = timedRungs ? TIMED_RANGE : REPS_RANGE;
-  const label = (rung: number) =>
-    timedRungs ? formatRungDuration(rung) : `${rung}`;
+  const label = (rung: number) => formatRungValue(rung, timedRungs);
+  const unitLabel = unitNoun === 'set' ? 'Set' : 'Rung';
 
   // Adding a rung focuses it (you'll want to set its value). Removing the
   // focused one hands the focus to whatever slides into its place.
@@ -102,9 +113,10 @@ export const LadderRepScheme = ({
             key={rungIndex}
             type="button"
             aria-pressed={rungIndex === focused}
-            aria-label={`${unitNoun === 'set' ? 'Set' : 'Rung'} ${
-              rungIndex + 1
-            }, ${label(rung)}${timedRungs ? '' : ' reps'}`}
+            aria-label={`${unitLabel} ${rungIndex + 1}, ${describeRungValue(
+              rung,
+              timedRungs,
+            )}`}
             onClick={() => setFocusedRung(rungIndex)}
             className={cn(
               'flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md border px-1 text-base font-semibold transition-colors',
@@ -133,6 +145,8 @@ export const LadderRepScheme = ({
         {...range}
         value={repScheme[focused]}
         unit={timedRungs ? 'sec' : 'reps'}
+        formatValue={(value) => (isMaxRung(value) ? MAX_RUNG_SYMBOL : null)}
+        describeValue={(value) => describeRungValue(value, timedRungs)}
         onChange={(value) => onChangeRung(focused, value)}
         onClickMinus={() =>
           onChangeRung(focused, repScheme[focused] - range.step)
@@ -141,6 +155,14 @@ export const LadderRepScheme = ({
           onChangeRung(focused, repScheme[focused] + range.step)
         }
       />
+
+      <p className="text-center text-sm text-muted-foreground">
+        {isMaxRung(repScheme[focused])
+          ? timedRungs
+            ? `${MAX_RUNG_SYMBOL} — hold to failure, then tap Continue.`
+            : `${MAX_RUNG_SYMBOL} — go to failure, then log the reps you hit.`
+          : `${MAX_RUNG_SYMBOL} = max ${timedRungs ? 'time' : 'reps'}`}
+      </p>
 
       {repScheme.length > 1 && (
         <Button

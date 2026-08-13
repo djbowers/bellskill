@@ -142,7 +142,7 @@ describe('validateRecommendation — shared runnability rules', () => {
     expect(reasonsFor(rec([])).join(' ')).toContain('the session');
   });
 
-  test.each([[0], [-1], [2.5], [101]])(
+  test.each([[-1], [2.5], [101]])(
     'a rung of %p is rejected',
     (rung: number) => {
       expect(reasonsFor(rec([{ rep_scheme: [5, rung] }])).join(' ')).toContain(
@@ -150,6 +150,12 @@ describe('validateRecommendation — shared runnability rules', () => {
       );
     },
   );
+
+  // 0 is the max-rung sentinel now, so it passes the shared rules rather than
+  // triggering a corrective retry.
+  test('a rung of 0 is accepted as max', () => {
+    expect(() => pass(rec([{ rep_scheme: [5, 0] }]))).not.toThrow();
+  });
 
   test('an implausible weight is a warning, not a retry', () => {
     expect(() => pass(rec([{ weight_kg: 150 }]))).not.toThrow();

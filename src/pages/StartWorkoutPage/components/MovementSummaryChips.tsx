@@ -1,8 +1,9 @@
 import { MovementOptions, WeightTabValue } from '~/types';
 import {
   WEIGHT_MODE_LABELS,
-  formatRungDuration,
+  formatRungValue,
   getBellColor,
+  isMaxRung,
   getWeightTabValue,
 } from '~/utils';
 
@@ -10,11 +11,12 @@ import { loadSummary } from '../utils/loadSummary';
 
 const repSummary = (movement: MovementOptions): string => {
   const { repScheme, timedRungs } = movement;
-  const fmt = (rung: number) =>
-    timedRungs ? formatRungDuration(rung) : `${rung}`;
+  const fmt = (rung: number) => formatRungValue(rung, timedRungs);
   if (repScheme.length === 0) return '—';
   if (repScheme.length === 1) {
-    return timedRungs ? fmt(repScheme[0]) : `${repScheme[0]} reps`;
+    const only = repScheme[0];
+    if (isMaxRung(only)) return timedRungs ? 'Max time' : 'Max reps';
+    return timedRungs ? fmt(only) : `${only} reps`;
   }
   return `Ladder ${repScheme.map(fmt).join('·')}`;
 };

@@ -11,6 +11,8 @@ import { completeProgramSession } from './useCompleteProgramSession';
 
 interface LogWorkoutInput {
   completedReps: number;
+  /** Reps per completed set, per movement — index-aligned with `movements`. */
+  completedRepsByMovement: number[][];
   completedRounds: number;
   completedRungs: number;
   completedSides: number;
@@ -26,6 +28,7 @@ export const useLogWorkout = () => {
   return useMutation({
     mutationFn: ({
       completedReps,
+      completedRepsByMovement,
       completedRounds,
       completedRungs,
       completedSides,
@@ -33,6 +36,7 @@ export const useLogWorkout = () => {
     }: LogWorkoutInput) =>
       logWorkout({
         completedReps,
+        completedRepsByMovement,
         completedRounds,
         completedRungs,
         completedSides,
@@ -121,6 +125,7 @@ const toWorkoutLogModeColumns = (
 
 const logWorkout = async ({
   completedReps,
+  completedRepsByMovement,
   completedRounds,
   completedRungs,
   completedSides,
@@ -129,6 +134,7 @@ const logWorkout = async ({
   workoutOptions,
 }: {
   completedReps: number;
+  completedRepsByMovement: number[][];
   completedRounds: number;
   completedRungs: number;
   completedSides: number;
@@ -201,10 +207,11 @@ const logWorkout = async ({
   const { error: movementLogError } = await supabase
     .from('movement_logs')
     .insert(
-      movements.map((movement) => ({
+      movements.map((movement, movementIndex) => ({
         movement_name: movement.movementName,
         user_movement_id: userMovementIdByName[movement.movementName] ?? null,
         rep_scheme: movement.repScheme,
+        completed_rep_scheme: completedRepsByMovement[movementIndex] ?? [],
         timed_rungs: movement.timedRungs ?? false,
         weight_one_unit: movement.weightOneUnit,
         weight_one_value: movement.weightOneValue,

@@ -22,6 +22,14 @@ interface ModifyCountButtonsProps {
   onChange: (value: number) => void;
   onClickMinus: () => void;
   onClickPlus: () => void;
+  /**
+   * Render a value as a symbol instead of a numeral — return null to keep the
+   * numeral. A value with a symbol is not typeable, so the center display swaps
+   * from the number input to plain text while one is shown.
+   */
+  formatValue?: (value: number) => string | null;
+  /** Spoken form of a formatted value, since the symbol alone does not read. */
+  describeValue?: (value: number) => string;
   step?: number;
   unit: string;
   unitTabs?: ReactNode;
@@ -36,6 +44,8 @@ export const ModifyCountButtons = ({
   onChange,
   onClickMinus,
   onClickPlus,
+  formatValue,
+  describeValue,
   step = 1,
   unit,
   unitTabs,
@@ -52,6 +62,8 @@ export const ModifyCountButtons = ({
     setCommittedValue(value);
     setDisplayValue(value);
   }
+
+  const formattedDisplay = formatValue?.(displayValue) ?? null;
 
   const qualify = (action: string) =>
     label ? `${action} ${unit} — ${label}` : `${action} ${unit}`;
@@ -78,6 +90,7 @@ export const ModifyCountButtons = ({
 
         <div className="relative min-w-0 flex-1">
           <ValueCarousel
+            formatValue={formatValue}
             chipColor={bellUnit ? chipColor : undefined}
             max={max}
             min={min}
@@ -88,6 +101,17 @@ export const ModifyCountButtons = ({
             value={value}
           />
           <div className="pointer-events-none absolute inset-x-0 top-0.5 flex justify-center">
+            {formattedDisplay !== null ? (
+              <div
+                aria-label={
+                  describeValue?.(displayValue) ?? String(displayValue)
+                }
+                style={{ width: ITEM_WIDTH }}
+                className="flex h-3 items-center justify-center text-base font-medium"
+              >
+                {formattedDisplay}
+              </div>
+            ) : (
             <Input
               ref={inputRef}
               type="number"
@@ -102,6 +126,7 @@ export const ModifyCountButtons = ({
                 editing && 'pointer-events-auto',
               )}
             />
+            )}
           </div>
         </div>
 

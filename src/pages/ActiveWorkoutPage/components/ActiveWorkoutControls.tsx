@@ -1,3 +1,4 @@
+import { PencilSquareIcon } from '@heroicons/react/24/outline';
 import { PlayIcon, PlusIcon } from '@heroicons/react/24/solid';
 import clsx from 'clsx';
 
@@ -10,6 +11,7 @@ interface ActiveWorkoutControlsProps {
   formattedIntervalRemaining: string;
   formattedRestRemaining: string;
   formattedRungRemaining?: string;
+  handleClickAdjustReps: () => void;
   handleClickContinue: () => void;
   handleClickStart: () => void;
   intervalCompletedPercentage: number;
@@ -19,6 +21,8 @@ interface ActiveWorkoutControlsProps {
   isEffectActive: boolean;
   isRestActive: boolean;
   isTimedRung?: boolean;
+  /** The set has at least one rep-based movement, so its count can be adjusted. */
+  canAdjustReps?: boolean;
   restCompletedPercentage: number;
   rungCompletedPercentage?: number;
   setIsEffectActive: (isActive: boolean) => void;
@@ -26,6 +30,8 @@ interface ActiveWorkoutControlsProps {
 }
 
 export const ActiveWorkoutControls = ({
+  canAdjustReps = false,
+  handleClickAdjustReps,
   formattedCountdownRemaining,
   formattedIntervalRemaining,
   formattedRestRemaining,
@@ -103,16 +109,32 @@ export const ActiveWorkoutControls = ({
     );
   }
 
+  // Continue assumes you hit the prescription. Adjust reps sits beside it for
+  // the set you fell short on — same completion, a different number.
   return (
-    <Button
-      className={clsx('grow', { 'animate-wiggle': isEffectActive })}
-      disabled={workoutTimerPaused}
-      onAnimationEnd={() => setIsEffectActive(false)}
-      onClick={handleClickContinue}
-      size="lg"
-    >
-      <PlusIcon className="mr-1 h-2.5 w-2.5 stroke-2" />{' '}
-      {isComplexMode ? 'Complete Set' : 'Continue'}
-    </Button>
+    <div className="flex grow items-stretch gap-1">
+      <Button
+        className={clsx('grow', { 'animate-wiggle': isEffectActive })}
+        disabled={workoutTimerPaused}
+        onAnimationEnd={() => setIsEffectActive(false)}
+        onClick={handleClickContinue}
+        size="lg"
+      >
+        <PlusIcon className="mr-1 h-2.5 w-2.5 stroke-2" />{' '}
+        {isComplexMode ? 'Complete Set' : 'Continue'}
+      </Button>
+
+      {canAdjustReps && (
+        <Button
+          aria-label="Adjust reps completed"
+          disabled={workoutTimerPaused}
+          onClick={handleClickAdjustReps}
+          size="lg"
+          variant="secondary"
+        >
+          <PencilSquareIcon className="h-2.5 w-2.5 stroke-2" />
+        </Button>
+      )}
+    </div>
   );
 };

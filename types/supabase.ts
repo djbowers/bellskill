@@ -109,6 +109,7 @@ export type Database = {
       }
       movement_logs: {
         Row: {
+          completed_rep_scheme: number[] | null
           created_at: string | null
           id: number
           movement_name: string
@@ -123,6 +124,7 @@ export type Database = {
           workout_log_id: number
         }
         Insert: {
+          completed_rep_scheme?: number[] | null
           created_at?: string | null
           id?: number
           movement_name: string
@@ -137,6 +139,7 @@ export type Database = {
           workout_log_id: number
         }
         Update: {
+          completed_rep_scheme?: number[] | null
           created_at?: string | null
           id?: number
           movement_name?: string

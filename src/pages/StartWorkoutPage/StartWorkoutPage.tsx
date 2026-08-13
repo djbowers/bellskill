@@ -49,6 +49,8 @@ import {
   getWeightRange,
   getWeightTabValue,
   getWeightUnitLabel,
+  isMaxRung,
+  MAX_RUNG,
   resolveMovementWeights,
   usesSharedBell,
   validateWorkout,
@@ -741,7 +743,8 @@ export const StartWorkoutPage = ({
 
   // Reps and seconds are not interchangeable magnitudes — a [5,4,3,2,1] ladder
   // reads as 5-second carries, and a 30-second plank reads as 30 reps. Flipping
-  // the unit reseeds every rung to a usable default for the new one.
+  // the unit reseeds every rung to a usable default for the new one. Max rungs
+  // survive the flip: "to failure" means the same thing in either unit.
   const handleToggleTimedRungs = (index: number, timed: boolean) =>
     setMovements((prev) =>
       prev.map((movement, i) =>
@@ -749,8 +752,12 @@ export const StartWorkoutPage = ({
           ? {
               ...movement,
               timedRungs: timed,
-              repScheme: movement.repScheme.map(() =>
-                timed ? DEFAULT_RUNG_SECONDS : DEFAULT_RUNG_REPS,
+              repScheme: movement.repScheme.map((rung) =>
+                isMaxRung(rung)
+                  ? MAX_RUNG
+                  : timed
+                    ? DEFAULT_RUNG_SECONDS
+                    : DEFAULT_RUNG_REPS,
               ),
             }
           : movement,
@@ -768,7 +775,7 @@ export const StartWorkoutPage = ({
           ? {
               ...movement,
               repScheme: movement.repScheme.map((rung, j) =>
-                j === rungIndex ? Math.max(1, value) : rung,
+                j === rungIndex ? Math.max(MAX_RUNG, value) : rung,
               ),
             }
           : movement,

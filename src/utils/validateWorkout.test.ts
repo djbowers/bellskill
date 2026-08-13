@@ -152,7 +152,7 @@ describe('validateWorkout — empty_rep_scheme', () => {
 });
 
 describe('validateWorkout — invalid_reps', () => {
-  test.each([[0], [-1], [2.5], [101]])(
+  test.each([[-1], [2.5], [101]])(
     'errors on a rung of %p',
     (rung: number) => {
       expect(
@@ -164,6 +164,13 @@ describe('validateWorkout — invalid_reps', () => {
   test('passes on the boundary values 1 and 100', () => {
     expect(
       codes(draft({ movements: [movement({ repScheme: [1, 100] })] })),
+    ).not.toContain('invalid_reps');
+  });
+
+  // 0 used to be rejected alongside the negatives; it is now the max sentinel.
+  test('passes on 0, the max-rung sentinel', () => {
+    expect(
+      codes(draft({ movements: [movement({ repScheme: [5, 0] })] })),
     ).not.toContain('invalid_reps');
   });
 });
@@ -250,6 +257,37 @@ describe('validateWorkout — interval_with_timed_rungs (warning)', () => {
 
   test('an interval timer alone is fine', () => {
     expect(warningCodes(draft({ intervalTimer: 60 }))).toEqual([]);
+  });
+});
+
+describe('validateWorkout — max rungs', () => {
+  test('a 0 rung is a valid ladder step, not an invalid rep count', () => {
+    expect(codes(draft({ movements: [movement({ repScheme: [1, 2, 3, 0] })] })))
+      .toEqual([]);
+  });
+
+  test('a negative rung is still rejected', () => {
+    expect(
+      codes(draft({ movements: [movement({ repScheme: [5, -1] })] })),
+    ).toContain('invalid_reps');
+  });
+
+  test('blocks when an interval timer meets a max rung', () => {
+    const { errors, warnings } = validateWorkout(
+      draft({
+        intervalTimer: 60,
+        movements: [movement({ repScheme: [5, 0] })],
+      }),
+    );
+    expect(errors.map((e) => e.code)).toEqual(['interval_with_max_reps']);
+    expect(errors[0].movementIndex).toBe(0);
+    expect(warnings).toEqual([]);
+  });
+
+  test('a max rung alone is fine', () => {
+    expect(
+      codes(draft({ intervalTimer: 0, movements: [movement({ repScheme: [0] })] })),
+    ).toEqual([]);
   });
 });
 

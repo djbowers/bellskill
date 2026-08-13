@@ -10,6 +10,7 @@ export class ExampleMovementLog implements MovementLog {
   movement_name: string;
   rep_scheme: number[];
   timed_rungs: boolean;
+  completed_rep_scheme: number[] | null;
   user_id: string;
   user_movement_id: string | null;
   weight_one_unit: 'kilograms' | 'pounds' | null;
@@ -23,6 +24,7 @@ export class ExampleMovementLog implements MovementLog {
     movement_name = 'Clean and Press',
     rep_scheme = [3],
     timed_rungs = false,
+    completed_rep_scheme = null,
     user_id = '1',
     user_movement_id = null,
     weight_one_unit = 'kilograms',
@@ -36,6 +38,7 @@ export class ExampleMovementLog implements MovementLog {
     this.movement_name = movement_name;
     this.rep_scheme = rep_scheme;
     this.timed_rungs = timed_rungs;
+    this.completed_rep_scheme = completed_rep_scheme;
     this.user_id = user_id;
     this.user_movement_id = user_movement_id;
     this.weight_one_unit = weight_one_unit;

@@ -9,7 +9,13 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import { MovementOptions, WeightUnit } from '~/types';
-import { formatRungDuration, getWeightUnitLabel } from '~/utils';
+import {
+  MAX_RUNG_SYMBOL,
+  describeRungValue,
+  formatRungValue,
+  getWeightUnitLabel,
+  isMaxRung,
+} from '~/utils';
 
 interface CurrentMovementProps {
   currentMovement: MovementOptions;
@@ -17,6 +23,9 @@ interface CurrentMovementProps {
   currentSide: number;
   isOneHanded: boolean | null;
   isTimedRung?: boolean;
+  /** Hold to failure: no prescribed duration, so the elapsed clock stands in. */
+  isMaxTimedRung?: boolean;
+  formattedElapsed?: string;
   leftWeightUnit: WeightUnit | null;
   leftWeightValue: number | null;
   repScheme: number[];
@@ -46,6 +55,8 @@ export const CurrentMovement = ({
   currentSide,
   isOneHanded,
   isTimedRung = false,
+  isMaxTimedRung = false,
+  formattedElapsed = '0:00',
   leftWeightUnit,
   leftWeightValue,
   repScheme,
@@ -62,6 +73,7 @@ export const CurrentMovement = ({
   hasStarted,
 }: CurrentMovementProps) => {
   const [notesExpanded, setNotesExpanded] = useState(false);
+  const isMaxSet = isMaxTimedRung || isMaxRung(repScheme[rungIndex]);
   const showNotesExpanded = !hasStarted || notesExpanded;
   const isThreeColumn = isOneHanded || rightWeightValue;
 
@@ -200,7 +212,18 @@ export const CurrentMovement = ({
             >
               {isThreeColumn ? 'Left' : 'Weight'}
             </CardDescription>
-            <CardDescription>{isTimedRung ? 'Time' : 'Reps'}</CardDescription>
+            <CardDescription
+              className={clsx(isMaxSet && 'font-semibold text-foreground')}
+              data-testid="rung-unit-label"
+            >
+              {isMaxSet
+                ? isMaxTimedRung
+                  ? 'Max time'
+                  : 'Max reps'
+                : isTimedRung
+                  ? 'Time'
+                  : 'Reps'}
+            </CardDescription>
             {isThreeColumn && (
               <CardDescription
                 className={clsx(
@@ -223,13 +246,33 @@ export const CurrentMovement = ({
             <div
               className="flex items-end justify-center text-3xl"
               data-testid="current-reps"
+              aria-label={
+                isMaxTimedRung
+                  ? `Max time, holding ${formattedElapsed}`
+                  : describeRungValue(
+                      repScheme[rungIndex],
+                      currentMovement.timedRungs,
+                    )
+              }
             >
               {restRemaining ? (
                 <span className="h-5" />
-              ) : isTimedRung ? (
-                formatRungDuration(repScheme[rungIndex])
+              ) : isMaxTimedRung ? (
+                // The hold's running clock, marked ∞ so a moving number still
+                // reads as "until failure" rather than as a prescription.
+                <span className="flex items-baseline gap-1">
+                  <span aria-hidden className="text-muted-foreground">
+                    {MAX_RUNG_SYMBOL}
+                  </span>
+                  <span
+                    className="font-mono tabular-nums"
+                    data-testid="hold-elapsed"
+                  >
+                    {formattedElapsed}
+                  </span>
+                </span>
               ) : (
-                repScheme[rungIndex]
+                formatRungValue(repScheme[rungIndex], currentMovement.timedRungs)
               )}
             </div>
 

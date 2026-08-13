@@ -73,6 +73,7 @@ function makeWrapper(workoutMode: WorkoutMode = 'circuit') {
 
 const logWorkoutInput = {
   completedReps: 5,
+  completedRepsByMovement: [[5]],
   completedRounds: 1,
   completedRungs: 1,
   completedSides: 2,
@@ -421,5 +422,97 @@ describe('useLogWorkout — activation funnel analytics (PROD-157)', () => {
     expect(analyticsBody!.event_name).toBe('workout_completed');
     expect(properties.is_first_workout).toBeNull();
     expect(properties.workout_log_id).toBe(1);
+  });
+});
+
+describe('useLogWorkout — per-set actuals', () => {
+  const makeMovementsWrapper = (
+    movements: (typeof DEFAULT_MOVEMENT_OPTIONS)[],
+  ) => {
+    const workoutOptions = { ...DEFAULT_WORKOUT_OPTIONS, movements };
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    return ({ children }: { children: React.ReactNode }) =>
+      React.createElement(
+        QueryClientProvider,
+        { client: queryClient },
+        React.createElement(
+          SessionProvider,
+          { value: mockSession },
+          React.createElement(
+            WorkoutOptionsContext.Provider,
+            { value: [workoutOptions, () => {}] },
+            children,
+          ),
+        ),
+      );
+  };
+
+  const logAndCaptureMovementRows = async (
+    wrapper: ReturnType<typeof makeMovementsWrapper>,
+    completedRepsByMovement: number[][],
+  ) => {
+    let rows: Record<string, unknown>[] = [];
+
+    server.use(
+      http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
+      http.post(WORKOUT_LOGS_URL, () => HttpResponse.json([{ id: 5 }])),
+      http.post(MOVEMENT_LOGS_URL, async ({ request }) => {
+        rows = (await request.json()) as Record<string, unknown>[];
+        return HttpResponse.json([]);
+      }),
+    );
+
+    const { result } = renderHook(() => useLogWorkout(), { wrapper });
+
+    act(() => {
+      result.current.mutate({ ...logWorkoutInput, completedRepsByMovement });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    return rows;
+  };
+
+  test('a prescribed ladder keeps its plan and gains the actuals alongside it', async () => {
+    const rows = await logAndCaptureMovementRows(
+      makeMovementsWrapper([{ ...defaultMovement, repScheme: [5, 5] }]),
+      [[5, 3]],
+    );
+
+    expect(rows[0]).toMatchObject({
+      rep_scheme: [5, 5],
+      completed_rep_scheme: [5, 3],
+    });
+  });
+
+  // The plan is written verbatim, max rungs and all — 0 is what "to failure"
+  // looks like on the way in, and the actuals carry what came of it.
+  test('a ladder to max persists the 0 rung and what was hit', async () => {
+    const rows = await logAndCaptureMovementRows(
+      makeMovementsWrapper([{ ...defaultMovement, repScheme: [1, 2, 0] }]),
+      [[1, 2, 12, 1, 2, 9]],
+    );
+
+    expect(rows[0]).toMatchObject({
+      rep_scheme: [1, 2, 0],
+      completed_rep_scheme: [1, 2, 12, 1, 2, 9],
+    });
+  });
+
+  test('a timed movement records seconds, in the same unit as its plan', async () => {
+    const rows = await logAndCaptureMovementRows(
+      makeMovementsWrapper([
+        { ...defaultMovement, repScheme: [30, 0], timedRungs: true },
+      ]),
+      [[30, 47]],
+    );
+
+    expect(rows[0]).toMatchObject({
+      rep_scheme: [30, 0],
+      completed_rep_scheme: [30, 47],
+      timed_rungs: true,
+    });
   });
 });

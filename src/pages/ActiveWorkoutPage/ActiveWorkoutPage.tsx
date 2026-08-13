@@ -6,19 +6,30 @@ import { Page, SpotifyMiniPlayer } from '~/components';
 import { ConfirmDialog } from '~/components/ConfirmDialog';
 import { useProgramSession, useSession, useWorkoutOptions } from '~/contexts';
 import { useCountdownTimer, useFeatures } from '~/hooks';
-import { playDing, playStartCue, unlockAudio } from '~/utils';
+import { MovementOptions } from '~/types';
+import {
+  formatRungDuration,
+  isMaxRung,
+  playDing,
+  playStartCue,
+  unlockAudio,
+} from '~/utils';
 
 import {
   ActiveWorkoutControls,
   ComplexMovementDisplay,
   CurrentMovement,
+  RepsCompletedDialog,
   WorkoutProgress,
   WorkoutSummary,
 } from './components';
-import { useRequestWakeLock } from './hooks';
+import { useRequestWakeLock, useSetStopwatch } from './hooks';
 import { getSetProgress } from './utils';
 
 const LB_TO_KG = 0.453592;
+
+/** Seed for the first max-rep set of a movement; later sets seed from the last. */
+const DEFAULT_MAX_REPS = 10;
 
 interface ActiveWorkoutPageProps {
   defaultPaused?: boolean;
@@ -128,6 +139,23 @@ export const ActiveWorkoutPage = ({
   const [completedSides, setCompletedSides] = useState<number>(0);
   const [completedVolume, setCompletedVolume] = useState<number>(0);
 
+  // The actuals record: reps per set in completion order, per movement. Every
+  // completed set appends — the prescription on a plain Continue, the reported
+  // count when the dialog was used — so it survives to movement_logs as what was
+  // really done, next to rep_scheme's plan.
+  const [completedRepsByMovement, setCompletedRepsByMovement] = useState<
+    number[][]
+  >(() => movements.map(() => []));
+  const [repsPromptOpen, setRepsPromptOpen] = useState(false);
+
+  // The last count reported for a MAX rung, per movement — the seed for the next
+  // one. Kept apart from completedRepsByMovement, whose last entry on a ladder is
+  // whatever prescribed rung came before the max one (seeding a to-failure set
+  // with the 2 of a 1-2-max ladder is worse than useless).
+  const [lastMaxReported, setLastMaxReported] = useState<
+    Record<number, number>
+  >({});
+
   const [isMirrorSet, setIsMirrorSet] = useState<boolean>(false); // for one-handed movements and mixed weights
   const [isEffectActive, setIsEffectActive] = useState<boolean>(false);
   const [isRestActive, setIsRestActive] = useState<boolean>(false);
@@ -142,15 +170,22 @@ export const ActiveWorkoutPage = ({
   const isLastMovement = currentMovementIndex === lastMovementIndex;
   const currentMovement = movements[currentMovementIndex];
 
+  const rungFor = (movement: MovementOptions, rungIndex: number) =>
+    movement.repScheme[Math.min(rungIndex, movement.repScheme.length - 1)];
+
+  const currentRung = rungFor(currentMovement, currentMovementRungIndex);
+
   // Timed movements (PROD-200): a timed movement's repScheme holds SECONDS per
   // rung, not reps. The rung runs on its own countdown that auto-fires
   // "continue" on expiry, exactly as intervalTimer does. The builder makes the
   // two mutually exclusive; the effects below also guard, since both would
   // otherwise drive continueWorkout and double-advance.
-  const isTimedRung = currentMovement.timedRungs === true;
-  const currentRungSeconds = isTimedRung
-    ? currentMovement.repScheme[currentMovementRungIndex]
-    : 0;
+  //
+  // A max timed rung is the exception: there is no duration to count down, so it
+  // runs on the stopwatch below and ends on a Continue press like a max-rep set.
+  const isTimedRung =
+    currentMovement.timedRungs === true && !isMaxRung(currentRung);
+  const currentRungSeconds = isTimedRung ? currentRung : 0;
 
   const [
     formattedRungRemaining,
@@ -164,6 +199,19 @@ export const ActiveWorkoutPage = ({
     defaultPaused: defaultPaused && hasTimedMovements,
     timeFormat: 'ss.S',
   });
+
+  // Only a max timed rung needs the stopwatch, and only while it is actually
+  // running — not during the opening countdown, a pause, or rest.
+  const isMaxTimedRung =
+    currentMovement.timedRungs === true && isMaxRung(currentRung);
+  const { elapsedSeconds, elapsedMilliseconds, reset: resetSetStopwatch } =
+    useSetStopwatch({
+      running:
+        isMaxTimedRung &&
+        !workoutTimerPaused &&
+        !isRestActive &&
+        !isCountdownActive,
+    });
 
   const primaryWeightSide = isMirrorSet ? 'right' : 'left'; // todo: make primary weight side configurable
 
@@ -217,12 +265,6 @@ export const ActiveWorkoutPage = ({
 
   const currentMovementRungs = currentMovement.repScheme.length;
   const isLastRung = currentMovementRungIndex === currentMovementRungs - 1;
-  // Seconds are not reps: a timed rung contributes no volume, or a 2-minute
-  // carry at 24 kg would log 2,880 kg and end a kilograms-goal workout instantly.
-  const currentRungVolume = isTimedRung
-    ? 0
-    : currentTotalWeight * currentMovement.repScheme[currentMovementRungIndex];
-
   const isStraightSets = workoutMode === 'straightSets';
   const currentRound = completedRounds + 1;
   const shouldMirrorReps = isOneHanded || isMixedWeights;
@@ -282,25 +324,57 @@ export const ActiveWorkoutPage = ({
         m.weightTwoValue === 0,
     );
 
-  const incrementReps = () =>
-    setCompletedReps((prev) =>
-      isTimedRung
-        ? prev
-        : prev + currentMovement.repScheme[currentMovementRungIndex],
+  // What a movement contributes to this set, in its own unit: reps, or seconds
+  // when it is timed. `reported` is what the user entered in the reps dialog —
+  // the only source for a max rep rung, and the correction to a rung they fell
+  // short of otherwise. A max timed rung reads the stopwatch instead: the
+  // Continue press is the measurement, so there is nothing to ask for.
+  const valueForMovement = (
+    movementIndex: number,
+    reported?: Record<number, number>,
+  ) => {
+    const movement = movements[movementIndex];
+    const rung = rungFor(movement, currentMovementRungIndex);
+    if (movement.timedRungs) return isMaxRung(rung) ? elapsedSeconds : rung;
+    return reported?.[movementIndex] ?? (isMaxRung(rung) ? 0 : rung);
+  };
+
+  // Seconds are not reps: a timed rung contributes neither reps nor volume, or a
+  // 2-minute carry at 24 kg would log 2,880 kg and end a kilograms-goal workout
+  // instantly.
+  const repsForMovement = (
+    movementIndex: number,
+    reported?: Record<number, number>,
+  ) =>
+    movements[movementIndex].timedRungs
+      ? 0
+      : valueForMovement(movementIndex, reported);
+
+  // A complex set completes every movement at once; otherwise only the current
+  // one advanced, so only it gets an entry.
+  const recordCompletedReps = (reported?: Record<number, number>) =>
+    setCompletedRepsByMovement((prev) =>
+      prev.map((entries, movementIndex) =>
+        isComplex || movementIndex === currentMovementIndex
+          ? [...entries, valueForMovement(movementIndex, reported)]
+          : entries,
+      ),
     );
 
-  const incrementRepsComplex = () =>
+  const incrementReps = (reported?: Record<number, number>) =>
+    setCompletedReps(
+      (prev) => prev + repsForMovement(currentMovementIndex, reported),
+    );
+
+  const incrementRepsComplex = (reported?: Record<number, number>) =>
     setCompletedReps(
       (prev) =>
         prev +
-        movements.reduce((sum, m) => {
-          if (m.timedRungs) return sum;
-          const repIdx = Math.min(
-            currentMovementRungIndex,
-            m.repScheme.length - 1,
-          );
-          return sum + m.repScheme[repIdx];
-        }, 0),
+        movements.reduce(
+          (sum, _, movementIndex) =>
+            sum + repsForMovement(movementIndex, reported),
+          0,
+        ),
     );
 
   const incrementRungs = () => setCompletedRungs((prev) => prev + 1);
@@ -309,14 +383,15 @@ export const ActiveWorkoutPage = ({
 
   const incrementRounds = () => setCompletedRounds((prev) => prev + 1);
 
-  const incrementVolume = () =>
-    setCompletedVolume((prev) => prev + currentRungVolume);
+  const incrementVolume = (reported?: Record<number, number>) =>
+    setCompletedVolume(
+      (prev) =>
+        prev +
+        currentTotalWeight * repsForMovement(currentMovementIndex, reported),
+    );
 
-  const incrementVolumeComplex = () => {
-    const complexVolume = movements.reduce((sum, m) => {
-      if (m.timedRungs) return sum;
-      const repIdx = Math.min(currentMovementRungIndex, m.repScheme.length - 1);
-      const reps = m.repScheme[repIdx];
+  const incrementVolumeComplex = (reported?: Record<number, number>) => {
+    const complexVolume = movements.reduce((sum, m, movementIndex) => {
       const weight =
         (m.weightOneUnit === 'pounds'
           ? (m.weightOneValue ?? 0) * LB_TO_KG
@@ -324,7 +399,7 @@ export const ActiveWorkoutPage = ({
         (m.weightTwoUnit === 'pounds'
           ? (m.weightTwoValue ?? 0) * LB_TO_KG
           : (m.weightTwoValue ?? 0));
-      return sum + weight * reps;
+      return sum + weight * repsForMovement(movementIndex, reported);
     }, 0);
     setCompletedVolume((prev) => prev + complexVolume);
   };
@@ -451,23 +526,24 @@ export const ActiveWorkoutPage = ({
     advanceArmedRef.current = true;
   });
 
-  const continueWorkout = () => {
+  const continueWorkout = (reported?: Record<number, number>) => {
     if (!advanceArmedRef.current) return;
     advanceArmedRef.current = false;
 
     requestWakeLock();
     incrementSides(); // each continue completes one side of work
+    recordCompletedReps(reported);
     if (isComplex) {
-      incrementRepsComplex();
-      incrementVolumeComplex();
+      incrementRepsComplex(reported);
+      incrementVolumeComplex(reported);
       if (isSingleArmComplex) {
         goToNextSideComplex();
       } else {
         goToNextSetComplex();
       }
     } else {
-      incrementReps();
-      incrementVolume();
+      incrementReps(reported);
+      incrementVolume(reported);
       goToNextSet();
     }
     if (restTimer > 0) startRest();
@@ -498,6 +574,7 @@ export const ActiveWorkoutPage = ({
     pauseWorkout();
     logWorkout({
       completedReps,
+      completedRepsByMovement,
       completedRounds,
       completedRungs,
       completedSides,
@@ -525,7 +602,63 @@ export const ActiveWorkoutPage = ({
     navigate('/');
   };
 
+  // Which movements the reps dialog covers. Timed ones are excluded either way:
+  // a fixed timed rung runs its countdown, and a max timed rung is measured by
+  // the stopwatch, so neither has anything to ask.
+  const setMovementIndexes = isComplex
+    ? movements.map((_, index) => index)
+    : [currentMovementIndex];
+  const promptMovementIndexes = setMovementIndexes.filter(
+    (index) => !movements[index].timedRungs,
+  );
+
+  const isMaxRepRung = (index: number) =>
+    !movements[index].timedRungs &&
+    isMaxRung(rungFor(movements[index], currentMovementRungIndex));
+
+  // A max rep rung can't be completed by a bare press — there is no
+  // prescription to assume, so the dialog is the only way through.
+  const requiresRepsPrompt = promptMovementIndexes.some(isMaxRepRung);
+  const canAdjustReps =
+    promptMovementIndexes.length > 0 && !requiresRepsPrompt;
+
+  const promptMovements = promptMovementIndexes.map((index) => {
+    const movement = movements[index];
+    const rung = rungFor(movement, currentMovementRungIndex);
+    // A later max set seeds from the last max you reported — the honest guess is
+    // "about what you managed last time", not a fixed number.
+    return {
+      movementIndex: index,
+      movementName: movement.movementName,
+      defaultReps: isMaxRung(rung)
+        ? (lastMaxReported[index] ?? DEFAULT_MAX_REPS)
+        : rung,
+    };
+  });
+
+  const openRepsPrompt = () => {
+    unlockAudio();
+    setRepsPromptOpen(true);
+  };
+
+  const handleConfirmReps = (reported: Record<number, number>) => {
+    setRepsPromptOpen(false);
+    setIsEffectActive(true);
+    setLastMaxReported((prev) => {
+      const next = { ...prev };
+      for (const [index, reps] of Object.entries(reported)) {
+        if (isMaxRepRung(Number(index))) next[Number(index)] = reps;
+      }
+      return next;
+    });
+    continueWorkout(reported);
+  };
+
   const handleClickContinue = () => {
+    if (requiresRepsPrompt) {
+      openRepsPrompt();
+      return;
+    }
     unlockAudio();
     setIsEffectActive(true);
     continueWorkout();
@@ -596,6 +729,16 @@ export const ActiveWorkoutPage = ({
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-arms once per advance; resetRungTimer is recreated whenever the rung duration changes and must not retrigger this effect
     [completedSides, currentRungSeconds, isTimedRung],
+  );
+
+  // Zero the hold clock on each advance, keyed on completedSides for the same
+  // reason armRungTimer is: it is the one counter every continue bumps.
+  useEffect(
+    function armSetStopwatch() {
+      resetSetStopwatch();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-arms once per advance; resetSetStopwatch is recreated whenever the run state flips and must not retrigger this effect
+    [completedSides],
   );
 
   useEffect(
@@ -676,6 +819,8 @@ export const ActiveWorkoutPage = ({
           currentSide={currentSide}
           isOneHanded={isOneHanded}
           isTimedRung={isTimedRung}
+          isMaxTimedRung={isMaxTimedRung}
+          formattedElapsed={formatRungDuration(elapsedMilliseconds / 1000)}
           leftWeightUnit={leftWeightUnit}
           leftWeightValue={leftWeightValue}
           repScheme={currentMovement.repScheme}
@@ -698,6 +843,8 @@ export const ActiveWorkoutPage = ({
           formattedCountdownRemaining={formattedCountdownRemaining}
           formattedIntervalRemaining={formattedIntervalRemaining}
           formattedRestRemaining={formattedRestRemaining}
+          canAdjustReps={canAdjustReps}
+          handleClickAdjustReps={openRepsPrompt}
           handleClickContinue={handleClickContinue}
           handleClickStart={handleClickStart}
           formattedRungRemaining={formattedRungRemaining}
@@ -724,6 +871,14 @@ export const ActiveWorkoutPage = ({
         logWorkoutLoading={logWorkoutLoading}
         onClickFinish={handleClickFinish}
         startedAt={startedAt ?? new Date()}
+      />
+
+      <RepsCompletedDialog
+        open={repsPromptOpen}
+        onOpenChange={setRepsPromptOpen}
+        movements={promptMovements}
+        required={requiresRepsPrompt}
+        onConfirm={handleConfirmReps}
       />
 
       <ConfirmDialog

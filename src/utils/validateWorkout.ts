@@ -11,6 +11,7 @@
 // it the way it already imports patternDebt.ts.
 
 import type { WorkoutMode } from '../types/workout-mode.type.ts';
+import { hasMaxRung } from './maxRung.ts';
 
 export type IssueSeverity = 'error' | 'warning';
 
@@ -23,6 +24,7 @@ export type IssueCode =
   | 'invalid_reps'
   | 'non_positive_weight'
   | 'interval_with_timed_rungs'
+  | 'interval_with_max_reps'
   | 'implausible_weight';
 
 /** A repair the UI may offer. Data only — the caller owns applying it. */
@@ -145,14 +147,15 @@ export const validateWorkout = (draft: WorkoutDraft): WorkoutValidation => {
         movementIndex,
       });
     } else if (
+      // 0 is allowed: it is the max-rung sentinel, not a magnitude.
       movement.repScheme.some(
-        (rung) => !Number.isInteger(rung) || rung <= 0 || rung > MAX_REP,
+        (rung) => !Number.isInteger(rung) || rung < 0 || rung > MAX_REP,
       )
     ) {
       errors.push({
         code: 'invalid_reps',
         severity: 'error',
-        message: `This movement has invalid rep counts — every rung must be a whole number from 1 to ${MAX_REP}.`,
+        message: `This movement has invalid rep counts — every rung must be a whole number from 1 to ${MAX_REP}, or 0 for max.`,
         movementIndex,
       });
     }
@@ -190,6 +193,19 @@ export const validateWorkout = (draft: WorkoutDraft): WorkoutValidation => {
           severity: 'warning',
           message:
             'The interval timer and this movement’s timed rungs both drive the set clock. Turn one of them off.',
+          movementIndex,
+        });
+      }
+
+      // An error, not a warning like timed rungs: the interval advances the set
+      // on its own, so a max rung has no Continue press to end it — the set
+      // would be cut at the interval instead of run to failure.
+      if (hasMaxRung(movement.repScheme)) {
+        errors.push({
+          code: 'interval_with_max_reps',
+          severity: 'error',
+          message:
+            'A max rung ends when you tap Continue, and the interval timer advances the set on its own. Turn one of them off.',
           movementIndex,
         });
       }

@@ -73,3 +73,13 @@ export const StraightSets: Story = {
 export const MaxRungs: Story = {
   render: () => <StatefulLadder initial={[1, 2, 3, 4, 5, 5, 4, 3, 2, 1]} />,
 };
+
+/** A ladder that climbs to failure: the last rung reads Max. */
+export const LadderToMax: Story = {
+  render: () => <StatefulLadder initial={[1, 2, 3, 4, 5, 0]} />,
+};
+
+/** Timed rungs take a max too — hold the last one until you drop. */
+export const TimedLadderToMax: Story = {
+  render: () => <StatefulLadder initial={[15, 30, 45, 0]} timedRungs />,
+};
