@@ -867,23 +867,27 @@ describe('Complex Mode', () => {
 
   test('movement card shows the shared weight, not its own, while Complex is on', async () => {
     await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
-    // The suggestion list hides the weight summary while it's open.
+    // The suggestion list covers the card's controls while it's open.
     const closeSuggestions = () =>
       userEvent.click(screen.getByRole('heading', { name: 'Movements' }));
     await closeSuggestions();
-    const ownWeight = `${DEFAULT_MOVEMENT_OPTIONS.weightOneValue} kg (2h)`;
-    expect(screen.getByText(ownWeight)).toBeInTheDocument();
+    const ownWeight = String(DEFAULT_MOVEMENT_OPTIONS.weightOneValue);
+    expect(screen.getByDisplayValue(ownWeight)).toBeInTheDocument();
 
+    // Complex takes the movement's own Load away and states the shared bell.
     await selectMode('Complex');
-    await userEvent.click(screen.getByLabelText('+ kg'));
+    expect(screen.getByText(`Shared bell · ${ownWeight} kg`)).toBeInTheDocument();
 
-    const sharedWeight = screen.getByText(/kg \(2h\)/).textContent;
-    expect(sharedWeight).not.toBe(ownWeight);
+    await userEvent.click(screen.getByLabelText('+ kg'));
+    expect(screen.getByText(/^Shared bell · /).textContent).not.toBe(
+      `Shared bell · ${ownWeight} kg`,
+    );
 
     await selectMode('Circuit');
     await toggleSharedBell();
 
-    expect(screen.getByText(ownWeight)).toBeInTheDocument();
+    expect(screen.getByDisplayValue(ownWeight)).toBeInTheDocument();
+    expect(screen.queryByText(/Shared bell · /)).not.toBeInTheDocument();
   });
 
   test('complex mode is preserved when adding movements', async () => {

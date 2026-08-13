@@ -91,17 +91,18 @@ describe('MovementCard weight display', () => {
     );
   });
 
-  test('shows the movement own weight when not a complex set', () => {
+  test('edits the movement own load when not a complex set', () => {
     renderCard();
 
-    expect(screen.getByText('16 kg (2h)')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('16')).toBeInTheDocument();
+    expect(screen.queryByText(/Shared bell/)).not.toBeInTheDocument();
   });
 
   test('shows the shared weight instead of the movement own when complex', () => {
     renderCard({ sharedBell: true });
 
-    expect(screen.getByText('24 kg (2h)')).toBeInTheDocument();
-    expect(screen.queryByText('16 kg (2h)')).not.toBeInTheDocument();
+    expect(screen.getByText('Shared bell · 24 kg')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('16')).not.toBeInTheDocument();
   });
 
   test('collapsed chips track the shared weight when complex', () => {
@@ -113,10 +114,67 @@ describe('MovementCard weight display', () => {
 
   test('turning the shared bell off restores the movement own weight', () => {
     const { rerender } = renderCard({ sharedBell: true });
-    expect(screen.getByText('24 kg (2h)')).toBeInTheDocument();
+    expect(screen.getByText('Shared bell · 24 kg')).toBeInTheDocument();
 
     rerender(<MovementCard {...baseProps} sharedBell={false} />);
 
-    expect(screen.getByText('16 kg (2h)')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('16')).toBeInTheDocument();
+    expect(screen.queryByText(/Shared bell/)).not.toBeInTheDocument();
+  });
+
+  test('does not repeat the mode and load above the controls that set them', () => {
+    renderCard();
+
+    expect(screen.queryByText('16 kg (2h)')).not.toBeInTheDocument();
+  });
+});
+
+describe('MovementCard weight mode control', () => {
+  beforeEach(() => {
+    server.use(
+      http.get(`${VITE_SUPABASE_URL}/rest/v1/movements_catalog`, () =>
+        HttpResponse.json([]),
+      ),
+      http.get(`${VITE_SUPABASE_URL}/rest/v1/movements`, () =>
+        HttpResponse.json([]),
+      ),
+      http.get(`${VITE_SUPABASE_URL}/rest/v1/user_movements`, () =>
+        HttpResponse.json([]),
+      ),
+    );
+  });
+
+  test('reads the mode out for a movement the catalog knows', () => {
+    renderCard({ catalogWeightMode: '2h' });
+
+    expect(screen.queryByRole('tab', { name: 'Single' })).not.toBeInTheDocument();
+    expect(screen.getByText('Two-Hand')).toBeInTheDocument();
+  });
+
+  test('offers the tabs for a custom movement', () => {
+    renderCard({ catalogWeightMode: null });
+
+    expect(screen.getByRole('tab', { name: 'Single' })).toBeEnabled();
+  });
+
+  test('reads the mode out under a shared bell', () => {
+    renderCard({ sharedBell: true, catalogWeightMode: null });
+
+    expect(screen.queryByRole('tab', { name: 'Single' })).not.toBeInTheDocument();
+    expect(screen.getByText('Two-Hand')).toBeInTheDocument();
+  });
+
+  test('names the mismatch when the shared bell overrides the catalog', () => {
+    renderCard({ sharedBell: true, catalogWeightMode: '1h' });
+
+    expect(
+      screen.getByText('Shared bell · 24 kg · usually Single'),
+    ).toBeInTheDocument();
+  });
+
+  test('states the shared weight plainly when it matches the catalog', () => {
+    renderCard({ sharedBell: true, catalogWeightMode: '2h' });
+
+    expect(screen.getByText('Shared bell · 24 kg')).toBeInTheDocument();
   });
 });

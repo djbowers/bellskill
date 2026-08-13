@@ -132,6 +132,10 @@ export const SwapMovementDialog = ({
   const [newName, setNewName] = useState('');
   // null until touched — seeded from whichever old movement is selected.
   const [mode, setMode] = useState<WeightTabValue | null>(null);
+  // The catalog settles how the replacement is held, so picking one locks the
+  // mode; a name we have no catalog row for stays hand-picked.
+  const [pickedWeightMode, setPickedWeightMode] =
+    useState<WeightTabValue | null>(null);
   const [weight, setWeight] = useState<StartingWeight | null>(null);
 
   const effectiveMode = mode ?? oldControl?.mode ?? '2h';
@@ -151,11 +155,26 @@ export const SwapMovementDialog = ({
     setSelectedOldName(name);
     setMode(null);
     setWeight(null);
+    setPickedWeightMode(null);
   };
 
   const handleModeChange = (nextMode: WeightTabValue) => {
     setMode(nextMode);
     setWeight(adaptWeightToMode(effectiveWeight, nextMode));
+  };
+
+  const handleMovementPick = (
+    _name: string,
+    _functionalMovementId?: string | null,
+    weightMode?: WeightTabValue | null,
+  ) => {
+    setPickedWeightMode(weightMode ?? null);
+    if (weightMode) handleModeChange(weightMode);
+  };
+
+  const handleChangeNewName = (name: string) => {
+    setNewName(name);
+    setPickedWeightMode(null);
   };
 
   const takenNames = useMemo(
@@ -243,10 +262,12 @@ export const SwapMovementDialog = ({
             </span>
             <MovementAutocomplete
               value={newName}
-              onChange={setNewName}
+              onChange={handleChangeNewName}
               weightMode={effectiveMode}
               onWeightModeChange={handleModeChange}
+              weightModeLocked={pickedWeightMode !== null}
               deferUserMovementWrite
+              onMovementPick={handleMovementPick}
             />
             {isDuplicate && (
               <p className="text-xs text-destructive">

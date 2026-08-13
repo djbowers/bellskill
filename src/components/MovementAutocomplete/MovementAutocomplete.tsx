@@ -7,13 +7,13 @@ import { Badge } from '~/components/ui/badge';
 import { cn } from '~/lib/utils';
 import { WeightTabValue } from '~/types';
 import {
-  WEIGHT_MODE_LABELS,
+  getWeightModeFromCatalogFields,
   movementNameMatchesSearchTokens,
   rankMovements,
-  recentMovementMatchesWeightMode,
   tokenizeMovementSearchQuery,
 } from '~/utils';
 
+import { WeightModeIndicator } from './WeightModeIndicator';
 import { WeightModeTabs } from './WeightModeTabs';
 
 export interface MovementAutocompleteProps {
@@ -23,10 +23,16 @@ export interface MovementAutocompleteProps {
   onWeightModeChange: (mode: WeightTabValue) => void;
   weightSummary?: string | null;
   showWeightModeTabs?: boolean;
+  /** The catalog settled this movement's mode — read it out instead of offering a choice. */
+  weightModeLocked?: boolean;
   weightModeHint?: string | null;
   className?: string;
   deferUserMovementWrite?: boolean;
-  onMovementPick?: (name: string, functionalMovementId?: string | null) => void;
+  onMovementPick?: (
+    name: string,
+    functionalMovementId?: string | null,
+    weightMode?: WeightTabValue | null,
+  ) => void;
 }
 
 export const MovementAutocomplete = ({
@@ -36,6 +42,7 @@ export const MovementAutocomplete = ({
   onWeightModeChange,
   weightSummary = null,
   showWeightModeTabs = true,
+  weightModeLocked = false,
   weightModeHint = null,
   className,
   deferUserMovementWrite = false,
@@ -61,25 +68,21 @@ export const MovementAutocomplete = ({
     data: catalogResults = [],
     isFetching: isCatalogFetching,
     isLoading: isCatalogLoading,
-  } = useMovementSearch(debouncedSearchQuery, weightMode);
+  } = useMovementSearch(debouncedSearchQuery);
   const createUserMovement = useCreateUserMovement();
 
   const frequentNames = new Set(
     frequentMovements.map((m) => m.canonicalName.toLowerCase()),
   );
 
-  const weightModeFilteredRecent = frequentMovements.filter((m) =>
-    recentMovementMatchesWeightMode(m.catalogWeightFields, weightMode),
-  );
-
   const searchTokens = tokenizeMovementSearchQuery(inputValue);
 
   const filteredRecentMatches =
     inputValue.length >= 1
-      ? weightModeFilteredRecent.filter((m) =>
+      ? frequentMovements.filter((m) =>
           movementNameMatchesSearchTokens(m.canonicalName, searchTokens),
         )
-      : weightModeFilteredRecent.slice(0, 8);
+      : frequentMovements.slice(0, 8);
 
   const filteredRecent =
     inputValue.length >= 1
@@ -118,8 +121,6 @@ export const MovementAutocomplete = ({
   const hasOptions =
     filteredRecent.length > 0 || rankedCatalog.length > 0 || showCatalogEmpty;
 
-  const catalogSectionLabel = `Catalog (${WEIGHT_MODE_LABELS[weightMode]})`;
-
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -136,9 +137,10 @@ export const MovementAutocomplete = ({
   const persistUserMovement = (
     name: string,
     functionalMovementId?: string | null,
+    pickedWeightMode?: WeightTabValue | null,
   ) => {
     if (deferUserMovementWrite) {
-      onMovementPick?.(name, functionalMovementId);
+      onMovementPick?.(name, functionalMovementId, pickedWeightMode);
       return;
     }
     createUserMovement.mutate({ canonicalName: name, functionalMovementId });
@@ -156,11 +158,15 @@ export const MovementAutocomplete = ({
     setIsOpen(true);
   };
 
-  const handleSelect = (name: string, functionalMovementId?: string | null) => {
+  const handleSelect = (
+    name: string,
+    functionalMovementId?: string | null,
+    pickedWeightMode?: WeightTabValue | null,
+  ) => {
     setInputValue(name);
     onChange(name);
     setIsOpen(false);
-    persistUserMovement(name, functionalMovementId);
+    persistUserMovement(name, functionalMovementId, pickedWeightMode);
   };
 
   const handleCustomEntry = () => {
@@ -169,9 +175,8 @@ export const MovementAutocomplete = ({
     persistUserMovement(inputValue, null);
   };
 
-  // The tabs double as the dropdown's mode filter, so the whole picker is one
-  // focus scope: moving focus to the tabs keeps the dropdown open (refiltered
-  // live); leaving the picker entirely closes it. Attached to the container —
+  // The picker is one focus scope: moving focus to the tabs keeps the dropdown
+  // open; leaving the picker entirely closes it. Attached to the container —
   // React's onBlur bubbles — so it also fires when focus leaves from the tabs.
   const handleContainerBlur = () => {
     window.setTimeout(() => {
@@ -184,10 +189,9 @@ export const MovementAutocomplete = ({
   const showDropdown = isOpen && (hasOptions || showCustomEntry);
   const showSummaryChip = value.length > 0 && weightSummary && !isOpen;
 
-  // The name comes first — you pick the exercise before you pick the grip.
+  // The name comes first — the movement determines the grip, not the reverse.
   // The open dropdown is anchored to the bottom of the whole picker so the
-  // weight-mode tabs stay visible and clickable while browsing results (they
-  // filter the catalog list).
+  // weight-mode tabs stay visible while browsing results.
   return (
     <div
       ref={containerRef}
@@ -214,13 +218,16 @@ export const MovementAutocomplete = ({
         <p className="mt-1 text-xs text-muted-foreground">{weightSummary}</p>
       )}
 
-      {showWeightModeTabs && (
-        <WeightModeTabs
-          value={weightMode}
-          onValueChange={handleWeightModeChange}
-          className="mt-1"
-        />
-      )}
+      {showWeightModeTabs &&
+        (weightModeLocked ? (
+          <WeightModeIndicator mode={weightMode} className="mt-1" />
+        ) : (
+          <WeightModeTabs
+            value={weightMode}
+            onValueChange={handleWeightModeChange}
+            className="mt-1"
+          />
+        ))}
 
       {weightModeHint && (
         <p className="mt-1 text-xs text-muted-foreground">{weightModeHint}</p>
@@ -247,6 +254,9 @@ export const MovementAutocomplete = ({
                     handleSelect(
                       movement.canonicalName,
                       movement.functionalMovementId,
+                      getWeightModeFromCatalogFields(
+                        movement.catalogWeightFields,
+                      ),
                     );
                   }}
                 >
@@ -266,7 +276,7 @@ export const MovementAutocomplete = ({
           {rankedCatalog.length > 0 && (
             <>
               <li className="px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                {catalogSectionLabel}
+                Catalog
               </li>
               {rankedCatalog.map((movement) => (
                 <li
@@ -276,7 +286,11 @@ export const MovementAutocomplete = ({
                   className="cursor-pointer px-2 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    handleSelect(movement.name, movement.id);
+                    handleSelect(
+                      movement.name,
+                      movement.id,
+                      movement.weightMode,
+                    );
                   }}
                 >
                   {movement.name}
@@ -287,9 +301,7 @@ export const MovementAutocomplete = ({
 
           {showCatalogEmpty && (
             <li className="px-2 py-1 text-sm text-muted-foreground">
-              No {WEIGHT_MODE_LABELS[weightMode].toLowerCase()} movements for
-              &ldquo;
-              {inputValue}&rdquo; — try another mode
+              No movements match &ldquo;{inputValue}&rdquo;
             </li>
           )}
 
