@@ -14,6 +14,7 @@ const {
   mockUseCancelProgram,
   mockUseDeleteProgram,
   mockUseSetProgramArchived,
+  mockUseRenameProgram,
   mockUseSetProgramReleased,
   mockUseQueuedPrograms,
   mockUseDequeueProgram,
@@ -25,6 +26,7 @@ const {
   cancelMutate,
   deleteMutate,
   setArchivedMutate,
+  renameMutate,
   setReleasedMutate,
   dequeueMutate,
   startQueuedMutate,
@@ -38,6 +40,7 @@ const {
   mockUseCancelProgram: vi.fn(),
   mockUseDeleteProgram: vi.fn(),
   mockUseSetProgramArchived: vi.fn(),
+  mockUseRenameProgram: vi.fn(),
   mockUseSetProgramReleased: vi.fn(),
   mockUseQueuedPrograms: vi.fn(),
   mockUseDequeueProgram: vi.fn(),
@@ -49,6 +52,7 @@ const {
   cancelMutate: vi.fn(),
   deleteMutate: vi.fn(),
   setArchivedMutate: vi.fn(),
+  renameMutate: vi.fn(),
   setReleasedMutate: vi.fn(),
   dequeueMutate: vi.fn(),
   startQueuedMutate: vi.fn(),
@@ -64,6 +68,7 @@ vi.mock('~/api', () => ({
   useCancelProgram: mockUseCancelProgram,
   useDeleteProgram: mockUseDeleteProgram,
   useSetProgramArchived: mockUseSetProgramArchived,
+  useRenameProgram: mockUseRenameProgram,
   useSetProgramReleased: mockUseSetProgramReleased,
   useQueuedPrograms: mockUseQueuedPrograms,
   useDequeueProgram: mockUseDequeueProgram,
@@ -224,6 +229,10 @@ describe('ProgramsPage', () => {
     });
     mockUseSetProgramArchived.mockReturnValue({
       mutate: setArchivedMutate,
+      isPending: false,
+    });
+    mockUseRenameProgram.mockReturnValue({
+      mutate: renameMutate,
       isPending: false,
     });
     mockUseSetProgramReleased.mockReturnValue({

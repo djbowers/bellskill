@@ -30,6 +30,7 @@ export interface MyProgramCardProps {
   onAddSessions: () => void;
   onViewProgress: () => void;
   onQueueForLater: () => void;
+  onRename: () => void;
   onCancel: () => void;
   onArchive: () => void;
   onDelete: () => void;
@@ -103,6 +104,7 @@ export const MyProgramCard = ({
   onAddSessions,
   onViewProgress,
   onQueueForLater,
+  onRename,
   onCancel,
   onArchive,
   onDelete,
@@ -126,6 +128,7 @@ export const MyProgramCard = ({
         : { label: 'View progress', onClick: onViewProgress, disabled: false };
 
   const menuActions: OverflowMenuAction[] = [
+    { label: 'Rename program', onSelect: onRename },
     ...(primary.label === 'Add sessions'
       ? []
       : [{ label: 'Add sessions', onSelect: onAddSessions }]),
