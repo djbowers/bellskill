@@ -47,6 +47,7 @@ import {
   getWeightTabValue,
   getWeightUnitLabel,
   resolveMovementWeights,
+  usesSharedBell,
   validateWorkout,
 } from '~/utils';
 import type { IssueSuggestion } from '~/utils';
@@ -396,6 +397,9 @@ export const StartWorkoutPage = ({
   const [workoutMode, setWorkoutMode] = useState<WorkoutMode>(
     workoutOptions.workoutMode,
   );
+  const [sharedBell, setSharedBell] = useState<boolean>(
+    usesSharedBell(workoutOptions),
+  );
   const [sharedWeightOneValue, setSharedWeightOneValue] = useState<
     number | null
   >(workoutOptions.sharedWeightOneValue);
@@ -423,6 +427,7 @@ export const StartWorkoutPage = ({
     setIntervalTimer(options.intervalTimer);
     setRestTimer(options.restTimer);
     setWorkoutMode(options.workoutMode);
+    setSharedBell(usesSharedBell(options));
     setSharedWeightOneValue(options.sharedWeightOneValue);
     setSharedWeightOneUnit(options.sharedWeightOneUnit);
     setSharedWeightTwoValue(options.sharedWeightTwoValue);
@@ -573,9 +578,22 @@ export const StartWorkoutPage = ({
     }
   };
 
+  // Complex runs off one bell by definition. Leaving `sharedBell` set on the way
+  // back out is deliberate: a weight the user just configured shouldn't vanish
+  // because they changed how the movements are arranged.
   const handleChangeWorkoutMode = (mode: WorkoutMode) => {
-    if (mode === 'complex') expandSection('sharedWeight');
+    if (mode === 'complex') {
+      setSharedBell(true);
+      expandSection('sharedWeight');
+    }
     setWorkoutMode(mode);
+  };
+
+  const handleToggleSharedBell = () => {
+    setSharedBell((prev) => {
+      if (!prev) expandSection('sharedWeight');
+      return !prev;
+    });
   };
 
   const handleChangeMovementName = (index: number, value: string) =>
@@ -859,6 +877,7 @@ export const StartWorkoutPage = ({
     startWorkout(
       applySharedWeights({
         workoutMode,
+        sharedBell,
         intervalTimer,
         movements,
         restTimer,
@@ -888,6 +907,7 @@ export const StartWorkoutPage = ({
     programSaveMode?.onSave(
       applySharedWeights({
         workoutMode,
+        sharedBell,
         intervalTimer,
         movements,
         restTimer,
@@ -904,6 +924,10 @@ export const StartWorkoutPage = ({
     );
   };
 
+  // The invariant, not the raw toggle: complex forces the shared bell on even if
+  // options loaded from an older session never carried the flag.
+  const sharedBellActive = usesSharedBell({ workoutMode, sharedBell });
+
   const sharedWeightTabValue = getWeightTabValue({
     weightOneValue: sharedWeightOneValue,
     weightTwoValue: sharedWeightTwoValue,
@@ -911,15 +935,16 @@ export const StartWorkoutPage = ({
 
   // One rule set for every producer — the builder, repeat-workout, program
   // sessions, curated workouts, and the recommender all land here (PROD-240).
-  // Complex movements are validated at their resolved (shared-bell) weights,
-  // since that is the load actually lifted.
+  // A shared-bell workout is validated at its resolved weights, since that is
+  // the load actually lifted — and that now includes a circuit or straight sets
+  // running off one bell, not just a complex.
   const { errors: workoutErrors, warnings: workoutWarnings } = validateWorkout({
     workoutMode,
     workoutGoal,
     intervalTimer,
     movements: movements.map((movement) =>
       resolveMovementWeights(movement, {
-        workoutMode,
+        sharedBell: sharedBellActive,
         sharedWeightOneUnit,
         sharedWeightOneValue,
         sharedWeightTwoUnit,
@@ -959,10 +984,10 @@ export const StartWorkoutPage = ({
     );
   };
 
-  // Every bell in play, for the footer's at-a-glance load range. Complex sets
-  // load one shared bell (or two), so they read from the shared weights instead.
+  // Every bell in play, for the footer's at-a-glance load range. A shared-bell
+  // workout carries one bell (or two), so it reads the shared weights instead.
   const summaryLoads: SummaryLoad[] = (
-    workoutMode === 'complex'
+    sharedBellActive
       ? [
           { value: sharedWeightOneValue, unit: sharedWeightOneUnit },
           { value: sharedWeightTwoValue, unit: sharedWeightTwoUnit },
@@ -1138,7 +1163,7 @@ export const StartWorkoutPage = ({
               key={index}
               index={index}
               movement={movement}
-              workoutMode={workoutMode}
+              sharedBell={sharedBellActive}
               sharedWeightTabValue={sharedWeightTabValue}
               sharedWeights={{
                 sharedWeightOneUnit,
@@ -1153,7 +1178,7 @@ export const StartWorkoutPage = ({
               hasError={erroredMovementIndexes.has(index)}
               onChangeName={(name) => handleChangeMovementName(index, name)}
               onChangeWeightTab={(mode) =>
-                workoutMode === 'complex'
+                sharedBellActive
                   ? handleChangeSharedWeightTab(mode)
                   : handleChangeWeightTab(index, mode)
               }
@@ -1194,10 +1219,13 @@ export const StartWorkoutPage = ({
             hasNotes={preWorkoutNotes !== null}
             hasInterval={intervalTimer > 0}
             hasRest={restTimer > 0}
+            hasSharedBell={sharedBellActive}
+            sharedBellLocked={workoutMode === 'complex'}
             hasTimedMovements={movements.some((m) => m.timedRungs)}
             onToggleInterval={handleToggleInterval}
             onToggleNotes={handleToggleNotes}
             onToggleRest={handleToggleRest}
+            onToggleSharedBell={handleToggleSharedBell}
           />
 
           {preWorkoutNotes !== null && (
@@ -1266,7 +1294,7 @@ export const StartWorkoutPage = ({
             </Card>
           )}
 
-          {workoutMode === 'complex' && (
+          {sharedBellActive && (
             <Card>
               <Section
                 title="Shared Weight"
@@ -1275,9 +1303,11 @@ export const StartWorkoutPage = ({
                 onToggle={() => handleToggleSection('sharedWeight')}
                 summary={sharedWeightSummary}
               >
-                <p className="text-xs text-muted-foreground">
-                  Complete all movements before setting the weight down.
-                </p>
+                {workoutMode === 'complex' && (
+                  <p className="text-xs text-muted-foreground">
+                    Complete all movements before setting the weight down.
+                  </p>
+                )}
                 <WeightModeTabs
                   value={sharedWeightTabValue}
                   onValueChange={handleChangeSharedWeightTab}

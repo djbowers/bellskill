@@ -1,13 +1,14 @@
 /**
- * How a workout's movements are arranged.
+ * How a workout's movements are arranged. Arrangement only — which bell each
+ * movement is loaded with is the separate `sharedBell` axis (`usesSharedBell`).
  *
  * - `circuit` — rotate through the movements, one rung each, little rest.
  * - `straightSets` — finish every rung of a movement before the next starts.
- * - `complex` — one bell held through every movement, back to back. Complex also
- *   implies the shared-bell weight model (see `resolveMovementWeights`).
+ * - `complex` — one bell held through every movement, back to back. Because the
+ *   bell never goes down, complex forces `sharedBell` on.
  *
- * Persisted as the `complex_set` / `straight_sets` boolean pair; translate at the
- * API boundary with `toWorkoutMode` / `fromWorkoutMode`.
+ * Persisted as `workout_logs.workout_mode`, with the legacy `complex_set` /
+ * `straight_sets` pair kept in sync until cached clients cycle.
  */
 export type WorkoutMode = 'circuit' | 'straightSets' | 'complex';
 

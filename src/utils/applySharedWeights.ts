@@ -4,12 +4,13 @@ import {
   SharedWeightOptions,
   resolveMovementWeights,
 } from './resolveMovementWeights';
+import { usesSharedBell } from './workoutMode';
 
 /**
- * Complex sets are loaded with one shared weight, but every consumer of
+ * A shared-bell workout is loaded with one weight, but every consumer of
  * {@link MovementOptions} (live volume accumulation, movement_logs persistence)
  * reads the per-movement weight fields. Copy the shared weight onto each
- * movement so the two stores can't disagree; non-complex options pass through
+ * movement so the two stores can't disagree; per-movement options pass through
  * untouched.
  */
 export const applySharedWeights = <
@@ -17,7 +18,7 @@ export const applySharedWeights = <
 >(
   options: T,
 ): T => {
-  if (options.workoutMode !== 'complex') return options;
+  if (!usesSharedBell(options)) return options;
 
   return {
     ...options,

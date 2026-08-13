@@ -6,6 +6,7 @@ import type { WorkoutGoalUnits, WorkoutOptions } from '~/types';
 // contexts inside that cycle. Fixtures stay leaf modules.
 const BARE_SESSION_OPTIONS: Omit<WorkoutOptions, 'startedAt'> = {
   workoutMode: 'circuit',
+  sharedBell: false,
   intervalTimer: 0,
   movements: [],
   restTimer: 0,

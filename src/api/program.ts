@@ -8,10 +8,11 @@ import {
   ProgramSessionCompletionStatus,
   UserProgram,
   UserProgramStatus,
+  WorkoutMode,
   WorkoutOptions,
 } from '~/types';
 
-import { fromWorkoutMode, toWorkoutMode } from '~/utils';
+import { fromWorkoutMode, toWorkoutMode, usesSharedBell } from '~/utils';
 
 import type { Database, Json } from '../../types/supabase';
 
@@ -47,12 +48,17 @@ export const mapProgramRow = (row: ProgramRow): Program => ({
 export type SessionWorkoutOptions = Omit<WorkoutOptions, 'startedAt'>;
 
 /**
- * `program_sessions.workout_options` as stored: the builder's shape, except the
- * arrangement is still the original `complexSet` / `straightSets` pair rather
- * than `workoutMode`. Rewriting the JSONB is deliberately deferred, so these two
- * mappers are the only translation.
+ * `program_sessions.workout_options` as stored: the builder's shape, plus the
+ * legacy `complexSet` / `straightSets` pair. Sessions authored before the
+ * shared-bell split carry only the pair, so both keys stay optional and the
+ * reader falls back to them.
  */
-type StoredWorkoutOptions = Omit<SessionWorkoutOptions, 'workoutMode'> & {
+type StoredWorkoutOptions = Omit<
+  SessionWorkoutOptions,
+  'workoutMode' | 'sharedBell'
+> & {
+  workoutMode?: WorkoutMode | null;
+  sharedBell?: boolean | null;
   complexSet?: boolean | null;
   straightSets?: boolean | null;
 };
@@ -61,22 +67,38 @@ type StoredWorkoutOptions = Omit<SessionWorkoutOptions, 'workoutMode'> & {
 export const parseSessionWorkoutOptions = (
   stored: unknown,
 ): SessionWorkoutOptions => {
-  const { complexSet, straightSets, ...rest } = stored as StoredWorkoutOptions;
-  return { ...rest, workoutMode: toWorkoutMode(complexSet, straightSets) };
+  const {
+    workoutMode,
+    sharedBell,
+    complexSet,
+    straightSets,
+    ...rest
+  } = stored as StoredWorkoutOptions;
+  const mode = workoutMode ?? toWorkoutMode(complexSet, straightSets);
+  return {
+    ...rest,
+    workoutMode: mode,
+    sharedBell: usesSharedBell({ workoutMode: mode, sharedBell }),
+  };
 };
 
-/** Write the builder's options back out in the stored JSONB shape. */
+/**
+ * Write the builder's options back out in the stored JSONB shape, emitting the
+ * legacy pair alongside the new keys so a client on cached JS still reads the
+ * session correctly. The follow-up migration drops the pair.
+ */
 export const serializeSessionWorkoutOptions = (
   options: SessionWorkoutOptions,
-): Json => {
-  const { workoutMode, ...rest } = options;
-  return { ...rest, ...fromWorkoutMode(workoutMode) } as unknown as Json;
-};
+): Json =>
+  ({
+    ...options,
+    ...fromWorkoutMode(options.workoutMode),
+  }) as unknown as Json;
 
 /**
  * camelCase mapper for a raw `program_sessions` row. `workout_options` is stored
  * as the builder's {@link WorkoutOptions} shape (minus `startedAt`), so only the
- * workout mode needs translating.
+ * arrangement and weight-model keys need translating.
  */
 export const mapProgramSessionRow = (
   row: ProgramSessionRow,

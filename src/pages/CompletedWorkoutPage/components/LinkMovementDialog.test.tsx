@@ -64,7 +64,7 @@ function renderDialog(overrides: Partial<MovementLog> = {}) {
       workoutLogId={42}
       movementLog={{ ...baseMovementLog, ...overrides }}
       movementIndex={0}
-      workoutMode="circuit"
+      sharedBell={false}
       sharedWeights={{
         weightOneValue: null,
         weightOneUnit: null,

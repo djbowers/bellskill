@@ -35,3 +35,17 @@ export const fromWorkoutMode = (mode: WorkoutMode): PersistedWorkoutMode => ({
   complexSet: mode === 'complex',
   straightSets: mode === 'straightSets',
 });
+
+/**
+ * Whether every movement is loaded with one shared bell pair rather than its own
+ * weights — the weight model, independent of how the movements are arranged.
+ *
+ * Complex forces it on: the bell is never set down, so per-movement weights can't
+ * be performed. That's derived here rather than trusted to the builder because
+ * legacy rows and authored program sessions carry `complex` with no `sharedBell`
+ * of their own.
+ */
+export const usesSharedBell = (options: {
+  workoutMode?: WorkoutMode | null;
+  sharedBell?: boolean | null;
+}): boolean => Boolean(options.sharedBell) || options.workoutMode === 'complex';

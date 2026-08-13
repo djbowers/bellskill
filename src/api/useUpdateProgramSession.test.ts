@@ -30,6 +30,7 @@ const mockSession = {
 
 const workoutOptions = {
   workoutMode: 'circuit' as const,
+  sharedBell: false,
   intervalTimer: 0,
   restTimer: 0,
   title: null,

@@ -22,6 +22,30 @@ const shared = (overrides = {}) => ({
 });
 
 describe('resolveMovementWeights', () => {
+  test('a circuit run off one bell reads the shared weight', () => {
+    const result = resolveMovementWeights(
+      movement(),
+      shared({ workoutMode: 'circuit' as WorkoutMode, sharedBell: true }),
+    );
+
+    expect(result.weightOneValue).toBe(28);
+  });
+
+  test('complex reads the shared weight even with no sharedBell flag', () => {
+    const result = resolveMovementWeights(movement(), shared());
+
+    expect(result.weightOneValue).toBe(28);
+  });
+
+  test('a circuit without a shared bell keeps per-movement weights', () => {
+    const result = resolveMovementWeights(
+      movement(),
+      shared({ workoutMode: 'circuit' as WorkoutMode, sharedBell: false }),
+    );
+
+    expect(result.weightOneValue).toBe(24);
+  });
+
   test('returns the shared weight when the movement is part of a complex set', () => {
     const result = resolveMovementWeights(
       movement(),

@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERIES } from '~/constants';
 import { useProgramSession, useSession, useWorkoutOptions } from '~/contexts';
 import { WorkoutLog, WorkoutOptions } from '~/types';
-import { fromWorkoutMode } from '~/utils';
+import { fromWorkoutMode, usesSharedBell } from '~/utils';
 
 import { supabase } from '../supabaseClient';
 import { AnalyticsEvent, trackEvent } from './analytics';
@@ -102,12 +102,21 @@ export const useLogWorkout = () => {
 };
 
 /**
- * The two persisted mode columns. `workout_logs` still stores the arrangement as
- * `complex_set` / `straight_sets`; this is the only write-side translation.
+ * The persisted arrangement and weight-model columns. `workout_mode` /
+ * `shared_bell` are the real ones; the legacy boolean pair is written alongside
+ * so a client still reading them sees a consistent row until they're dropped.
  */
-const toWorkoutLogModeColumns = (mode: WorkoutOptions['workoutMode']) => {
+const toWorkoutLogModeColumns = (
+  mode: WorkoutOptions['workoutMode'],
+  sharedBell: boolean,
+) => {
   const { complexSet, straightSets } = fromWorkoutMode(mode);
-  return { complex_set: complexSet, straight_sets: straightSets };
+  return {
+    workout_mode: mode,
+    shared_bell: sharedBell,
+    complex_set: complexSet,
+    straight_sets: straightSets,
+  };
 };
 
 const logWorkout = async ({
@@ -165,7 +174,7 @@ const logWorkout = async ({
       completed_rungs: completedRungs,
       completed_sides: completedSides,
       completed_volume: completedVolume,
-      ...toWorkoutLogModeColumns(workoutMode),
+      ...toWorkoutLogModeColumns(workoutMode, usesSharedBell(workoutOptions)),
       interval_timer: intervalTimer,
       movements: movements.map((movement) => movement.movementName),
       rest_timer: restTimer,

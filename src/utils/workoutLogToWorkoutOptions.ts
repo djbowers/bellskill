@@ -2,6 +2,7 @@ import { MovementLog, WorkoutLog, WorkoutOptions } from '~/types';
 
 import { applySharedWeights } from './applySharedWeights';
 import { resolveSharedWeights } from './resolveSharedWeights';
+import { usesSharedBell } from './workoutMode';
 
 /**
  * Convert a completed {@link WorkoutLog} (plus its per-movement
@@ -25,7 +26,7 @@ export const workoutLogToWorkoutOptions = (
       ? workoutLog.completedVolume
       : undefined;
 
-  const isComplexSet = workoutLog.workoutMode === 'complex';
+  const sharedBell = usesSharedBell(workoutLog);
   const sharedWeights = resolveSharedWeights(
     workoutLog.sharedWeightOneValue,
     workoutLog.sharedWeightOneUnit,
@@ -36,6 +37,7 @@ export const workoutLogToWorkoutOptions = (
 
   return applySharedWeights({
     workoutMode: workoutLog.workoutMode,
+    sharedBell,
     intervalTimer: workoutLog.intervalTimer,
     movements: movementLogs.map((movementLog) => ({
       movementName: movementLog.movementName,
@@ -47,10 +49,10 @@ export const workoutLogToWorkoutOptions = (
       weightTwoValue: movementLog.weightTwoValue,
     })),
     restTimer: workoutLog.restTimer,
-    sharedWeightOneUnit: isComplexSet ? sharedWeights.weightOneUnit : null,
-    sharedWeightOneValue: isComplexSet ? sharedWeights.weightOneValue : null,
-    sharedWeightTwoUnit: isComplexSet ? sharedWeights.weightTwoUnit : null,
-    sharedWeightTwoValue: isComplexSet ? sharedWeights.weightTwoValue : null,
+    sharedWeightOneUnit: sharedBell ? sharedWeights.weightOneUnit : null,
+    sharedWeightOneValue: sharedBell ? sharedWeights.weightOneValue : null,
+    sharedWeightTwoUnit: sharedBell ? sharedWeights.weightTwoUnit : null,
+    sharedWeightTwoValue: sharedBell ? sharedWeights.weightTwoValue : null,
     title: workoutLog.title,
     preWorkoutNotes: workoutLog.preWorkoutNotes,
     workoutGoal: workoutLog.workoutGoal,
