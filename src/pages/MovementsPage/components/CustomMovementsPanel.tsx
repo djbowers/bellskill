@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import {
   useLinkUserMovement,
   useMovementCatalog,
@@ -7,6 +9,7 @@ import { Loading } from '~/components';
 import { Card } from '~/components/ui/card';
 
 import { CustomMovementRow } from './CustomMovementRow';
+import { LinkMovementDialog } from './LinkMovementDialog';
 
 export const CustomMovementsPanel = () => {
   const { data: userMovements = [], isLoading: isLoadingUserMovements } =
@@ -14,10 +17,22 @@ export const CustomMovementsPanel = () => {
   const { data: catalog = [], isLoading: isLoadingCatalog } =
     useMovementCatalog();
   const linkUserMovement = useLinkUserMovement();
+  const [linkingId, setLinkingId] = useState<string | null>(null);
 
   const customMovements = userMovements.filter(
     (movement) => movement.functionalMovementId == null,
   );
+
+  const linkingMovement =
+    customMovements.find((movement) => movement.id === linkingId) ?? null;
+
+  const handleLink = (functionalMovementId: string) => {
+    if (!linkingId) return;
+    linkUserMovement.mutate(
+      { userMovementId: linkingId, functionalMovementId },
+      { onSuccess: () => setLinkingId(null) },
+    );
+  };
 
   if (isLoadingUserMovements || isLoadingCatalog) {
     return (
@@ -49,24 +64,23 @@ export const CustomMovementsPanel = () => {
           {customMovements.map((movement) => (
             <CustomMovementRow
               key={movement.id}
-              id={movement.id}
               canonicalName={movement.canonicalName}
               logCount={movement.logCount}
-              catalog={catalog}
-              isLinking={
-                linkUserMovement.isPending &&
-                linkUserMovement.variables?.userMovementId === movement.id
-              }
-              onLink={(userMovementId, functionalMovementId) =>
-                linkUserMovement.mutate({
-                  userMovementId,
-                  functionalMovementId,
-                })
-              }
+              onClickLink={() => setLinkingId(movement.id)}
             />
           ))}
         </div>
       </Card>
+
+      <LinkMovementDialog
+        open={linkingMovement !== null}
+        onOpenChange={(open) => !open && setLinkingId(null)}
+        canonicalName={linkingMovement?.canonicalName ?? ''}
+        logCount={linkingMovement?.logCount ?? 0}
+        catalog={catalog}
+        isPending={linkUserMovement.isPending}
+        onLink={handleLink}
+      />
     </>
   );
 };

@@ -87,15 +87,19 @@ describe('custom movements panel', () => {
     expect(screen.getByText('1 log')).toBeInTheDocument();
   });
 
-  test('offers a one-click link to the suggested catalog match', async () => {
+  test('the dialog links to the suggested catalog match', async () => {
     const user = userEvent.setup();
     renderPanel();
 
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'Link to Kettlebell Clean and Press',
-      }),
-    );
+    const [firstLink] = await screen.findAllByRole('button', { name: 'Link' });
+    await user.click(firstLink);
+
+    expect(
+      await screen.findByText('Link “Clean and Press”'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Kettlebell Clean and Press')).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole('button', { name: 'Link' }).at(-1)!);
 
     await waitFor(() => expect(patchRequests).toHaveLength(1));
     expect(patchRequests[0].body).toEqual({
@@ -104,17 +108,19 @@ describe('custom movements panel', () => {
     expect(patchRequests[0].url.searchParams.get('id')).toBe('eq.user-1');
   });
 
-  test('falls back to catalog search when there is no confident suggestion', async () => {
+  test('the dialog falls back to catalog search when there is no confident suggestion', async () => {
     const user = userEvent.setup();
     renderPanel();
 
-    await user.click(
-      await screen.findByRole('button', { name: 'Find a match' }),
-    );
-    await user.type(
-      screen.getByLabelText('Search catalog for Bottoms Up Carry'),
-      'swing',
-    );
+    const links = await screen.findAllByRole('button', { name: 'Link' });
+    await user.click(links.at(-1)!);
+
+    expect(
+      await screen.findByText('Link “Bottoms Up Carry”'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Find a movement')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Find a movement'), 'swing');
     await user.click(screen.getByRole('button', { name: 'Kettlebell Swing' }));
 
     await waitFor(() => expect(patchRequests).toHaveLength(1));
@@ -122,5 +128,17 @@ describe('custom movements panel', () => {
       functional_movement_id: 'catalog-2',
     });
     expect(patchRequests[0].url.searchParams.get('id')).toBe('eq.user-3');
+  });
+
+  test('the dialog reports how much history the link carries over', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    const [firstLink] = await screen.findAllByRole('button', { name: 'Link' });
+    await user.click(firstLink);
+
+    expect(
+      await screen.findByText(/Your 4 logs stay attached/),
+    ).toBeInTheDocument();
   });
 });

@@ -4,20 +4,11 @@ import { Card } from '~/components/ui/card';
 
 import { CustomMovementRow } from './CustomMovementRow';
 
-const CATALOG = [
-  { id: 'catalog-1', name: 'Kettlebell Clean and Press' },
-  { id: 'catalog-2', name: 'Kettlebell Swing' },
-  { id: 'catalog-3', name: 'Goblet Squat' },
-  { id: 'catalog-4', name: 'Double Kettlebell Front Rack Squat' },
-];
-
 const meta: Meta<typeof CustomMovementRow> = {
   title: 'Movements/CustomMovementRow',
   component: CustomMovementRow,
   args: {
-    catalog: CATALOG,
-    isLinking: false,
-    onLink: () => {},
+    onClickLink: () => {},
   },
   decorators: [
     (Story) => (
@@ -35,18 +26,23 @@ const meta: Meta<typeof CustomMovementRow> = {
 export default meta;
 type Story = StoryObj<typeof CustomMovementRow>;
 
-export const WithSuggestion: Story = {
+export const Default: Story = {
   args: {
-    id: 'user-1',
     canonicalName: 'Clean and Press',
     logCount: 12,
   },
 };
 
-export const WithoutSuggestion: Story = {
+export const SingleLog: Story = {
   args: {
-    id: 'user-2',
-    canonicalName: 'Bottoms Up Carry',
+    canonicalName: 'My Homemade Sandbag Carry',
     logCount: 1,
+  },
+};
+
+export const LongName: Story = {
+  args: {
+    canonicalName: 'Double Kettlebell Front Rack Reverse Lunge to Press',
+    logCount: 3,
   },
 };
