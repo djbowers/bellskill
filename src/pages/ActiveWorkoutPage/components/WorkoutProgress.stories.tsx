@@ -134,3 +134,15 @@ export const RoundsGoal: Story = {
     completedRounds: 2,
   },
 };
+
+// Circuit and straight sets count in sets, so the bar moves on every movement
+// instead of sitting flat through a whole lap.
+export const SetsRemaining: Story = {
+  args: {
+    workoutGoalUnits: 'rounds',
+    workoutGoal: 5,
+    completedRounds: 2,
+    completedSets: 7,
+    totalSets: 15,
+  },
+};

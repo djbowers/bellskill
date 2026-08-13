@@ -304,20 +304,37 @@ test.describe('full workout flow', () => {
       'true',
     );
 
-    await page.getByRole('tab', { name: 'Rounds' }).click();
-    const minusRoundsButton = page.getByRole('button', { name: '- rounds' });
-    for (let i = 0; i < 9; i++) {
-      await minusRoundsButton.click();
-    }
+    // Straight sets prescribes its work in the rep schemes, so there is no goal
+    // to pick.
+    await expect(page.getByRole('heading', { name: 'Goal' })).toBeHidden();
 
-    await page.getByLabel('Movement Input').fill('Kettlebell Swing');
+    // Two movements, two sets each: A, A, B, B.
+    const movementInputs = page.getByLabel('Movement Input');
+    await movementInputs.first().fill('Kettlebell Swing');
+    await page.getByRole('button', { name: 'Add set' }).first().click();
+
+    await page.getByRole('button', { name: '+ Movement' }).click();
+    await movementInputs.nth(1).fill('Goblet Squat');
+    await page.getByRole('button', { name: 'Add set' }).nth(1).click();
 
     await expect(startWorkoutButton).toBeEnabled();
     await startWorkoutButton.click();
     await expect(page).toHaveURL(/\/active$/);
 
+    const currentMovement = page.getByTestId('current-movement-card');
     const continueButton = page.getByRole('button', { name: 'Continue' });
+
     await expect(continueButton).toBeVisible();
+    await expect(currentMovement).toContainText('Kettlebell Swing');
+    await continueButton.click();
+
+    // Still the first movement — straight sets finishes it before moving on.
+    await expect(currentMovement).toContainText('Kettlebell Swing');
+    await continueButton.click();
+
+    await expect(currentMovement).toContainText('Goblet Squat');
+    await continueButton.click();
+    await expect(currentMovement).toContainText('Goblet Squat');
     await continueButton.click();
 
     await expect(page).toHaveURL(/\/history\/\d+$/, { timeout: 10_000 });
@@ -331,6 +348,8 @@ test.describe('full workout flow', () => {
     );
 
     expect(workoutLog!.workout_mode).toBe('straightSets');
+    // 2 movements x 2 sets, counted one per set against the derived goal.
+    expect(workoutLog!.completed_rounds).toBe(4);
     expect(workoutLog!.shared_bell).toBe(false);
     expect(workoutLog!.straight_sets).toBe(true);
     expect(workoutLog!.complex_set).toBe(false);

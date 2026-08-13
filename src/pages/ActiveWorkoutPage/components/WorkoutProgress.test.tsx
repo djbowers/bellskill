@@ -17,7 +17,31 @@ const {
   VolumeGoalZero,
   TimeGoal,
   RoundsGoal,
+  SetsRemaining,
 } = composeStories(stories);
+
+describe('WorkoutProgress - sets', () => {
+  test('counts sets remaining when a set count is supplied', () => {
+    render(<SetsRemaining />);
+
+    expect(screen.getByText('sets remaining')).toBeInTheDocument();
+    expect(screen.getByText('8')).toBeInTheDocument(); // 15 - 7
+    expect(screen.queryByText('rounds remaining')).not.toBeInTheDocument();
+  });
+
+  test('falls back to rounds when no set count is supplied', () => {
+    render(<RoundsGoal />);
+
+    expect(screen.getByText('rounds remaining')).toBeInTheDocument();
+    expect(screen.queryByText('sets remaining')).not.toBeInTheDocument();
+  });
+
+  test('never reports negative sets remaining', () => {
+    render(<SetsRemaining completedSets={20} totalSets={15} />);
+
+    expect(screen.getByText('0')).toBeInTheDocument();
+  });
+});
 
 describe('WorkoutProgress - volume goals', () => {
   describe('progress percentage calculation', () => {

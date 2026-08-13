@@ -429,6 +429,29 @@ export const WorkoutGoalRounds: Story = {
   },
 };
 
+// Three movements, one rung, two rounds: six sets, so the bar moves on every
+// movement rather than once per lap.
+export const CircuitMultipleMovements: Story = {
+  parameters: {
+    workoutOptions: {
+      workoutMode: 'circuit',
+      workoutGoal: 2,
+      workoutGoalUnits: 'rounds',
+      movements: ['Goblet Squat', 'Kettlebell Swing', 'Bent Over Row'].map(
+        (movementName) => ({
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName,
+          repScheme: [5],
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms' as const,
+          weightTwoValue: null,
+          weightTwoUnit: null,
+        }),
+      ) satisfies MovementOptions[],
+    },
+  },
+};
+
 export const WeightUnitsPounds: Story = {
   parameters: {
     workoutOptions: {
@@ -938,11 +961,13 @@ const EASY_STRENGTH_MOVEMENTS = [
   weightTwoUnit: 'kilograms' as const,
 })) satisfies MovementOptions[];
 
+// Straight sets has no goal to pick: the rep schemes are the set list, and the
+// builder ships their total as the rounds goal. 5 movements x 2 sets = 10.
 export const StraightSets: Story = {
   parameters: {
     workoutOptions: {
       workoutMode: 'straightSets',
-      workoutGoal: 1,
+      workoutGoal: 10,
       workoutGoalUnits: 'rounds',
       movements: EASY_STRENGTH_MOVEMENTS,
     },
@@ -950,12 +975,12 @@ export const StraightSets: Story = {
 };
 
 // The rotating order requires every movement to share a rung count; straight
-// sets gives each movement its own ladder, so uneven prescriptions are legal.
+// sets gives each movement its own set list, so uneven prescriptions are legal.
 export const StraightSetsUnevenLadders: Story = {
   parameters: {
     workoutOptions: {
       workoutMode: 'straightSets',
-      workoutGoal: 1,
+      workoutGoal: 5,
       workoutGoalUnits: 'rounds',
       movements: [
         {
@@ -977,6 +1002,30 @@ export const StraightSetsUnevenLadders: Story = {
           weightTwoUnit: null,
         },
       ] satisfies MovementOptions[],
+    },
+  },
+};
+
+// One-handed straight sets: a set is both hands, so the movement only changes
+// after the second side.
+export const StraightSetsOneHanded: Story = {
+  parameters: {
+    workoutOptions: {
+      workoutMode: 'straightSets',
+      workoutGoal: 4,
+      workoutGoalUnits: 'rounds',
+      movements: [
+        'One-Arm Kettlebell Press',
+        'One-Arm Kettlebell Row',
+      ].map((movementName) => ({
+        ...DEFAULT_MOVEMENT_OPTIONS,
+        movementName,
+        repScheme: [5, 5],
+        weightOneValue: 24,
+        weightOneUnit: 'kilograms' as const,
+        weightTwoValue: 0,
+        weightTwoUnit: null,
+      })) satisfies MovementOptions[],
     },
   },
 };

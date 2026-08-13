@@ -20,11 +20,15 @@ const MAX_RUNGS = 10;
  * A movement's rep scheme as a ladder: each rung is a chip you tap to focus,
  * then set its value on the caliper picker below. Replaces a stack of one picker
  * per rung — the ladder reads at a glance and stays short as rungs grow.
+ *
+ * Straight sets reads the same list as plain sets rather than a ladder, so the
+ * labels follow `unitNoun`.
  */
 export const LadderRepScheme = ({
   repScheme,
   timedRungs = false,
   intervalActive = false,
+  unitNoun = 'rung',
   onChangeRung,
   onRemoveRung,
   onAddRung,
@@ -34,6 +38,7 @@ export const LadderRepScheme = ({
   timedRungs?: boolean;
   /** The interval timer and timed rungs both drive the set clock — only one may be on. */
   intervalActive?: boolean;
+  unitNoun?: 'rung' | 'set';
   onChangeRung: (rungIndex: number, value: number) => void;
   onRemoveRung: (rungIndex: number) => void;
   onAddRung: () => void;
@@ -90,16 +95,16 @@ export const LadderRepScheme = ({
       <div
         className="flex items-center gap-1 overflow-x-auto py-0.5"
         role="group"
-        aria-label="Ladder rungs"
+        aria-label={unitNoun === 'set' ? 'Sets' : 'Ladder rungs'}
       >
         {repScheme.map((rung, rungIndex) => (
           <button
             key={rungIndex}
             type="button"
             aria-pressed={rungIndex === focused}
-            aria-label={`Rung ${rungIndex + 1}, ${label(rung)}${
-              timedRungs ? '' : ' reps'
-            }`}
+            aria-label={`${unitNoun === 'set' ? 'Set' : 'Rung'} ${
+              rungIndex + 1
+            }, ${label(rung)}${timedRungs ? '' : ' reps'}`}
             onClick={() => setFocusedRung(rungIndex)}
             className={cn(
               'flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md border px-1 text-base font-semibold transition-colors',
@@ -115,7 +120,7 @@ export const LadderRepScheme = ({
         {repScheme.length < MAX_RUNGS && (
           <button
             type="button"
-            aria-label="Add rung"
+            aria-label={unitNoun === 'set' ? 'Add set' : 'Add rung'}
             onClick={handleAddRung}
             className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md border border-dashed border-border px-1 text-muted-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
@@ -143,7 +148,7 @@ export const LadderRepScheme = ({
           className="self-center text-muted-foreground hover:text-destructive"
           onClick={handleRemoveFocusedRung}
         >
-          Remove rung {focused + 1}
+          Remove {unitNoun} {focused + 1}
         </Button>
       )}
     </div>
