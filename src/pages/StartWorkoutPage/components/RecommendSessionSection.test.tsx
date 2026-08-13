@@ -38,16 +38,12 @@ function makeQueryClient() {
 function renderSection(
   entitlement: EntitlementContextValue,
   onAccept = vi.fn(),
-  initialMode?: 'default' | 'balance',
 ) {
   render(
     <QueryClientProvider client={makeQueryClient()}>
       <MemoryRouter>
         <EntitlementContext.Provider value={entitlement}>
-          <RecommendSessionSection
-            onAccept={onAccept}
-            initialMode={initialMode}
-          />
+          <RecommendSessionSection onAccept={onAccept} />
         </EntitlementContext.Provider>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -116,29 +112,7 @@ describe('RecommendSessionSection', () => {
     ).toBeInTheDocument();
   });
 
-  test('Balance focus toggle sends mode=balance to the function', async () => {
-    let requestBody: Record<string, unknown> | null = null;
-    server.use(
-      http.post(FUNCTION_URL, async ({ request }) => {
-        requestBody = (await request.json()) as Record<string, unknown>;
-        return HttpResponse.json(
-          { id: 'rec-1', recommendation: new ExampleRecommendation() },
-          { status: 200 },
-        );
-      }),
-    );
-
-    renderSection(premium);
-    await userEvent.click(screen.getByRole('tab', { name: /balance focus/i }));
-    await userEvent.click(
-      screen.getByRole('button', { name: /balance me out/i }),
-    );
-
-    expect(await screen.findByText('Your AI session')).toBeInTheDocument();
-    expect(requestBody).toMatchObject({ mode: 'balance' });
-  });
-
-  test('default mode sends mode=default and keeps the original CTA label', async () => {
+  test('request body carries client_today and no mode', async () => {
     let requestBody: Record<string, unknown> | null = null;
     server.use(
       http.post(FUNCTION_URL, async ({ request }) => {
@@ -154,36 +128,7 @@ describe('RecommendSessionSection', () => {
     await userEvent.click(recommendButton());
 
     expect(await screen.findByText('Your AI session')).toBeInTheDocument();
-    expect(requestBody).toMatchObject({ mode: 'default' });
-  });
-
-  test('initialMode="balance" preselects the toggle (Weekly Balance CTA path)', () => {
-    renderSection(premium, vi.fn(), 'balance');
-    expect(
-      screen.getByRole('tab', { name: /balance focus/i }),
-    ).toHaveAttribute('aria-selected', 'true');
-    expect(
-      screen.getByRole('button', { name: /balance me out/i }),
-    ).toBeInTheDocument();
-  });
-
-  test('free user tapping Balance me out gets the preview modal, no call', async () => {
-    let calls = 0;
-    server.use(
-      http.post(FUNCTION_URL, () => {
-        calls += 1;
-        return HttpResponse.json({}, { status: 200 });
-      }),
-    );
-
-    renderSection(base, vi.fn(), 'balance');
-    await userEvent.click(
-      screen.getByRole('button', { name: /balance me out/i }),
-    );
-
-    expect(
-      await screen.findByText(/AI session recommendations/i),
-    ).toBeInTheDocument();
-    expect(calls).toBe(0);
+    expect(requestBody).toHaveProperty('client_today');
+    expect(requestBody).not.toHaveProperty('mode');
   });
 });

@@ -1023,12 +1023,6 @@ export const StartWorkoutPage = ({
             <RecommendSessionSection
               userId={userId}
               onAccept={handleAcceptRecommendation}
-              initialMode={
-                (location.state as { recommendMode?: 'balance' } | null)
-                  ?.recommendMode === 'balance'
-                  ? 'balance'
-                  : 'default'
-              }
             />
           )}
 

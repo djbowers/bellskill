@@ -65,7 +65,7 @@ export async function generateRecommendation(
   const doublesById = new Map(
     inputs.candidates.map((c) => [c.user_movement_id, c.supports_doubles]),
   );
-  const system = buildSystemPrompt(inputs.mode);
+  const system = buildSystemPrompt(inputs.balance_targets.length > 0);
   const messages: Message[] = [
     { role: 'user', content: buildUserPrompt(inputs) },
   ];
