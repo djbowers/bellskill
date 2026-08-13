@@ -43,6 +43,7 @@ export const workoutLogToWorkoutOptions = (
       movementName: movementLog.movementName,
       repScheme: movementLog.repScheme,
       timedRungs: movementLog.timedRungs ?? false,
+      maxReps: movementLog.maxReps ?? false,
       weightOneUnit: movementLog.weightOneUnit,
       weightOneValue: movementLog.weightOneValue,
       weightTwoUnit: movementLog.weightTwoUnit,

@@ -17,7 +17,7 @@ One folder per route under `src/pages/` (`Page.tsx`, `.test.tsx`, `.stories.tsx`
 
 ## Domain Concepts
 - **Movement**: one exercise with a rep scheme and up to two weights.
-- **Rep scheme / ladder**: rep counts per rung, e.g. `[1,2,3,4,5]`; a **rung** is one element.
+- **Rep scheme / ladder**: rep counts per rung, e.g. `[1,2,3,4,5]`; a **rung** is one element. Three rung modes: reps, `timedRungs` (seconds per rung), `maxReps` (to failure — the runner asks for the count). Actual reps per set land in `movement_logs.completed_rep_scheme`.
 - **Complex set** (`complexSet: true`): movements done back-to-back without setting the bell down.
 - **Weight config**: up to two weights — tabs None / 2H / 1H / Double.
 - **Workout goal**: time, rounds, or volume. **Workout options**: full session config in `WorkoutOptionsContext`, written to Supabase on completion.

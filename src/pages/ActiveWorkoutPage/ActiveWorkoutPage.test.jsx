@@ -46,6 +46,9 @@ const {
   ZeroWeightValues,
   VeryLargeVolumeGoal,
   DecimalVolumeCalculation,
+  MaxReps,
+  FixedRepsForAdjustment,
+  IntervalTimer,
 } = composeStories(stories);
 
 describe('finishing a workout', () => {
@@ -76,6 +79,7 @@ describe('finishing a workout', () => {
 
     // Should call logWorkout mutation
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: expect.any(Number),
       completedRounds: expect.any(Number),
       completedRungs: expect.any(Number),
@@ -95,6 +99,7 @@ describe('finishing a workout', () => {
 
     // Should call logWorkout mutation
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: expect.any(Number),
       completedRounds: expect.any(Number),
       completedRungs: expect.any(Number),
@@ -113,6 +118,7 @@ describe('finishing a workout', () => {
     );
 
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
@@ -153,6 +159,7 @@ describe('integration tests for previous volume persistence', () => {
 
     // Verify completedVolume is included in the logged data
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
@@ -169,6 +176,7 @@ describe('integration tests for previous volume persistence', () => {
 
     // Should automatically call logWorkout with completedVolume
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
@@ -189,6 +197,7 @@ describe('integration tests for previous volume persistence', () => {
 
     // Verify volume is rounded to nearest integer
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
@@ -227,6 +236,7 @@ describe('volume calculation with kilogram weights', () => {
     );
 
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
@@ -245,6 +255,7 @@ describe('volume calculation with kilogram weights', () => {
     );
 
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 0,
       completedRungs: 0,
@@ -283,6 +294,7 @@ describe('volume calculation with pound weights', () => {
     );
 
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
@@ -325,6 +337,7 @@ describe('volume calculation with mixed weight units', () => {
     );
 
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 0,
       completedRungs: 0,
@@ -347,6 +360,7 @@ describe('volume calculation with mixed weight units', () => {
     );
 
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 0,
       completedRungs: 0,
@@ -390,6 +404,7 @@ describe('volume calculation with one-handed movements', () => {
     );
 
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 0,
       completedRungs: 0,
@@ -428,6 +443,7 @@ describe('volume calculation with bodyweight movements', () => {
     );
 
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 0,
       completedRungs: 0,
@@ -473,6 +489,7 @@ describe('volume accumulation across multiple rungs', () => {
     );
 
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 6, // 1 + 2 + 3
       completedRounds: 1,
       completedRungs: 3,
@@ -798,6 +815,7 @@ describe('automatic workout completion with volume goals', () => {
 
     // Should automatically call logWorkout mutation
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
@@ -814,6 +832,7 @@ describe('automatic workout completion with volume goals', () => {
 
     // Should automatically call logWorkout mutation
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
@@ -853,6 +872,7 @@ describe('volume rounding on workout completion', () => {
     );
 
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
@@ -872,6 +892,7 @@ describe('volume rounding on workout completion', () => {
     );
 
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 5,
       completedRounds: 1,
       completedRungs: 1,
@@ -955,6 +976,7 @@ describe('edge case and boundary tests', () => {
       );
 
       expect(logWorkout).toHaveBeenCalledWith({
+        completedRepsByMovement: expect.any(Array),
         completedReps: 5,
         completedRounds: 1,
         completedRungs: 1,
@@ -979,6 +1001,7 @@ describe('edge case and boundary tests', () => {
 
       // Verify large volume is logged correctly
       expect(logWorkout).toHaveBeenCalledWith({
+        completedRepsByMovement: expect.any(Array),
         completedReps: 15,
         completedRounds: 3,
         completedRungs: 3,
@@ -1012,6 +1035,7 @@ describe('edge case and boundary tests', () => {
 
       // Verify volume is rounded to nearest integer (122.835 rounds to 123)
       expect(logWorkout).toHaveBeenCalledWith({
+        completedRepsByMovement: expect.any(Array),
         completedReps: 5,
         completedRounds: 1,
         completedRungs: 1,
@@ -1034,6 +1058,7 @@ describe('edge case and boundary tests', () => {
 
       // Verify accumulated decimal volume is rounded correctly (368.505 rounds to 369)
       expect(logWorkout).toHaveBeenCalledWith({
+        completedRepsByMovement: expect.any(Array),
         completedReps: 15,
         completedRounds: 3,
         completedRungs: 3,
@@ -1055,6 +1080,7 @@ describe('edge case and boundary tests', () => {
 
       // Verify 245.67 rounds to 246
       expect(logWorkout).toHaveBeenCalledWith({
+        completedRepsByMovement: expect.any(Array),
         completedReps: 10,
         completedRounds: 2,
         completedRungs: 2,
@@ -1096,6 +1122,7 @@ describe('volume calculation for complex mode', () => {
 
     // 3 movements × 24kg × 5 reps = 360kg
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 15, // 5 + 5 + 5
       completedRounds: 0, // still in round 1 (only 1 of 5 rungs done)
       completedRungs: 1,
@@ -1120,6 +1147,7 @@ describe('volume calculation for complex mode', () => {
 
     // 3 movements × 24kg × (5+4+3+2+1) reps = 3 × 24 × 15 = 1080kg
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 45, // (5+4+3+2+1) × 3 movements
       completedRounds: 1,
       completedRungs: 5,
@@ -1144,6 +1172,7 @@ describe('volume calculation for complex mode', () => {
     // Per round: (2+1+3) reps = 6; double 24kg bells = 48kg/movement.
     // Volume/round = 48×(2+1+3) = 288kg; ×5 rounds = 1440kg.
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 30, // 6 reps × 5 rounds
       completedRounds: 5,
       completedRungs: 5, // 1 rung per round × 5
@@ -1163,6 +1192,7 @@ describe('volume calculation for complex mode', () => {
 
     // 2 movements × (20 + 16)kg × 5 reps = 2 × 36 × 5 = 360kg
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 10, // 5 + 5
       completedRounds: 1, // repScheme [5] has 1 rung — round completes on first press
       completedRungs: 1,
@@ -1693,6 +1723,7 @@ describe('active workout page (straight sets)', () => {
     for (let i = 0; i < 10; i++) await clickContinue();
 
     expect(logWorkout).toHaveBeenCalledWith({
+      completedRepsByMovement: expect.any(Array),
       completedReps: 50, // 10 sets x 5 reps
       completedRounds: 1,
       completedRungs: 10,
@@ -1782,3 +1813,118 @@ const clickCompleteSet = async () => {
   const button = screen.getByRole('button', { name: 'Complete Set' });
   await userEvent.click(button);
 };
+
+describe('reporting reps actually completed', () => {
+  const logWorkout = vi.fn();
+
+  beforeEach(() =>
+    useLogWorkout.mockReturnValue({
+      mutate: logWorkout,
+      data: null,
+      isLoading: false,
+    }),
+  );
+
+  afterEach(() => vi.clearAllMocks());
+
+  const openAdjustDialog = () =>
+    userEvent.click(
+      screen.getByRole('button', { name: /adjust reps completed/i }),
+    );
+
+  const completeSet = () =>
+    userEvent.click(screen.getByRole('button', { name: 'Complete set' }));
+
+  const clickMinus = async (times) => {
+    const minus = screen.getByRole('button', {
+      name: '- reps — Two-Arm Kettlebell Military Press',
+    });
+    for (let i = 0; i < times; i++) await userEvent.click(minus);
+  };
+
+  const finish = () =>
+    userEvent.click(screen.getByRole('button', { name: /finish workout/i }));
+
+  test('max reps: Continue asks for the count instead of assuming one', async () => {
+    render(<MaxReps />);
+
+    await clickContinue();
+
+    expect(
+      screen.getByRole('heading', { name: /how many reps/i }),
+    ).toBeInTheDocument();
+
+    // Seeded at 10; 20 kg of bells makes the volume unambiguous.
+    await completeSet();
+    await finish();
+
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completedReps: 10,
+        completedVolume: 200,
+        completedRepsByMovement: [[10]],
+      }),
+    );
+  });
+
+  test('max reps: the reported count is what gets logged', async () => {
+    render(<MaxReps />);
+
+    await clickContinue();
+    await clickMinus(3);
+    await completeSet();
+    await finish();
+
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completedReps: 7,
+        completedVolume: 140,
+        completedRepsByMovement: [[7]],
+      }),
+    );
+  });
+
+  test('fixed reps: Continue advances without asking', async () => {
+    render(<FixedRepsForAdjustment />);
+
+    await clickContinue();
+
+    expect(
+      screen.queryByRole('heading', { name: /how many reps/i }),
+    ).not.toBeInTheDocument();
+
+    await finish();
+
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completedReps: 5,
+        completedRepsByMovement: [[5]],
+      }),
+    );
+  });
+
+  test('fixed reps: Adjust reps logs a short set at the count reported', async () => {
+    render(<FixedRepsForAdjustment />);
+
+    await openAdjustDialog();
+    await clickMinus(2); // 3 of the 5 prescribed
+    await completeSet();
+    await finish();
+
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completedReps: 3,
+        completedVolume: 60,
+        completedRepsByMovement: [[3]],
+      }),
+    );
+  });
+
+  test('intervals: no Continue press to adjust against', async () => {
+    render(<IntervalTimer />);
+
+    expect(
+      screen.queryByRole('button', { name: /adjust reps completed/i }),
+    ).not.toBeInTheDocument();
+  });
+});

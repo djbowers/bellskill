@@ -11,6 +11,8 @@ import { completeProgramSession } from './useCompleteProgramSession';
 
 interface LogWorkoutInput {
   completedReps: number;
+  /** Reps per completed set, per movement — index-aligned with `movements`. */
+  completedRepsByMovement: number[][];
   completedRounds: number;
   completedRungs: number;
   completedSides: number;
@@ -26,6 +28,7 @@ export const useLogWorkout = () => {
   return useMutation({
     mutationFn: ({
       completedReps,
+      completedRepsByMovement,
       completedRounds,
       completedRungs,
       completedSides,
@@ -33,6 +36,7 @@ export const useLogWorkout = () => {
     }: LogWorkoutInput) =>
       logWorkout({
         completedReps,
+        completedRepsByMovement,
         completedRounds,
         completedRungs,
         completedSides,
@@ -119,8 +123,25 @@ const toWorkoutLogModeColumns = (
   };
 };
 
+/**
+ * What one ladder pass of a max-reps movement actually was. Consumers of
+ * `rep_scheme` (pattern_debt_movements, history, repeat-workout) all read it as
+ * a single pass and scale it by rounds/sides themselves, and a max-reps movement
+ * has no prescription to put there — so the first pass of actuals is the honest
+ * value. Falls back to the placeholder ladder if the workout ended before a full
+ * pass was logged.
+ */
+const toRepScheme = (movement: WorkoutOptions['movements'][number], completed: number[]) => {
+  if (!movement.maxReps) return movement.repScheme;
+  const firstPass = completed.slice(0, movement.repScheme.length);
+  return firstPass.length === movement.repScheme.length
+    ? firstPass
+    : movement.repScheme;
+};
+
 const logWorkout = async ({
   completedReps,
+  completedRepsByMovement,
   completedRounds,
   completedRungs,
   completedSides,
@@ -129,6 +150,7 @@ const logWorkout = async ({
   workoutOptions,
 }: {
   completedReps: number;
+  completedRepsByMovement: number[][];
   completedRounds: number;
   completedRungs: number;
   completedSides: number;
@@ -201,11 +223,16 @@ const logWorkout = async ({
   const { error: movementLogError } = await supabase
     .from('movement_logs')
     .insert(
-      movements.map((movement) => ({
+      movements.map((movement, movementIndex) => ({
         movement_name: movement.movementName,
         user_movement_id: userMovementIdByName[movement.movementName] ?? null,
-        rep_scheme: movement.repScheme,
+        rep_scheme: toRepScheme(
+          movement,
+          completedRepsByMovement[movementIndex] ?? [],
+        ),
+        completed_rep_scheme: completedRepsByMovement[movementIndex] ?? [],
         timed_rungs: movement.timedRungs ?? false,
+        max_reps: movement.maxReps ?? false,
         weight_one_unit: movement.weightOneUnit,
         weight_one_value: movement.weightOneValue,
         weight_two_unit: movement.weightTwoUnit,

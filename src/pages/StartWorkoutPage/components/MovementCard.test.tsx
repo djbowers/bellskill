@@ -59,7 +59,7 @@ const baseProps: MovementCardProps = {
   onChangeRung: noop,
   onRemoveRung: noop,
   onAddRung: noop,
-  onToggleTimed: noop,
+  onChangeRungMode: noop,
 };
 
 const renderCard = (overrides: Partial<MovementCardProps> = {}) => {

@@ -21,15 +21,18 @@ type Story = StoryObj<typeof LadderRepScheme>;
 const StatefulLadder = ({
   initial,
   timedRungs = false,
+  maxReps = false,
 }: {
   initial: number[];
   timedRungs?: boolean;
+  maxReps?: boolean;
 }) => {
   const [repScheme, setRepScheme] = useState<number[]>(initial);
   return (
     <LadderRepScheme
       repScheme={repScheme}
       timedRungs={timedRungs}
+      maxReps={maxReps}
       onChangeRung={(rungIndex, value) =>
         setRepScheme((prev) =>
           prev.map((rung, i) => (i === rungIndex ? Math.max(1, value) : rung)),
@@ -41,7 +44,7 @@ const StatefulLadder = ({
       onAddRung={() =>
         setRepScheme((prev) => [...prev, prev[prev.length - 1] ?? 1])
       }
-      onToggleTimed={() => {}}
+      onChangeRungMode={() => {}}
     />
   );
 };
@@ -64,4 +67,9 @@ export const TimedRungs: Story = {
 /** At ten rungs the add slot drops away. */
 export const MaxRungs: Story = {
   render: () => <StatefulLadder initial={[1, 2, 3, 4, 5, 5, 4, 3, 2, 1]} />,
+};
+
+/** Max reps has no magnitude: the rungs become bare set slots. */
+export const MaxReps: Story = {
+  render: () => <StatefulLadder initial={[5, 5, 5]} maxReps />,
 };

@@ -24,10 +24,15 @@ const loadSummary = (movement: MovementOptions): string | null => {
 };
 
 const repSummary = (movement: MovementOptions): string => {
-  const { repScheme, timedRungs } = movement;
+  const { repScheme, timedRungs, maxReps } = movement;
   const fmt = (rung: number) =>
     timedRungs ? formatRungDuration(rung) : `${rung}`;
   if (repScheme.length === 0) return '—';
+  if (maxReps) {
+    return repScheme.length === 1
+      ? 'Max reps'
+      : `Max reps ×${repScheme.length}`;
+  }
   if (repScheme.length === 1) {
     return timedRungs ? fmt(repScheme[0]) : `${repScheme[0]} reps`;
   }

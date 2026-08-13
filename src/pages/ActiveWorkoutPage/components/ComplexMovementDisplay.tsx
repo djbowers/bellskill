@@ -115,9 +115,11 @@ export const ComplexMovementDisplay = ({
                   className="shrink-0 text-2xl font-medium"
                   data-testid={`complex-movement-reps-${index}`}
                 >
-                  {movement.timedRungs
-                    ? formatRungDuration(movement.repScheme[repIndex])
-                    : movement.repScheme[repIndex]}
+                  {movement.maxReps
+                    ? 'Max'
+                    : movement.timedRungs
+                      ? formatRungDuration(movement.repScheme[repIndex])
+                      : movement.repScheme[repIndex]}
                 </div>
               </div>
             );

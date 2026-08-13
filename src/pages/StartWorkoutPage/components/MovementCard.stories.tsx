@@ -55,7 +55,7 @@ const meta = {
     onChangeRung: noop,
     onRemoveRung: noop,
     onAddRung: noop,
-    onToggleTimed: noop,
+    onChangeRungMode: noop,
   },
 } satisfies Meta<typeof MovementCard>;
 

@@ -253,6 +253,23 @@ describe('validateWorkout — interval_with_timed_rungs (warning)', () => {
   });
 });
 
+describe('validateWorkout — interval_with_max_reps (error)', () => {
+  test('blocks when an interval timer meets max reps', () => {
+    const { errors, warnings } = validateWorkout(
+      draft({ intervalTimer: 60, movements: [movement({ maxReps: true })] }),
+    );
+    expect(errors.map((e) => e.code)).toEqual(['interval_with_max_reps']);
+    expect(errors[0].movementIndex).toBe(0);
+    expect(warnings).toEqual([]);
+  });
+
+  test('max reps alone is fine', () => {
+    expect(
+      codes(draft({ intervalTimer: 0, movements: [movement({ maxReps: true })] })),
+    ).toEqual([]);
+  });
+});
+
 describe('validateWorkout — severities never cross', () => {
   test('every warning code stays out of errors, and vice versa', () => {
     const { errors, warnings } = validateWorkout(

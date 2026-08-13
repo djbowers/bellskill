@@ -980,3 +980,49 @@ export const StraightSetsUnevenLadders: Story = {
     },
   },
 };
+
+/**
+ * Sets to failure: no prescription to show, so Continue opens the reps dialog
+ * instead of assuming a number. Two bells so the volume math is unambiguous.
+ */
+export const MaxReps: Story = {
+  parameters: {
+    workoutOptions: {
+      workoutGoal: 10,
+      workoutGoalUnits: 'rounds',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Two-Arm Kettlebell Military Press',
+          repScheme: [5, 5],
+          maxReps: true,
+          weightOneValue: 10,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 10,
+          weightTwoUnit: 'kilograms',
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
+/** A fixed prescription, so the Adjust reps button is what reports a short set. */
+export const FixedRepsForAdjustment: Story = {
+  parameters: {
+    workoutOptions: {
+      workoutGoal: 10,
+      workoutGoalUnits: 'rounds',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Two-Arm Kettlebell Military Press',
+          repScheme: [5, 5],
+          weightOneValue: 10,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 10,
+          weightTwoUnit: 'kilograms',
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};

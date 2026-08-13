@@ -206,6 +206,8 @@ export const CurrentMovement = ({
             >
               {restRemaining ? (
                 <span className="h-5" />
+              ) : currentMovement.maxReps ? (
+                'Max'
               ) : isTimedRung ? (
                 formatRungDuration(repScheme[rungIndex])
               ) : (

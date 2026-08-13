@@ -73,6 +73,7 @@ function makeWrapper(workoutMode: WorkoutMode = 'circuit') {
 
 const logWorkoutInput = {
   completedReps: 5,
+  completedRepsByMovement: [[5]],
   completedRounds: 1,
   completedRungs: 1,
   completedSides: 2,
@@ -421,5 +422,100 @@ describe('useLogWorkout — activation funnel analytics (PROD-157)', () => {
     expect(analyticsBody!.event_name).toBe('workout_completed');
     expect(properties.is_first_workout).toBeNull();
     expect(properties.workout_log_id).toBe(1);
+  });
+});
+
+describe('useLogWorkout — per-set actuals', () => {
+  const makeMovementsWrapper = (
+    movements: (typeof DEFAULT_MOVEMENT_OPTIONS)[],
+  ) => {
+    const workoutOptions = { ...DEFAULT_WORKOUT_OPTIONS, movements };
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    return ({ children }: { children: React.ReactNode }) =>
+      React.createElement(
+        QueryClientProvider,
+        { client: queryClient },
+        React.createElement(
+          SessionProvider,
+          { value: mockSession },
+          React.createElement(
+            WorkoutOptionsContext.Provider,
+            { value: [workoutOptions, () => {}] },
+            children,
+          ),
+        ),
+      );
+  };
+
+  const logAndCaptureMovementRows = async (
+    wrapper: ReturnType<typeof makeMovementsWrapper>,
+    completedRepsByMovement: number[][],
+  ) => {
+    let rows: Record<string, unknown>[] = [];
+
+    server.use(
+      http.get(USER_MOVEMENTS_URL, () => HttpResponse.json([])),
+      http.post(WORKOUT_LOGS_URL, () => HttpResponse.json([{ id: 5 }])),
+      http.post(MOVEMENT_LOGS_URL, async ({ request }) => {
+        rows = (await request.json()) as Record<string, unknown>[];
+        return HttpResponse.json([]);
+      }),
+    );
+
+    const { result } = renderHook(() => useLogWorkout(), { wrapper });
+
+    act(() => {
+      result.current.mutate({ ...logWorkoutInput, completedRepsByMovement });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    return rows;
+  };
+
+  test('a fixed movement keeps its plan and gains the actuals alongside it', async () => {
+    const rows = await logAndCaptureMovementRows(
+      makeMovementsWrapper([{ ...defaultMovement, repScheme: [5, 5] }]),
+      [[5, 3]],
+    );
+
+    expect(rows[0]).toMatchObject({
+      rep_scheme: [5, 5],
+      completed_rep_scheme: [5, 3],
+      max_reps: false,
+    });
+  });
+
+  // A max-reps movement has no prescription, so rep_scheme takes the first
+  // ladder pass of actuals — what every rep_scheme consumer reads it as.
+  test('a max-reps movement writes its first pass as the rep scheme', async () => {
+    const rows = await logAndCaptureMovementRows(
+      makeMovementsWrapper([
+        { ...defaultMovement, repScheme: [5, 5], maxReps: true },
+      ]),
+      [[12, 9, 8, 6]],
+    );
+
+    expect(rows[0]).toMatchObject({
+      rep_scheme: [12, 9],
+      completed_rep_scheme: [12, 9, 8, 6],
+      max_reps: true,
+    });
+  });
+
+  test('a max-reps movement cut short falls back to the placeholder ladder', async () => {
+    const rows = await logAndCaptureMovementRows(
+      makeMovementsWrapper([
+        { ...defaultMovement, repScheme: [5, 5], maxReps: true },
+      ]),
+      [[12]],
+    );
+
+    expect(rows[0]).toMatchObject({
+      rep_scheme: [5, 5],
+      completed_rep_scheme: [12],
+    });
   });
 });

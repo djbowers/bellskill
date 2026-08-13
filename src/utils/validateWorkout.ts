@@ -23,6 +23,7 @@ export type IssueCode =
   | 'invalid_reps'
   | 'non_positive_weight'
   | 'interval_with_timed_rungs'
+  | 'interval_with_max_reps'
   | 'implausible_weight';
 
 /** A repair the UI may offer. Data only — the caller owns applying it. */
@@ -54,6 +55,7 @@ export interface WorkoutDraft {
     movementName: string;
     repScheme: number[];
     timedRungs?: boolean;
+    maxReps?: boolean;
     /** null means bodyweight, which is valid. */
     weightOneValue: number | null;
     /**
@@ -190,6 +192,19 @@ export const validateWorkout = (draft: WorkoutDraft): WorkoutValidation => {
           severity: 'warning',
           message:
             'The interval timer and this movement’s timed rungs both drive the set clock. Turn one of them off.',
+          movementIndex,
+        });
+      }
+
+      // An error, not a warning like timed rungs: the interval advances the set
+      // on its own, so there is no Continue press to report max reps against and
+      // the count would be silently lost.
+      if (movement.maxReps) {
+        errors.push({
+          code: 'interval_with_max_reps',
+          severity: 'error',
+          message:
+            'Max reps needs a Continue press to report against, and the interval timer advances the set on its own. Turn one of them off.',
           movementIndex,
         });
       }
