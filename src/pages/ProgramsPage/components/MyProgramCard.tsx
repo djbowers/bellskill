@@ -129,9 +129,9 @@ export const MyProgramCard = ({
 
   const menuActions: OverflowMenuAction[] = [
     { label: 'Rename program', onSelect: onRename },
-    ...(primary.label === 'Add sessions'
+    ...(state === 'draft'
       ? []
-      : [{ label: 'Add sessions', onSelect: onAddSessions }]),
+      : [{ label: 'Edit sessions', onSelect: onAddSessions }]),
     ...(primary.label === 'View progress'
       ? []
       : [{ label: 'View progress', onSelect: onViewProgress }]),

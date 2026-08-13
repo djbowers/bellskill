@@ -694,6 +694,16 @@ describe('ProgramsPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('offers Edit sessions in the menu once a program has sessions', () => {
+    renderPage();
+
+    openCardMenu('My Program');
+
+    expect(
+      screen.getByRole('menuitem', { name: 'Edit sessions' }),
+    ).toBeInTheDocument();
+  });
+
   const threeActive = [1, 2, 3].map((slot) => ({
     enrollment: {
       id: `up-${slot}`,
