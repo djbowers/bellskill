@@ -183,6 +183,21 @@ describe('getWeightModeFromCatalogFields', () => {
     expect(getWeightModeFromCatalogFields(undefined)).toBeNull();
   });
 
+  // Bodyweight rows still carry an arm split (Side Plank Hip Dip is
+  // Bodyweight/Single Arm), so equipment has to win or they'd derive 1h and
+  // pick up a phantom bell.
+  test('reads a single-arm bodyweight row as bodyweight, not single', () => {
+    expect(
+      getWeightModeFromCatalogFields(
+        row({
+          primaryEquipment: 'Bodyweight',
+          primaryItemCount: 1,
+          singleOrDoubleArm: 'Single Arm',
+        }),
+      ),
+    ).toBe('none');
+  });
+
   test('returns null for a row that maps to no mode', () => {
     expect(
       getWeightModeFromCatalogFields(
