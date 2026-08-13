@@ -25,12 +25,14 @@ export const BuilderActionBar = ({
   movementCount,
   workoutGoal,
   workoutGoalUnits,
+  countsSets = false,
 }: {
   children: ReactNode;
   loads: SummaryLoad[];
   movementCount: number;
   workoutGoal: number;
   workoutGoalUnits: WorkoutGoalUnits;
+  countsSets?: boolean;
 }) => {
   const bottomNavVisible = useBottomNavVisible();
 
@@ -48,6 +50,7 @@ export const BuilderActionBar = ({
             workoutGoalUnits={workoutGoalUnits}
             movementCount={movementCount}
             loads={loads}
+            countsSets={countsSets}
           />
         )}
         {children}

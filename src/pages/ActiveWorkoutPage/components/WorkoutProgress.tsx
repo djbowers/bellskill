@@ -11,6 +11,14 @@ interface WorkoutProgressProps {
   handleClickPause: () => void;
   onClickCancel: () => void;
   remainingMilliseconds: number;
+  /**
+   * Sets finished and sets prescribed. Passed together for the modes whose unit
+   * of work is a set rather than a round, so the bar moves on every set instead
+   * of sitting flat through a whole lap. Absent for complex, where the round is
+   * genuinely the unit of work.
+   */
+  completedSets?: number;
+  totalSets?: number;
   workoutGoal: number;
   workoutGoalUnits: string;
   workoutTimerPaused: boolean;
@@ -23,6 +31,8 @@ export const WorkoutProgress = ({
   handleClickPause,
   onClickCancel,
   remainingMilliseconds,
+  completedSets,
+  totalSets,
   workoutGoal,
   workoutGoalUnits,
   workoutTimerPaused,
@@ -43,10 +53,17 @@ export const WorkoutProgress = ({
   }
 
   if (workoutGoalUnits === 'rounds') {
-    progressBarValue = `${workoutGoal - completedRounds}`;
-    completedPercentage =
-      workoutGoal > 0 ? (completedRounds / workoutGoal) * 100 : 0;
-    progressBarDescription = 'rounds remaining';
+    if (completedSets !== undefined && totalSets !== undefined) {
+      const setsDone = Math.min(completedSets, totalSets);
+      progressBarValue = `${totalSets - setsDone}`;
+      completedPercentage = totalSets > 0 ? (setsDone / totalSets) * 100 : 0;
+      progressBarDescription = 'sets remaining';
+    } else {
+      progressBarValue = `${workoutGoal - completedRounds}`;
+      completedPercentage =
+        workoutGoal > 0 ? (completedRounds / workoutGoal) * 100 : 0;
+      progressBarDescription = 'rounds remaining';
+    }
   }
 
   if (workoutGoalUnits === 'kilograms') {

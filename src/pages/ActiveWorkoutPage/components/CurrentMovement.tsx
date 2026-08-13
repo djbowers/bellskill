@@ -24,7 +24,11 @@ interface CurrentMovementProps {
   rightWeightUnit: WeightUnit | null;
   rightWeightValue: number | null;
   rungIndex: number;
-  /** Rungs in the current movement's ladder; shown only in straight-sets mode. */
+  /**
+   * Sets in the current movement, passed only in straight-sets mode. Its
+   * presence is what marks the mode here: straight sets has no rounds, so the
+   * round badge gives way to "Set X of N".
+   */
   totalRungs?: number;
   totalSides: number;
   title: string | null;
@@ -103,19 +107,21 @@ export const CurrentMovement = ({
     <Card data-testid="current-movement-card">
       <CardHeader>
         <div className="flex gap-2">
-          <CardTitle>
-            <div className="flex h-full flex-col items-center justify-center gap-0.5">
-              Round
-              <div className="relative h-4 w-4 rounded-md bg-accent text-accent-foreground">
-                <div
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-bold"
-                  data-testid="current-round"
-                >
-                  {currentRound}
+          {totalRungs === undefined && (
+            <CardTitle>
+              <div className="flex h-full flex-col items-center justify-center gap-0.5">
+                Round
+                <div className="relative h-4 w-4 rounded-md bg-accent text-accent-foreground">
+                  <div
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-bold"
+                    data-testid="current-round"
+                  >
+                    {currentRound}
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardTitle>
+            </CardTitle>
+          )}
 
           <div className="flex grow flex-col justify-center gap-1">
             <div className="text-2xl font-medium">

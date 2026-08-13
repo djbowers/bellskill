@@ -16,6 +16,7 @@ import {
   WorkoutSummary,
 } from './components';
 import { useRequestWakeLock } from './hooks';
+import { getSetProgress } from './utils';
 
 const LB_TO_KG = 0.453592;
 
@@ -222,6 +223,7 @@ export const ActiveWorkoutPage = ({
     ? 0
     : currentTotalWeight * currentMovement.repScheme[currentMovementRungIndex];
 
+  const isStraightSets = workoutMode === 'straightSets';
   const currentRound = completedRounds + 1;
   const shouldMirrorReps = isOneHanded || isMixedWeights;
 
@@ -247,6 +249,19 @@ export const ActiveWorkoutPage = ({
     100;
 
   const isComplex = workoutMode === 'complex';
+
+  // Straight sets already counts each set as a round against a goal derived from
+  // the set list, so it feeds the bar directly; circuit needs the translation.
+  const setProgress = isStraightSets
+    ? { completedSets: completedRounds, totalSets: workoutGoal }
+    : getSetProgress({
+        completedRounds,
+        currentMovementIndex,
+        currentMovementRungIndex,
+        movements,
+        workoutGoal,
+        workoutMode,
+      });
 
   // Complex mode: round completes when the longest movement's final rung is done
   const maxMovementRungs = isComplex
@@ -357,14 +372,14 @@ export const ActiveWorkoutPage = ({
     }
   };
 
-  // Straight sets (PROD-243): finish a movement's whole ladder before starting
-  // the next one, so the movement index advances once per ladder instead of once
-  // per rung. `completedRungs` counts each movement's rungs here, where the
-  // rotating order counts the single ladder pointer shared by every movement; the
-  // column is logged but never displayed, and reps / volume / rounds / sides come
-  // out identical either way.
+  // Straight sets (PROD-243): a movement's rep scheme is its set list — [5,5,5]
+  // is three sets of five, done back-to-back — so the movement index only moves
+  // forward and never returns to a finished movement. There is no round here:
+  // the builder derives `workoutGoal` as the total set count, so counting each
+  // set as a "round" lets handleRoundsGoalReached end the workout unchanged.
   const goToNextRungStraight = () => {
     incrementRungs();
+    incrementRounds();
 
     if (!isLastRung) {
       setCurrentMovementRungIndex((prev) => prev + 1);
@@ -372,18 +387,14 @@ export const ActiveWorkoutPage = ({
     }
 
     setCurrentMovementRungIndex(0);
-    if (isLastMovement) {
-      incrementRounds();
-      setCurrentMovementIndex(0);
-    } else {
+    if (!isLastMovement) {
       setCurrentMovementIndex((prev) => prev + 1);
+      setIsMirrorSet(false);
     }
   };
 
   const advanceMovement = () =>
-    workoutMode === 'straightSets'
-      ? goToNextRungStraight()
-      : goToNextMovement();
+    isStraightSets ? goToNextRungStraight() : goToNextMovement();
 
   const goToNextSide = () => {
     if (isMirrorSet) {
@@ -429,7 +440,21 @@ export const ActiveWorkoutPage = ({
     continueWorkout();
   };
 
+  // Every advance handler reads this render's indexes (isLastRung,
+  // isLastMovement, isMirrorSet), so a second continue fired before React
+  // commits would advance from stale state — double-counting reps and stepping
+  // the rung twice, e.g. "Set 3 of 2". One advance per render; the effect below
+  // re-arms once the new state is on screen.
+  const advanceArmedRef = useRef(true);
+
+  useEffect(function rearmContinue() {
+    advanceArmedRef.current = true;
+  });
+
   const continueWorkout = () => {
+    if (!advanceArmedRef.current) return;
+    advanceArmedRef.current = false;
+
     requestWakeLock();
     incrementSides(); // each continue completes one side of work
     if (isComplex) {
@@ -625,6 +650,8 @@ export const ActiveWorkoutPage = ({
         formattedTimeRemaining={formattedTimeRemaining}
         handleClickPause={handleClickPause}
         remainingMilliseconds={remainingMilliseconds}
+        completedSets={setProgress?.completedSets}
+        totalSets={setProgress?.totalSets}
         workoutGoal={workoutGoal}
         workoutGoalUnits={workoutGoalUnits}
         workoutTimerPaused={workoutTimerPaused}
@@ -656,9 +683,7 @@ export const ActiveWorkoutPage = ({
           rightWeightUnit={rightWeightUnit}
           rightWeightValue={rightWeightValue}
           rungIndex={currentMovementRungIndex}
-          totalRungs={
-            workoutMode === 'straightSets' ? currentMovementRungs : undefined
-          }
+          totalRungs={isStraightSets ? currentMovementRungs : undefined}
           totalSides={totalSides}
           title={title}
           preWorkoutNotes={preWorkoutNotes}

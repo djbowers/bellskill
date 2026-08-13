@@ -8,6 +8,7 @@ import {
   FORMAT_WORKOUT_MODES,
   type MovementWeightModeFields,
   movementMatchesWeightMode,
+  recommendationGoal,
 } from '~/utils';
 
 /** Catalog weight-mode metadata keyed by canonical movement name. */
@@ -85,8 +86,9 @@ export const recommendationToMovements = (
 
 /**
  * Maps a recommendation onto a full set of workout options ready to load into
- * the builder. Duration becomes a time goal; timers and shared weights default
- * off for the user to add if they want.
+ * the builder. Duration becomes a time goal — except in straight sets, where the
+ * rep schemes already prescribe the work; timers and shared weights default off
+ * for the user to add if they want.
  */
 export const recommendationToWorkoutOptions = (
   recommendation: Recommendation,
@@ -103,6 +105,5 @@ export const recommendationToWorkoutOptions = (
   sharedWeightTwoValue: null,
   title: null,
   preWorkoutNotes: null,
-  workoutGoal: recommendation.duration_minutes,
-  workoutGoalUnits: 'minutes',
+  ...recommendationGoal(recommendation),
 });

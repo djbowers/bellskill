@@ -8,6 +8,7 @@
 // Dependency-free (relative `.ts` imports only) so the Deno edge runtime can
 // import it alongside validateWorkout.ts.
 
+import type { WorkoutGoalUnits } from '../types/workout-goal-units.type.ts';
 import type { WorkoutMode } from '../types/workout-mode.type.ts';
 import type { WorkoutDraft } from './validateWorkout.ts';
 
@@ -47,6 +48,27 @@ export interface RecommendationLike {
 }
 
 /**
+ * The goal the recommendation implies. Straight sets prescribes its work in the
+ * rep schemes themselves — each entry is one set, done before the next movement
+ * starts — so it finishes on the set count rather than the wall clock.
+ */
+export const recommendationGoal = (
+  recommendation: RecommendationLike,
+): { workoutGoal: number; workoutGoalUnits: WorkoutGoalUnits } =>
+  formatToWorkoutMode(recommendation.format) === 'straightSets'
+    ? {
+        workoutGoal: recommendation.blocks.reduce(
+          (total, block) => total + block.rep_scheme.length,
+          0,
+        ),
+        workoutGoalUnits: 'rounds',
+      }
+    : {
+        workoutGoal: recommendation.duration_minutes,
+        workoutGoalUnits: 'minutes',
+      };
+
+/**
  * Adapts an LLM recommendation into the shared draft shape. The recommender has
  * no timers and prescribes one weight in kg per movement, which becomes weight
  * one. `weight_kg` is a required number in the schema, so a recommended movement
@@ -56,7 +78,7 @@ export const recommendationToDraft = (
   recommendation: RecommendationLike,
 ): WorkoutDraft => ({
   workoutMode: formatToWorkoutMode(recommendation.format),
-  workoutGoal: recommendation.duration_minutes,
+  workoutGoal: recommendationGoal(recommendation).workoutGoal,
   intervalTimer: 0,
   movements: recommendation.blocks.map((block) => ({
     movementName: block.movement_name,

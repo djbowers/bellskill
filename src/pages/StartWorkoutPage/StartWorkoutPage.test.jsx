@@ -166,6 +166,68 @@ describe('start workout page', () => {
     );
   });
 
+  describe('Straight Sets', () => {
+    const selectStraightSets = () =>
+      userEvent.click(screen.getByRole('tab', { name: 'Straight Sets' }));
+
+    test('hides the goal picker — the rep scheme is the prescription', async () => {
+      expect(
+        screen.getByRole('heading', { name: 'Goal' }),
+      ).toBeInTheDocument();
+
+      await selectStraightSets();
+
+      expect(screen.queryByRole('heading', { name: 'Goal' })).toBeNull();
+      expect(screen.queryByRole('tab', { name: 'Rounds' })).toBeNull();
+    });
+
+    test('calls the rep scheme entries sets rather than rungs', async () => {
+      await selectStraightSets();
+
+      expect(
+        screen.getByRole('button', { name: 'Add set' }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Add rung' })).toBeNull();
+    });
+
+    test('starts with a goal of the total set count', async () => {
+      await userEvent.type(
+        screen.getByLabelText('Movement Input'),
+        'Clean and Press',
+      );
+      await selectStraightSets();
+      await userEvent.click(screen.getByRole('button', { name: 'Add set' }));
+      await userEvent.click(screen.getByRole('button', { name: /Start/i }));
+
+      expect(startWorkout).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workoutMode: 'straightSets',
+          workoutGoal: 2, // one movement x two sets
+          workoutGoalUnits: 'rounds',
+        }),
+      );
+    });
+
+    test('leaves the previously chosen goal intact on the way back out', async () => {
+      await userEvent.type(
+        screen.getByLabelText('Movement Input'),
+        'Clean and Press',
+      );
+      await userEvent.click(screen.getByRole('tab', { name: 'Rounds' }));
+      await selectStraightSets();
+      await userEvent.click(screen.getByRole('tab', { name: 'Circuit' }));
+      await userEvent.click(screen.getByRole('button', { name: /Start/i }));
+
+      expect(startWorkout).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workoutMode: 'circuit',
+          workoutGoalUnits: 'rounds',
+          workoutGoal: 10, // previousRounds, untouched by the straight-sets detour
+        }),
+      );
+    });
+  });
+
   test('entering a movement name enables start button', async () => {
     const movementInput = screen.getByLabelText('Movement Input');
     await userEvent.type(movementInput, 'Clean and Press');

@@ -5,7 +5,7 @@ import { ConfirmDialog } from '~/components/ConfirmDialog';
 import { OverflowMenu } from '~/components/OverflowMenu';
 import { Button } from '~/components/ui/button';
 import { cn } from '~/lib/utils';
-import { WorkoutGoalUnits } from '~/types';
+import { WorkoutGoalUnits, WorkoutMode } from '~/types';
 
 /**
  * The home page's single high-contrast surface. Every other block on the page is
@@ -41,9 +41,12 @@ interface QuickStartHeroProps {
 const estimatedDuration = (
   goal: number,
   units: WorkoutGoalUnits,
+  workoutMode: WorkoutMode,
 ): string | null => {
   if (units === 'minutes') return `~${goal} min`;
-  if (units === 'rounds') return `${goal} rounds`;
+  // Straight sets stores its total set count as a rounds goal — it has no rounds.
+  if (units === 'rounds')
+    return workoutMode === 'straightSets' ? `${goal} sets` : `${goal} rounds`;
   return null; // volume goals have no meaningful time estimate here
 };
 
@@ -147,6 +150,7 @@ const ProgramHero = ({
   const duration = estimatedDuration(
     workoutOptions.workoutGoal,
     workoutOptions.workoutGoalUnits,
+    workoutOptions.workoutMode,
   );
   const title =
     session.title?.trim() ||

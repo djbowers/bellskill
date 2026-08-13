@@ -46,6 +46,7 @@ export const ProgressBar = ({
               'text-3xl': size === 'large',
             },
           )}
+          data-testid="progress-bar-value"
         >
           {value ?? <>&infin;</>}
         </div>

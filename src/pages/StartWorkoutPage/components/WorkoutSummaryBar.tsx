@@ -8,7 +8,12 @@ export interface SummaryLoad {
   unit: WeightUnit | null;
 }
 
-const goalLabel = (goal: number, units: WorkoutGoalUnits): string => {
+const goalLabel = (
+  goal: number,
+  units: WorkoutGoalUnits,
+  countsSets: boolean,
+): string => {
+  if (countsSets) return `${goal} ${goal === 1 ? 'set' : 'sets'}`;
   if (units === 'minutes') return `${goal} min`;
   if (units === 'rounds') return `${goal} ${goal === 1 ? 'round' : 'rounds'}`;
   return `${goal} kg`;
@@ -35,11 +40,14 @@ export const WorkoutSummaryBar = ({
   workoutGoalUnits,
   movementCount,
   loads,
+  countsSets = false,
 }: {
   workoutGoal: number;
   workoutGoalUnits: WorkoutGoalUnits;
   movementCount: number;
   loads: SummaryLoad[];
+  /** Straight sets prescribes sets, not rounds — read the goal that way. */
+  countsSets?: boolean;
 }) => {
   const sorted = [...loads].sort((a, b) => a.value - b.value);
   const min = sorted[0];
@@ -55,7 +63,7 @@ export const WorkoutSummaryBar = ({
     <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 px-0.5 text-xs font-medium text-muted-foreground">
       <span className="inline-flex items-center gap-0.5">
         <ClockIcon className="h-2 w-2" aria-hidden />
-        {goalLabel(workoutGoal, workoutGoalUnits)}
+        {goalLabel(workoutGoal, workoutGoalUnits, countsSets)}
       </span>
       <span>
         {movementCount} {movementCount === 1 ? 'movement' : 'movements'}

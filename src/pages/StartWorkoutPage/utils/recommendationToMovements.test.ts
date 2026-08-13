@@ -148,8 +148,32 @@ describe('recommendationToWorkoutOptions', () => {
     );
 
     expect(getWeightTabValue(options.movements[0])).toBe('double');
+  });
+
+  test('duration becomes a time goal for the rotating formats', () => {
+    const options = recommendationToWorkoutOptions({
+      ...recommendation([[DOUBLE_KB_FRONT_SQUAT, 24]]),
+      format: 'Circuit',
+    });
+
     expect(options.workoutGoal).toBe(20);
     expect(options.workoutGoalUnits).toBe('minutes');
+  });
+
+  // Straight sets stops on its set list, not the clock, so the goal is the
+  // total number of sets across every block.
+  test('a straight-sets recommendation goal is its total set count', () => {
+    const rec = recommendation([
+      [TWO_HAND_SWING, 24],
+      [DOUBLE_KB_FRONT_SQUAT, 24],
+    ]);
+    rec.blocks[0].rep_scheme = [5, 5, 5];
+    rec.blocks[1].rep_scheme = [8, 8];
+
+    const options = recommendationToWorkoutOptions(rec);
+
+    expect(options.workoutGoal).toBe(5);
+    expect(options.workoutGoalUnits).toBe('rounds');
   });
 
   test.each([
