@@ -23,7 +23,6 @@ export enum AnalyticsEvent {
   // AI Next Session Recommender (PROD-89).
   RecommendationRequested = 'recommendation_requested',
   RecommendationAccepted = 'recommendation_accepted',
-  RecommendationRegenerated = 'recommendation_regenerated',
   RecommendationPreviewShown = 'recommendation_preview_shown',
   // AI Program Recommender.
   ProgramRecommendationRequested = 'program_recommendation_requested',

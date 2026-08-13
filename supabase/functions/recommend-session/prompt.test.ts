@@ -2,7 +2,6 @@ import { buildSystemPrompt, buildUserPrompt } from './prompt.ts';
 import type { RecommenderInputs } from './types.ts';
 
 const baseInputs = (over: Partial<RecommenderInputs> = {}): RecommenderInputs => ({
-  mode: 'default',
   balance_targets: [],
   training_goal: null,
   readiness: null,
@@ -38,17 +37,17 @@ describe('prompt — pattern annotations and balance targets', () => {
 
   test('balance targets render a mandatory section; absent when empty', () => {
     const withTargets = buildUserPrompt(
-      baseInputs({ mode: 'balance', balance_targets: ['hinge', 'carry'] }),
+      baseInputs({ balance_targets: ['hinge', 'carry'] }),
     );
     expect(withTargets).toContain('Target patterns');
     expect(withTargets).toContain('hinge, carry');
     expect(buildUserPrompt(baseInputs())).not.toContain('Target patterns');
   });
 
-  test('system prompt adds the balance rule only in balance mode', () => {
-    expect(buildSystemPrompt('balance')).toContain('BALANCE MODE');
-    expect(buildSystemPrompt('default')).not.toContain('BALANCE MODE');
-    expect(buildSystemPrompt()).not.toContain('BALANCE MODE');
+  test('system prompt adds the must-cover rule only when targets exist', () => {
+    expect(buildSystemPrompt(true)).toContain('Target patterns');
+    expect(buildSystemPrompt(false)).not.toContain('Target patterns');
+    expect(buildSystemPrompt()).not.toContain('Target patterns');
   });
 
   test('system prompt bans the word "debt" in rationale copy', () => {

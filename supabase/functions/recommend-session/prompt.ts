@@ -3,20 +3,19 @@
 // Kept separate from transport (llm.ts) so prompt quality can be iterated in
 // PROD-88 without touching the API plumbing.
 
-import type { RecommendMode, RecommenderInputs } from './types.ts';
+import type { RecommenderInputs } from './types.ts';
 import { formatEquipmentSection } from '../_shared/equipmentInput.ts';
 import { formatPatternLine } from '../_shared/patternDebtPrompt.ts';
 
-export function buildSystemPrompt(mode: RecommendMode = 'default'): string {
-  const balanceRules =
-    mode === 'balance'
-      ? [
-          '- BALANCE MODE: the request lists "Target patterns". Your session MUST',
-          "  include, for every target pattern, at least one movement whose pays",
-          '  list covers it. Multi-pattern movements may cover several targets at',
-          '  once. Name the patterns you are catching up in the rationale.',
-        ]
-      : [];
+export function buildSystemPrompt(hasTargets = false): string {
+  const targetRules = hasTargets
+    ? [
+        '- The request lists "Target patterns". Your session MUST include, for',
+        '  every target pattern, at least one movement whose pays list covers it.',
+        '  Multi-pattern movements may cover several targets at once. Name the',
+        '  patterns you are catching up in the rationale.',
+      ]
+    : [];
   return [
     'You are an expert kettlebell programming coach. You know the Big 6 (swing,',
     'clean, press, snatch, squat, get-up) and common protocols (Simple & Sinister,',
@@ -38,7 +37,7 @@ export function buildSystemPrompt(mode: RecommendMode = 'default'): string {
     "  lifter's goal still take precedence when they conflict.",
     "- Patterns marked \"new\" have no training history yet — treat them as",
     '  neutral, not overdue; do not count them toward pattern debt.',
-    ...balanceRules,
+    ...targetRules,
     '- Give a short, concrete rationale a thoughtful coach would give — tie it to',
     '  their goal, recent history, and readiness. Avoid generic filler. Never use',
     '  the word "debt" — say a pattern is due, overdue, or needs attention.',

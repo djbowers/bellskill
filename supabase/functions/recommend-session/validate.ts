@@ -9,7 +9,7 @@
 //     shared verifier, so the builder enforces the same rules (PROD-240). Its
 //     errors become retry reasons; its warnings are logged, never retried on.
 //   - The LLM contract ("did the model follow instructions?") stays local:
-//     candidate-id membership and balance-mode pattern coverage.
+//     candidate-id membership and target-pattern coverage.
 
 import {
   type EquipmentSummary,
@@ -20,7 +20,7 @@ import { recommendationToDraft } from '../../../src/utils/recommendationDraft.ts
 import { validateWorkout } from '../../../src/utils/validateWorkout.ts';
 import type { Recommendation } from './types.ts';
 
-/** Balance-mode coverage requirement: targets plus each candidate's credits. */
+/** Target-pattern coverage requirement: targets plus each candidate's credits. */
 export interface CoverageRequirement {
   targets: Pattern[];
   creditsById: Map<string, readonly string[] | null>;
