@@ -4,7 +4,10 @@
       "mcp__e7560fe6-e0dc-4e41-8b81-77e2cf92370e__get_issue",
       "Bash(npm test *)",
       "Bash(npm run compile:ts *)",
-      "Bash(npx supabase status *)"
+      "Bash(npx supabase status *)",
+      "mcp__Claude_Browser__preview_start",
+      "mcp__Claude_Browser__preview_stop",
+      "mcp__Claude_Browser__preview_logs"
     ]
   }
 }
