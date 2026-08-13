@@ -1131,6 +1131,13 @@ export const StartWorkoutPage = ({
             />
           )}
 
+          {/* Above the goal: the arrangement decides whether there is a goal to
+              set at all, so it has to be the first choice. */}
+          <WorkoutModeTabs
+            value={workoutMode}
+            onValueChange={handleChangeWorkoutMode}
+          />
+
           {!isStraightSets && (
             <Card>
               <Section
@@ -1169,11 +1176,6 @@ export const StartWorkoutPage = ({
               </Section>
             </Card>
           )}
-
-          <WorkoutModeTabs
-            value={workoutMode}
-            onValueChange={handleChangeWorkoutMode}
-          />
 
           <MovementsHeader count={movements.length} />
 

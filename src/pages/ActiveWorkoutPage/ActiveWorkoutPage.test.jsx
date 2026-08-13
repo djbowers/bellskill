@@ -1641,6 +1641,16 @@ describe('active workout page (Armor Building Complex seed session)', () => {
 });
 
 describe('active workout page (circuit progress)', () => {
+  test('places the movement in the workout as the circuit rotates', async () => {
+    render(<CircuitMultipleMovements />);
+
+    const position = screen.getByTestId('current-movement-position');
+    expect(position).toHaveTextContent('Movement 1 of 3');
+
+    await clickContinue();
+    expect(position).toHaveTextContent('Movement 2 of 3');
+  });
+
   test('counts sets, so the bar moves on every movement instead of once per lap', async () => {
     render(<CircuitMultipleMovements />);
 
@@ -1730,6 +1740,19 @@ describe('active workout page (straight sets)', () => {
 
     expect(screen.getByTestId('current-set')).toHaveTextContent('Set 2 of 2');
     expect(screen.getByTestId('progress-bar-value')).toHaveTextContent('9');
+  });
+
+  test('places the movement in the workout, and advances it', async () => {
+    render(<StraightSets />);
+
+    const position = screen.getByTestId('current-movement-position');
+    expect(position).toHaveTextContent('Movement 1 of 5');
+
+    await clickContinue();
+    expect(position).toHaveTextContent('Movement 1 of 5');
+
+    await clickContinue();
+    expect(position).toHaveTextContent('Movement 2 of 5');
   });
 
   test('shows no round badge — straight sets has no rounds', () => {

@@ -170,6 +170,16 @@ describe('start workout page', () => {
     const selectStraightSets = () =>
       userEvent.click(screen.getByRole('tab', { name: 'Straight Sets' }));
 
+    test('sits above the goal, since it decides whether there is one', () => {
+      const modeTab = screen.getByRole('tab', { name: 'Straight Sets' });
+      const goal = screen.getByRole('heading', { name: 'Goal' });
+
+      expect(
+        modeTab.compareDocumentPosition(goal) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
     test('hides the goal picker — the rep scheme is the prescription', async () => {
       expect(
         screen.getByRole('heading', { name: 'Goal' }),
