@@ -1,7 +1,7 @@
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { cn } from '~/lib/utils';
 import { WeightTabValue } from '~/types';
-import { WEIGHT_MODE_LABELS } from '~/utils';
+import { WEIGHT_MODE_LABELS, WEIGHT_MODE_SHORT_LABELS } from '~/utils';
 
 import { KettlebellGlyph } from './KettlebellGlyph';
 
@@ -29,13 +29,14 @@ export const WeightModeTabs = ({
       {MODES.filter((mode) => !(hideNone && mode === 'none')).map((mode) => (
         <TabsTrigger
           key={mode}
+          aria-label={WEIGHT_MODE_LABELS[mode]}
           className="flex min-w-0 flex-1 flex-col gap-0.5 px-0.5 py-1"
           size="sm"
           value={mode}
         >
           <KettlebellGlyph mode={mode} />
           <span className="truncate leading-none">
-            {WEIGHT_MODE_LABELS[mode]}
+            {WEIGHT_MODE_SHORT_LABELS[mode]}
           </span>
         </TabsTrigger>
       ))}
