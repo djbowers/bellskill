@@ -84,6 +84,7 @@ interface RenderOptions {
   showWeightModeTabs?: boolean;
   weightSummary?: string | null;
   weightModeHint?: string | null;
+  weightModeLocked?: boolean;
   deferUserMovementWrite?: boolean;
   onMovementPick?: ReturnType<typeof vi.fn>;
 }
@@ -97,6 +98,7 @@ function renderAutocomplete({
   showWeightModeTabs = true,
   weightSummary = null,
   weightModeHint = null,
+  weightModeLocked = false,
   deferUserMovementWrite = false,
   onMovementPick,
 }: RenderOptions = {}) {
@@ -110,6 +112,7 @@ function renderAutocomplete({
       showWeightModeTabs={showWeightModeTabs}
       weightSummary={weightSummary}
       weightModeHint={weightModeHint}
+      weightModeLocked={weightModeLocked}
       deferUserMovementWrite={deferUserMovementWrite}
       onMovementPick={onMovementPick}
     />,
@@ -149,6 +152,20 @@ describe('MovementAutocomplete', () => {
     expect(onWeightModeChange).toHaveBeenCalledWith('1h');
   });
 
+  test('renders the tabs as a read-only indicator when the mode is locked', async () => {
+    const onWeightModeChange = vi.fn();
+    renderAutocomplete({ weightModeLocked: true, onWeightModeChange });
+
+    expect(screen.getByRole('tab', { name: 'Single' })).toBeDisabled();
+    expect(screen.getByRole('tab', { name: 'Two-Hand' })).toHaveAttribute(
+      'data-state',
+      'active',
+    );
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Single' }));
+    expect(onWeightModeChange).not.toHaveBeenCalled();
+  });
+
   test('keeps dropdown open while focus moves to the weight-mode tabs', async () => {
     renderAutocomplete();
 
@@ -157,8 +174,8 @@ describe('MovementAutocomplete', () => {
     await userEvent.type(input, 'Swing');
     expect(screen.getByRole('listbox')).toBeInTheDocument();
 
-    // The tabs filter the dropdown's catalog results, so moving focus onto
-    // them must not dismiss the results being filtered.
+    // The tabs sit below the results, so reaching for them must not dismiss
+    // the list they sit under.
     await userEvent.tab();
     expect(screen.getByRole('tab', { name: 'Two-Hand' })).toHaveFocus();
     expect(screen.getByRole('listbox')).toBeInTheDocument();
@@ -271,7 +288,7 @@ describe('MovementAutocomplete', () => {
     expect(screen.queryByText('Clean and Press')).not.toBeInTheDocument();
   });
 
-  test('filters recent movements by weight mode when catalog metadata exists', async () => {
+  test('shows recent movements whose mode differs from the selected tab', async () => {
     server.use(
       http.get(MOVEMENTS_URL, ({ request }) => {
         const url = new URL(request.url);
@@ -315,7 +332,7 @@ describe('MovementAutocomplete', () => {
     await waitFor(() => {
       expect(screen.getByText('Kettlebell Swing')).toBeInTheDocument();
     });
-    expect(screen.queryByText('Kettlebell Clean')).not.toBeInTheDocument();
+    expect(screen.getByText('Kettlebell Clean')).toBeInTheDocument();
   });
 
   test('shows custom recent movements regardless of weight mode', async () => {
@@ -488,7 +505,7 @@ describe('MovementAutocomplete', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Kettlebell Snatch')).toBeInTheDocument();
-      expect(screen.getByText('Catalog (Two-Hand)')).toBeInTheDocument();
+      expect(screen.getByText('Catalog')).toBeInTheDocument();
     });
 
     await userEvent.click(screen.getByText('Kettlebell Snatch'));
@@ -530,7 +547,11 @@ describe('MovementAutocomplete', () => {
 
     await userEvent.click(screen.getByText('Kettlebell Snatch'));
 
-    expect(onMovementPick).toHaveBeenCalledWith('Kettlebell Snatch', 'mov-1');
+    expect(onMovementPick).toHaveBeenCalledWith(
+      'Kettlebell Snatch',
+      'mov-1',
+      '2h',
+    );
     expect(capturedInsert).toBeNull();
   });
 
@@ -542,7 +563,7 @@ describe('MovementAutocomplete', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/No two-hand movements for.*Swing.*try another mode/i),
+        screen.getByText(/No movements match .*Swing/i),
       ).toBeInTheDocument();
     });
   });

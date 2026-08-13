@@ -79,6 +79,7 @@ const MovementAutocompleteDemo = ({
   initialValue = '',
   initialWeightMode = '2h' as WeightTabValue,
   showWeightModeTabs = true,
+  weightModeLocked = false,
   weightModeHint = null as string | null,
   weightSummary = null as string | null,
 }) => {
@@ -93,6 +94,7 @@ const MovementAutocompleteDemo = ({
       weightMode={weightMode}
       onWeightModeChange={setWeightMode}
       showWeightModeTabs={showWeightModeTabs}
+      weightModeLocked={weightModeLocked}
       weightModeHint={weightModeHint}
       weightSummary={weightSummary}
     />
@@ -164,9 +166,14 @@ export const WithCatalogResults: Story = {
   },
 };
 
-export const BodyweightMode: Story = {
+/** The picked movement is in the catalog, so its mode is shown, not chosen. */
+export const LockedWeightMode: Story = {
   render: () => (
-    <MovementAutocompleteDemo initialValue="Push" initialWeightMode="none" />
+    <MovementAutocompleteDemo
+      initialValue="One-Arm Kettlebell Swing"
+      initialWeightMode="1h"
+      weightModeLocked
+    />
   ),
   parameters: {
     msw: {

@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from '~/components/ui/dialog';
 import { MovementLog, WeightTabValue } from '~/types';
-import { WEIGHT_MODE_LABELS, getWeightTabValue } from '~/utils';
+import { getWeightTabValue } from '~/utils';
 
 import type { SharedWeights } from '../utils/resolveSharedWeights';
 
@@ -131,7 +131,6 @@ export const LinkMovementDialog = ({
           weightMode={weightMode}
           onWeightModeChange={() => {}}
           showWeightModeTabs={false}
-          weightModeHint={`Catalog filtered to ${WEIGHT_MODE_LABELS[weightMode]}`}
           deferUserMovementWrite
           onMovementPick={handleMovementPick}
         />

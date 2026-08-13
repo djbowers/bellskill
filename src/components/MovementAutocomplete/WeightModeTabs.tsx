@@ -10,6 +10,8 @@ interface WeightModeTabsProps {
   onValueChange: (value: WeightTabValue) => void;
   className?: string;
   hideNone?: boolean;
+  /** Render as a read-only indicator of a mode determined elsewhere. */
+  disabled?: boolean;
 }
 
 const MODES: WeightTabValue[] = ['none', '2h', '1h', 'double'];
@@ -19,6 +21,7 @@ export const WeightModeTabs = ({
   onValueChange,
   className,
   hideNone = false,
+  disabled = false,
 }: WeightModeTabsProps) => (
   <Tabs
     value={value}
@@ -30,9 +33,13 @@ export const WeightModeTabs = ({
         <TabsTrigger
           key={mode}
           aria-label={WEIGHT_MODE_LABELS[mode]}
-          className="flex min-w-0 flex-1 flex-col gap-0.5 px-0.5 py-1"
+          className={cn(
+            'flex min-w-0 flex-1 flex-col gap-0.5 px-0.5 py-1',
+            disabled && 'data-[state=active]:opacity-100',
+          )}
           size="sm"
           value={mode}
+          disabled={disabled}
         >
           <KettlebellGlyph mode={mode} />
           <span className="truncate leading-none">

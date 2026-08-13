@@ -61,34 +61,10 @@ export const movementMatchesWeightMode = (
   }
 };
 
-export const recentMovementMatchesWeightMode = (
-  catalogWeightFields: MovementWeightModeFields | null,
-  mode: WeightTabValue,
-): boolean => {
-  if (!catalogWeightFields) return true;
-  return movementMatchesWeightMode(catalogWeightFields, mode);
-};
-
-export const applyWeightModeToCatalogQuery = (query: any, mode: WeightTabValue) => {
-  switch (mode) {
-    case 'none':
-      return query.eq('primary_equipment', 'Bodyweight');
-    case '2h':
-      return query
-        .eq('primary_equipment', 'Kettlebell')
-        .eq('primary_item_count', 1)
-        .eq('single_or_double_arm', 'Double Arm');
-    case '1h':
-      return query
-        .eq('primary_equipment', 'Kettlebell')
-        .eq('primary_item_count', 1)
-        .eq('single_or_double_arm', 'Single Arm');
-    case 'double':
-      return query
-        .eq('primary_equipment', 'Kettlebell')
-        .eq('primary_item_count', 2)
-        .eq('single_or_double_arm', 'Double Arm');
-    default:
-      return query;
-  }
+export const getWeightModeFromCatalogFields = (
+  fields: MovementWeightModeFields | null | undefined,
+): WeightTabValue | null => {
+  if (!fields) return null;
+  const modes: WeightTabValue[] = ['none', '2h', '1h', 'double'];
+  return modes.find((mode) => movementMatchesWeightMode(fields, mode)) ?? null;
 };

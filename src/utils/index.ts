@@ -1,4 +1,5 @@
 export * from './applySharedWeights';
+export * from './applyWeightMode';
 export * from './bellColors';
 export * from './equipment';
 export * from './formatRungDuration';

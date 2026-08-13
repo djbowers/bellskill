@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+  getWeightModeFromCatalogFields,
   getWeightTabValue,
   movementMatchesWeightMode,
-  recentMovementMatchesWeightMode,
   type MovementWeightModeFields,
 } from './movementWeightModeFilter';
 
@@ -144,26 +144,54 @@ describe('movementMatchesWeightMode', () => {
   });
 });
 
-describe('recentMovementMatchesWeightMode', () => {
-  test('includes movements without catalog metadata', () => {
-    expect(recentMovementMatchesWeightMode(null, '2h')).toBe(true);
+describe('getWeightModeFromCatalogFields', () => {
+  test('derives each weight mode from the catalog fields', () => {
+    expect(
+      getWeightModeFromCatalogFields(row({ primaryEquipment: 'Bodyweight' })),
+    ).toBe('none');
+    expect(
+      getWeightModeFromCatalogFields(
+        row({
+          primaryEquipment: 'Kettlebell',
+          primaryItemCount: 1,
+          singleOrDoubleArm: 'Double Arm',
+        }),
+      ),
+    ).toBe('2h');
+    expect(
+      getWeightModeFromCatalogFields(
+        row({
+          primaryEquipment: 'Kettlebell',
+          primaryItemCount: 1,
+          singleOrDoubleArm: 'Single Arm',
+        }),
+      ),
+    ).toBe('1h');
+    expect(
+      getWeightModeFromCatalogFields(
+        row({
+          primaryEquipment: 'Kettlebell',
+          primaryItemCount: 2,
+          singleOrDoubleArm: 'Double Arm',
+        }),
+      ),
+    ).toBe('double');
   });
 
-  test('filters linked catalog movements by weight mode', () => {
-    const twoHanded = row({
-      primaryEquipment: 'Kettlebell',
-      primaryItemCount: 1,
-      singleOrDoubleArm: 'Double Arm',
-    });
-    const singleArm = row({
-      primaryEquipment: 'Kettlebell',
-      primaryItemCount: 1,
-      singleOrDoubleArm: 'Single Arm',
-    });
+  test('returns null without catalog metadata', () => {
+    expect(getWeightModeFromCatalogFields(null)).toBeNull();
+    expect(getWeightModeFromCatalogFields(undefined)).toBeNull();
+  });
 
-    expect(recentMovementMatchesWeightMode(twoHanded, '2h')).toBe(true);
-    expect(recentMovementMatchesWeightMode(twoHanded, '1h')).toBe(false);
-    expect(recentMovementMatchesWeightMode(singleArm, '1h')).toBe(true);
-    expect(recentMovementMatchesWeightMode(singleArm, '2h')).toBe(false);
+  test('returns null for a row that maps to no mode', () => {
+    expect(
+      getWeightModeFromCatalogFields(
+        row({
+          primaryEquipment: 'Barbell',
+          primaryItemCount: 1,
+          singleOrDoubleArm: 'Double Arm',
+        }),
+      ),
+    ).toBeNull();
   });
 });

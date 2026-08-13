@@ -35,6 +35,7 @@ import {
   MovementOptions,
   ProgramSession,
   Recommendation,
+  WeightTabValue,
   WeightUnit,
   WorkoutGoalUnits,
   WorkoutMode,
@@ -43,6 +44,8 @@ import {
 import {
   WEIGHT_MODE_LABELS,
   applySharedWeights,
+  applyWeightMode,
+  getWeightModeFromCatalogFields,
   getWeightRange,
   getWeightTabValue,
   getWeightUnitLabel,
@@ -81,8 +84,8 @@ import {
   recommendationToWorkoutOptions,
 } from './utils/recommendationToMovements';
 
-// One page comfortably covers the whole ~250-row catalog, so the recommender
-// can infer each movement's loading mode without paginating.
+// One page comfortably covers the whole ~250-row catalog, so weight-mode
+// inference never has to paginate.
 const MOVEMENT_CATALOG_PAGE_SIZE: number = 500;
 
 const DEFAULT_INTERVAL_TIMER: number = 30; // seconds
@@ -93,6 +96,10 @@ const DEFAULT_WEIGHT_UNIT: WeightUnit =
   DEFAULT_MOVEMENT_OPTIONS.weightOneUnit ?? 'kilograms';
 const DEFAULT_WEIGHT_VALUE: number =
   DEFAULT_MOVEMENT_OPTIONS.weightOneValue ?? 16;
+const WEIGHT_MODE_DEFAULTS = {
+  value: DEFAULT_WEIGHT_VALUE,
+  unit: DEFAULT_WEIGHT_UNIT,
+};
 
 const INCREMENT_DURATION: number = 1; // minutes
 const INCREMENT_INTERVAL_TIMER: number = 5; // seconds
@@ -250,23 +257,6 @@ export const StartWorkoutPage = ({
   );
   const slotsFull = activeEnrollments.length >= MAX_ACTIVE_PROGRAMS;
 
-  // The recommender prescribes a single weight per movement; the catalog's
-  // primary-item count + arm split tell us whether that load means two-hand,
-  // single, or two-bell so an accepted recommendation opens in the right mode
-  // (PROD-238). Only fetched when the recommender surface is actually shown.
-  const movementCatalogQuery = useMovements(
-    { limit: MOVEMENT_CATALOG_PAGE_SIZE },
-    { enabled: showRecommender },
-  );
-  const recommendationCatalog = useMemo<RecommendationCatalog>(
-    () =>
-      buildRecommendationCatalog(
-        movementCatalogQuery.data?.movements ?? [],
-        movementCatalogQuery.data?.hasNextPage,
-      ),
-    [movementCatalogQuery.data],
-  );
-
   // Browse mode shows recommendations plus a Build-custom button; the builder
   // opens directly when there's nothing to browse or when history's "Repeat"
   // navigates here with `editWorkout`.
@@ -282,6 +272,26 @@ export const StartWorkoutPage = ({
   // against, so it's excluded from the gate.
   const [builderOverride, setBuilderOverride] = useState<boolean | null>(null);
   const showBuilder = builderOverride ?? (editWorkout || !showBrowse);
+
+  // The catalog's primary-item count + arm split settle each movement's loading
+  // mode: the recommender maps a prescribed weight into the right slots
+  // (PROD-238), and the builder derives the mode from whatever movement you
+  // pick. Fetched only when one of those surfaces is actually shown.
+  const movementCatalogQuery = useMovements(
+    { limit: MOVEMENT_CATALOG_PAGE_SIZE },
+    { enabled: showRecommender || showBuilder },
+  );
+  const movementCatalog = useMemo<RecommendationCatalog>(
+    () =>
+      buildRecommendationCatalog(
+        movementCatalogQuery.data?.movements ?? [],
+        movementCatalogQuery.data?.hasNextPage,
+      ),
+    [movementCatalogQuery.data],
+  );
+  const getCatalogWeightMode = (movementName: string) =>
+    getWeightModeFromCatalogFields(movementCatalog.get(movementName));
+
   const gatesPending = !programSaveMode && programGatePending && !editWorkout;
   // Where the (eventual) start originated, carried through any edits the user
   // makes in the builder so `workout_started` stays attributed to the surface.
@@ -611,11 +621,22 @@ export const StartWorkoutPage = ({
     });
   };
 
-  const handleChangeMovementName = (index: number, value: string) =>
+  // The catalog knows how a movement is held, so naming one settles its loading
+  // mode too — applied in the same update so the name and its weights can never
+  // disagree. A movement we have no catalog row for keeps whatever mode it had.
+  const handleChangeMovementName = (
+    index: number,
+    value: string,
+    weightMode: WeightTabValue | null,
+  ) =>
     setMovements((prev) =>
-      prev.map((movement, i) =>
-        i === index ? { ...movement, movementName: value } : movement,
-      ),
+      prev.map((movement, i) => {
+        if (i !== index) return movement;
+        const renamed = { ...movement, movementName: value };
+        return weightMode
+          ? applyWeightMode(renamed, weightMode, WEIGHT_MODE_DEFAULTS)
+          : renamed;
+      }),
     );
 
   const handleClickRemoveMovement = (index: number) => {
@@ -641,19 +662,21 @@ export const StartWorkoutPage = ({
       return next;
     });
 
-  const handleChangeSharedWeightTab = (value: string) => {
-    setSharedWeightOneValue(
-      value === 'none' ? null : sharedWeightOneValue || DEFAULT_WEIGHT_VALUE,
+  const handleChangeSharedWeightTab = (value: WeightTabValue) => {
+    const next = applyWeightMode(
+      {
+        weightOneUnit: sharedWeightOneUnit,
+        weightOneValue: sharedWeightOneValue,
+        weightTwoUnit: sharedWeightTwoUnit,
+        weightTwoValue: sharedWeightTwoValue,
+      },
+      value,
+      WEIGHT_MODE_DEFAULTS,
     );
-    setSharedWeightOneUnit(value === 'none' ? null : DEFAULT_WEIGHT_UNIT);
-    setSharedWeightTwoValue(
-      value === 'double'
-        ? sharedWeightTwoValue || DEFAULT_WEIGHT_VALUE
-        : value === '1h'
-          ? 0
-          : null,
-    );
-    setSharedWeightTwoUnit(value === 'double' ? DEFAULT_WEIGHT_UNIT : null);
+    setSharedWeightOneValue(next.weightOneValue);
+    setSharedWeightOneUnit(next.weightOneUnit);
+    setSharedWeightTwoValue(next.weightTwoValue);
+    setSharedWeightTwoUnit(next.weightTwoUnit);
   };
 
   const handleChangeSharedWeightOneValue = (value: number) =>
@@ -668,25 +691,11 @@ export const StartWorkoutPage = ({
   const handleChangeSharedWeightTwoUnit = (value: WeightUnit) =>
     setSharedWeightTwoUnit(value);
 
-  const handleChangeWeightTab = (index: number, value: string) => {
+  const handleChangeWeightTab = (index: number, value: WeightTabValue) => {
     setMovements((prev) =>
       prev.map((movement, i) =>
         i === index
-          ? {
-              ...movement,
-              weightOneValue:
-                value === 'none'
-                  ? null
-                  : movement.weightOneValue || DEFAULT_WEIGHT_VALUE,
-              weightOneUnit: value === 'none' ? null : DEFAULT_WEIGHT_UNIT,
-              weightTwoValue:
-                value === 'double'
-                  ? movement.weightTwoValue || DEFAULT_WEIGHT_VALUE
-                  : value === '1h'
-                    ? 0
-                    : null,
-              weightTwoUnit: value === 'double' ? DEFAULT_WEIGHT_UNIT : null,
-            }
+          ? applyWeightMode(movement, value, WEIGHT_MODE_DEFAULTS)
           : movement,
       ),
     );
@@ -835,7 +844,7 @@ export const StartWorkoutPage = ({
     recommendationId: string,
   ) => {
     loadIntoBuilder(
-      recommendationToWorkoutOptions(recommendation, recommendationCatalog),
+      recommendationToWorkoutOptions(recommendation, movementCatalog),
     );
     setStartSource('recommender');
     setStartSourceProps({ recommendation_id: recommendationId });
@@ -1192,7 +1201,14 @@ export const StartWorkoutPage = ({
               onToggleExpanded={() => handleToggleMovementExpanded(index)}
               onRemove={() => handleClickRemoveMovement(index)}
               hasError={erroredMovementIndexes.has(index)}
-              onChangeName={(name) => handleChangeMovementName(index, name)}
+              catalogWeightMode={getCatalogWeightMode(movement.movementName)}
+              onChangeName={(name) =>
+                handleChangeMovementName(
+                  index,
+                  name,
+                  sharedBellActive ? null : getCatalogWeightMode(name),
+                )
+              }
               onChangeWeightTab={(mode) =>
                 sharedBellActive
                   ? handleChangeSharedWeightTab(mode)

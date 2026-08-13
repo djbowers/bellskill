@@ -120,3 +120,49 @@ describe('MovementCard weight display', () => {
     expect(screen.getByText('16 kg (2h)')).toBeInTheDocument();
   });
 });
+
+describe('MovementCard weight mode tabs', () => {
+  beforeEach(() => {
+    server.use(
+      http.get(`${VITE_SUPABASE_URL}/rest/v1/movements_catalog`, () =>
+        HttpResponse.json([]),
+      ),
+      http.get(`${VITE_SUPABASE_URL}/rest/v1/movements`, () =>
+        HttpResponse.json([]),
+      ),
+      http.get(`${VITE_SUPABASE_URL}/rest/v1/user_movements`, () =>
+        HttpResponse.json([]),
+      ),
+    );
+  });
+
+  test('locks the tabs for a movement the catalog knows', () => {
+    renderCard({ catalogWeightMode: '2h' });
+
+    expect(screen.getByRole('tab', { name: 'Single' })).toBeDisabled();
+  });
+
+  test('leaves the tabs editable for a custom movement', () => {
+    renderCard({ catalogWeightMode: null });
+
+    expect(screen.getByRole('tab', { name: 'Single' })).toBeEnabled();
+  });
+
+  test('names the mismatch when the shared bell overrides the catalog', () => {
+    renderCard({ sharedBell: true, catalogWeightMode: '1h' });
+
+    expect(
+      screen.getByText(
+        'Using shared weight: Two-Hand (this movement is usually Single)',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  test('states the shared weight plainly when it matches the catalog', () => {
+    renderCard({ sharedBell: true, catalogWeightMode: '2h' });
+
+    expect(
+      screen.getByText('Using shared weight: Two-Hand'),
+    ).toBeInTheDocument();
+  });
+});

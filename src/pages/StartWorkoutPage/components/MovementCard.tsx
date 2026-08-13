@@ -45,6 +45,8 @@ export interface MovementCardProps {
   hasError?: boolean;
   /** Straight sets reads the rep scheme as a list of sets, not a ladder. */
   repSchemeUnitNoun?: 'rung' | 'set';
+  /** The mode the catalog dictates for this movement; null when it has no row. */
+  catalogWeightMode?: WeightTabValue | null;
   onToggleExpanded: () => void;
   onRemove: () => void;
   onChangeName: (name: string) => void;
@@ -69,6 +71,7 @@ export const MovementCard = ({
   intervalActive,
   hasError = false,
   repSchemeUnitNoun = 'rung',
+  catalogWeightMode = null,
   onToggleExpanded,
   onRemove,
   onChangeName,
@@ -99,6 +102,14 @@ export const MovementCard = ({
     : null;
   const showLoad = !sharedBell && weightTabValue !== 'none';
 
+  // One movement's metadata shouldn't reshape a workout-level decision, so the
+  // shared bell wins outright — the hint just names the discrepancy.
+  const sharedWeightHint = sharedBell
+    ? catalogWeightMode && catalogWeightMode !== sharedWeightTabValue
+      ? `Using shared weight: ${WEIGHT_MODE_LABELS[sharedWeightTabValue]} (this movement is usually ${WEIGHT_MODE_LABELS[catalogWeightMode]})`
+      : `Using shared weight: ${WEIGHT_MODE_LABELS[sharedWeightTabValue]}`
+    : null;
+
   return (
     <Card
       className={cn('overflow-hidden', hasError && 'border-destructive')}
@@ -120,11 +131,7 @@ export const MovementCard = ({
               weightMode={activeWeightMode}
               onWeightModeChange={onChangeWeightTab}
               showWeightModeTabs={false}
-              weightModeHint={
-                sharedBell
-                  ? `Using shared weight: ${WEIGHT_MODE_LABELS[sharedWeightTabValue]}`
-                  : null
-              }
+              weightModeHint={sharedWeightHint}
               weightSummary={weightSummary}
             />
           ) : (
@@ -187,6 +194,7 @@ export const MovementCard = ({
               <WeightModeTabs
                 value={activeWeightMode}
                 onValueChange={onChangeWeightTab}
+                disabled={catalogWeightMode !== null}
               />
             </div>
           )}
