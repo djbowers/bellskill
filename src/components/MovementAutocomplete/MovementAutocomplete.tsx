@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useCreateUserMovement } from '~/api/useCreateUserMovement';
 import { useMovementSearch } from '~/api/useMovementSearch';
 import { useUserMovementFrequency } from '~/api/useUserMovementFrequency';
+import { Badge } from '~/components/ui/badge';
 import { cn } from '~/lib/utils';
 import { WeightTabValue } from '~/types';
 import {
@@ -249,7 +250,14 @@ export const MovementAutocomplete = ({
                     );
                   }}
                 >
-                  {movement.canonicalName}
+                  <span className="flex items-center justify-between gap-2">
+                    <span>{movement.canonicalName}</span>
+                    {movement.functionalMovementId == null && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        Custom
+                      </Badge>
+                    )}
+                  </span>
                 </li>
               ))}
             </>
