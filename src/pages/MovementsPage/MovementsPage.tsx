@@ -24,7 +24,7 @@ import {
 import { useDebouncedCallback } from '~/hooks/useDebouncedCallback';
 import { DifficultyLevel, Equipment, Movement, MuscleGroup } from '~/types';
 
-import { MovementRow } from './components';
+import { CustomMovementsPanel, MovementRow } from './components';
 
 export const MovementsPage = () => {
   const navigate = useNavigate();
@@ -37,7 +37,10 @@ export const MovementsPage = () => {
     orderBy: withDefault(StringParam, 'Movement'),
     order: withDefault(StringParam, 'ASC'),
     search: withDefault(StringParam, undefined),
+    source: withDefault(StringParam, 'catalog'),
   });
+
+  const showCustomMovements = queryParams.source === 'custom';
 
   const [searchInput, setSearchInput] = useState(queryParams.search);
 
@@ -54,19 +57,22 @@ export const MovementsPage = () => {
     setQueryParams({ search: value || undefined, page: undefined });
   });
 
-  const { data, isLoading } = useMovements({
-    page: queryParams.page,
-    limit: PAGE_SIZE,
-    order: queryParams.order as 'ASC' | 'DESC',
-    orderBy: queryParams.orderBy,
-    where: {
-      difficultyLevel: queryParams.difficultyLevel as DifficultyLevel,
-      equipment: queryParams.equipment as Equipment,
-      movementName: queryParams.search,
-      movementPattern: queryParams.movementPattern,
-      muscleGroup: queryParams.muscleGroup as MuscleGroup,
+  const { data, isLoading } = useMovements(
+    {
+      page: queryParams.page,
+      limit: PAGE_SIZE,
+      order: queryParams.order as 'ASC' | 'DESC',
+      orderBy: queryParams.orderBy,
+      where: {
+        difficultyLevel: queryParams.difficultyLevel as DifficultyLevel,
+        equipment: queryParams.equipment as Equipment,
+        movementName: queryParams.search,
+        movementPattern: queryParams.movementPattern,
+        muscleGroup: queryParams.muscleGroup as MuscleGroup,
+      },
     },
-  });
+    { enabled: !showCustomMovements },
+  );
 
   const movements = data?.movements ?? [];
   const rowCount = data?.count ?? 0;
@@ -132,148 +138,173 @@ export const MovementsPage = () => {
   return (
     <Page title="Movements" width="full">
       <div className="mb-2 grid grid-cols-2 gap-1 md:flex md:items-center md:gap-2">
-        <Input
-          className="col-span-2 md:col-auto"
-          onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Search movements..."
-          value={searchInput}
-        />
-
         <Select
-          value={queryParams.muscleGroup || ''}
-          onValueChange={handleFilterByMuscleGroup}
-          showReset={!!queryParams.muscleGroup}
-          onReset={() => handleFilterByMuscleGroup(undefined)}
+          value={queryParams.source}
+          onValueChange={(value) =>
+            setQueryParams({ source: value, page: undefined })
+          }
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Muscle Group" />
+          <SelectTrigger className="col-span-2 md:col-auto">
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {MUSCLE_GROUPS.map((group) => (
-              <SelectItem key={group} value={group}>
-                {group}
-              </SelectItem>
-            ))}
+            <SelectItem value="catalog">Catalog</SelectItem>
+            <SelectItem value="custom">My Custom</SelectItem>
           </SelectContent>
         </Select>
 
-        <Select
-          value={queryParams.equipment || ''}
-          onValueChange={handleFilterByEquipment}
-          showReset={!!queryParams.equipment}
-          onReset={() => handleFilterByEquipment(undefined)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Equipment" />
-          </SelectTrigger>
-          <SelectContent>
-            {EQUIPMENT_TYPES.map((equipment) => (
-              <SelectItem key={equipment} value={equipment}>
-                {equipment}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {!showCustomMovements && (
+          <>
+            <Input
+              className="col-span-2 md:col-auto"
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="Search movements..."
+              value={searchInput}
+            />
 
-        <Select
-          value={queryParams.difficultyLevel || ''}
-          onValueChange={handleFilterByDifficulty}
-          showReset={!!queryParams.difficultyLevel}
-          onReset={() => handleFilterByDifficulty(undefined)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Difficulty" />
-          </SelectTrigger>
-          <SelectContent>
-            {DIFFICULTY_LEVELS.map((level) => (
-              <SelectItem key={level} value={level}>
-                {level}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <Select
+              value={queryParams.muscleGroup || ''}
+              onValueChange={handleFilterByMuscleGroup}
+              showReset={!!queryParams.muscleGroup}
+              onReset={() => handleFilterByMuscleGroup(undefined)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Muscle Group" />
+              </SelectTrigger>
+              <SelectContent>
+                {MUSCLE_GROUPS.map((group) => (
+                  <SelectItem key={group} value={group}>
+                    {group}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        <Select
-          value={queryParams.movementPattern || ''}
-          onValueChange={handleFilterByPattern}
-          showReset={!!queryParams.movementPattern}
-          onReset={() => handleFilterByPattern(undefined)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Pattern" />
-          </SelectTrigger>
-          <SelectContent>
-            {MOVEMENT_PATTERNS.map((pattern) => (
-              <SelectItem key={pattern} value={pattern}>
-                {pattern}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <Select
+              value={queryParams.equipment || ''}
+              onValueChange={handleFilterByEquipment}
+              showReset={!!queryParams.equipment}
+              onReset={() => handleFilterByEquipment(undefined)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Equipment" />
+              </SelectTrigger>
+              <SelectContent>
+                {EQUIPMENT_TYPES.map((equipment) => (
+                  <SelectItem key={equipment} value={equipment}>
+                    {equipment}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        {hasActiveFilters && (
-          <Button
-            className="col-span-2 md:col-auto"
-            variant="ghost"
-            onClick={handleResetFilters}
-          >
-            Reset Filters
-          </Button>
+            <Select
+              value={queryParams.difficultyLevel || ''}
+              onValueChange={handleFilterByDifficulty}
+              showReset={!!queryParams.difficultyLevel}
+              onReset={() => handleFilterByDifficulty(undefined)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                {DIFFICULTY_LEVELS.map((level) => (
+                  <SelectItem key={level} value={level}>
+                    {level}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={queryParams.movementPattern || ''}
+              onValueChange={handleFilterByPattern}
+              showReset={!!queryParams.movementPattern}
+              onReset={() => handleFilterByPattern(undefined)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pattern" />
+              </SelectTrigger>
+              <SelectContent>
+                {MOVEMENT_PATTERNS.map((pattern) => (
+                  <SelectItem key={pattern} value={pattern}>
+                    {pattern}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {hasActiveFilters && (
+              <Button
+                className="col-span-2 md:col-auto"
+                variant="ghost"
+                onClick={handleResetFilters}
+              >
+                Reset Filters
+              </Button>
+            )}
+          </>
         )}
       </div>
 
-      <div className="hidden md:block">
-        <DataTable
-          columns={COLUMNS}
-          currentPage={queryParams.page}
-          data={movements}
-          hasNextPage={hasNextPage}
-          hasPreviousPage={hasPreviousPage}
-          isLoading={isLoading}
-          onClickFirstPage={handleClickFirstPage}
-          onClickLastPage={handleClickLastPage}
-          onClickNextPage={handleClickNextPage}
-          onClickPreviousPage={handleClickPreviousPage}
-          onRowClick={(movement) => navigate(`/movements/${movement.id}`)}
-          onSort={handleSort}
-          order={queryParams.order as 'ASC' | 'DESC'}
-          orderBy={queryParams.orderBy}
-          pageSize={PAGE_SIZE}
-          rowCount={rowCount}
-        />
-      </div>
+      {showCustomMovements ? (
+        <CustomMovementsPanel />
+      ) : (
+        <>
+          <div className="hidden md:block">
+            <DataTable
+              columns={COLUMNS}
+              currentPage={queryParams.page}
+              data={movements}
+              hasNextPage={hasNextPage}
+              hasPreviousPage={hasPreviousPage}
+              isLoading={isLoading}
+              onClickFirstPage={handleClickFirstPage}
+              onClickLastPage={handleClickLastPage}
+              onClickNextPage={handleClickNextPage}
+              onClickPreviousPage={handleClickPreviousPage}
+              onRowClick={(movement) => navigate(`/movements/${movement.id}`)}
+              onSort={handleSort}
+              order={queryParams.order as 'ASC' | 'DESC'}
+              orderBy={queryParams.orderBy}
+              pageSize={PAGE_SIZE}
+              rowCount={rowCount}
+            />
+          </div>
 
-      <div className="md:hidden">
-        {isLoading ? (
-          <div className="flex justify-center py-3">
-            <Loading />
+          <div className="md:hidden">
+            {isLoading ? (
+              <div className="flex justify-center py-3">
+                <Loading />
+              </div>
+            ) : movements.length === 0 ? (
+              <div className="py-3 text-center text-muted-foreground">
+                No results.
+              </div>
+            ) : (
+              <Card>
+                <div className="divide-y">
+                  {movements.map((movement) => (
+                    <Link key={movement.id} to={`/movements/${movement.id}`}>
+                      <MovementRow movement={movement} />
+                    </Link>
+                  ))}
+                </div>
+              </Card>
+            )}
+            <DataTablePagination
+              currentPage={queryParams.page}
+              hasNextPage={hasNextPage}
+              hasPreviousPage={hasPreviousPage}
+              isLoading={isLoading}
+              onClickNextPage={handleClickNextPage}
+              onClickPreviousPage={handleClickPreviousPage}
+              pageSize={PAGE_SIZE}
+              rowCount={rowCount}
+            />
           </div>
-        ) : movements.length === 0 ? (
-          <div className="py-3 text-center text-muted-foreground">
-            No results.
-          </div>
-        ) : (
-          <Card>
-            <div className="divide-y">
-              {movements.map((movement) => (
-                <Link key={movement.id} to={`/movements/${movement.id}`}>
-                  <MovementRow movement={movement} />
-                </Link>
-              ))}
-            </div>
-          </Card>
-        )}
-        <DataTablePagination
-          currentPage={queryParams.page}
-          hasNextPage={hasNextPage}
-          hasPreviousPage={hasPreviousPage}
-          isLoading={isLoading}
-          onClickNextPage={handleClickNextPage}
-          onClickPreviousPage={handleClickPreviousPage}
-          pageSize={PAGE_SIZE}
-          rowCount={rowCount}
-        />
-      </div>
+        </>
+      )}
     </Page>
   );
 };
