@@ -3,6 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import { SessionProvider } from '~/contexts';
 import { VITE_SUPABASE_URL } from '~/env';
 import { WeightTabValue } from '~/types';
 
@@ -37,13 +38,37 @@ const mockRecentMovements = [
   {
     id: 'um-2',
     canonical_name: 'Kettlebell Swing',
-    functional_movement_id: null,
+    functional_movement_id: 'mov-swing',
     created_at: '2026-05-19T10:00:00Z',
     user_id: 'user-1',
     is_big_6: false,
     skill_tree_enabled: false,
   },
 ];
+
+const mockRecentCatalogRows = [
+  {
+    id: 'mov-swing',
+    Movement: 'Kettlebell Swing',
+    'Primary Equipment': 'Kettlebell',
+    '# Primary Items': 1,
+    'Single or Double Arm': 'Double Arm',
+  },
+];
+
+const mockSession = {
+  user: {
+    id: 'user-1',
+    app_metadata: {},
+    user_metadata: {},
+    created_at: '',
+    aud: '',
+  },
+  access_token: '',
+  refresh_token: '',
+  expires_in: 10000,
+  token_type: '',
+};
 
 const makeQueryClient = () =>
   new QueryClient({
@@ -79,9 +104,11 @@ export default {
   decorators: [
     (Story) => (
       <QueryClientProvider client={makeQueryClient()}>
-        <div className="max-w-sm p-4">
-          <Story />
-        </div>
+        <SessionProvider value={mockSession}>
+          <div className="max-w-sm p-4">
+            <Story />
+          </div>
+        </SessionProvider>
       </QueryClientProvider>
     ),
   ],
@@ -108,7 +135,12 @@ export const WithRecentMovements: Story = {
     msw: {
       handlers: [
         http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json([])),
-        http.get(MOVEMENTS_URL, () => HttpResponse.json([])),
+        http.get(MOVEMENTS_URL, ({ request }) => {
+          const url = new URL(request.url);
+          if (url.searchParams.get('id')?.startsWith('in.'))
+            return HttpResponse.json(mockRecentCatalogRows);
+          return HttpResponse.json([]);
+        }),
         http.get(USER_MOVEMENTS_URL, () =>
           HttpResponse.json(mockRecentMovements),
         ),
