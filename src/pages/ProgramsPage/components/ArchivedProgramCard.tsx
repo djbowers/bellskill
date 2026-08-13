@@ -10,6 +10,7 @@ export interface ArchivedProgramCardProps {
   program: Program;
   pending: { archive: boolean; delete: boolean };
   onRestore: () => void;
+  onRename: () => void;
   onDelete: () => void;
 }
 
@@ -23,6 +24,7 @@ export const ArchivedProgramCard = ({
   program,
   pending,
   onRestore,
+  onRename,
   onDelete,
 }: ArchivedProgramCardProps) => (
   <Card className="flex flex-col gap-2 p-2 opacity-90">
@@ -51,6 +53,7 @@ export const ArchivedProgramCard = ({
       <OverflowMenu
         menuLabel={program.title}
         actions={[
+          { label: 'Rename program', onSelect: onRename },
           {
             label: 'Delete program',
             onSelect: onDelete,

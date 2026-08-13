@@ -27,6 +27,7 @@ export * from './useEnrollProgram';
 export * from './useQueuedPrograms';
 export * from './useProgram';
 export * from './useProgramMutationErrorHandler';
+export * from './useRenameProgram';
 export * from './useResumeProgram';
 export * from './useProgramProgress';
 export * from './usePrograms';
