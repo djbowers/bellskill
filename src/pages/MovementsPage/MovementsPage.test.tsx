@@ -65,10 +65,7 @@ const renderPage = () => {
         <QueryClientProvider client={new QueryClient()}>
           <Routes>
             <Route path="/" element={<MovementsPage />} />
-            <Route
-              path="/movements/:id"
-              element={<DetailsProbe />}
-            />
+            <Route path="/movements/:id" element={<DetailsProbe />} />
           </Routes>
         </QueryClientProvider>
       </QueryParamProvider>
@@ -138,7 +135,9 @@ describe('movements page', () => {
       .find(Boolean);
     await user.click(patternTrigger!);
     await user.click(screen.getByRole('option', { name: 'Hip Hinge' }));
-    await user.click(await screen.findByRole('button', { name: 'Reset Filters' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'Reset Filters' }),
+    );
 
     await waitFor(() =>
       expect(
@@ -146,5 +145,25 @@ describe('movements page', () => {
       ).toBeNull(),
     );
     expect(await screen.findAllByText('Goblet Squat')).toHaveLength(2);
+  });
+
+  test('the source filter swaps the catalog table for custom movements', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findAllByText('Kettlebell Swing');
+
+    const sourceTrigger = screen
+      .getAllByText('Catalog')
+      .map((element) => element.closest('button'))
+      .find(Boolean);
+    await user.click(sourceTrigger!);
+    await user.click(screen.getByRole('option', { name: 'My Custom' }));
+
+    await waitFor(() =>
+      expect(screen.queryAllByText('Kettlebell Swing')).toHaveLength(0),
+    );
+    expect(
+      screen.queryByPlaceholderText('Search movements...'),
+    ).not.toBeInTheDocument();
   });
 });

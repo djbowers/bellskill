@@ -15,6 +15,7 @@ export * from './resolveMovementWeights';
 export * from './resolveSharedWeights';
 export * from './soundPreference';
 export * from './stackFit';
+export * from './suggestCatalogMatch';
 export * from './timerSound';
 export * from './validateWorkout';
 export * from './weightUnits';
