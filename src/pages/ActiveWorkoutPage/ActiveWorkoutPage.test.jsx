@@ -2095,6 +2095,27 @@ describe('reporting reps actually completed', () => {
     );
   });
 
+  test('a max set is marked as such, in both units', async () => {
+    const { unmount } = render(<MaxReps />);
+    expect(screen.getByTestId('rung-unit-label')).toHaveTextContent('Max reps');
+    expect(screen.getByTestId('current-reps')).toHaveTextContent('∞');
+    unmount();
+
+    render(<MaxTimedRung />);
+    expect(screen.getByTestId('rung-unit-label')).toHaveTextContent('Max time');
+    // The clock moves, so ∞ is what keeps it reading as to-failure.
+    expect(screen.getByTestId('current-reps')).toHaveTextContent('∞');
+    expect(screen.getByTestId('hold-elapsed')).toBeInTheDocument();
+  });
+
+  test('a prescribed rung is not marked max', () => {
+    render(<FixedRepsForAdjustment />);
+
+    expect(screen.getByTestId('rung-unit-label')).toHaveTextContent('Reps');
+    expect(screen.getByTestId('rung-unit-label')).not.toHaveTextContent('Max');
+    expect(screen.getByTestId('current-reps')).not.toHaveTextContent('∞');
+  });
+
   test('a max timed rung: the press records the hold, with no dialog', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {

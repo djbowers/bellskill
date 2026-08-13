@@ -19,7 +19,7 @@ const renderLadder = (overrides = {}) =>
   );
 
 describe('LadderRepScheme — max rungs', () => {
-  test('a 0 rung reads as Max, alongside its prescribed neighbours', () => {
+  test('a 0 rung reads as ∞, alongside its prescribed neighbours', () => {
     renderLadder({ repScheme: [1, 2, 3, 0] });
 
     expect(
@@ -27,21 +27,21 @@ describe('LadderRepScheme — max rungs', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Rung 4, max reps' }),
-    ).toHaveTextContent('Max');
+    ).toHaveTextContent('∞');
   });
 
-  test('a timed 0 rung reads as Max, not 0:00', () => {
+  test('a timed 0 rung reads as ∞, not 0:00', () => {
     renderLadder({ repScheme: [15, 30, 0], timedRungs: true });
 
     expect(
       screen.getByRole('button', { name: 'Rung 3, max time' }),
-    ).toHaveTextContent('Max');
+    ).toHaveTextContent('∞');
     expect(
       screen.getByRole('button', { name: 'Rung 2, 0:30' }),
     ).toBeInTheDocument();
   });
 
-  test('the caliper winds down to Max rather than bottoming out at 1', async () => {
+  test('the caliper winds down to ∞ rather than bottoming out at 1', async () => {
     const onChangeRung = vi.fn();
     renderLadder({ repScheme: [1], onChangeRung });
 
@@ -54,6 +54,15 @@ describe('LadderRepScheme — max rungs', () => {
     renderLadder({ repScheme: [0] });
 
     expect(screen.getByText(/go to failure/i)).toBeInTheDocument();
+  });
+
+  // ∞ alone does not read aloud, so the label carries the words.
+  test('the symbol is labelled for screen readers', () => {
+    renderLadder({ repScheme: [15, 0], timedRungs: true });
+
+    expect(
+      screen.getByRole('button', { name: 'Rung 2, max time' }),
+    ).toBeInTheDocument();
   });
 });
 

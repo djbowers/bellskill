@@ -12,11 +12,30 @@ import { formatRungDuration } from './formatRungDuration.ts';
 
 export const MAX_RUNG = 0;
 
+/**
+ * How a max rung reads. A symbol rather than the word: it fits the same chip as
+ * a two-digit rep count (a "Max" chip clipped in the ladder's scroller) and
+ * carries across reps and seconds without changing wording.
+ */
+export const MAX_RUNG_SYMBOL = '∞';
+
 export const isMaxRung = (rung: number): boolean => rung === MAX_RUNG;
 
 export const hasMaxRung = (repScheme: readonly number[]): boolean =>
   repScheme.some(isMaxRung);
 
-/** How a rung reads to the user: "Max", "1:30", or "5". */
+/** How a rung reads to the user: "∞", "1:30", or "5". */
 export const formatRungValue = (rung: number, timedRungs = false): string =>
-  isMaxRung(rung) ? 'Max' : timedRungs ? formatRungDuration(rung) : `${rung}`;
+  isMaxRung(rung)
+    ? MAX_RUNG_SYMBOL
+    : timedRungs
+      ? formatRungDuration(rung)
+      : `${rung}`;
+
+/** Spoken form of a rung, for the labels the symbol alone would fail. */
+export const describeRungValue = (rung: number, timedRungs = false): string =>
+  isMaxRung(rung)
+    ? `max ${timedRungs ? 'time' : 'reps'}`
+    : timedRungs
+      ? formatRungDuration(rung)
+      : `${rung} reps`;

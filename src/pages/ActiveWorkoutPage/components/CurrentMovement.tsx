@@ -9,7 +9,13 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import { MovementOptions, WeightUnit } from '~/types';
-import { formatRungValue, getWeightUnitLabel } from '~/utils';
+import {
+  MAX_RUNG_SYMBOL,
+  describeRungValue,
+  formatRungValue,
+  getWeightUnitLabel,
+  isMaxRung,
+} from '~/utils';
 
 interface CurrentMovementProps {
   currentMovement: MovementOptions;
@@ -67,6 +73,7 @@ export const CurrentMovement = ({
   hasStarted,
 }: CurrentMovementProps) => {
   const [notesExpanded, setNotesExpanded] = useState(false);
+  const isMaxSet = isMaxTimedRung || isMaxRung(repScheme[rungIndex]);
   const showNotesExpanded = !hasStarted || notesExpanded;
   const isThreeColumn = isOneHanded || rightWeightValue;
 
@@ -205,8 +212,17 @@ export const CurrentMovement = ({
             >
               {isThreeColumn ? 'Left' : 'Weight'}
             </CardDescription>
-            <CardDescription>
-              {isTimedRung || isMaxTimedRung ? 'Time' : 'Reps'}
+            <CardDescription
+              className={clsx(isMaxSet && 'font-semibold text-foreground')}
+              data-testid="rung-unit-label"
+            >
+              {isMaxSet
+                ? isMaxTimedRung
+                  ? 'Max time'
+                  : 'Max reps'
+                : isTimedRung
+                  ? 'Time'
+                  : 'Reps'}
             </CardDescription>
             {isThreeColumn && (
               <CardDescription
@@ -230,14 +246,30 @@ export const CurrentMovement = ({
             <div
               className="flex items-end justify-center text-3xl"
               data-testid="current-reps"
+              aria-label={
+                isMaxTimedRung
+                  ? `Max time, holding ${formattedElapsed}`
+                  : describeRungValue(
+                      repScheme[rungIndex],
+                      currentMovement.timedRungs,
+                    )
+              }
             >
               {restRemaining ? (
                 <span className="h-5" />
               ) : isMaxTimedRung ? (
-                // The hold's running clock: on a set with no prescribed
-                // duration, this is the number being recorded.
-                <span className="font-mono tabular-nums" data-testid="hold-elapsed">
-                  {formattedElapsed}
+                // The hold's running clock, marked ∞ so a moving number still
+                // reads as "until failure" rather than as a prescription.
+                <span className="flex items-baseline gap-1">
+                  <span aria-hidden className="text-muted-foreground">
+                    {MAX_RUNG_SYMBOL}
+                  </span>
+                  <span
+                    className="font-mono tabular-nums"
+                    data-testid="hold-elapsed"
+                  >
+                    {formattedElapsed}
+                  </span>
                 </span>
               ) : (
                 formatRungValue(repScheme[rungIndex], currentMovement.timedRungs)

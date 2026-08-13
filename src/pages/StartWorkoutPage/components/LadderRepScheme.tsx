@@ -4,7 +4,13 @@ import { useState } from 'react';
 import { Button } from '~/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { cn } from '~/lib/utils';
-import { MAX_RUNG, formatRungValue, isMaxRung } from '~/utils';
+import {
+  MAX_RUNG,
+  MAX_RUNG_SYMBOL,
+  describeRungValue,
+  formatRungValue,
+  isMaxRung,
+} from '~/utils';
 
 import { FieldLabel } from './FieldLabel';
 import { ModifyCountButtons } from './ModifyCountButtons';
@@ -107,15 +113,10 @@ export const LadderRepScheme = ({
             key={rungIndex}
             type="button"
             aria-pressed={rungIndex === focused}
-            aria-label={
-              isMaxRung(rung)
-                ? `${unitLabel} ${rungIndex + 1}, max ${
-                    timedRungs ? 'time' : 'reps'
-                  }`
-                : `${unitLabel} ${rungIndex + 1}, ${label(rung)}${
-                    timedRungs ? '' : ' reps'
-                  }`
-            }
+            aria-label={`${unitLabel} ${rungIndex + 1}, ${describeRungValue(
+              rung,
+              timedRungs,
+            )}`}
             onClick={() => setFocusedRung(rungIndex)}
             className={cn(
               'flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md border px-1 text-base font-semibold transition-colors',
@@ -144,6 +145,8 @@ export const LadderRepScheme = ({
         {...range}
         value={repScheme[focused]}
         unit={timedRungs ? 'sec' : 'reps'}
+        formatValue={(value) => (isMaxRung(value) ? MAX_RUNG_SYMBOL : null)}
+        describeValue={(value) => describeRungValue(value, timedRungs)}
         onChange={(value) => onChangeRung(focused, value)}
         onClickMinus={() =>
           onChangeRung(focused, repScheme[focused] - range.step)
@@ -156,9 +159,9 @@ export const LadderRepScheme = ({
       <p className="text-center text-sm text-muted-foreground">
         {isMaxRung(repScheme[focused])
           ? timedRungs
-            ? 'Max — hold to failure, then tap Continue.'
-            : 'Max — go to failure, then log the reps you hit.'
-          : `0 = max ${timedRungs ? 'time' : 'reps'}`}
+            ? `${MAX_RUNG_SYMBOL} — hold to failure, then tap Continue.`
+            : `${MAX_RUNG_SYMBOL} — go to failure, then log the reps you hit.`
+          : `${MAX_RUNG_SYMBOL} = max ${timedRungs ? 'time' : 'reps'}`}
       </p>
 
       {repScheme.length > 1 && (
