@@ -10,6 +10,14 @@ interface WorkoutSummaryProps {
   completedReps: number;
   completedRounds: number;
   completedVolume: number;
+  /**
+   * Rounds prescribed. The progress bar counts sets now, so without this the
+   * screen never says how many rounds the session is. Absent for time and
+   * volume goals, which set no round count.
+   */
+  roundsGoal?: number;
+  /** Straight sets logs a round per set — call the tally what it is. */
+  roundsLabel?: string;
   logWorkoutLoading: boolean;
   onClickFinish: () => void;
   startedAt: Date;
@@ -19,6 +27,8 @@ export const WorkoutSummary = ({
   completedReps,
   completedRounds,
   completedVolume,
+  roundsGoal,
+  roundsLabel = 'Rounds',
   logWorkoutLoading,
   onClickFinish,
   startedAt,
@@ -39,7 +49,14 @@ export const WorkoutSummary = ({
     <div className="flex flex-col gap-2" data-testid="completed-section">
       <div className="flex items-center justify-between rounded-md bg-accent px-2 py-1 text-accent-foreground">
         <CompletedItem label="Elapsed" value={formattedElapsed} align="left" />
-        <CompletedItem label="Rounds" value={completedRounds} />
+        <CompletedItem
+          label={roundsLabel}
+          value={
+            roundsGoal !== undefined
+              ? `${completedRounds}/${roundsGoal}`
+              : completedRounds
+          }
+        />
         <CompletedItem label="Reps" value={completedReps} />
         <CompletedItem
           label="Volume"

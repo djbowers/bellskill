@@ -30,13 +30,6 @@ export const LowConfidence: Story = {
 export const WithActions: Story = {
   args: {
     recommendation: new ExampleRecommendation(),
-    footer: (
-      <>
-        <Button className="flex-1">Accept</Button>
-        <Button className="flex-1" variant="outline">
-          Regenerate
-        </Button>
-      </>
-    ),
+    footer: <Button className="flex-1">Accept</Button>,
   },
 };

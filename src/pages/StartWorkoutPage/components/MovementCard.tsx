@@ -43,6 +43,8 @@ export interface MovementCardProps {
   intervalActive: boolean;
   /** This movement is the subject of a blocking issue listed above Start. */
   hasError?: boolean;
+  /** Straight sets reads the rep scheme as a list of sets, not a ladder. */
+  repSchemeUnitNoun?: 'rung' | 'set';
   onToggleExpanded: () => void;
   onRemove: () => void;
   onChangeName: (name: string) => void;
@@ -66,6 +68,7 @@ export const MovementCard = ({
   expanded,
   intervalActive,
   hasError = false,
+  repSchemeUnitNoun = 'rung',
   onToggleExpanded,
   onRemove,
   onChangeName,
@@ -241,6 +244,7 @@ export const MovementCard = ({
             repScheme={movement.repScheme}
             timedRungs={movement.timedRungs}
             intervalActive={intervalActive}
+            unitNoun={repSchemeUnitNoun}
             onChangeRung={onChangeRung}
             onRemoveRung={onRemoveRung}
             onAddRung={onAddRung}

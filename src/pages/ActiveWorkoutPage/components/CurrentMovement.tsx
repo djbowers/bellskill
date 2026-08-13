@@ -27,7 +27,14 @@ interface CurrentMovementProps {
   rightWeightUnit: WeightUnit | null;
   rightWeightValue: number | null;
   rungIndex: number;
-  /** Rungs in the current movement's ladder; shown only in straight-sets mode. */
+  /** Where this movement sits in the workout; shown when there's more than one. */
+  movementIndex: number;
+  totalMovements?: number;
+  /**
+   * Sets in the current movement, passed only in straight-sets mode. Its
+   * presence is what marks the mode here: straight sets has no rounds, so the
+   * round badge gives way to "Set X of N".
+   */
   totalRungs?: number;
   totalSides: number;
   title: string | null;
@@ -51,6 +58,8 @@ export const CurrentMovement = ({
   rightWeightUnit,
   rightWeightValue,
   rungIndex,
+  movementIndex,
+  totalMovements,
   totalRungs,
   totalSides,
   title,
@@ -108,19 +117,21 @@ export const CurrentMovement = ({
     <Card data-testid="current-movement-card">
       <CardHeader>
         <div className="flex gap-2">
-          <CardTitle>
-            <div className="flex h-full flex-col items-center justify-center gap-0.5">
-              Round
-              <div className="relative h-4 w-4 rounded-md bg-accent text-accent-foreground">
-                <div
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-bold"
-                  data-testid="current-round"
-                >
-                  {currentRound}
+          {totalRungs === undefined && (
+            <CardTitle>
+              <div className="flex h-full flex-col items-center justify-center gap-0.5">
+                Round
+                <div className="relative h-4 w-4 rounded-md bg-accent text-accent-foreground">
+                  <div
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-bold"
+                    data-testid="current-round"
+                  >
+                    {currentRound}
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardTitle>
+            </CardTitle>
+          )}
 
           <div className="flex grow flex-col justify-center gap-1">
             <div className="text-2xl font-medium">
@@ -158,6 +169,15 @@ export const CurrentMovement = ({
 
       <CardContent>
         <div className="flex flex-col gap-1">
+          {totalMovements !== undefined && totalMovements > 1 && (
+            <CardDescription
+              className="text-center"
+              data-testid="current-movement-position"
+            >
+              Movement {movementIndex + 1} of {totalMovements}
+            </CardDescription>
+          )}
+
           {totalRungs !== undefined && (
             <CardDescription className="text-center" data-testid="current-set">
               Set {rungIndex + 1} of {totalRungs}

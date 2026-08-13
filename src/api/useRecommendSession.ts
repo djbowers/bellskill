@@ -21,12 +21,7 @@ export class RecommendSessionError extends Error {
   }
 }
 
-/** 'balance' asks for a debt-optimal session; omitted/'default' is coach's pick. */
-export type RecommendSessionMode = 'default' | 'balance';
-
-const recommendSession = async (
-  mode: RecommendSessionMode = 'default',
-): Promise<RecommendSessionResponse> => {
+const recommendSession = async (): Promise<RecommendSessionResponse> => {
   // client_today anchors the recommender's "days since last workout" to the
   // user's local calendar date — the edge function runs in UTC and has no
   // notion of the caller's timezone otherwise. Daily-readiness wiring lands
@@ -34,7 +29,7 @@ const recommendSession = async (
   const { data, error } =
     await supabase.functions.invoke<RecommendSessionResponse>(
       'recommend-session',
-      { body: { client_today: localDateString(), mode } },
+      { body: { client_today: localDateString() } },
     );
 
   if (error) {
@@ -72,5 +67,5 @@ const recommendSession = async (
  */
 export const useRecommendSession = () =>
   useMutation({
-    mutationFn: (mode?: RecommendSessionMode) => recommendSession(mode),
+    mutationFn: recommendSession,
   });

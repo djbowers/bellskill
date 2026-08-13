@@ -22,13 +22,18 @@ const MAX_RUNGS = 10;
  * then set its value on the caliper picker below. Replaces a stack of one picker
  * per rung — the ladder reads at a glance and stays short as rungs grow.
  *
+
  * Winding a rung down past its smallest value lands on Max, so a ladder can run
  * up to failure — [1, 2, 3, 4, 5, Max] or [0:15, 0:30, 0:45, Max].
+ *
+ * Straight sets reads the same list as plain sets rather than a ladder, so the
+ * labels follow `unitNoun`.
  */
 export const LadderRepScheme = ({
   repScheme,
   timedRungs = false,
   intervalActive = false,
+  unitNoun = 'rung',
   onChangeRung,
   onRemoveRung,
   onAddRung,
@@ -38,6 +43,7 @@ export const LadderRepScheme = ({
   timedRungs?: boolean;
   /** The interval timer and timed rungs both drive the set clock — only one may be on. */
   intervalActive?: boolean;
+  unitNoun?: 'rung' | 'set';
   onChangeRung: (rungIndex: number, value: number) => void;
   onRemoveRung: (rungIndex: number) => void;
   onAddRung: () => void;
@@ -50,6 +56,7 @@ export const LadderRepScheme = ({
   const focused = Math.min(focusedRung, repScheme.length - 1);
   const range = timedRungs ? TIMED_RANGE : REPS_RANGE;
   const label = (rung: number) => formatRungValue(rung, timedRungs);
+  const unitLabel = unitNoun === 'set' ? 'Set' : 'Rung';
 
   // Adding a rung focuses it (you'll want to set its value). Removing the
   // focused one hands the focus to whatever slides into its place.
@@ -93,7 +100,7 @@ export const LadderRepScheme = ({
       <div
         className="flex items-center gap-1 overflow-x-auto py-0.5"
         role="group"
-        aria-label="Ladder rungs"
+        aria-label={unitNoun === 'set' ? 'Sets' : 'Ladder rungs'}
       >
         {repScheme.map((rung, rungIndex) => (
           <button
@@ -102,8 +109,10 @@ export const LadderRepScheme = ({
             aria-pressed={rungIndex === focused}
             aria-label={
               isMaxRung(rung)
-                ? `Rung ${rungIndex + 1}, max ${timedRungs ? 'time' : 'reps'}`
-                : `Rung ${rungIndex + 1}, ${label(rung)}${
+                ? `${unitLabel} ${rungIndex + 1}, max ${
+                    timedRungs ? 'time' : 'reps'
+                  }`
+                : `${unitLabel} ${rungIndex + 1}, ${label(rung)}${
                     timedRungs ? '' : ' reps'
                   }`
             }
@@ -122,7 +131,7 @@ export const LadderRepScheme = ({
         {repScheme.length < MAX_RUNGS && (
           <button
             type="button"
-            aria-label="Add rung"
+            aria-label={unitNoun === 'set' ? 'Add set' : 'Add rung'}
             onClick={handleAddRung}
             className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md border border-dashed border-border px-1 text-muted-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
@@ -158,7 +167,7 @@ export const LadderRepScheme = ({
           className="self-center text-muted-foreground hover:text-destructive"
           onClick={handleRemoveFocusedRung}
         >
-          Remove rung {focused + 1}
+          Remove {unitNoun} {focused + 1}
         </Button>
       )}
     </div>

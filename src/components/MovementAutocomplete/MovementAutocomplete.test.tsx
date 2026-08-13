@@ -345,6 +345,60 @@ describe('MovementAutocomplete', () => {
     });
   });
 
+  test('shows a Custom badge only for recent movements not linked to the catalog', async () => {
+    server.use(
+      http.get(MOVEMENTS_URL, ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get('id')?.startsWith('in.')) {
+          return HttpResponse.json([toMovementsTableRow(twoHandedCatalogMovement)]);
+        }
+        return HttpResponse.json([]);
+      }),
+      http.get(USER_MOVEMENTS_URL, () =>
+        HttpResponse.json([
+          {
+            id: 'um-1',
+            canonical_name: 'My Custom Move',
+            functional_movement_id: null,
+            created_at: '2026-05-20T10:00:00Z',
+            user_id: 'user-123',
+            is_big_6: false,
+            skill_tree_enabled: false,
+          },
+          {
+            id: 'um-2',
+            canonical_name: 'Kettlebell Swing',
+            functional_movement_id: 'mov-2h',
+            created_at: '2026-05-19T10:00:00Z',
+            user_id: 'user-123',
+            is_big_6: false,
+            skill_tree_enabled: false,
+          },
+        ]),
+      ),
+    );
+
+    renderAutocomplete({ weightMode: '2h' });
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      expect(screen.getByText('My Custom Move')).toBeInTheDocument();
+      expect(screen.getByText('Kettlebell Swing')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Custom')).toBeInTheDocument();
+
+    const swingItem = screen.getByText('Kettlebell Swing').closest('li');
+    expect(swingItem).not.toBeNull();
+    expect(
+      swingItem && Array.from(swingItem.querySelectorAll('span')).some(
+        (el) => el.textContent === 'Custom',
+      ),
+    ).toBe(false);
+  });
+
   test('selecting a recent movement calls onChange with the name', async () => {
     server.use(
       http.get(USER_MOVEMENTS_URL, () =>

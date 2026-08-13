@@ -5,7 +5,6 @@ import {
   AnalyticsEvent,
   RecommendProgramError,
   RecommendSessionError,
-  type RecommendSessionMode,
   trackEvent,
   useRecommendProgram,
   useRecommendSession,
@@ -31,8 +30,6 @@ export interface RecommendSectionProps {
   onAcceptSession: (recommendation: Recommendation, recommendationId: string) => void;
   /** Authenticated user id, for analytics (fire-and-forget). */
   userId?: string;
-  /** Preselects the session mode toggle — set to 'balance' by the Weekly Balance CTA. */
-  initialMode?: RecommendSessionMode;
   /** Whether the program scope is offered at all (programs feature on). */
   showPrograms: boolean;
   /** The full program list, for resolving a recommended id to a card. */
@@ -47,15 +44,14 @@ export interface RecommendSectionProps {
 
 /**
  * The hub's unified AI recommender: one tinted surface that recommends either
- * the next session (Coach's pick / Balance focus) or the next program. Premium
- * users fetch and review a recommendation; free users see a preview modal with
- * an upgrade CTA — the functions are never called for them. Results are held
- * per scope so toggling never discards a fetched recommendation.
+ * the next session or the next program. Premium users fetch and review a
+ * recommendation; free users see a preview modal with an upgrade CTA — the
+ * functions are never called for them. Results are held per scope so toggling
+ * never discards a fetched recommendation.
  */
 export const RecommendSection = ({
   onAcceptSession,
   userId,
-  initialMode = 'default',
   showPrograms,
   programs,
   slotsFull,
@@ -65,9 +61,7 @@ export const RecommendSection = ({
   const { effectiveAccess, isLoading: entitlementLoading } = useEntitlement();
   const isPremium = !entitlementLoading && effectiveAccess === 'premium';
 
-  // A balance deep link (Weekly Balance CTA) always lands in session scope.
   const [scope, setScope] = useState<RecommendScope>('session');
-  const [mode, setMode] = useState<RecommendSessionMode>(initialMode);
 
   const sessionMutation = useRecommendSession();
   const programMutation = useRecommendProgram();
@@ -92,8 +86,8 @@ export const RecommendSection = ({
   };
 
   const fetchSession = (event: AnalyticsEvent) => {
-    track(event, { mode });
-    sessionMutation.mutate(mode, {
+    track(event);
+    sessionMutation.mutate(undefined, {
       onSuccess: (data) => setSessionResult(data),
       onError: (err) => {
         // A stale free-tier client could still get gated server-side; fall back
@@ -127,7 +121,7 @@ export const RecommendSection = ({
 
   const handleRecommendSession = () => {
     if (!isPremium) {
-      track(AnalyticsEvent.RecommendationPreviewShown, { mode });
+      track(AnalyticsEvent.RecommendationPreviewShown);
       setSessionPreviewOpen(true);
       return;
     }
@@ -146,7 +140,6 @@ export const RecommendSection = ({
   const handleAcceptSession = () => {
     if (!sessionResult) return;
     track(AnalyticsEvent.RecommendationAccepted, {
-      mode,
       movement_count: sessionResult.recommendation.blocks.length,
     });
     onAcceptSession(sessionResult.recommendation, sessionResult.id);
@@ -252,46 +245,21 @@ export const RecommendSection = ({
             <RecommendationCard
               recommendation={sessionResult.recommendation}
               footer={
-                <>
-                  <Button className="flex-1" onClick={handleAcceptSession}>
-                    Accept
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    variant="outline"
-                    loading={sessionMutation.isPending}
-                    onClick={() =>
-                      fetchSession(AnalyticsEvent.RecommendationRegenerated)
-                    }
-                  >
-                    Regenerate
-                  </Button>
-                </>
+                <Button className="flex-1" onClick={handleAcceptSession}>
+                  Accept
+                </Button>
               }
             />
           ) : (
-            <>
-              <Tabs
-                value={mode}
-                onValueChange={(value) => setMode(value as RecommendSessionMode)}
-              >
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="default">Coach&apos;s pick</TabsTrigger>
-                  <TabsTrigger value="balance">Balance focus</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <Button
-                className="w-full"
-                variant="secondary"
-                loading={sessionMutation.isPending}
-                onClick={handleRecommendSession}
-              >
-                <SparklesIcon className="mr-1 h-2.5 w-2.5" />
-                {mode === 'balance'
-                  ? 'Balance me out'
-                  : 'Recommend my next session'}
-              </Button>
-            </>
+            <Button
+              className="w-full"
+              variant="secondary"
+              loading={sessionMutation.isPending}
+              onClick={handleRecommendSession}
+            >
+              <SparklesIcon className="mr-1 h-2.5 w-2.5" />
+              Recommend my next session
+            </Button>
           )}
           {sessionError && (
             <p className="text-center text-xs text-destructive">

@@ -26,7 +26,7 @@ export const WeeklyBalanceContainer = () => {
       isLoading={balanceLoading || logsLoading}
       isError={isError}
       onRetry={() => refetch()}
-      onBalanceMe={() => navigate('/', { state: { recommendMode: 'balance' } })}
+      onBalanceMe={() => navigate('/')}
     />
   );
 };

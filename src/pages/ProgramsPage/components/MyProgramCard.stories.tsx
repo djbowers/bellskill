@@ -52,6 +52,7 @@ const meta = {
     onAddSessions: () => {},
     onViewProgress: () => {},
     onQueueForLater: () => {},
+    onRename: () => {},
     onCancel: () => {},
     onArchive: () => {},
     onDelete: () => {},

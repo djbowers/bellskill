@@ -25,7 +25,9 @@ const {
   TimedRungsVaryingDurations,
   TimedRungsVolumeGoal,
   RepLadders,
+  CircuitMultipleMovements,
   StraightSets,
+  StraightSetsOneHanded,
   StraightSetsUnevenLadders,
   TwoHanded,
   WorkoutGoalRounds,
@@ -1670,6 +1672,53 @@ describe('active workout page (Armor Building Complex seed session)', () => {
   });
 });
 
+describe('active workout page (circuit progress)', () => {
+  test('places the movement in the workout as the circuit rotates', async () => {
+    render(<CircuitMultipleMovements />);
+
+    const position = screen.getByTestId('current-movement-position');
+    expect(position).toHaveTextContent('Movement 1 of 3');
+
+    await clickContinue();
+    expect(position).toHaveTextContent('Movement 2 of 3');
+  });
+
+  test('tallies rounds against the goal, which the sets bar no longer shows', async () => {
+    render(<CircuitMultipleMovements />);
+
+    const summary = screen.getByTestId('completed-section');
+    expect(summary).toHaveTextContent('Rounds');
+    expect(summary).toHaveTextContent('0/2');
+
+    // A round closes after all three movements.
+    await clickContinue();
+    await clickContinue();
+    await clickContinue();
+    expect(summary).toHaveTextContent('1/2');
+  });
+
+  test('counts sets, so the bar moves on every movement instead of once per lap', async () => {
+    render(<CircuitMultipleMovements />);
+
+    const remaining = screen.getByTestId('progress-bar-value');
+
+    // 3 movements x 1 rung x 2 rounds = 6 sets.
+    expect(remaining).toHaveTextContent('6');
+    expect(screen.getByText('sets remaining')).toBeInTheDocument();
+
+    await clickContinue();
+    expect(remaining).toHaveTextContent('5');
+
+    await clickContinue();
+    expect(remaining).toHaveTextContent('4');
+
+    // The lap closes here: the count must step by one, not stall or jump.
+    await clickContinue();
+    expect(remaining).toHaveTextContent('3');
+    expect(screen.getByTestId('current-round')).toHaveTextContent('2');
+  });
+});
+
 describe('active workout page (straight sets)', () => {
   const { workoutOptions } = StraightSets.parameters;
 
@@ -1703,31 +1752,98 @@ describe('active workout page (straight sets)', () => {
     }
   });
 
-  test('holds the round at 1 until the last movement finishes its ladder', async () => {
+  test('never returns to a movement it has finished', async () => {
     render(<StraightSets />);
 
-    const round = screen.getByTestId('current-round');
+    const currentMovement = screen.getByTestId('current-movement-card');
+    const names = workoutOptions.movements.map((m) => m.movementName);
+    const seen = [];
 
-    // 9 of the 10 sets: still round 1, since a round is one pass through the
-    // whole movement list.
     for (let i = 0; i < 9; i++) {
-      expect(round).toHaveTextContent('1');
+      const shown = names.find((name) =>
+        currentMovement.textContent.includes(name),
+      );
+      if (seen.at(-1) !== shown) {
+        expect(seen).not.toContain(shown);
+        seen.push(shown);
+      }
       await clickContinue();
     }
 
-    expect(round).toHaveTextContent('1');
+    expect(seen).toEqual(names);
   });
 
-  test('finishes on the rounds goal after the last set', async () => {
+  test('two continues in one tick advance a single set', async () => {
     render(<StraightSets />);
 
-    // 5 movements x 2 rungs = 10 sets = the story's 1-round goal.
-    for (let i = 0; i < 10; i++) await clickContinue();
+    // Every advance handler reads this render's indexes, so an unguarded double
+    // fire would step the rung twice and read "Set 3 of 2".
+    const button = screen.getByRole('button', { name: 'Continue' });
+    await act(async () => {
+      button.click();
+      button.click();
+    });
 
+    expect(screen.getByTestId('current-set')).toHaveTextContent('Set 2 of 2');
+    expect(screen.getByTestId('progress-bar-value')).toHaveTextContent('9');
+  });
+
+  test('places the movement in the workout, and advances it', async () => {
+    render(<StraightSets />);
+
+    const position = screen.getByTestId('current-movement-position');
+    expect(position).toHaveTextContent('Movement 1 of 5');
+
+    await clickContinue();
+    expect(position).toHaveTextContent('Movement 1 of 5');
+
+    await clickContinue();
+    expect(position).toHaveTextContent('Movement 2 of 5');
+  });
+
+  test('tallies sets, not rounds — straight sets logs one per set', async () => {
+    render(<StraightSets />);
+
+    const summary = screen.getByTestId('completed-section');
+    expect(summary).toHaveTextContent('Sets');
+    expect(summary).not.toHaveTextContent('Rounds');
+    expect(summary).toHaveTextContent('0/10');
+
+    await clickContinue();
+    expect(summary).toHaveTextContent('1/10');
+  });
+
+  test('shows no round badge — straight sets has no rounds', () => {
+    render(<StraightSets />);
+
+    expect(screen.queryByTestId('current-round')).toBeNull();
+    expect(screen.getByTestId('current-set')).toBeInTheDocument();
+  });
+
+  test('counts down the sets remaining as each one is finished', async () => {
+    render(<StraightSets />);
+
+    const remaining = screen.getByTestId('progress-bar-value');
+
+    // 5 movements x 2 sets = the story's 10-set goal.
+    expect(remaining).toHaveTextContent('10');
+    expect(screen.getByText('sets remaining')).toBeInTheDocument();
+
+    await clickContinue();
+    expect(remaining).toHaveTextContent('9');
+  });
+
+  test('finishes only after the last movement completes its last set', async () => {
+    render(<StraightSets />);
+
+    for (let i = 0; i < 9; i++) await clickContinue();
+    expect(logWorkout).not.toHaveBeenCalled();
+
+    await clickContinue();
     expect(logWorkout).toHaveBeenCalledWith({
       completedRepsByMovement: expect.any(Array),
       completedReps: 50, // 10 sets x 5 reps
-      completedRounds: 1,
+      completedRounds: 10, // one per set, against the derived set-count goal
       completedRungs: 10,
       completedSides: 10,
       completedVolume: 2400, // 48kg x 5 reps x 10 sets
@@ -1750,6 +1866,29 @@ describe('active workout page (straight sets)', () => {
     await clickContinue();
     expect(currentMovement).toHaveTextContent('Kettlebell Swing');
     expect(screen.getByTestId('current-set')).toHaveTextContent('Set 1 of 2');
+  });
+
+  test('a one-handed set is both hands, and the movement starts on side 1', async () => {
+    render(<StraightSetsOneHanded />);
+
+    const currentMovement = screen.getByTestId('current-movement-card');
+    const side = () => screen.getByTestId('current-side');
+
+    expect(side()).toHaveTextContent('1');
+    await clickContinue();
+
+    // Second hand, same set.
+    expect(side()).toHaveTextContent('2');
+    expect(screen.getByTestId('current-set')).toHaveTextContent('Set 1 of 2');
+    await clickContinue();
+
+    expect(screen.getByTestId('current-set')).toHaveTextContent('Set 2 of 2');
+    expect(side()).toHaveTextContent('1');
+
+    await clickContinue();
+    await clickContinue();
+    expect(currentMovement).toHaveTextContent('One-Arm Kettlebell Row');
+    expect(side()).toHaveTextContent('1');
   });
 });
 

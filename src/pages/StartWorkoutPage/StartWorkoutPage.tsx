@@ -515,6 +515,21 @@ export const StartWorkoutPage = ({
     }
   };
 
+  // Straight sets has no goal to pick: a movement's rep scheme is its set list,
+  // so the workout ends when the last movement's last set is done. The total set
+  // count still ships as a rounds goal, which keeps history, program tracking and
+  // the progress bar free of a special case — and leaves the user's own goal
+  // untouched for when they switch back to another mode.
+  const isStraightSets = workoutMode === 'straightSets';
+  const straightSetsGoal = movements.reduce(
+    (total, movement) => total + movement.repScheme.length,
+    0,
+  );
+  const effectiveWorkoutGoal = isStraightSets ? straightSetsGoal : workoutGoal;
+  const effectiveWorkoutGoalUnits: WorkoutGoalUnits = isStraightSets
+    ? 'rounds'
+    : workoutGoalUnits;
+
   const handleDecrementInterval = () =>
     setIntervalTimer((prev) =>
       prev > 0 ? prev - INCREMENT_INTERVAL_TIMER : 0,
@@ -894,15 +909,15 @@ export const StartWorkoutPage = ({
         sharedWeightTwoValue,
         title: title?.trim() || null,
         preWorkoutNotes: preWorkoutNotes?.trim() || null,
-        workoutGoal,
-        workoutGoalUnits,
+        workoutGoal: effectiveWorkoutGoal,
+        workoutGoalUnits: effectiveWorkoutGoalUnits,
       }),
       startSource,
       {
         ...startSourceProps,
         is_first_workout: isFirstWorkout,
         movement_count: movements.length,
-        workout_goal_units: workoutGoalUnits,
+        workout_goal_units: effectiveWorkoutGoalUnits,
       },
       pendingProgramSession,
     );
@@ -924,8 +939,8 @@ export const StartWorkoutPage = ({
         sharedWeightTwoValue,
         title: null,
         preWorkoutNotes: preWorkoutNotes?.trim() || null,
-        workoutGoal,
-        workoutGoalUnits,
+        workoutGoal: effectiveWorkoutGoal,
+        workoutGoalUnits: effectiveWorkoutGoalUnits,
       }),
       sessionTitle.trim(),
     );
@@ -947,7 +962,7 @@ export const StartWorkoutPage = ({
   // running off one bell, not just a complex.
   const { errors: workoutErrors, warnings: workoutWarnings } = validateWorkout({
     workoutMode,
-    workoutGoal,
+    workoutGoal: effectiveWorkoutGoal,
     intervalTimer,
     movements: movements.map((movement) =>
       resolveMovementWeights(movement, {
@@ -1007,9 +1022,11 @@ export const StartWorkoutPage = ({
     .filter((load): load is SummaryLoad => (load.value ?? 0) > 0)
     .map((load) => ({ value: load.value as number, unit: load.unit }));
 
-  const goalSummary = `${workoutGoal} ${
-    workoutGoalUnits === 'kilograms' ? 'kg' : workoutGoalUnits
-  }`;
+  const goalSummary = isStraightSets
+    ? `${straightSetsGoal} ${straightSetsGoal === 1 ? 'set' : 'sets'}`
+    : `${workoutGoal} ${
+        workoutGoalUnits === 'kilograms' ? 'kg' : workoutGoalUnits
+      }`;
   const sharedWeightSummary = [
     WEIGHT_MODE_LABELS[sharedWeightTabValue],
     sharedWeightOneValue !== null &&
@@ -1074,12 +1091,6 @@ export const StartWorkoutPage = ({
             <RecommendSection
               userId={userId}
               onAcceptSession={handleAcceptRecommendation}
-              initialMode={
-                (location.state as { recommendMode?: 'balance' } | null)
-                  ?.recommendMode === 'balance'
-                  ? 'balance'
-                  : 'default'
-              }
               showPrograms={features.programs}
               programs={allPrograms}
               slotsFull={slotsFull}
@@ -1121,47 +1132,51 @@ export const StartWorkoutPage = ({
             />
           )}
 
-          <Card>
-            <Section
-              title="Goal"
-              collapsible
-              collapsed={collapsedSections.has('goal')}
-              onToggle={() => handleToggleSection('goal')}
-              summary={goalSummary}
-              actions={
-                <Tabs
-                  value={workoutGoalUnits}
-                  onValueChange={handleChangeWorkoutGoalUnits}
-                >
-                  <TabsList>
-                    <TabsTrigger size="sm" value="minutes">
-                      Time
-                    </TabsTrigger>
-                    <TabsTrigger size="sm" value="rounds">
-                      Rounds
-                    </TabsTrigger>
-                    <TabsTrigger size="sm" value="kilograms">
-                      Volume
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              }
-            >
-              <ModifyCountButtons
-                {...getGoalRange(workoutGoalUnits)}
-                onClickMinus={handleDecrementGoalValue}
-                onClickPlus={handleIncrementGoalValue}
-                onChange={setWorkoutGoal}
-                unit={workoutGoalUnits}
-                value={workoutGoal}
-              />
-            </Section>
-          </Card>
-
+          {/* Above the goal: the arrangement decides whether there is a goal to
+              set at all, so it has to be the first choice. */}
           <WorkoutModeTabs
             value={workoutMode}
             onValueChange={handleChangeWorkoutMode}
           />
+
+          {!isStraightSets && (
+            <Card>
+              <Section
+                title="Goal"
+                collapsible
+                collapsed={collapsedSections.has('goal')}
+                onToggle={() => handleToggleSection('goal')}
+                summary={goalSummary}
+                actions={
+                  <Tabs
+                    value={workoutGoalUnits}
+                    onValueChange={handleChangeWorkoutGoalUnits}
+                  >
+                    <TabsList>
+                      <TabsTrigger size="sm" value="minutes">
+                        Time
+                      </TabsTrigger>
+                      <TabsTrigger size="sm" value="rounds">
+                        Rounds
+                      </TabsTrigger>
+                      <TabsTrigger size="sm" value="kilograms">
+                        Volume
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                }
+              >
+                <ModifyCountButtons
+                  {...getGoalRange(workoutGoalUnits)}
+                  onClickMinus={handleDecrementGoalValue}
+                  onClickPlus={handleIncrementGoalValue}
+                  onChange={setWorkoutGoal}
+                  unit={workoutGoalUnits}
+                  value={workoutGoal}
+                />
+              </Section>
+            </Card>
+          )}
 
           <MovementsHeader count={movements.length} />
 
@@ -1178,6 +1193,7 @@ export const StartWorkoutPage = ({
                 sharedWeightTwoUnit,
                 sharedWeightTwoValue,
               }}
+              repSchemeUnitNoun={isStraightSets ? 'set' : 'rung'}
               expanded={!collapsedMovements.has(index)}
               intervalActive={intervalTimer > 0}
               onToggleExpanded={() => handleToggleMovementExpanded(index)}
@@ -1370,8 +1386,9 @@ export const StartWorkoutPage = ({
           )}
 
           <BuilderActionBar
-            workoutGoal={workoutGoal}
-            workoutGoalUnits={workoutGoalUnits}
+            workoutGoal={effectiveWorkoutGoal}
+            workoutGoalUnits={effectiveWorkoutGoalUnits}
+            countsSets={isStraightSets}
             movementCount={movements.length}
             loads={summaryLoads}
           >

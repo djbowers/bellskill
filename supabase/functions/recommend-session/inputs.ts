@@ -21,7 +21,6 @@ import {
 import type {
   CandidateMovement,
   PatternDebtInput,
-  RecommendMode,
   RecommenderInputs,
   WorkoutHistoryEntry,
 } from './types.ts';
@@ -97,9 +96,9 @@ export async function gatherInputs(
   admin: SupabaseClient,
   authClient: SupabaseClient,
   userId: string,
-  body: { readiness?: unknown; client_today?: unknown; mode?: unknown },
+  // Stale clients may still send a `mode` field; it is accepted and ignored.
+  body: { readiness?: unknown; client_today?: unknown },
 ): Promise<RecommenderInputs> {
-  const mode: RecommendMode = body.mode === 'balance' ? 'balance' : 'default';
   const readiness =
     typeof body.readiness === 'string' && body.readiness.trim()
       ? body.readiness.trim()
@@ -219,23 +218,21 @@ export async function gatherInputs(
   const pattern_debt = await gatherPatternDebt(authClient, clientToday);
   const equipment = await gatherEquipment(admin, userId);
 
-  // Balance mode's deterministic targets. Degrades to [] (default behavior)
+  // Deterministic must-cover targets. Degrades to [] (no hard constraint)
   // when debt is unavailable or nothing red is coverable from the library.
-  const balance_targets =
-    mode === 'balance' && pattern_debt
-      ? selectBalanceTargets(
-          pattern_debt.patterns.map((p) => ({
-            pattern: p.pattern,
-            band: p.band,
-            debtScore: p.debt_score,
-            isNew: p.is_new,
-          })),
-          candidates.map((c) => c.pattern_credits),
-        )
-      : [];
+  const balance_targets = pattern_debt
+    ? selectBalanceTargets(
+        pattern_debt.patterns.map((p) => ({
+          pattern: p.pattern,
+          band: p.band,
+          debtScore: p.debt_score,
+          isNew: p.is_new,
+        })),
+        candidates.map((c) => c.pattern_credits),
+      )
+    : [];
 
   return {
-    mode,
     balance_targets,
     training_goal: profile?.training_goal ?? null,
     readiness,

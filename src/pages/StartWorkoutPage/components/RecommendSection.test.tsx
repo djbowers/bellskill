@@ -148,7 +148,7 @@ describe('RecommendSection — session scope', () => {
     ).toBeInTheDocument();
   });
 
-  test('Balance focus toggle sends mode=balance to the function', async () => {
+  test('request body carries client_today and no mode', async () => {
     let requestBody: Record<string, unknown> | null = null;
     server.use(
       http.post(SESSION_URL, async ({ request }) => {
@@ -161,23 +161,11 @@ describe('RecommendSection — session scope', () => {
     );
 
     renderSection();
-    await userEvent.click(screen.getByRole('tab', { name: /balance focus/i }));
-    await userEvent.click(
-      screen.getByRole('button', { name: /balance me out/i }),
-    );
+    await userEvent.click(recommendSessionButton());
 
     expect(await screen.findByText('Your AI session')).toBeInTheDocument();
-    expect(requestBody).toMatchObject({ mode: 'balance' });
-  });
-
-  test('initialMode="balance" preselects the toggle (Weekly Balance CTA path)', () => {
-    renderSection({ initialMode: 'balance' });
-    expect(
-      screen.getByRole('tab', { name: /balance focus/i }),
-    ).toHaveAttribute('aria-selected', 'true');
-    expect(
-      screen.getByRole('button', { name: /balance me out/i }),
-    ).toBeInTheDocument();
+    expect(requestBody).toHaveProperty('client_today');
+    expect(requestBody).not.toHaveProperty('mode');
   });
 });
 

@@ -3,7 +3,6 @@ import type { Recommendation, RecommenderInputs } from './types.ts';
 import { ValidationError } from './validate.ts';
 
 const inputs: RecommenderInputs = {
-  mode: 'default',
   balance_targets: [],
   training_goal: null,
   readiness: null,

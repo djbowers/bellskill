@@ -13,6 +13,14 @@ export const WEIGHT_MODE_LABELS: Record<WeightTabValue, string> = {
   double: 'Double',
 };
 
+/** Compact variants for the weight-mode tabs, which are four-across on phone widths. */
+export const WEIGHT_MODE_SHORT_LABELS: Record<WeightTabValue, string> = {
+  none: 'Body',
+  '2h': '2-Hand',
+  '1h': '1-Hand',
+  double: 'Double',
+};
+
 export const getWeightTabValue = (movement: {
   weightOneValue: MovementOptions['weightOneValue'];
   weightTwoValue: MovementOptions['weightTwoValue'];

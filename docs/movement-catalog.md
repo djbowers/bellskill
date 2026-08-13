@@ -20,11 +20,21 @@ Postgres enums — so `~/types` defines `Equipment` / `MuscleGroup` /
   whole catalog (its INSERT block is regenerated with `npm run movements:emit-sql`),
   so it is reproducible on `supabase db reset` and auto-deploys. There is **no**
   live-DB ingest path anymore.
-- **To change the catalog:** edit the CSV → `movements:check` → regenerate the
-  migration's VALUES block via `movements:emit-sql` → `supabase db reset` →
-  `gen:types`. Any new field value must already be in the app vocabularies (no
-  new enums); Explore's filter constants in `MovementsPage.tsx` mirror the CSV's
-  value set.
+- **To change the catalog:** edit the CSV → `movements:check` → add a **forward**
+  migration carrying the change → `supabase db reset` → `gen:types`. The reload
+  migration is already applied upstream and will not re-run, so never edit its
+  VALUES block; use `movements:emit-sql` only to lift correctly-quoted literals
+  for the new rows, and guard additive inserts with a
+  `WHERE NOT EXISTS (… lower("Movement") = lower(…))` check — `"Movement"` has no
+  unique index, and the guard keeps a fresh `db reset` from double-inserting.
+  `*_add_ab_wheel_core_movements.sql` is the reference shape. Any new field value
+  must already be in the app vocabularies (no new enums); Explore's filter
+  constants in `MovementsPage.tsx` mirror the CSV's value set.
+- **Implements beyond a bell:** equipment stays two classes, so anything needing
+  a bar, bench, or ab wheel is filed as `Bodyweight` with the implement named in
+  the movement (`Hanging Leg Raise`, `Decline Crunch`, `Ab Wheel Rollout`). A
+  third `Primary Equipment` value would be unreachable in the builder until
+  `movementWeightModeFilter.ts`'s `none` mode widened beyond `Bodyweight`.
 - **Renaming orphans `user_movements` FKs:** the reload relinks
   `user_movements.functional_movement_id` on exact name match, so any row whose
   `canonical_name` was renamed matches nothing and is stranded NULL (silently

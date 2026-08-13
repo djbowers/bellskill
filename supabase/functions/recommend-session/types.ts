@@ -13,9 +13,6 @@ import type {
   PatternRpe,
 } from '../../../src/utils/patternDebt.ts';
 
-/** How the recommender selects: default coach's pick, or balance (debt-optimal). */
-export type RecommendMode = 'default' | 'balance';
-
 /** One movement in the user's library — the candidate set the LLM may choose from. */
 export interface CandidateMovement {
   user_movement_id: string;
@@ -66,11 +63,10 @@ export interface PatternDebtInput {
 
 /** Everything the recommender reasons over. Snapshotted into inputs JSONB. */
 export interface RecommenderInputs {
-  mode: RecommendMode;
   /**
-   * Balance mode's deterministic targets: the highest-debt red-band patterns
-   * coverable from the candidate set (max BALANCE_TARGET_LIMIT). Always [] in
-   * default mode or when pattern debt is unavailable.
+   * Deterministic must-cover targets: the highest-debt red-band patterns
+   * coverable from the candidate set (max BALANCE_TARGET_LIMIT). [] when
+   * pattern debt is unavailable or nothing red is coverable.
    */
   balance_targets: Pattern[];
   training_goal: string | null;

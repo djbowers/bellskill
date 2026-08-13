@@ -7,7 +7,7 @@ import { Section } from './Section';
 
 interface RecommendationCardProps {
   recommendation: Recommendation;
-  /** Action buttons rendered at the foot of the card (e.g. Accept / Regenerate). */
+  /** Action buttons rendered at the foot of the card (e.g. Accept). */
   footer?: ReactNode;
 }
 

@@ -21,15 +21,18 @@ type Story = StoryObj<typeof LadderRepScheme>;
 const StatefulLadder = ({
   initial,
   timedRungs = false,
+  unitNoun,
 }: {
   initial: number[];
   timedRungs?: boolean;
+  unitNoun?: 'rung' | 'set';
 }) => {
   const [repScheme, setRepScheme] = useState<number[]>(initial);
   return (
     <LadderRepScheme
       repScheme={repScheme}
       timedRungs={timedRungs}
+      unitNoun={unitNoun}
       onChangeRung={(rungIndex, value) =>
         setRepScheme((prev) =>
           prev.map((rung, i) => (i === rungIndex ? Math.max(1, value) : rung)),
@@ -59,6 +62,11 @@ export const SingleRung: Story = {
 /** Timed rungs render the widest labels — the tightest fit for the corner ×. */
 export const TimedRungs: Story = {
   render: () => <StatefulLadder initial={[60, 45, 30]} timedRungs />,
+};
+
+/** Straight sets reads the same list as plain sets: 3×5 is [5, 5, 5]. */
+export const StraightSets: Story = {
+  render: () => <StatefulLadder initial={[5, 5, 5]} unitNoun="set" />,
 };
 
 /** At ten rungs the add slot drops away. */

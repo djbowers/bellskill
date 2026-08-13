@@ -5,5 +5,6 @@ export * from './CreateProgramForm';
 export * from './MyProgramCard';
 export * from './QueueTimeline';
 export * from './RecommendProgramSection';
+export * from './RenameProgramDialog';
 export * from './ReplaceProgramDialog';
 export * from './ResumeProgramDialog';

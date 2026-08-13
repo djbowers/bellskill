@@ -11,10 +11,16 @@ const meta: Meta<typeof WeightModeTabs> = {
 };
 export default meta;
 
-const Interactive = ({ initial }: { initial: WeightTabValue }) => {
+const Interactive = ({
+  initial,
+  widthClassName = 'max-w-md',
+}: {
+  initial: WeightTabValue;
+  widthClassName?: string;
+}) => {
   const [value, setValue] = useState<WeightTabValue>(initial);
   return (
-    <div className="max-w-md">
+    <div className={widthClassName}>
       <WeightModeTabs value={value} onValueChange={setValue} />
     </div>
   );
@@ -24,3 +30,8 @@ export const Bodyweight: StoryObj = { render: () => <Interactive initial="none" 
 export const TwoHand: StoryObj = { render: () => <Interactive initial="2h" /> };
 export const Single: StoryObj = { render: () => <Interactive initial="1h" /> };
 export const Double: StoryObj = { render: () => <Interactive initial="double" /> };
+
+/** Approximates the MovementCard content width on a 320px-wide phone. */
+export const NarrowPhone: StoryObj = {
+  render: () => <Interactive initial="2h" widthClassName="w-[300px]" />,
+};

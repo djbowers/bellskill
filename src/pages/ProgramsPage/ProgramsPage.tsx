@@ -15,6 +15,7 @@ import {
   useProgramProgress,
   usePrograms,
   useQueuedPrograms,
+  useRenameProgram,
   useResumeProgram,
   useSetProgramArchived,
   useStartQueuedProgram,
@@ -32,6 +33,7 @@ import {
   MyProgramCard,
   QueueTimeline,
   RecommendProgramSection,
+  RenameProgramDialog,
   ReplaceProgramDialog,
   ResumeProgramDialog,
 } from './components';
@@ -49,6 +51,7 @@ export const ProgramsPage = () => {
   const cancelProgram = useCancelProgram();
   const deleteProgram = useDeleteProgram();
   const setArchived = useSetProgramArchived();
+  const renameProgram = useRenameProgram();
   const { data: queuedPrograms = [] } = useQueuedPrograms();
   const dequeue = useDequeueProgram();
   const startQueued = useStartQueuedProgram();
@@ -65,6 +68,8 @@ export const ProgramsPage = () => {
   // Several programs can be active at once, so this holds which one.
   const [pendingCancelId, setPendingCancelId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
+  // Own program being renamed.
+  const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
 
   // Program the user is trying to start with every parallel slot taken, plus
   // the active enrollment they picked to drop for it.
@@ -193,6 +198,17 @@ export const ProgramsPage = () => {
 
   const resumeDialogProgram =
     programs.find((p) => p.id === resumeTarget?.programId) ?? null;
+
+  const renameTargetProgram =
+    programs.find((p) => p.id === renameTargetId) ?? null;
+
+  const confirmRename = (newTitle: string) => {
+    if (!renameTargetId) return;
+    renameProgram.mutate(
+      { programId: renameTargetId, title: newTitle },
+      { onSuccess: () => setRenameTargetId(null) },
+    );
+  };
 
   // A resume needs a free slot too. At the cap the least-recently-worked
   // program is the one it displaces — named in the dialog so the choice is
@@ -341,6 +357,7 @@ export const ProgramsPage = () => {
           onQueueForLater={() =>
             enroll.mutate({ programId: program.id, queue: true })
           }
+          onRename={() => setRenameTargetId(program.id)}
           onCancel={() =>
             setPendingCancelId(enrollmentFor(program)?.enrollment.id ?? null)
           }
@@ -379,6 +396,7 @@ export const ProgramsPage = () => {
                     archived: false,
                   })
                 }
+                onRename={() => setRenameTargetId(program.id)}
                 onDelete={() => setPendingDeleteId(program.id)}
               />
             ))}
@@ -424,6 +442,16 @@ export const ProgramsPage = () => {
           showReleasedBadge={isOwner(session)}
         />
       )}
+
+      <RenameProgramDialog
+        open={renameTargetProgram !== null}
+        onOpenChange={(open) => {
+          if (!open) setRenameTargetId(null);
+        }}
+        currentTitle={renameTargetProgram?.title ?? ''}
+        onSubmit={confirmRename}
+        isPending={renameProgram.isPending}
+      />
 
       <ReplaceProgramDialog
         open={pendingSwitchId !== null}
