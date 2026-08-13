@@ -23,7 +23,7 @@ import {
 } from '~/utils';
 
 import { FieldLabel } from './FieldLabel';
-import { LadderRepScheme, RungMode } from './LadderRepScheme';
+import { LadderRepScheme } from './LadderRepScheme';
 import { ModifyCountButtons } from './ModifyCountButtons';
 import { MovementAutocomplete } from './MovementAutocomplete';
 import { MovementSummaryChips } from './MovementSummaryChips';
@@ -54,7 +54,7 @@ export interface MovementCardProps {
   onChangeRung: (rungIndex: number, value: number) => void;
   onRemoveRung: (rungIndex: number) => void;
   onAddRung: () => void;
-  onChangeRungMode: (mode: RungMode) => void;
+  onToggleTimed: (timed: boolean) => void;
 }
 
 export const MovementCard = ({
@@ -77,7 +77,7 @@ export const MovementCard = ({
   onChangeRung,
   onRemoveRung,
   onAddRung,
-  onChangeRungMode,
+  onToggleTimed,
 }: MovementCardProps) => {
   const weightTabValue = getWeightTabValue(movement);
   const activeWeightMode = sharedBell ? sharedWeightTabValue : weightTabValue;
@@ -240,12 +240,11 @@ export const MovementCard = ({
           <LadderRepScheme
             repScheme={movement.repScheme}
             timedRungs={movement.timedRungs}
-            maxReps={movement.maxReps}
             intervalActive={intervalActive}
             onChangeRung={onChangeRung}
             onRemoveRung={onRemoveRung}
             onAddRung={onAddRung}
-            onChangeRungMode={onChangeRungMode}
+            onToggleTimed={onToggleTimed}
           />
         </div>
       )}

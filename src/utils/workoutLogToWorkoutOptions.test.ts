@@ -58,7 +58,6 @@ describe('workoutLogToWorkoutOptions', () => {
           movementName: 'Kettlebell Swing',
           repScheme: [10],
           timedRungs: false,
-          maxReps: false,
           weightOneUnit: 'kilograms',
           weightOneValue: 16,
           weightTwoUnit: null,

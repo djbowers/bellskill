@@ -112,7 +112,6 @@ export type Database = {
           completed_rep_scheme: number[] | null
           created_at: string | null
           id: number
-          max_reps: boolean
           movement_name: string
           rep_scheme: number[]
           timed_rungs: boolean
@@ -128,7 +127,6 @@ export type Database = {
           completed_rep_scheme?: number[] | null
           created_at?: string | null
           id?: number
-          max_reps?: boolean
           movement_name: string
           rep_scheme?: number[]
           timed_rungs?: boolean
@@ -144,7 +142,6 @@ export type Database = {
           completed_rep_scheme?: number[] | null
           created_at?: string | null
           id?: number
-          max_reps?: boolean
           movement_name?: string
           rep_scheme?: number[]
           timed_rungs?: boolean

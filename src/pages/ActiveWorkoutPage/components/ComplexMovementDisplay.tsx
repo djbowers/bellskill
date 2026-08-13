@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import { MovementOptions, WeightUnit } from '~/types';
-import { formatRungDuration, getWeightUnitLabel } from '~/utils';
+import { formatRungValue, getWeightUnitLabel } from '~/utils';
 
 interface ComplexMovementDisplayProps {
   currentRound: number;
@@ -115,11 +115,10 @@ export const ComplexMovementDisplay = ({
                   className="shrink-0 text-2xl font-medium"
                   data-testid={`complex-movement-reps-${index}`}
                 >
-                  {movement.maxReps
-                    ? 'Max'
-                    : movement.timedRungs
-                      ? formatRungDuration(movement.repScheme[repIndex])
-                      : movement.repScheme[repIndex]}
+                  {formatRungValue(
+                    movement.repScheme[repIndex],
+                    movement.timedRungs,
+                  )}
                 </div>
               </div>
             );

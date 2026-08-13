@@ -123,22 +123,6 @@ const toWorkoutLogModeColumns = (
   };
 };
 
-/**
- * What one ladder pass of a max-reps movement actually was. Consumers of
- * `rep_scheme` (pattern_debt_movements, history, repeat-workout) all read it as
- * a single pass and scale it by rounds/sides themselves, and a max-reps movement
- * has no prescription to put there — so the first pass of actuals is the honest
- * value. Falls back to the placeholder ladder if the workout ended before a full
- * pass was logged.
- */
-const toRepScheme = (movement: WorkoutOptions['movements'][number], completed: number[]) => {
-  if (!movement.maxReps) return movement.repScheme;
-  const firstPass = completed.slice(0, movement.repScheme.length);
-  return firstPass.length === movement.repScheme.length
-    ? firstPass
-    : movement.repScheme;
-};
-
 const logWorkout = async ({
   completedReps,
   completedRepsByMovement,
@@ -226,13 +210,9 @@ const logWorkout = async ({
       movements.map((movement, movementIndex) => ({
         movement_name: movement.movementName,
         user_movement_id: userMovementIdByName[movement.movementName] ?? null,
-        rep_scheme: toRepScheme(
-          movement,
-          completedRepsByMovement[movementIndex] ?? [],
-        ),
+        rep_scheme: movement.repScheme,
         completed_rep_scheme: completedRepsByMovement[movementIndex] ?? [],
         timed_rungs: movement.timedRungs ?? false,
-        max_reps: movement.maxReps ?? false,
         weight_one_unit: movement.weightOneUnit,
         weight_one_value: movement.weightOneValue,
         weight_two_unit: movement.weightTwoUnit,

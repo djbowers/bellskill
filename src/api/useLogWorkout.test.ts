@@ -475,7 +475,7 @@ describe('useLogWorkout — per-set actuals', () => {
     return rows;
   };
 
-  test('a fixed movement keeps its plan and gains the actuals alongside it', async () => {
+  test('a prescribed ladder keeps its plan and gains the actuals alongside it', async () => {
     const rows = await logAndCaptureMovementRows(
       makeMovementsWrapper([{ ...defaultMovement, repScheme: [5, 5] }]),
       [[5, 3]],
@@ -484,38 +484,35 @@ describe('useLogWorkout — per-set actuals', () => {
     expect(rows[0]).toMatchObject({
       rep_scheme: [5, 5],
       completed_rep_scheme: [5, 3],
-      max_reps: false,
     });
   });
 
-  // A max-reps movement has no prescription, so rep_scheme takes the first
-  // ladder pass of actuals — what every rep_scheme consumer reads it as.
-  test('a max-reps movement writes its first pass as the rep scheme', async () => {
+  // The plan is written verbatim, max rungs and all — 0 is what "to failure"
+  // looks like on the way in, and the actuals carry what came of it.
+  test('a ladder to max persists the 0 rung and what was hit', async () => {
     const rows = await logAndCaptureMovementRows(
-      makeMovementsWrapper([
-        { ...defaultMovement, repScheme: [5, 5], maxReps: true },
-      ]),
-      [[12, 9, 8, 6]],
+      makeMovementsWrapper([{ ...defaultMovement, repScheme: [1, 2, 0] }]),
+      [[1, 2, 12, 1, 2, 9]],
     );
 
     expect(rows[0]).toMatchObject({
-      rep_scheme: [12, 9],
-      completed_rep_scheme: [12, 9, 8, 6],
-      max_reps: true,
+      rep_scheme: [1, 2, 0],
+      completed_rep_scheme: [1, 2, 12, 1, 2, 9],
     });
   });
 
-  test('a max-reps movement cut short falls back to the placeholder ladder', async () => {
+  test('a timed movement records seconds, in the same unit as its plan', async () => {
     const rows = await logAndCaptureMovementRows(
       makeMovementsWrapper([
-        { ...defaultMovement, repScheme: [5, 5], maxReps: true },
+        { ...defaultMovement, repScheme: [30, 0], timedRungs: true },
       ]),
-      [[12]],
+      [[30, 47]],
     );
 
     expect(rows[0]).toMatchObject({
-      rep_scheme: [5, 5],
-      completed_rep_scheme: [12],
+      rep_scheme: [30, 0],
+      completed_rep_scheme: [30, 47],
+      timed_rungs: true,
     });
   });
 });

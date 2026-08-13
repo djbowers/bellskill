@@ -21,18 +21,15 @@ type Story = StoryObj<typeof LadderRepScheme>;
 const StatefulLadder = ({
   initial,
   timedRungs = false,
-  maxReps = false,
 }: {
   initial: number[];
   timedRungs?: boolean;
-  maxReps?: boolean;
 }) => {
   const [repScheme, setRepScheme] = useState<number[]>(initial);
   return (
     <LadderRepScheme
       repScheme={repScheme}
       timedRungs={timedRungs}
-      maxReps={maxReps}
       onChangeRung={(rungIndex, value) =>
         setRepScheme((prev) =>
           prev.map((rung, i) => (i === rungIndex ? Math.max(1, value) : rung)),
@@ -44,7 +41,7 @@ const StatefulLadder = ({
       onAddRung={() =>
         setRepScheme((prev) => [...prev, prev[prev.length - 1] ?? 1])
       }
-      onChangeRungMode={() => {}}
+      onToggleTimed={() => {}}
     />
   );
 };
@@ -69,7 +66,12 @@ export const MaxRungs: Story = {
   render: () => <StatefulLadder initial={[1, 2, 3, 4, 5, 5, 4, 3, 2, 1]} />,
 };
 
-/** Max reps has no magnitude: the rungs become bare set slots. */
-export const MaxReps: Story = {
-  render: () => <StatefulLadder initial={[5, 5, 5]} maxReps />,
+/** A ladder that climbs to failure: the last rung reads Max. */
+export const LadderToMax: Story = {
+  render: () => <StatefulLadder initial={[1, 2, 3, 4, 5, 0]} />,
+};
+
+/** Timed rungs take a max too — hold the last one until you drop. */
+export const TimedLadderToMax: Story = {
+  render: () => <StatefulLadder initial={[15, 30, 45, 0]} timedRungs />,
 };

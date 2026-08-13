@@ -47,6 +47,8 @@ const {
   VeryLargeVolumeGoal,
   DecimalVolumeCalculation,
   MaxReps,
+  LadderToMaxReps,
+  MaxTimedRung,
   FixedRepsForAdjustment,
   IntervalTimer,
 } = composeStories(stories);
@@ -1845,7 +1847,7 @@ describe('reporting reps actually completed', () => {
   const finish = () =>
     userEvent.click(screen.getByRole('button', { name: /finish workout/i }));
 
-  test('max reps: Continue asks for the count instead of assuming one', async () => {
+  test('a max rung: Continue asks for the count instead of assuming one', async () => {
     render(<MaxReps />);
 
     await clickContinue();
@@ -1867,7 +1869,7 @@ describe('reporting reps actually completed', () => {
     );
   });
 
-  test('max reps: the reported count is what gets logged', async () => {
+  test('a max rung: the reported count is what gets logged', async () => {
     render(<MaxReps />);
 
     await clickContinue();
@@ -1884,7 +1886,7 @@ describe('reporting reps actually completed', () => {
     );
   });
 
-  test('fixed reps: Continue advances without asking', async () => {
+  test('a prescribed rung: Continue advances without asking', async () => {
     render(<FixedRepsForAdjustment />);
 
     await clickContinue();
@@ -1903,7 +1905,7 @@ describe('reporting reps actually completed', () => {
     );
   });
 
-  test('fixed reps: Adjust reps logs a short set at the count reported', async () => {
+  test('a prescribed rung: Adjust reps logs a short set at the count reported', async () => {
     render(<FixedRepsForAdjustment />);
 
     await openAdjustDialog();
@@ -1926,5 +1928,62 @@ describe('reporting reps actually completed', () => {
     expect(
       screen.queryByRole('button', { name: /adjust reps completed/i }),
     ).not.toBeInTheDocument();
+  });
+
+  test('a ladder to max: prescribed rungs pass through, the max rung asks', async () => {
+    render(<LadderToMaxReps />);
+
+    // Rungs 1 and 2 are prescribed, so they complete on the press alone.
+    await clickContinue();
+    await clickContinue();
+    expect(
+      screen.queryByRole('heading', { name: /how many reps/i }),
+    ).not.toBeInTheDocument();
+
+    // The third is max, so it can't be completed without a count.
+    await clickContinue();
+    expect(
+      screen.getByRole('heading', { name: /how many reps/i }),
+    ).toBeInTheDocument();
+    await completeSet();
+    await finish();
+
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completedReps: 13, // 1 + 2 + the 10 reported
+        completedRepsByMovement: [[1, 2, 10]],
+      }),
+    );
+  });
+
+  test('a max timed rung: the press records the hold, with no dialog', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      render(<MaxTimedRung />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(8000);
+      });
+
+      await clickContinue();
+
+      expect(
+        screen.queryByRole('heading', { name: /how many reps/i }),
+      ).not.toBeInTheDocument();
+
+      await finish();
+    } finally {
+      vi.useRealTimers();
+    }
+
+    const [[logged]] = logWorkout.mock.calls;
+    const [[held]] = logged.completedRepsByMovement;
+    // The hold is measured, not prescribed, so assert the band rather than a
+    // brittle exact tick.
+    expect(held).toBeGreaterThanOrEqual(7);
+    expect(held).toBeLessThanOrEqual(9);
+    // Seconds are not reps: a timed rung still contributes neither.
+    expect(logged.completedReps).toBe(0);
+    expect(logged.completedVolume).toBe(0);
   });
 });

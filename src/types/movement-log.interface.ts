@@ -6,8 +6,11 @@ export interface MovementLog {
   /** Reps per rung, or seconds per rung when `timedRungs` is set. */
   repScheme: number[];
   timedRungs?: boolean;
-  maxReps?: boolean;
-  /** Reps actually completed, one entry per set in completion order. */
+  /**
+   * What was actually done, one entry per completed set in order — reps, or
+   * seconds when `timedRungs` is set. Spans every round and side, so it is not
+   * index-aligned with `repScheme`.
+   */
   completedRepScheme?: number[];
   userMovementId: string | null;
   functionalMovementId: string | null;

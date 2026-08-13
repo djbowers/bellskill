@@ -982,8 +982,9 @@ export const StraightSetsUnevenLadders: Story = {
 };
 
 /**
- * Sets to failure: no prescription to show, so Continue opens the reps dialog
- * instead of assuming a number. Two bells so the volume math is unambiguous.
+ * A rung of 0 is "to failure": no prescription to show, so Continue opens the
+ * reps dialog instead of assuming a number. Two 10 kg bells so the volume math
+ * is unambiguous.
  */
 export const MaxReps: Story = {
   parameters: {
@@ -994,8 +995,7 @@ export const MaxReps: Story = {
         {
           ...DEFAULT_MOVEMENT_OPTIONS,
           movementName: 'Two-Arm Kettlebell Military Press',
-          repScheme: [5, 5],
-          maxReps: true,
+          repScheme: [0, 0],
           weightOneValue: 10,
           weightOneUnit: 'kilograms',
           weightTwoValue: 10,
@@ -1021,6 +1021,52 @@ export const FixedRepsForAdjustment: Story = {
           weightOneUnit: 'kilograms',
           weightTwoValue: 10,
           weightTwoUnit: 'kilograms',
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
+/** A ladder that climbs to failure: 1, 2, then max. */
+export const LadderToMaxReps: Story = {
+  parameters: {
+    workoutOptions: {
+      workoutGoal: 10,
+      workoutGoalUnits: 'rounds',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Two-Arm Kettlebell Military Press',
+          repScheme: [1, 2, 0],
+          weightOneValue: 10,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 10,
+          weightTwoUnit: 'kilograms',
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
+/**
+ * Hold to failure: a timed rung of 0 has no countdown to run, so the set clock
+ * counts up and the Continue press is what records it — no dialog.
+ */
+export const MaxTimedRung: Story = {
+  parameters: {
+    workoutOptions: {
+      workoutGoal: 10,
+      workoutGoalUnits: 'rounds',
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Kettlebell Front Rack Hold',
+          repScheme: [0],
+          timedRungs: true,
+          weightOneValue: 16,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: null,
+          weightTwoUnit: null,
         },
       ] satisfies MovementOptions[],
     },

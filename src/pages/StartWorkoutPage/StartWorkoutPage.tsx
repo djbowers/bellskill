@@ -46,6 +46,8 @@ import {
   getWeightRange,
   getWeightTabValue,
   getWeightUnitLabel,
+  isMaxRung,
+  MAX_RUNG,
   resolveMovementWeights,
   usesSharedBell,
   validateWorkout,
@@ -72,7 +74,7 @@ import {
   WorkoutIssueList,
   WorkoutModeTabs,
 } from './components';
-import type { RungMode, SummaryLoad } from './components';
+import type { SummaryLoad } from './components';
 import { useRecommendedWorkouts } from './hooks';
 import { INCREMENT_VOLUME, getGoalRange } from './utils/goalRange';
 import {
@@ -560,20 +562,12 @@ export const StartWorkoutPage = ({
     }
   };
 
-  // Turning the interval on takes the Continue press away, so max reps has
-  // nothing to report against — drop it the way the builder locks out the Time
-  // tab while an interval is running.
   const handleToggleInterval = () => {
     if (intervalTimer > 0) {
       setIntervalTimer(0);
     } else {
       handleIncrementInterval();
       expandSection('interval');
-      setMovements((prev) =>
-        prev.map((movement) =>
-          movement.maxReps ? { ...movement, maxReps: false } : movement,
-        ),
-      );
     }
   };
 
@@ -725,19 +719,21 @@ export const StartWorkoutPage = ({
 
   // Reps and seconds are not interchangeable magnitudes — a [5,4,3,2,1] ladder
   // reads as 5-second carries, and a 30-second plank reads as 30 reps. Flipping
-  // the unit reseeds every rung to a usable default for the new one. Max reps
-  // has no magnitude at all, so it reseeds to the rep default: the values go
-  // unused while it's on, and are sane again if the user switches back.
-  const handleChangeRungMode = (index: number, mode: RungMode) =>
+  // the unit reseeds every rung to a usable default for the new one. Max rungs
+  // survive the flip: "to failure" means the same thing in either unit.
+  const handleToggleTimedRungs = (index: number, timed: boolean) =>
     setMovements((prev) =>
       prev.map((movement, i) =>
         i === index
           ? {
               ...movement,
-              timedRungs: mode === 'time',
-              maxReps: mode === 'max',
-              repScheme: movement.repScheme.map(() =>
-                mode === 'time' ? DEFAULT_RUNG_SECONDS : DEFAULT_RUNG_REPS,
+              timedRungs: timed,
+              repScheme: movement.repScheme.map((rung) =>
+                isMaxRung(rung)
+                  ? MAX_RUNG
+                  : timed
+                    ? DEFAULT_RUNG_SECONDS
+                    : DEFAULT_RUNG_REPS,
               ),
             }
           : movement,
@@ -755,7 +751,7 @@ export const StartWorkoutPage = ({
           ? {
               ...movement,
               repScheme: movement.repScheme.map((rung, j) =>
-                j === rungIndex ? Math.max(1, value) : rung,
+                j === rungIndex ? Math.max(MAX_RUNG, value) : rung,
               ),
             }
           : movement,
@@ -1210,7 +1206,7 @@ export const StartWorkoutPage = ({
               }
               onRemoveRung={(rungIndex) => handleRemoveRung(index, rungIndex)}
               onAddRung={() => handleAddRung(index)}
-              onChangeRungMode={(mode) => handleChangeRungMode(index, mode)}
+              onToggleTimed={(timed) => handleToggleTimedRungs(index, timed)}
             />
           ))}
 

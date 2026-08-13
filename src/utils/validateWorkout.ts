@@ -11,6 +11,7 @@
 // it the way it already imports patternDebt.ts.
 
 import type { WorkoutMode } from '../types/workout-mode.type.ts';
+import { hasMaxRung } from './maxRung.ts';
 
 export type IssueSeverity = 'error' | 'warning';
 
@@ -55,7 +56,6 @@ export interface WorkoutDraft {
     movementName: string;
     repScheme: number[];
     timedRungs?: boolean;
-    maxReps?: boolean;
     /** null means bodyweight, which is valid. */
     weightOneValue: number | null;
     /**
@@ -147,14 +147,15 @@ export const validateWorkout = (draft: WorkoutDraft): WorkoutValidation => {
         movementIndex,
       });
     } else if (
+      // 0 is allowed: it is the max-rung sentinel, not a magnitude.
       movement.repScheme.some(
-        (rung) => !Number.isInteger(rung) || rung <= 0 || rung > MAX_REP,
+        (rung) => !Number.isInteger(rung) || rung < 0 || rung > MAX_REP,
       )
     ) {
       errors.push({
         code: 'invalid_reps',
         severity: 'error',
-        message: `This movement has invalid rep counts — every rung must be a whole number from 1 to ${MAX_REP}.`,
+        message: `This movement has invalid rep counts — every rung must be a whole number from 1 to ${MAX_REP}, or 0 for max.`,
         movementIndex,
       });
     }
@@ -197,14 +198,14 @@ export const validateWorkout = (draft: WorkoutDraft): WorkoutValidation => {
       }
 
       // An error, not a warning like timed rungs: the interval advances the set
-      // on its own, so there is no Continue press to report max reps against and
-      // the count would be silently lost.
-      if (movement.maxReps) {
+      // on its own, so a max rung has no Continue press to end it — the set
+      // would be cut at the interval instead of run to failure.
+      if (hasMaxRung(movement.repScheme)) {
         errors.push({
           code: 'interval_with_max_reps',
           severity: 'error',
           message:
-            'Max reps needs a Continue press to report against, and the interval timer advances the set on its own. Turn one of them off.',
+            'A max rung ends when you tap Continue, and the interval timer advances the set on its own. Turn one of them off.',
           movementIndex,
         });
       }

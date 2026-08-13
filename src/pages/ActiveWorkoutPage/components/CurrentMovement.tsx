@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import { MovementOptions, WeightUnit } from '~/types';
-import { formatRungDuration, getWeightUnitLabel } from '~/utils';
+import { formatRungValue, getWeightUnitLabel } from '~/utils';
 
 interface CurrentMovementProps {
   currentMovement: MovementOptions;
@@ -17,6 +17,9 @@ interface CurrentMovementProps {
   currentSide: number;
   isOneHanded: boolean | null;
   isTimedRung?: boolean;
+  /** Hold to failure: no prescribed duration, so the elapsed clock stands in. */
+  isMaxTimedRung?: boolean;
+  formattedElapsed?: string;
   leftWeightUnit: WeightUnit | null;
   leftWeightValue: number | null;
   repScheme: number[];
@@ -39,6 +42,8 @@ export const CurrentMovement = ({
   currentSide,
   isOneHanded,
   isTimedRung = false,
+  isMaxTimedRung = false,
+  formattedElapsed = '0:00',
   leftWeightUnit,
   leftWeightValue,
   repScheme,
@@ -180,7 +185,9 @@ export const CurrentMovement = ({
             >
               {isThreeColumn ? 'Left' : 'Weight'}
             </CardDescription>
-            <CardDescription>{isTimedRung ? 'Time' : 'Reps'}</CardDescription>
+            <CardDescription>
+              {isTimedRung || isMaxTimedRung ? 'Time' : 'Reps'}
+            </CardDescription>
             {isThreeColumn && (
               <CardDescription
                 className={clsx(
@@ -206,12 +213,14 @@ export const CurrentMovement = ({
             >
               {restRemaining ? (
                 <span className="h-5" />
-              ) : currentMovement.maxReps ? (
-                'Max'
-              ) : isTimedRung ? (
-                formatRungDuration(repScheme[rungIndex])
+              ) : isMaxTimedRung ? (
+                // The hold's running clock: on a set with no prescribed
+                // duration, this is the number being recorded.
+                <span className="font-mono tabular-nums" data-testid="hold-elapsed">
+                  {formattedElapsed}
+                </span>
               ) : (
-                repScheme[rungIndex]
+                formatRungValue(repScheme[rungIndex], currentMovement.timedRungs)
               )}
             </div>
 

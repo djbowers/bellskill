@@ -6,7 +6,14 @@ import { Page, SpotifyMiniPlayer } from '~/components';
 import { ConfirmDialog } from '~/components/ConfirmDialog';
 import { useProgramSession, useSession, useWorkoutOptions } from '~/contexts';
 import { useCountdownTimer, useFeatures } from '~/hooks';
-import { playDing, playStartCue, unlockAudio } from '~/utils';
+import { MovementOptions } from '~/types';
+import {
+  formatRungDuration,
+  isMaxRung,
+  playDing,
+  playStartCue,
+  unlockAudio,
+} from '~/utils';
 
 import {
   ActiveWorkoutControls,
@@ -16,11 +23,11 @@ import {
   WorkoutProgress,
   WorkoutSummary,
 } from './components';
-import { useRequestWakeLock } from './hooks';
+import { useRequestWakeLock, useSetStopwatch } from './hooks';
 
 const LB_TO_KG = 0.453592;
 
-/** Seed for the first max-reps set of a movement; later sets seed from the last. */
+/** Seed for the first max-rep set of a movement; later sets seed from the last. */
 const DEFAULT_MAX_REPS = 10;
 
 interface ActiveWorkoutPageProps {
@@ -140,6 +147,14 @@ export const ActiveWorkoutPage = ({
   >(() => movements.map(() => []));
   const [repsPromptOpen, setRepsPromptOpen] = useState(false);
 
+  // The last count reported for a MAX rung, per movement — the seed for the next
+  // one. Kept apart from completedRepsByMovement, whose last entry on a ladder is
+  // whatever prescribed rung came before the max one (seeding a to-failure set
+  // with the 2 of a 1-2-max ladder is worse than useless).
+  const [lastMaxReported, setLastMaxReported] = useState<
+    Record<number, number>
+  >({});
+
   const [isMirrorSet, setIsMirrorSet] = useState<boolean>(false); // for one-handed movements and mixed weights
   const [isEffectActive, setIsEffectActive] = useState<boolean>(false);
   const [isRestActive, setIsRestActive] = useState<boolean>(false);
@@ -154,15 +169,22 @@ export const ActiveWorkoutPage = ({
   const isLastMovement = currentMovementIndex === lastMovementIndex;
   const currentMovement = movements[currentMovementIndex];
 
+  const rungFor = (movement: MovementOptions, rungIndex: number) =>
+    movement.repScheme[Math.min(rungIndex, movement.repScheme.length - 1)];
+
+  const currentRung = rungFor(currentMovement, currentMovementRungIndex);
+
   // Timed movements (PROD-200): a timed movement's repScheme holds SECONDS per
   // rung, not reps. The rung runs on its own countdown that auto-fires
   // "continue" on expiry, exactly as intervalTimer does. The builder makes the
   // two mutually exclusive; the effects below also guard, since both would
   // otherwise drive continueWorkout and double-advance.
-  const isTimedRung = currentMovement.timedRungs === true;
-  const currentRungSeconds = isTimedRung
-    ? currentMovement.repScheme[currentMovementRungIndex]
-    : 0;
+  //
+  // A max timed rung is the exception: there is no duration to count down, so it
+  // runs on the stopwatch below and ends on a Continue press like a max-rep set.
+  const isTimedRung =
+    currentMovement.timedRungs === true && !isMaxRung(currentRung);
+  const currentRungSeconds = isTimedRung ? currentRung : 0;
 
   const [
     formattedRungRemaining,
@@ -176,6 +198,19 @@ export const ActiveWorkoutPage = ({
     defaultPaused: defaultPaused && hasTimedMovements,
     timeFormat: 'ss.S',
   });
+
+  // Only a max timed rung needs the stopwatch, and only while it is actually
+  // running — not during the opening countdown, a pause, or rest.
+  const isMaxTimedRung =
+    currentMovement.timedRungs === true && isMaxRung(currentRung);
+  const { elapsedSeconds, elapsedMilliseconds, reset: resetSetStopwatch } =
+    useSetStopwatch({
+      running:
+        isMaxTimedRung &&
+        !workoutTimerPaused &&
+        !isRestActive &&
+        !isCountdownActive,
+    });
 
   const primaryWeightSide = isMirrorSet ? 'right' : 'left'; // todo: make primary weight side configurable
 
@@ -274,27 +309,31 @@ export const ActiveWorkoutPage = ({
         m.weightTwoValue === 0,
     );
 
-  // What a movement contributes to this set. `reported` is what the user typed
-  // into the reps dialog — for a max-reps set there is no prescription to fall
-  // back on, and for a normal set it's the correction to a rung they missed.
-  const repsForMovement = (
+  // What a movement contributes to this set, in its own unit: reps, or seconds
+  // when it is timed. `reported` is what the user entered in the reps dialog —
+  // the only source for a max rep rung, and the correction to a rung they fell
+  // short of otherwise. A max timed rung reads the stopwatch instead: the
+  // Continue press is the measurement, so there is nothing to ask for.
+  const valueForMovement = (
     movementIndex: number,
     reported?: Record<number, number>,
   ) => {
     const movement = movements[movementIndex];
-    // Seconds are not reps: a timed rung contributes neither reps nor volume, or
-    // a 2-minute carry at 24 kg would log 2,880 kg and end a kilograms-goal
-    // workout instantly.
-    if (movement.timedRungs) return 0;
-    const reportedReps = reported?.[movementIndex];
-    if (reportedReps !== undefined) return reportedReps;
-    if (movement.maxReps) return 0;
-    const rungIndex = Math.min(
-      currentMovementRungIndex,
-      movement.repScheme.length - 1,
-    );
-    return movement.repScheme[rungIndex];
+    const rung = rungFor(movement, currentMovementRungIndex);
+    if (movement.timedRungs) return isMaxRung(rung) ? elapsedSeconds : rung;
+    return reported?.[movementIndex] ?? (isMaxRung(rung) ? 0 : rung);
   };
+
+  // Seconds are not reps: a timed rung contributes neither reps nor volume, or a
+  // 2-minute carry at 24 kg would log 2,880 kg and end a kilograms-goal workout
+  // instantly.
+  const repsForMovement = (
+    movementIndex: number,
+    reported?: Record<number, number>,
+  ) =>
+    movements[movementIndex].timedRungs
+      ? 0
+      : valueForMovement(movementIndex, reported);
 
   // A complex set completes every movement at once; otherwise only the current
   // one advanced, so only it gets an entry.
@@ -302,7 +341,7 @@ export const ActiveWorkoutPage = ({
     setCompletedRepsByMovement((prev) =>
       prev.map((entries, movementIndex) =>
         isComplex || movementIndex === currentMovementIndex
-          ? [...entries, repsForMovement(movementIndex, reported)]
+          ? [...entries, valueForMovement(movementIndex, reported)]
           : entries,
       ),
     );
@@ -538,35 +577,39 @@ export const ActiveWorkoutPage = ({
     navigate('/');
   };
 
-  // A set that includes a max-reps movement can't be completed by a bare press —
-  // there is no prescription to assume, so the dialog is the only way through.
-  const promptMovementIndexes = isComplex
+  // Which movements the reps dialog covers. Timed ones are excluded either way:
+  // a fixed timed rung runs its countdown, and a max timed rung is measured by
+  // the stopwatch, so neither has anything to ask.
+  const setMovementIndexes = isComplex
     ? movements.map((_, index) => index)
     : [currentMovementIndex];
-  const requiresRepsPrompt = promptMovementIndexes.some(
-    (index) => movements[index].maxReps,
-  );
-  const canAdjustReps = promptMovementIndexes.some(
-    (index) => !movements[index].timedRungs && !movements[index].maxReps,
+  const promptMovementIndexes = setMovementIndexes.filter(
+    (index) => !movements[index].timedRungs,
   );
 
-  const promptMovements = promptMovementIndexes
-    .filter((index) => !movements[index].timedRungs)
-    .map((index) => {
-      const movement = movements[index];
-      const lastReported = completedRepsByMovement[index]?.at(-1);
-      const rungIndex = Math.min(
-        currentMovementRungIndex,
-        movement.repScheme.length - 1,
-      );
-      return {
-        movementIndex: index,
-        movementName: movement.movementName,
-        defaultReps: movement.maxReps
-          ? (lastReported ?? DEFAULT_MAX_REPS)
-          : movement.repScheme[rungIndex],
-      };
-    });
+  const isMaxRepRung = (index: number) =>
+    !movements[index].timedRungs &&
+    isMaxRung(rungFor(movements[index], currentMovementRungIndex));
+
+  // A max rep rung can't be completed by a bare press — there is no
+  // prescription to assume, so the dialog is the only way through.
+  const requiresRepsPrompt = promptMovementIndexes.some(isMaxRepRung);
+  const canAdjustReps =
+    promptMovementIndexes.length > 0 && !requiresRepsPrompt;
+
+  const promptMovements = promptMovementIndexes.map((index) => {
+    const movement = movements[index];
+    const rung = rungFor(movement, currentMovementRungIndex);
+    // A later max set seeds from the last max you reported — the honest guess is
+    // "about what you managed last time", not a fixed number.
+    return {
+      movementIndex: index,
+      movementName: movement.movementName,
+      defaultReps: isMaxRung(rung)
+        ? (lastMaxReported[index] ?? DEFAULT_MAX_REPS)
+        : rung,
+    };
+  });
 
   const openRepsPrompt = () => {
     unlockAudio();
@@ -576,6 +619,13 @@ export const ActiveWorkoutPage = ({
   const handleConfirmReps = (reported: Record<number, number>) => {
     setRepsPromptOpen(false);
     setIsEffectActive(true);
+    setLastMaxReported((prev) => {
+      const next = { ...prev };
+      for (const [index, reps] of Object.entries(reported)) {
+        if (isMaxRepRung(Number(index))) next[Number(index)] = reps;
+      }
+      return next;
+    });
     continueWorkout(reported);
   };
 
@@ -656,6 +706,16 @@ export const ActiveWorkoutPage = ({
     [completedSides, currentRungSeconds, isTimedRung],
   );
 
+  // Zero the hold clock on each advance, keyed on completedSides for the same
+  // reason armRungTimer is: it is the one counter every continue bumps.
+  useEffect(
+    function armSetStopwatch() {
+      resetSetStopwatch();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-arms once per advance; resetSetStopwatch is recreated whenever the run state flips and must not retrigger this effect
+    [completedSides],
+  );
+
   useEffect(
     function handleFinishRung() {
       if (!isTimedRung || intervalTimer > 0) return;
@@ -732,6 +792,8 @@ export const ActiveWorkoutPage = ({
           currentSide={currentSide}
           isOneHanded={isOneHanded}
           isTimedRung={isTimedRung}
+          isMaxTimedRung={isMaxTimedRung}
+          formattedElapsed={formatRungDuration(elapsedMilliseconds / 1000)}
           leftWeightUnit={leftWeightUnit}
           leftWeightValue={leftWeightValue}
           repScheme={currentMovement.repScheme}

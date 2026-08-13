@@ -4,67 +4,52 @@ import { useState } from 'react';
 import { Button } from '~/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { cn } from '~/lib/utils';
-import { formatRungDuration } from '~/utils';
+import { MAX_RUNG, formatRungValue, isMaxRung } from '~/utils';
 
 import { FieldLabel } from './FieldLabel';
 import { ModifyCountButtons } from './ModifyCountButtons';
 
 // Rung magnitudes. Reps step by one; timed rungs (carries, planks) step by five
-// because nudging a two-minute carry a second at a time is unusable.
-const REPS_RANGE = { min: 1, max: 50, step: 1 };
-const TIMED_RANGE = { min: 5, max: 300, step: 5 };
+// because nudging a two-minute carry a second at a time is unusable. Both bottom
+// out at MAX_RUNG, which reads as "to failure" rather than as a magnitude.
+const REPS_RANGE = { min: MAX_RUNG, max: 50, step: 1 };
+const TIMED_RANGE = { min: MAX_RUNG, max: 300, step: 5 };
 
 const MAX_RUNGS = 10;
-
-export type RungMode = 'reps' | 'time' | 'max';
-
-/** The interval timer drives the set clock; max reps needs a press to report against. */
-const INTERVAL_LOCKED_COPY: Record<'time' | 'max', string> = {
-  time: 'Turn off the interval timer first — both drive the set clock.',
-  max: 'Turn off the interval timer first — max reps needs a Continue press to report against.',
-};
 
 /**
  * A movement's rep scheme as a ladder: each rung is a chip you tap to focus,
  * then set its value on the caliper picker below. Replaces a stack of one picker
  * per rung — the ladder reads at a glance and stays short as rungs grow.
  *
- * Max reps has no magnitude to pick: the rungs become bare set slots and the
- * runner asks for the count once each set is done.
+ * Winding a rung down past its smallest value lands on Max, so a ladder can run
+ * up to failure — [1, 2, 3, 4, 5, Max] or [0:15, 0:30, 0:45, Max].
  */
 export const LadderRepScheme = ({
   repScheme,
   timedRungs = false,
-  maxReps = false,
   intervalActive = false,
   onChangeRung,
   onRemoveRung,
   onAddRung,
-  onChangeRungMode,
+  onToggleTimed,
 }: {
   repScheme: number[];
   timedRungs?: boolean;
-  maxReps?: boolean;
   /** The interval timer and timed rungs both drive the set clock — only one may be on. */
   intervalActive?: boolean;
   onChangeRung: (rungIndex: number, value: number) => void;
   onRemoveRung: (rungIndex: number) => void;
   onAddRung: () => void;
-  onChangeRungMode: (mode: RungMode) => void;
+  onToggleTimed: (timed: boolean) => void;
 }) => {
   const [focusedRung, setFocusedRung] = useState(
     Math.max(0, repScheme.length - 1),
   );
   // Adding/removing rungs can leave the focus past the end; clamp on render.
   const focused = Math.min(focusedRung, repScheme.length - 1);
-  const mode: RungMode = maxReps ? 'max' : timedRungs ? 'time' : 'reps';
   const range = timedRungs ? TIMED_RANGE : REPS_RANGE;
-  const label = (rung: number, rungIndex: number) =>
-    maxReps
-      ? `Set ${rungIndex + 1}`
-      : timedRungs
-        ? formatRungDuration(rung)
-        : `${rung}`;
+  const label = (rung: number) => formatRungValue(rung, timedRungs);
 
   // Adding a rung focuses it (you'll want to set its value). Removing the
   // focused one hands the focus to whatever slides into its place.
@@ -80,12 +65,10 @@ export const LadderRepScheme = ({
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between gap-1">
-        <FieldLabel>
-          {maxReps ? 'Sets to failure' : timedRungs ? 'Duration' : 'Rep scheme'}
-        </FieldLabel>
+        <FieldLabel>{timedRungs ? 'Duration' : 'Rep scheme'}</FieldLabel>
         <Tabs
-          value={mode}
-          onValueChange={(value) => onChangeRungMode(value as RungMode)}
+          value={timedRungs ? 'time' : 'reps'}
+          onValueChange={(value) => onToggleTimed(value === 'time')}
         >
           <TabsList>
             <TabsTrigger size="sm" value="reps">
@@ -95,17 +78,13 @@ export const LadderRepScheme = ({
               size="sm"
               value="time"
               disabled={intervalActive}
-              title={intervalActive ? INTERVAL_LOCKED_COPY.time : undefined}
+              title={
+                intervalActive
+                  ? 'Turn off the interval timer first — both drive the set clock.'
+                  : undefined
+              }
             >
               Time
-            </TabsTrigger>
-            <TabsTrigger
-              size="sm"
-              value="max"
-              disabled={intervalActive}
-              title={intervalActive ? INTERVAL_LOCKED_COPY.max : undefined}
-            >
-              Max
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -122,9 +101,9 @@ export const LadderRepScheme = ({
             type="button"
             aria-pressed={rungIndex === focused}
             aria-label={
-              maxReps
-                ? `Set ${rungIndex + 1}, max reps`
-                : `Rung ${rungIndex + 1}, ${label(rung, rungIndex)}${
+              isMaxRung(rung)
+                ? `Rung ${rungIndex + 1}, max ${timedRungs ? 'time' : 'reps'}`
+                : `Rung ${rungIndex + 1}, ${label(rung)}${
                     timedRungs ? '' : ' reps'
                   }`
             }
@@ -136,7 +115,7 @@ export const LadderRepScheme = ({
                 : 'border-border bg-secondary text-secondary-foreground',
             )}
           >
-            {label(rung, rungIndex)}
+            {label(rung)}
           </button>
         ))}
 
@@ -152,25 +131,26 @@ export const LadderRepScheme = ({
         )}
       </div>
 
-      {maxReps ? (
-        <p className="text-center text-sm text-muted-foreground">
-          Every set runs to failure. You&apos;ll enter the reps you hit as you
-          finish each one.
-        </p>
-      ) : (
-        <ModifyCountButtons
-          {...range}
-          value={repScheme[focused]}
-          unit={timedRungs ? 'sec' : 'reps'}
-          onChange={(value) => onChangeRung(focused, value)}
-          onClickMinus={() =>
-            onChangeRung(focused, repScheme[focused] - range.step)
-          }
-          onClickPlus={() =>
-            onChangeRung(focused, repScheme[focused] + range.step)
-          }
-        />
-      )}
+      <ModifyCountButtons
+        {...range}
+        value={repScheme[focused]}
+        unit={timedRungs ? 'sec' : 'reps'}
+        onChange={(value) => onChangeRung(focused, value)}
+        onClickMinus={() =>
+          onChangeRung(focused, repScheme[focused] - range.step)
+        }
+        onClickPlus={() =>
+          onChangeRung(focused, repScheme[focused] + range.step)
+        }
+      />
+
+      <p className="text-center text-sm text-muted-foreground">
+        {isMaxRung(repScheme[focused])
+          ? timedRungs
+            ? 'Max — hold to failure, then tap Continue.'
+            : 'Max — go to failure, then log the reps you hit.'
+          : `0 = max ${timedRungs ? 'time' : 'reps'}`}
+      </p>
 
       {repScheme.length > 1 && (
         <Button
@@ -178,7 +158,7 @@ export const LadderRepScheme = ({
           className="self-center text-muted-foreground hover:text-destructive"
           onClick={handleRemoveFocusedRung}
         >
-          Remove {maxReps ? 'set' : 'rung'} {focused + 1}
+          Remove rung {focused + 1}
         </Button>
       )}
     </div>

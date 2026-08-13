@@ -13,48 +13,55 @@ const renderLadder = (overrides = {}) =>
       onChangeRung={noop}
       onRemoveRung={noop}
       onAddRung={noop}
-      onChangeRungMode={noop}
+      onToggleTimed={noop}
       {...overrides}
     />,
   );
 
-describe('LadderRepScheme — rung modes', () => {
-  test('reports the picked mode', async () => {
-    const onChangeRungMode = vi.fn();
-    renderLadder({ onChangeRungMode });
+describe('LadderRepScheme — max rungs', () => {
+  test('a 0 rung reads as Max, alongside its prescribed neighbours', () => {
+    renderLadder({ repScheme: [1, 2, 3, 0] });
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Max' }));
-
-    expect(onChangeRungMode).toHaveBeenCalledWith('max');
+    expect(
+      screen.getByRole('button', { name: 'Rung 1, 1 reps' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Rung 4, max reps' }),
+    ).toHaveTextContent('Max');
   });
 
-  test('an active interval timer locks out Time and Max', () => {
-    renderLadder({ intervalActive: true });
+  test('a timed 0 rung reads as Max, not 0:00', () => {
+    renderLadder({ repScheme: [15, 30, 0], timedRungs: true });
 
-    expect(screen.getByRole('tab', { name: 'Time' })).toBeDisabled();
-    expect(screen.getByRole('tab', { name: 'Max' })).toBeDisabled();
-    expect(screen.getByRole('tab', { name: 'Reps' })).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: 'Rung 3, max time' }),
+    ).toHaveTextContent('Max');
+    expect(
+      screen.getByRole('button', { name: 'Rung 2, 0:30' }),
+    ).toBeInTheDocument();
+  });
+
+  test('the caliper winds down to Max rather than bottoming out at 1', async () => {
+    const onChangeRung = vi.fn();
+    renderLadder({ repScheme: [1], onChangeRung });
+
+    await userEvent.click(screen.getByRole('button', { name: '- reps' }));
+
+    expect(onChangeRung).toHaveBeenCalledWith(0, 0);
+  });
+
+  test('explains what a focused max rung means', () => {
+    renderLadder({ repScheme: [0] });
+
+    expect(screen.getByText(/go to failure/i)).toBeInTheDocument();
   });
 });
 
-describe('LadderRepScheme — max reps', () => {
-  test('rungs become bare set slots with no magnitude to pick', () => {
-    renderLadder({ maxReps: true });
+describe('LadderRepScheme — rung units', () => {
+  test('an active interval timer locks out Time', () => {
+    renderLadder({ intervalActive: true });
 
-    expect(screen.getByRole('button', { name: 'Set 1, max reps' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Set 3, max reps' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^\+ reps/ })).not.toBeInTheDocument();
-  });
-
-  test('sets can still be added and removed', async () => {
-    const onAddRung = vi.fn();
-    const onRemoveRung = vi.fn();
-    renderLadder({ maxReps: true, onAddRung, onRemoveRung });
-
-    await userEvent.click(screen.getByRole('button', { name: 'Add rung' }));
-    expect(onAddRung).toHaveBeenCalled();
-
-    await userEvent.click(screen.getByRole('button', { name: /remove set 3/i }));
-    expect(onRemoveRung).toHaveBeenCalledWith(2);
+    expect(screen.getByRole('tab', { name: 'Time' })).toBeDisabled();
+    expect(screen.getByRole('tab', { name: 'Reps' })).toBeEnabled();
   });
 });
