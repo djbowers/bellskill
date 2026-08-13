@@ -12,7 +12,6 @@ import {
   MovementOptions,
   WeightTabValue,
   WeightUnit,
-  WorkoutMode,
 } from '~/types';
 import {
   SharedWeightOptions,
@@ -34,11 +33,11 @@ import { WeightUnitTabs } from './WeightUnitTabs';
 export interface MovementCardProps {
   index: number;
   movement: MovementOptions;
-  workoutMode: WorkoutMode;
-  /** For complex sets the whole card reflects the shared-weight mode. */
+  /** The workout runs off one bell, so the card reflects the shared weight. */
+  sharedBell: boolean;
   sharedWeightTabValue: WeightTabValue;
-  /** The complex set's shared weight, displayed in place of the movement's own. */
-  sharedWeights: Omit<SharedWeightOptions, 'workoutMode'>;
+  /** The shared weight, displayed in place of the movement's own. */
+  sharedWeights: Omit<SharedWeightOptions, 'workoutMode' | 'sharedBell'>;
   expanded: boolean;
   /** The interval timer is on, so timed rungs must be disabled. */
   intervalActive: boolean;
@@ -61,7 +60,7 @@ export interface MovementCardProps {
 export const MovementCard = ({
   index,
   movement,
-  workoutMode,
+  sharedBell,
   sharedWeightTabValue,
   sharedWeights,
   expanded,
@@ -80,12 +79,11 @@ export const MovementCard = ({
   onAddRung,
   onToggleTimed,
 }: MovementCardProps) => {
-  const isComplex = workoutMode === 'complex';
   const weightTabValue = getWeightTabValue(movement);
-  const activeWeightMode = isComplex ? sharedWeightTabValue : weightTabValue;
+  const activeWeightMode = sharedBell ? sharedWeightTabValue : weightTabValue;
   const named = movement.movementName.length > 0;
   const displayedMovement = resolveMovementWeights(movement, {
-    workoutMode,
+    sharedBell,
     ...sharedWeights,
   });
   const weightSummary = named
@@ -96,7 +94,7 @@ export const MovementCard = ({
         displayedMovement.weightTwoUnit,
       )
     : null;
-  const showLoad = !isComplex && weightTabValue !== 'none';
+  const showLoad = !sharedBell && weightTabValue !== 'none';
 
   return (
     <Card
@@ -120,7 +118,7 @@ export const MovementCard = ({
               onWeightModeChange={onChangeWeightTab}
               showWeightModeTabs={false}
               weightModeHint={
-                isComplex
+                sharedBell
                   ? `Using shared weight: ${WEIGHT_MODE_LABELS[sharedWeightTabValue]}`
                   : null
               }
@@ -180,7 +178,7 @@ export const MovementCard = ({
         <div className="flex flex-col gap-1.5 px-1.5 pb-1.5">
           <div className="h-px bg-border" />
 
-          {!isComplex && (
+          {!sharedBell && (
             <div>
               <FieldLabel className="mb-0.5">Weight</FieldLabel>
               <WeightModeTabs

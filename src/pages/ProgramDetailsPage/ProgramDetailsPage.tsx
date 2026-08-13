@@ -38,7 +38,7 @@ import {
 
 import {
   deriveMovementWeights,
-  isComplexProgram,
+  isSharedBellProgram,
 } from './utils/deriveMovementWeights';
 import {
   StartingWeight,
@@ -178,7 +178,7 @@ export const ProgramDetailsPage = () => {
     null,
   );
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
-  // Complex-set path: one shared bell pair for the whole complex.
+  // Shared-bell path: one bell pair for every movement in the session.
   const [sharedWeightOneValue, setSharedWeightOneValue] = useState<
     number | null
   >(DEFAULT_STARTING_WEIGHT_VALUE);
@@ -189,7 +189,7 @@ export const ProgramDetailsPage = () => {
   >(DEFAULT_STARTING_WEIGHT_VALUE);
   const [sharedWeightTwoUnit, setSharedWeightTwoUnit] =
     useState<WeightUnit | null>(DEFAULT_WEIGHT_UNIT);
-  // Non-complex path: chosen starting weight per movement, keyed by name.
+  // Per-movement path: chosen starting weight per movement, keyed by name.
   const [movementWeights, setMovementWeights] = useState<
     Record<string, StartingWeight>
   >({});
@@ -213,11 +213,11 @@ export const ProgramDetailsPage = () => {
   // for a program you already configured in the builder.
   const isOwnProgram = !!program && program.ownerId === userId;
 
-  // A complex program (ABC) uses one bell pair for the whole complex, so it
+  // A shared-bell program (an ABC, say) uses one bell pair throughout, so it
   // keeps a single shared-weight picker; every other program gets a control per
   // movement, each sized to that movement's own config.
-  const complex = useMemo(
-    () => (sessions ? isComplexProgram(sessions) : false),
+  const sharedBell = useMemo(
+    () => (sessions ? isSharedBellProgram(sessions) : false),
     [sessions],
   );
   const movementControls = useMemo(
@@ -234,7 +234,7 @@ export const ProgramDetailsPage = () => {
 
   useEffect(() => {
     if (!sessions || seeded) return;
-    if (complex) {
+    if (sharedBell) {
       const derived = deriveStartingWeight(sessions);
       setSharedWeightOneValue(derived.sharedWeightOneValue);
       setSharedWeightOneUnit(derived.sharedWeightOneUnit);
@@ -251,7 +251,7 @@ export const ProgramDetailsPage = () => {
       );
     }
     setSeeded(true);
-  }, [sessions, seeded, complex, movementControls]);
+  }, [sessions, seeded, sharedBell, movementControls]);
 
   useEffect(() => {
     if (isOwnProgram && id) navigate(`/programs/${id}`, { replace: true });
@@ -312,7 +312,7 @@ export const ProgramDetailsPage = () => {
   // queue-for-later (a queued clone bakes the same weights now).
   const enrollmentConfig = () => ({
     autoRepeat,
-    ...(complex
+    ...(sharedBell
       ? {
           sharedWeightOneValue,
           sharedWeightOneUnit,
@@ -379,7 +379,7 @@ export const ProgramDetailsPage = () => {
   // The kg/lb switch is hoisted out of the individual bell controls: one unit
   // for the screen, applied to every slot that carries a weight at all.
   const displayUnit: WeightUnit =
-    (complex
+    (sharedBell
       ? sharedWeightOneUnit
       : movementControls
           .map((control) => movementWeights[control.movementName])
@@ -538,9 +538,9 @@ export const ProgramDetailsPage = () => {
 
           {!seeded && <p className="text-sm text-muted-foreground">Loading…</p>}
 
-          {/* Complex sets share one bell pair for the whole complex, so a single
+          {/* A shared-bell program uses one bell pair throughout, so a single
               picker; every other program gets one control per movement. */}
-          {seeded && complex && (
+          {seeded && sharedBell && (
             <WeightSlots
               weight={workingWeight}
               onChange={handleChangeWorkingWeight}
@@ -550,7 +550,7 @@ export const ProgramDetailsPage = () => {
           )}
 
           {seeded &&
-            !complex &&
+            !sharedBell &&
             movementControls.map((control) => (
               <div
                 key={control.movementName}

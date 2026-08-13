@@ -20,6 +20,7 @@ const baseWorkoutLog = (overrides: Partial<WorkoutLog> = {}): WorkoutLog => ({
   sharedWeightTwoValue: null,
   startedAt: new Date('2026-01-01T10:00:00.000Z'),
   workoutMode: 'circuit',
+  sharedBell: false,
   title: 'Morning swings',
   preWorkoutNotes: null,
   workoutGoal: 5,
@@ -49,6 +50,7 @@ describe('workoutLogToWorkoutOptions', () => {
 
     expect(result).toEqual({
       workoutMode: 'circuit',
+      sharedBell: false,
       intervalTimer: 0,
       restTimer: 60,
       movements: [
@@ -106,6 +108,7 @@ describe('workoutLogToWorkoutOptions', () => {
     const result = workoutLogToWorkoutOptions(
       baseWorkoutLog({
         workoutMode: 'complex',
+        sharedBell: false,
         sharedWeightOneUnit: 'kilograms',
         sharedWeightOneValue: 24,
       }),

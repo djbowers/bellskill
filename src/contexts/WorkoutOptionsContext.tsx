@@ -15,6 +15,7 @@ export const DEFAULT_MOVEMENT_OPTIONS: MovementOptions = {
 // eslint-disable-next-line react-refresh/only-export-components -- default-options constant is intentionally co-located with its Provider; splitting the module is out of scope for the lint pass
 export const DEFAULT_WORKOUT_OPTIONS: WorkoutOptions = {
   workoutMode: DEFAULT_WORKOUT_MODE,
+  sharedBell: false,
   intervalTimer: 0,
   movements: [{ ...DEFAULT_MOVEMENT_OPTIONS }],
   restTimer: 0,

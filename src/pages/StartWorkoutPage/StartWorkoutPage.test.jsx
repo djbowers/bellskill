@@ -106,6 +106,11 @@ const enterBuildMode = async () =>
 const selectMode = (name) =>
   userEvent.click(screen.getByRole('tab', { name }));
 
+const sharedBellToggle = () =>
+  screen.getByRole('button', { name: /^Shared Bell,/ });
+
+const toggleSharedBell = () => userEvent.click(sharedBellToggle());
+
 describe('start workout page', () => {
   let startWorkout;
 
@@ -705,18 +710,52 @@ describe('Complex Mode', () => {
     expect(screen.getAllByText('Rep scheme')).toHaveLength(2);
   });
 
-  test('leaving Complex hides shared weight section and restores per-movement weight sections', async () => {
+  test('leaving Complex keeps the shared bell, which the toggle then releases', async () => {
     await selectMode('Complex');
     expect(
       screen.getByRole('heading', { name: 'Shared Weight' }),
     ).toBeInTheDocument();
 
+    // The bell is its own axis now: changing the arrangement must not throw away
+    // a weight the user just dialled in.
     await selectMode('Circuit');
+    expect(
+      screen.getByRole('heading', { name: 'Shared Weight' }),
+    ).toBeInTheDocument();
+
+    await toggleSharedBell();
 
     expect(
       screen.queryByRole('heading', { name: 'Shared Weight' }),
     ).not.toBeInTheDocument();
     expect(screen.getByText('Load')).toBeInTheDocument();
+  });
+
+  test('Complex locks the shared bell on', async () => {
+    await selectMode('Complex');
+
+    expect(sharedBellToggle()).toBeDisabled();
+    expect(sharedBellToggle()).toHaveAttribute('aria-pressed', 'true');
+    // Reads as locked, not merely on — there is no hover affordance on touch.
+    expect(
+      screen.getByRole('button', { name: 'Shared Bell, locked' }),
+    ).toBeInTheDocument();
+  });
+
+  test('a circuit can run off one shared bell', async () => {
+    await toggleSharedBell();
+    await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
+    await userEvent.click(screen.getByRole('button', { name: /Start/i }));
+
+    const options = startWorkout.mock.calls[0][0];
+    expect(options.workoutMode).toBe('circuit');
+    expect(options.sharedBell).toBe(true);
+    // The whole point: the shared weight lands on every movement, so volume
+    // accumulation and movement_logs can't disagree.
+    options.movements.forEach((movement) => {
+      expect(movement.weightOneValue).toBe(options.sharedWeightOneValue);
+      expect(movement.weightOneUnit).toBe(options.sharedWeightOneUnit);
+    });
   });
 
   test("startWorkout is called with workoutMode: 'complex' and shared weight fields when Complex is active", async () => {
@@ -770,6 +809,7 @@ describe('Complex Mode', () => {
     expect(sharedWeight).not.toBe(ownWeight);
 
     await selectMode('Circuit');
+    await toggleSharedBell();
 
     expect(screen.getByText(ownWeight)).toBeInTheDocument();
   });

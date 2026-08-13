@@ -38,7 +38,7 @@ const noop = () => {};
 const baseProps: MovementCardProps = {
   index: 0,
   movement,
-  workoutMode: 'circuit',
+  sharedBell: false,
   sharedWeightTabValue: '2h',
   sharedWeights: {
     sharedWeightOneValue: 24,
@@ -98,24 +98,24 @@ describe('MovementCard weight display', () => {
   });
 
   test('shows the shared weight instead of the movement own when complex', () => {
-    renderCard({ workoutMode: 'complex' });
+    renderCard({ sharedBell: true });
 
     expect(screen.getByText('24 kg (2h)')).toBeInTheDocument();
     expect(screen.queryByText('16 kg (2h)')).not.toBeInTheDocument();
   });
 
   test('collapsed chips track the shared weight when complex', () => {
-    renderCard({ workoutMode: 'complex', expanded: false });
+    renderCard({ sharedBell: true, expanded: false });
 
     expect(screen.getByText('24 kg')).toBeInTheDocument();
     expect(screen.queryByText('16 kg')).not.toBeInTheDocument();
   });
 
-  test('toggling complex off restores the movement own weight', () => {
-    const { rerender } = renderCard({ workoutMode: 'complex' });
+  test('turning the shared bell off restores the movement own weight', () => {
+    const { rerender } = renderCard({ sharedBell: true });
     expect(screen.getByText('24 kg (2h)')).toBeInTheDocument();
 
-    rerender(<MovementCard {...baseProps} workoutMode="circuit" />);
+    rerender(<MovementCard {...baseProps} sharedBell={false} />);
 
     expect(screen.getByText('16 kg (2h)')).toBeInTheDocument();
   });

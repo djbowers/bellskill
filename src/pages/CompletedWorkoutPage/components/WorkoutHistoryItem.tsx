@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import { MovementLog, WeightUnit, WorkoutMode } from '~/types';
+import { usesSharedBell } from '~/utils';
 
 import {
   getDisplayDate,
@@ -25,6 +26,7 @@ import { LinkMovementDialog } from './LinkMovementDialog';
 export interface WorkoutHistoryItemProps {
   completedAt: Date;
   workoutMode: WorkoutMode;
+  sharedBell: boolean;
   intervalTimer: number;
   movementLogs: MovementLog[];
   movementLogsLoading: boolean;
@@ -44,6 +46,7 @@ export interface WorkoutHistoryItemProps {
 export const WorkoutHistoryItem = ({
   completedAt,
   workoutMode,
+  sharedBell: sharedBellProp,
   intervalTimer,
   movementLogs,
   movementLogsLoading,
@@ -62,7 +65,7 @@ export const WorkoutHistoryItem = ({
   const { explore } = useFeatures();
   const displayDate = getDisplayDate(completedAt);
   const timeRange = getTimeRange(startedAt, completedAt);
-  const isComplexSet = workoutMode === 'complex';
+  const sharedBell = usesSharedBell({ workoutMode, sharedBell: sharedBellProp });
   const sharedWeights = resolveSharedWeights(
     sharedWeightOneValue,
     sharedWeightOneUnit,
@@ -77,7 +80,9 @@ export const WorkoutHistoryItem = ({
         <CardTitle className="flex items-baseline justify-between gap-1">
           <div className="flex items-baseline gap-1">
             {displayDate}
-            {isComplexSet && <Badge variant="secondary">Complex</Badge>}
+            {workoutMode === 'complex' && (
+              <Badge variant="secondary">Complex</Badge>
+            )}
           </div>
           <CardDescription className="text-xs">{timeRange}</CardDescription>
         </CardTitle>
@@ -124,7 +129,7 @@ export const WorkoutHistoryItem = ({
         </div>
       ) : (
         <>
-          {isComplexSet && (
+          {sharedBell && (
             <CardContent>
               <CardDescription id="shared-weight">
                 Shared Weight
@@ -142,7 +147,7 @@ export const WorkoutHistoryItem = ({
           {movementLogs.map((movement, index) => (
             <CardContent key={movement.id}>
               <div
-                className={`grid gap-2 ${isComplexSet ? 'grid-cols-2' : 'grid-cols-3'}`}
+                className={`grid gap-2 ${sharedBell ? 'grid-cols-2' : 'grid-cols-3'}`}
               >
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <CardDescription>Movement #{index + 1}</CardDescription>
@@ -168,7 +173,7 @@ export const WorkoutHistoryItem = ({
                           workoutLogId={workoutLogId}
                           movementLog={movement}
                           movementIndex={index}
-                          workoutMode={workoutMode}
+                          sharedBell={sharedBell}
                           sharedWeights={sharedWeights}
                         />
                       )}
@@ -176,7 +181,7 @@ export const WorkoutHistoryItem = ({
                   </div>
                 </div>
 
-                {!isComplexSet && (
+                {!sharedBell && (
                   <div className="flex flex-col gap-0.5 text-right">
                     <CardDescription id="weights">Weights</CardDescription>
                     <div aria-labelledby="weights">
@@ -199,7 +204,7 @@ export const WorkoutHistoryItem = ({
                   <div aria-labelledby="rep-scheme">
                     {getRepSchemeDisplayValue(
                       movement.repScheme,
-                      isComplexSet
+                      sharedBell
                         ? [
                             sharedWeights.weightOneValue,
                             sharedWeights.weightTwoValue,

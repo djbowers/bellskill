@@ -64,6 +64,8 @@ interface WorkoutLogInsert {
   started_at: string;
   completed_at?: string;
   complex_set?: boolean;
+  workout_mode?: string | null;
+  shared_bell?: boolean | null;
   shared_weight_one_value?: number | null;
   shared_weight_one_unit?: 'kilograms' | 'pounds' | null;
   shared_weight_two_value?: number | null;
@@ -356,6 +358,47 @@ test.describe('pattern_debt_movements RPC', () => {
       user.token,
     );
 
+    // ── Fixture 3b: circuit + shared bell — the axes are independent now, ──
+    // and volume must follow the shared bell rather than the arrangement.
+    const sharedBellWorkout = await insertWorkoutLog(
+      {
+        movements: ['Kettlebell Front Squat'],
+        workout_goal_units: 'rounds',
+        workout_goal: 1,
+        completed_rounds: 1,
+        completed_reps: 4,
+        completed_rungs: 1,
+        rep_scheme: [4],
+        started_at: isoDaysAgo(1),
+        completed_at: isoDaysAgo(1),
+        workout_mode: 'circuit',
+        shared_bell: true,
+        complex_set: false,
+        shared_weight_one_value: 10,
+        shared_weight_one_unit: 'kilograms',
+        shared_weight_two_value: null,
+        shared_weight_two_unit: null,
+        user_id: user.uid,
+      },
+      user.token,
+    );
+    await insertMovementLog(
+      {
+        movement_name: 'Kettlebell Front Squat',
+        rep_scheme: [4],
+        timed_rungs: false,
+        // Stale per-movement weight the RPC must ignore in favour of the bell.
+        weight_one_value: 99,
+        weight_one_unit: 'kilograms',
+        weight_two_value: null,
+        weight_two_unit: null,
+        workout_log_id: sharedBellWorkout.id,
+        user_id: user.uid,
+        created_at: isoDaysAgo(1),
+      },
+      user.token,
+    );
+
     // ── Fixture 4: timed_rungs — recency/sets only, zero reps/volume ───────
     const timedWorkout = await insertWorkoutLog(
       {
@@ -481,6 +524,12 @@ test.describe('pattern_debt_movements RPC', () => {
     const complexRow = findRow(rows, 'Double Kettlebell Clean');
     expect(complexRow.total_reps).toBe(3);
     expect(complexRow.total_volume_kg).toBe(120);
+
+    // 3b. Circuit run off one bell: volume reads the shared 10 kg, not the
+    //     stale 99 kg. Before the axes split this row scored 396 kg.
+    const sharedBellRow = findRow(rows, 'Kettlebell Front Squat');
+    expect(sharedBellRow.total_reps).toBe(4);
+    expect(sharedBellRow.total_volume_kg).toBe(40);
 
     // 4. Timed rungs: recency/sets only, zero reps/volume.
     const timedRow = findRow(rows, 'Plank');

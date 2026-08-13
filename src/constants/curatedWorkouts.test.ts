@@ -94,6 +94,7 @@ describe('CURATED_WORKOUTS', () => {
 
     expect(swing?.workoutOptions).toEqual({
       workoutMode: 'circuit',
+      sharedBell: false,
       intervalTimer: 0,
       restTimer: 60,
       movements: [

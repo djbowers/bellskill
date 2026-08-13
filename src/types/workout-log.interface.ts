@@ -21,6 +21,7 @@ export interface WorkoutLog {
   sharedWeightTwoValue: number | null;
   startedAt: Date;
   workoutMode: WorkoutMode;
+  sharedBell: boolean;
   title: string | null;
   preWorkoutNotes: string | null;
   workoutGoal: number;

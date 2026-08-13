@@ -81,19 +81,8 @@ export const ProgramComplete: Story = {
   ),
 };
 
-/** No active program: the quick-start anchor, with a one-tap repeat. */
+/** No active program: the quick-start anchor. */
 export const QuickStart: Story = {
-  render: () => (
-    <StartWorkoutHero
-      variant="quickStart"
-      onBuildCustom={() => {}}
-      onRepeatLast={() => {}}
-    />
-  ),
-};
-
-/** No active program and nothing to repeat (a brand-new user). */
-export const QuickStartFirstTime: Story = {
   render: () => (
     <StartWorkoutHero variant="quickStart" onBuildCustom={() => {}} />
   ),

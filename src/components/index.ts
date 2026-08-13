@@ -9,6 +9,7 @@ export * from './OverflowMenu';
 export * from './PWAInstallPrompt';
 export * from './Page';
 export * from './PremiumGate';
+export * from './ProgramRecommendationPreviewDialog';
 export * from './ProgramTags';
 export * from './SafeAreaWrapper';
 export * from './Sidebar';

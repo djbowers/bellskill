@@ -20,14 +20,14 @@ import { mapProgramRow } from './program';
  * derivation. Sessions are embedded in the same query, so this stays a single
  * round-trip.
  */
-export const usePrograms = () => {
+export const usePrograms = ({ enabled = true }: { enabled?: boolean } = {}) => {
   const session = useSession();
   const userId = session?.user?.id;
 
   return useQuery({
     queryKey: [QUERIES.PROGRAMS, userId],
     queryFn: () => fetchPrograms(userId!),
-    enabled: !!userId,
+    enabled: !!userId && enabled,
   });
 };
 

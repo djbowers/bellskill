@@ -99,6 +99,7 @@ describe('mapProgramSessionRow', () => {
       workoutOptions: {
         movements: workoutOptions.movements,
         workoutMode: 'straightSets',
+        sharedBell: false,
       },
       notes: 'Go easy on the swings.',
       weightLabel: 'Deload weeks',
@@ -228,15 +229,39 @@ describe('program session workout_options JSONB', () => {
     ).toBe(workoutMode);
   });
 
+  it('prefers the new keys over the legacy pair', () => {
+    const parsed = parseSessionWorkoutOptions({
+      ...baseOptions,
+      workoutMode: 'circuit',
+      sharedBell: true,
+      complexSet: false,
+      straightSets: false,
+    });
+
+    expect(parsed.workoutMode).toBe('circuit');
+    expect(parsed.sharedBell).toBe(true);
+  });
+
+  it('derives sharedBell for a legacy complex session', () => {
+    const parsed = parseSessionWorkoutOptions({
+      ...baseOptions,
+      complexSet: true,
+      straightSets: false,
+    });
+
+    expect(parsed.sharedBell).toBe(true);
+  });
+
   it.each(['circuit', 'straightSets', 'complex'] as const)(
-    '%s is written back as the original boolean pair',
+    '%s is written back as both representations',
     (workoutMode) => {
       const stored = serializeSessionWorkoutOptions({
         ...baseOptions,
         workoutMode,
+        sharedBell: workoutMode === 'complex',
       }) as Record<string, unknown>;
 
-      expect(stored.workoutMode).toBeUndefined();
+      expect(stored.workoutMode).toBe(workoutMode);
       expect(stored.complexSet).toBe(workoutMode === 'complex');
       expect(stored.straightSets).toBe(workoutMode === 'straightSets');
       expect(parseSessionWorkoutOptions(stored).workoutMode).toBe(workoutMode);

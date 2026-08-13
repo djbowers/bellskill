@@ -2,6 +2,7 @@ import {
   ClockIcon,
   DocumentTextIcon,
   PauseIcon,
+  ScaleIcon,
 } from '@heroicons/react/24/outline';
 import { ComponentType, SVGProps } from 'react';
 
@@ -11,6 +12,7 @@ const ICONS = {
   notes: DocumentTextIcon,
   interval: ClockIcon,
   rest: PauseIcon,
+  'shared-bell': ScaleIcon,
 } as const;
 
 export type WorkoutAddonId = keyof typeof ICONS;
@@ -31,12 +33,15 @@ export const WorkoutAddonToggle = ({
   onToggle: () => void;
 }) => {
   const Icon = ICONS[id] as ComponentType<SVGProps<SVGSVGElement>>;
+  // A forced-on addon reads as 'locked', not 'on': the dimming that marks the
+  // other disabled chips would misread as off, and `title` never fires on touch.
+  const state = disabled && isOn ? 'locked' : isOn ? 'on' : 'off';
 
   return (
     <button
       type="button"
       aria-pressed={isOn}
-      aria-label={`${label}, ${isOn ? 'on' : 'off'}`}
+      aria-label={`${label}, ${state}`}
       disabled={disabled}
       title={disabled ? disabledReason : undefined}
       onClick={onToggle}
@@ -45,7 +50,8 @@ export const WorkoutAddonToggle = ({
         isOn
           ? 'border-primary/40 bg-secondary ring-1 ring-primary/30'
           : 'border-border',
-        disabled && 'cursor-not-allowed opacity-40',
+        disabled && 'cursor-not-allowed',
+        disabled && !isOn && 'opacity-40',
       )}
     >
       <Icon className="h-2.5 w-2.5 shrink-0 text-foreground" aria-hidden />
@@ -53,7 +59,7 @@ export const WorkoutAddonToggle = ({
         {label}
       </span>
       <span className="text-[10px] leading-tight text-muted-foreground">
-        {isOn ? 'on' : 'off'}
+        {state}
       </span>
     </button>
   );

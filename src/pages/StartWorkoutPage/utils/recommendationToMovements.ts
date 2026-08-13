@@ -93,6 +93,7 @@ export const recommendationToWorkoutOptions = (
   catalog?: RecommendationCatalog,
 ): Omit<WorkoutOptions, 'startedAt'> => ({
   workoutMode: FORMAT_WORKOUT_MODES[recommendation.format] ?? 'circuit',
+  sharedBell: false,
   intervalTimer: 0,
   movements: recommendationToMovements(recommendation, catalog),
   restTimer: 0,

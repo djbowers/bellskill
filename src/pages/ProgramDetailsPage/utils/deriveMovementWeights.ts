@@ -1,5 +1,5 @@
 import { ProgramSession, WeightTabValue } from '~/types';
-import { getWeightTabValue } from '~/utils';
+import { getWeightTabValue, usesSharedBell } from '~/utils';
 
 import { StartingWeight, weightKey } from './deriveWeightGroups';
 
@@ -32,11 +32,11 @@ const movementWeight = (movement: {
   sharedWeightTwoUnit: movement.weightTwoUnit,
 });
 
-/** True when any session is a complex set — those movements share one bell pair
- *  for the whole complex, so enrollment offers a single shared weight rather
- *  than a control per movement. */
-export const isComplexProgram = (sessions: ProgramSession[]): boolean =>
-  sessions.some((session) => session.workoutOptions.workoutMode === 'complex');
+/** True when any session runs off a shared bell — those movements share one bell
+ *  pair for the whole session, so enrollment offers a single shared weight
+ *  rather than a control per movement. */
+export const isSharedBellProgram = (sessions: ProgramSession[]): boolean =>
+  sessions.some((session) => usesSharedBell(session.workoutOptions));
 
 /**
  * One weight control per distinct movement (by name), in first-appearance order.

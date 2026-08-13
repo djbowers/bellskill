@@ -19,6 +19,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
     estimatedMinutes: 10,
     workoutOptions: {
       workoutMode: 'circuit',
+      sharedBell: false,
       intervalTimer: 0,
       restTimer: 60,
       movements: [
@@ -48,6 +49,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
     estimatedMinutes: 8,
     workoutOptions: {
       workoutMode: 'circuit',
+      sharedBell: false,
       intervalTimer: 0,
       restTimer: 60,
       movements: [
@@ -78,6 +80,7 @@ export const CURATED_WORKOUTS: CuratedWorkout[] = [
     estimatedMinutes: 8,
     workoutOptions: {
       workoutMode: 'circuit',
+      sharedBell: false,
       intervalTimer: 0,
       restTimer: 60,
       movements: [

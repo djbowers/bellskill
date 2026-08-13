@@ -50,14 +50,9 @@ const makeWrapper = () => {
     );
 };
 
-const omitWorkoutMode = (options: Omit<WorkoutOptions, 'startedAt'>) => {
-  const stored: Partial<Omit<WorkoutOptions, 'startedAt'>> = { ...options };
-  delete stored.workoutMode;
-  return stored;
-};
-
 const workoutOptions: Omit<WorkoutOptions, 'startedAt'> = {
   workoutMode: 'circuit',
+  sharedBell: false,
   intervalTimer: 0,
   movements: [
     {
@@ -115,9 +110,9 @@ describe('useUpdateProgramSessionsForward', () => {
     expect(patchUrl).toContain('id=eq.ps-1');
     expect(patchBody).toEqual({
       title: 'Week 2 Day 1',
-      // The JSONB keeps the original boolean pair, not the app's workoutMode.
+      // The JSONB carries both representations until cached clients cycle.
       workout_options: {
-        ...omitWorkoutMode(workoutOptions),
+        ...workoutOptions,
         complexSet: false,
         straightSets: false,
       },
@@ -131,8 +126,10 @@ describe('useUpdateProgramSessionsForward', () => {
         sharedWeightOneUnit: workoutOptions.sharedWeightOneUnit,
         sharedWeightTwoValue: workoutOptions.sharedWeightTwoValue,
         sharedWeightTwoUnit: workoutOptions.sharedWeightTwoUnit,
-        // The RPC still merges the persisted booleans, so the mode is
-        // translated on the way out.
+        // Both representations forward, so a mode or shared-bell change lands
+        // on downstream sessions no matter which keys the reader prefers.
+        workoutMode: 'circuit',
+        sharedBell: false,
         complexSet: false,
         straightSets: false,
       },

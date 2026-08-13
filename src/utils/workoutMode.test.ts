@@ -1,6 +1,6 @@
 import { WorkoutMode } from '~/types';
 
-import { fromWorkoutMode, toWorkoutMode } from './workoutMode';
+import { fromWorkoutMode, toWorkoutMode, usesSharedBell } from './workoutMode';
 
 describe('toWorkoutMode', () => {
   test.each([
@@ -37,4 +37,32 @@ describe('round trip', () => {
       expect(toWorkoutMode(complexSet, straightSets)).toBe(mode);
     },
   );
+});
+
+describe('usesSharedBell', () => {
+  test.each([
+    ['circuit', false, false],
+    ['straightSets', false, false],
+    ['circuit', true, true],
+    ['straightSets', true, true],
+    // Complex forces it on: the bell is never set down, so per-movement weights
+    // can't be performed.
+    ['complex', false, true],
+    ['complex', true, true],
+  ] as const)('%s + sharedBell=%s => %s', (workoutMode, sharedBell, expected) => {
+    expect(usesSharedBell({ workoutMode, sharedBell })).toBe(expected);
+  });
+
+  test('legacy options with no sharedBell key fall back to the mode', () => {
+    expect(usesSharedBell({ workoutMode: 'complex' })).toBe(true);
+    expect(usesSharedBell({ workoutMode: 'circuit' })).toBe(false);
+    expect(usesSharedBell({ workoutMode: 'complex', sharedBell: null })).toBe(
+      true,
+    );
+  });
+
+  test('the axis alone is enough — no mode required', () => {
+    expect(usesSharedBell({ sharedBell: true })).toBe(true);
+    expect(usesSharedBell({})).toBe(false);
+  });
 });

@@ -7,6 +7,8 @@ export interface WorkoutOptions {
   intervalTimer: number; // seconds
   movements: MovementOptions[];
   workoutMode: WorkoutMode;
+  /** One shared bell pair for every movement. Forced on by `complex`. */
+  sharedBell: boolean;
   restTimer: number; // seconds
   sharedWeightOneUnit: WeightUnit | null;
   sharedWeightOneValue: number | null;
