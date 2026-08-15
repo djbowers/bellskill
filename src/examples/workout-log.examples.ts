@@ -33,6 +33,7 @@ export class ExampleWorkoutLog implements WorkoutLog {
   workout_goal: number;
   workout_goal_units: WorkoutGoalUnits;
   post_workout_notes: string | null;
+  program_session_id: string | null;
 
   bells: number[];
   is_one_handed: boolean | null;
@@ -70,6 +71,7 @@ export class ExampleWorkoutLog implements WorkoutLog {
     workout_goal = 20,
     workout_goal_units = 'minutes',
     post_workout_notes = null,
+    program_session_id = null,
   }: Partial<WorkoutLog>) {
     this.bells = bells;
     this.is_one_handed = is_one_handed;
@@ -106,6 +108,7 @@ export class ExampleWorkoutLog implements WorkoutLog {
     this.workout_goal = workout_goal;
     this.workout_goal_units = workout_goal_units;
     this.post_workout_notes = post_workout_notes;
+    this.program_session_id = program_session_id;
     id++;
   }
 }

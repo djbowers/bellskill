@@ -765,6 +765,7 @@ export type Database = {
           movements: string[]
           post_workout_notes: string | null
           pre_workout_notes: string | null
+          program_session_id: string | null
           rep_scheme: number[]
           rest_timer: number
           rpe: Database["public"]["Enums"]["RPE"] | null
@@ -801,6 +802,7 @@ export type Database = {
           movements: string[]
           post_workout_notes?: string | null
           pre_workout_notes?: string | null
+          program_session_id?: string | null
           rep_scheme?: number[]
           rest_timer?: number
           rpe?: Database["public"]["Enums"]["RPE"] | null
@@ -837,6 +839,7 @@ export type Database = {
           movements?: string[]
           post_workout_notes?: string | null
           pre_workout_notes?: string | null
+          program_session_id?: string | null
           rep_scheme?: number[]
           rest_timer?: number
           rpe?: Database["public"]["Enums"]["RPE"] | null
@@ -860,11 +863,57 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "workout_logs_program_session_id_fkey"
+            columns: ["program_session_id"]
+            isOneToOne: false
+            referencedRelation: "program_sessions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "workout_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_activation"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      workout_round_splits: {
+        Row: {
+          elapsed_ms: number
+          id: number
+          round_index: number
+          user_id: string
+          workout_log_id: number
+        }
+        Insert: {
+          elapsed_ms: number
+          id?: number
+          round_index: number
+          user_id: string
+          workout_log_id: number
+        }
+        Update: {
+          elapsed_ms?: number
+          id?: number
+          round_index?: number
+          user_id?: string
+          workout_log_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_round_splits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "workout_round_splits_workout_log_id_fkey"
+            columns: ["workout_log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_logs"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1005,6 +1054,55 @@ export type Database = {
           flag_key: string
           variant: string
         }[]
+      }
+      get_ghost_workout_log: {
+        Args: {
+          p_exclude_workout_log_id?: number
+          p_program_session_id: string
+        }
+        Returns: {
+          bells: number[]
+          completed_at: string
+          completed_reps: number
+          completed_rounds: number
+          completed_rungs: number
+          completed_sides: number | null
+          completed_volume: number | null
+          complex_set: boolean
+          id: number
+          interval_timer: number
+          is_one_handed: boolean | null
+          movements: string[]
+          post_workout_notes: string | null
+          pre_workout_notes: string | null
+          program_session_id: string | null
+          rep_scheme: number[]
+          rest_timer: number
+          rpe: Database["public"]["Enums"]["RPE"] | null
+          shared_bell: boolean | null
+          shared_weight_one_unit:
+            | Database["public"]["Enums"]["weight_unit"]
+            | null
+          shared_weight_one_value: number | null
+          shared_weight_two_unit:
+            | Database["public"]["Enums"]["weight_unit"]
+            | null
+          shared_weight_two_value: number | null
+          started_at: string
+          straight_sets: boolean
+          title: string | null
+          unit: string | null
+          user_id: string
+          workout_goal: number
+          workout_goal_units: Database["public"]["Enums"]["workout_goal_units"]
+          workout_mode: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "workout_logs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_spotify_connection_status: {
         Args: never

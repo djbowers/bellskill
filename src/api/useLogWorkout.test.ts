@@ -78,6 +78,7 @@ const logWorkoutInput = {
   completedRungs: 1,
   completedSides: 2,
   completedVolume: 120,
+  roundSplits: [],
 };
 
 describe('useLogWorkout — workout mode persistence', () => {

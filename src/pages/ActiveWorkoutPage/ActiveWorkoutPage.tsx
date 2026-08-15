@@ -1,12 +1,18 @@
+import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { AnalyticsEvent, trackEvent, useLogWorkout } from '~/api';
+import {
+  AnalyticsEvent,
+  trackEvent,
+  useGhostSession,
+  useLogWorkout,
+} from '~/api';
 import { Page, SpotifyMiniPlayer } from '~/components';
 import { ConfirmDialog } from '~/components/ConfirmDialog';
 import { useProgramSession, useSession, useWorkoutOptions } from '~/contexts';
 import { useCountdownTimer, useFeatures } from '~/hooks';
-import { MovementOptions } from '~/types';
+import { MovementOptions, RoundSplit } from '~/types';
 import {
   formatRungDuration,
   isMaxRung,
@@ -19,12 +25,14 @@ import {
   ActiveWorkoutControls,
   ComplexMovementDisplay,
   CurrentMovement,
+  GhostRail,
+  LapDeltaPill,
   RepsCompletedDialog,
   WorkoutProgress,
   WorkoutSummary,
 } from './components';
 import { useRequestWakeLock, useSetStopwatch } from './hooks';
-import { getSetProgress } from './utils';
+import { getLapDelta, getRailScale, getSetProgress } from './utils';
 
 const LB_TO_KG = 0.453592;
 
@@ -55,6 +63,7 @@ export const ActiveWorkoutPage = ({
       preWorkoutNotes,
       workoutGoal,
       workoutGoalUnits,
+      previousWorkoutLogId,
     },
   ] = useWorkoutOptions();
 
@@ -66,7 +75,7 @@ export const ActiveWorkoutPage = ({
 
   const navigate = useNavigate();
   const requestWakeLock = useRequestWakeLock();
-  const [, setProgramSession] = useProgramSession();
+  const [programSession, setProgramSession] = useProgramSession();
   const session = useSession();
   const userId = session?.user?.id;
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -156,6 +165,24 @@ export const ActiveWorkoutPage = ({
     Record<number, number>
   >({});
 
+  // Lap times for this session, written once at finish. A ref so stamping a
+  // round costs no render mid-set.
+  const roundSplitsRef = useRef<RoundSplit[]>([]);
+  // The round just finished, for the ghost pill. Null until the first round
+  // lands, and again once the pill has had its say.
+  const [lastLap, setLastLap] = useState<{
+    roundIndex: number;
+    lapMs: number;
+  } | null>(null);
+
+  // Ghost pacing: the previous run of this workout, if there is one. Resolves
+  // after the page mounts — nothing needs it until the first round lands, and
+  // waiting on it would put a network round trip in front of the Start button.
+  const { data: ghost } = useGhostSession({
+    previousWorkoutLogId,
+    programSessionId: programSession?.programSessionId,
+  });
+
   const [isMirrorSet, setIsMirrorSet] = useState<boolean>(false); // for one-handed movements and mixed weights
   const [isEffectActive, setIsEffectActive] = useState<boolean>(false);
   const [isRestActive, setIsRestActive] = useState<boolean>(false);
@@ -204,14 +231,17 @@ export const ActiveWorkoutPage = ({
   // running — not during the opening countdown, a pause, or rest.
   const isMaxTimedRung =
     currentMovement.timedRungs === true && isMaxRung(currentRung);
-  const { elapsedSeconds, elapsedMilliseconds, reset: resetSetStopwatch } =
-    useSetStopwatch({
-      running:
-        isMaxTimedRung &&
-        !workoutTimerPaused &&
-        !isRestActive &&
-        !isCountdownActive,
-    });
+  const {
+    elapsedSeconds,
+    elapsedMilliseconds,
+    reset: resetSetStopwatch,
+  } = useSetStopwatch({
+    running:
+      isMaxTimedRung &&
+      !workoutTimerPaused &&
+      !isRestActive &&
+      !isCountdownActive,
+  });
 
   const primaryWeightSide = isMirrorSet ? 'right' : 'left'; // todo: make primary weight side configurable
 
@@ -381,7 +411,32 @@ export const ActiveWorkoutPage = ({
 
   const incrementSides = () => setCompletedSides((prev) => prev + 1);
 
-  const incrementRounds = () => setCompletedRounds((prev) => prev + 1);
+  /**
+   * Stamps the lap time for the round just finished, then advances the counter.
+   *
+   * Every mode routes its round boundary through here — circuit via
+   * goToNextRung, complex via goToNextSetComplex, straight sets via
+   * goToNextRungStraight — so this is the one place a round ends.
+   *
+   * The index comes from the ref's own length rather than `completedRounds`,
+   * which may not have committed yet; the ref is the single writer, so it can
+   * never disagree with itself. Splits live in a ref and not state because a
+   * lap time changes nothing on screen until the round after it.
+   */
+  const incrementRounds = () => {
+    if (startedAt) {
+      const elapsedMs = Date.now() - startedAt.getTime();
+      const previousElapsedMs =
+        roundSplitsRef.current[roundSplitsRef.current.length - 1]?.elapsedMs ??
+        0;
+      const roundIndex = roundSplitsRef.current.length;
+
+      roundSplitsRef.current.push({ roundIndex, elapsedMs });
+      setLastLap({ roundIndex, lapMs: elapsedMs - previousElapsedMs });
+    }
+
+    setCompletedRounds((prev) => prev + 1);
+  };
 
   const incrementVolume = (reported?: Record<number, number>) =>
     setCompletedVolume(
@@ -579,6 +634,7 @@ export const ActiveWorkoutPage = ({
       completedRungs,
       completedSides,
       completedVolume: Math.round(completedVolume),
+      roundSplits: roundSplitsRef.current,
     });
   };
 
@@ -619,8 +675,7 @@ export const ActiveWorkoutPage = ({
   // A max rep rung can't be completed by a bare press — there is no
   // prescription to assume, so the dialog is the only way through.
   const requiresRepsPrompt = promptMovementIndexes.some(isMaxRepRung);
-  const canAdjustReps =
-    promptMovementIndexes.length > 0 && !requiresRepsPrompt;
+  const canAdjustReps = promptMovementIndexes.length > 0 && !requiresRepsPrompt;
 
   const promptMovements = promptMovementIndexes.map((index) => {
     const movement = movements[index];
@@ -784,94 +839,126 @@ export const ActiveWorkoutPage = ({
     [countdownRemainingMilliseconds],
   );
 
+  const lapDeltaMs =
+    ghost && lastLap
+      ? getLapDelta(ghost, lastLap.roundIndex, lastLap.lapMs)
+      : null;
+
   return (
     <Page>
-      <WorkoutProgress
-        onClickCancel={() => setCancelDialogOpen(true)}
-        completedRounds={completedRounds}
-        completedVolume={completedVolume}
-        formattedTimeRemaining={formattedTimeRemaining}
-        handleClickPause={handleClickPause}
-        remainingMilliseconds={remainingMilliseconds}
-        completedSets={setProgress?.completedSets}
-        totalSets={setProgress?.totalSets}
-        workoutGoal={workoutGoal}
-        workoutGoalUnits={workoutGoalUnits}
-        workoutTimerPaused={workoutTimerPaused}
-      />
+      {/* The rail is absolutely positioned, so it needs a positioned parent and
+          room to its left. Both only exist when there is a ghost, leaving the
+          markup of an unraced workout exactly as it was. */}
+      <div
+        className={clsx(
+          'flex flex-col gap-2',
+          ghost && startedAt && 'relative pl-2',
+        )}
+      >
+        {ghost && startedAt && (
+          <GhostRail
+            ghost={ghost}
+            totalRounds={getRailScale({
+              workoutGoal,
+              workoutGoalUnits,
+              ghost,
+            })}
+            completedRounds={completedRounds}
+            startedAt={startedAt}
+          />
+        )}
 
-      {isComplex ? (
-        <ComplexMovementDisplay
-          currentRound={currentRound}
-          currentSide={currentSide}
-          movements={movements}
-          rungIndex={currentMovementRungIndex}
-          sharedWeightTwoUnit={sharedWeightTwoUnit}
-          sharedWeightTwoValue={sharedWeightTwoValue}
-          sharedWeightUnit={sharedWeightOneUnit}
-          sharedWeightValue={sharedWeightOneValue}
-          totalSides={isSingleArmComplex ? totalSides : 1}
-        />
-      ) : (
-        <CurrentMovement
-          currentMovement={currentMovement}
-          currentRound={currentRound}
-          currentSide={currentSide}
-          isOneHanded={isOneHanded}
-          isTimedRung={isTimedRung}
-          isMaxTimedRung={isMaxTimedRung}
-          formattedElapsed={formatRungDuration(elapsedMilliseconds / 1000)}
-          leftWeightUnit={leftWeightUnit}
-          leftWeightValue={leftWeightValue}
-          repScheme={currentMovement.repScheme}
-          restRemaining={isRestActive}
-          rightWeightUnit={rightWeightUnit}
-          rightWeightValue={rightWeightValue}
-          rungIndex={currentMovementRungIndex}
-          movementIndex={currentMovementIndex}
-          totalMovements={movements.length}
-          totalRungs={isStraightSets ? currentMovementRungs : undefined}
-          totalSides={totalSides}
-          title={title}
-          preWorkoutNotes={preWorkoutNotes}
-          hasStarted={hasStarted}
-        />
-      )}
-
-      <div className="flex h-5 items-center justify-center">
-        <ActiveWorkoutControls
-          formattedCountdownRemaining={formattedCountdownRemaining}
-          formattedIntervalRemaining={formattedIntervalRemaining}
-          formattedRestRemaining={formattedRestRemaining}
-          canAdjustReps={canAdjustReps}
-          handleClickAdjustReps={openRepsPrompt}
-          handleClickContinue={handleClickContinue}
-          handleClickStart={handleClickStart}
-          formattedRungRemaining={formattedRungRemaining}
-          intervalCompletedPercentage={intervalCompletedPercentage}
-          intervalTimer={intervalTimer}
-          isComplexMode={isComplex}
-          isCountdownActive={isCountdownActive}
-          isEffectActive={isEffectActive}
-          isRestActive={isRestActive}
-          isTimedRung={isTimedRung}
-          restCompletedPercentage={restCompletedPercentage}
-          rungCompletedPercentage={rungCompletedPercentage}
-          setIsEffectActive={setIsEffectActive}
+        <WorkoutProgress
+          onClickCancel={() => setCancelDialogOpen(true)}
+          completedRounds={completedRounds}
+          completedVolume={completedVolume}
+          formattedTimeRemaining={formattedTimeRemaining}
+          handleClickPause={handleClickPause}
+          remainingMilliseconds={remainingMilliseconds}
+          completedSets={setProgress?.completedSets}
+          totalSets={setProgress?.totalSets}
+          workoutGoal={workoutGoal}
+          workoutGoalUnits={workoutGoalUnits}
           workoutTimerPaused={workoutTimerPaused}
         />
-      </div>
 
-      <WorkoutSummary
-        completedReps={completedReps}
-        completedRounds={completedRounds}
-        completedVolume={completedVolume}
-        roundsGoal={workoutGoalUnits === 'rounds' ? workoutGoal : undefined}
-        roundsLabel={isStraightSets ? 'Sets' : 'Rounds'}
-        logWorkoutLoading={logWorkoutLoading}
-        onClickFinish={handleClickFinish}
-        startedAt={startedAt ?? new Date()}
-      />
+        {isComplex ? (
+          <ComplexMovementDisplay
+            currentRound={currentRound}
+            currentSide={currentSide}
+            movements={movements}
+            rungIndex={currentMovementRungIndex}
+            sharedWeightTwoUnit={sharedWeightTwoUnit}
+            sharedWeightTwoValue={sharedWeightTwoValue}
+            sharedWeightUnit={sharedWeightOneUnit}
+            sharedWeightValue={sharedWeightOneValue}
+            totalSides={isSingleArmComplex ? totalSides : 1}
+          />
+        ) : (
+          <CurrentMovement
+            currentMovement={currentMovement}
+            currentRound={currentRound}
+            currentSide={currentSide}
+            isOneHanded={isOneHanded}
+            isTimedRung={isTimedRung}
+            isMaxTimedRung={isMaxTimedRung}
+            formattedElapsed={formatRungDuration(elapsedMilliseconds / 1000)}
+            leftWeightUnit={leftWeightUnit}
+            leftWeightValue={leftWeightValue}
+            repScheme={currentMovement.repScheme}
+            restRemaining={isRestActive}
+            rightWeightUnit={rightWeightUnit}
+            rightWeightValue={rightWeightValue}
+            rungIndex={currentMovementRungIndex}
+            movementIndex={currentMovementIndex}
+            totalMovements={movements.length}
+            totalRungs={isStraightSets ? currentMovementRungs : undefined}
+            totalSides={totalSides}
+            title={title}
+            preWorkoutNotes={preWorkoutNotes}
+            hasStarted={hasStarted}
+          />
+        )}
+
+        {lapDeltaMs !== null && lastLap && (
+          <LapDeltaPill deltaMs={lapDeltaMs} lapKey={lastLap.roundIndex} />
+        )}
+
+        <div className="flex h-5 items-center justify-center">
+          <ActiveWorkoutControls
+            formattedCountdownRemaining={formattedCountdownRemaining}
+            formattedIntervalRemaining={formattedIntervalRemaining}
+            formattedRestRemaining={formattedRestRemaining}
+            canAdjustReps={canAdjustReps}
+            handleClickAdjustReps={openRepsPrompt}
+            handleClickContinue={handleClickContinue}
+            handleClickStart={handleClickStart}
+            formattedRungRemaining={formattedRungRemaining}
+            intervalCompletedPercentage={intervalCompletedPercentage}
+            intervalTimer={intervalTimer}
+            isComplexMode={isComplex}
+            isCountdownActive={isCountdownActive}
+            isEffectActive={isEffectActive}
+            isRestActive={isRestActive}
+            isTimedRung={isTimedRung}
+            restCompletedPercentage={restCompletedPercentage}
+            rungCompletedPercentage={rungCompletedPercentage}
+            setIsEffectActive={setIsEffectActive}
+            workoutTimerPaused={workoutTimerPaused}
+          />
+        </div>
+
+        <WorkoutSummary
+          completedReps={completedReps}
+          completedRounds={completedRounds}
+          completedVolume={completedVolume}
+          roundsGoal={workoutGoalUnits === 'rounds' ? workoutGoal : undefined}
+          roundsLabel={isStraightSets ? 'Sets' : 'Rounds'}
+          logWorkoutLoading={logWorkoutLoading}
+          onClickFinish={handleClickFinish}
+          startedAt={startedAt ?? new Date()}
+        />
+      </div>
 
       <RepsCompletedDialog
         open={repsPromptOpen}
