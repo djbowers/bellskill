@@ -66,6 +66,26 @@ describe('LadderRepScheme — max rungs', () => {
   });
 });
 
+describe('LadderRepScheme — ceilings', () => {
+  test('a timed rung stops at the five-minute ceiling the validator allows', async () => {
+    const onChangeRung = vi.fn();
+    renderLadder({ repScheme: [300], timedRungs: true, onChangeRung });
+
+    await userEvent.click(screen.getByRole('button', { name: '+ sec' }));
+
+    expect(onChangeRung).toHaveBeenCalledWith(0, 300);
+  });
+
+  test('a rep rung stops at the top of its own, smaller range', async () => {
+    const onChangeRung = vi.fn();
+    renderLadder({ repScheme: [50], onChangeRung });
+
+    await userEvent.click(screen.getByRole('button', { name: '+ reps' }));
+
+    expect(onChangeRung).toHaveBeenCalledWith(0, 50);
+  });
+});
+
 describe('LadderRepScheme — rung units', () => {
   test('an active interval timer locks out Time', () => {
     renderLadder({ intervalActive: true });

@@ -173,6 +173,43 @@ describe('validateWorkout — invalid_reps', () => {
       codes(draft({ movements: [movement({ repScheme: [5, 0] })] })),
     ).not.toContain('invalid_reps');
   });
+
+  // Timed rungs hold seconds, so the rep ceiling would block a carry over 1:40.
+  test.each([[101], [120], [300]])(
+    'passes on a timed rung of %p seconds',
+    (rung: number) => {
+      expect(
+        codes(
+          draft({
+            movements: [movement({ repScheme: [60, rung], timedRungs: true })],
+          }),
+        ),
+      ).not.toContain('invalid_reps');
+    },
+  );
+
+  test.each([[301], [-1], [2.5]])(
+    'errors on a timed rung of %p seconds',
+    (rung: number) => {
+      expect(
+        codes(
+          draft({
+            movements: [movement({ repScheme: [60, rung], timedRungs: true })],
+          }),
+        ),
+      ).toContain('invalid_reps');
+    },
+  );
+
+  test('0 is still the max sentinel on a timed movement', () => {
+    expect(
+      codes(
+        draft({
+          movements: [movement({ repScheme: [60, 0], timedRungs: true })],
+        }),
+      ),
+    ).not.toContain('invalid_reps');
+  });
 });
 
 describe('validateWorkout — non_positive_weight', () => {

@@ -73,7 +73,13 @@ export interface WorkoutValidation {
   warnings: WorkoutIssue[];
 }
 
-const MAX_REP = 100;
+/**
+ * Rung ceilings, in the rung's own unit. Timed rungs hold seconds, so they run
+ * far past the rep ceiling — a five-minute carry is 300. The builder's pickers
+ * read these so the validator and the range you can dial can't drift apart.
+ */
+export const MAX_REP_RUNG = 100;
+export const MAX_TIMED_RUNG_SECONDS = 300;
 /** Generous kettlebell ceiling — absurd, but not impossible, so only a warning. */
 const MAX_PLAUSIBLE_WEIGHT_KG = 100;
 
@@ -146,18 +152,25 @@ export const validateWorkout = (draft: WorkoutDraft): WorkoutValidation => {
         message: 'This movement has an empty rep scheme — add at least one rung.',
         movementIndex,
       });
-    } else if (
+    } else {
+      const maxRungValue = movement.timedRungs
+        ? MAX_TIMED_RUNG_SECONDS
+        : MAX_REP_RUNG;
       // 0 is allowed: it is the max-rung sentinel, not a magnitude.
-      movement.repScheme.some(
-        (rung) => !Number.isInteger(rung) || rung < 0 || rung > MAX_REP,
-      )
-    ) {
-      errors.push({
-        code: 'invalid_reps',
-        severity: 'error',
-        message: `This movement has invalid rep counts — every rung must be a whole number from 1 to ${MAX_REP}, or 0 for max.`,
-        movementIndex,
-      });
+      if (
+        movement.repScheme.some(
+          (rung) => !Number.isInteger(rung) || rung < 0 || rung > maxRungValue,
+        )
+      ) {
+        errors.push({
+          code: 'invalid_reps',
+          severity: 'error',
+          message: movement.timedRungs
+            ? `This movement has invalid rung durations — every rung must be a whole number of seconds from 1 to ${MAX_TIMED_RUNG_SECONDS}, or 0 for max.`
+            : `This movement has invalid rep counts — every rung must be a whole number from 1 to ${MAX_REP_RUNG}, or 0 for max.`,
+          movementIndex,
+        });
+      }
     }
 
     // null is bodyweight, which is a real workout. The rule is "weight, when

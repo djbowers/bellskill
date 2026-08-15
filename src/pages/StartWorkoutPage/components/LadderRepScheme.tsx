@@ -7,6 +7,7 @@ import { cn } from '~/lib/utils';
 import {
   MAX_RUNG,
   MAX_RUNG_SYMBOL,
+  MAX_TIMED_RUNG_SECONDS,
   describeRungValue,
   formatRungValue,
   isMaxRung,
@@ -19,7 +20,7 @@ import { ModifyCountButtons } from './ModifyCountButtons';
 // because nudging a two-minute carry a second at a time is unusable. Both bottom
 // out at MAX_RUNG, which reads as "to failure" rather than as a magnitude.
 const REPS_RANGE = { min: MAX_RUNG, max: 50, step: 1 };
-const TIMED_RANGE = { min: MAX_RUNG, max: 300, step: 5 };
+const TIMED_RANGE = { min: MAX_RUNG, max: MAX_TIMED_RUNG_SECONDS, step: 5 };
 
 const MAX_RUNGS = 10;
 
@@ -61,6 +62,10 @@ export const LadderRepScheme = ({
   // Adding/removing rungs can leave the focus past the end; clamp on render.
   const focused = Math.min(focusedRung, repScheme.length - 1);
   const range = timedRungs ? TIMED_RANGE : REPS_RANGE;
+  // The validator rejects a rung past the ceiling, so the picker never hands one
+  // out — winding or typing past either end lands on the end.
+  const clampToRange = (value: number) =>
+    Math.min(range.max, Math.max(range.min, value));
   const label = (rung: number) => formatRungValue(rung, timedRungs);
   const unitLabel = unitNoun === 'set' ? 'Set' : 'Rung';
 
@@ -147,12 +152,12 @@ export const LadderRepScheme = ({
         unit={timedRungs ? 'sec' : 'reps'}
         formatValue={(value) => (isMaxRung(value) ? MAX_RUNG_SYMBOL : null)}
         describeValue={(value) => describeRungValue(value, timedRungs)}
-        onChange={(value) => onChangeRung(focused, value)}
+        onChange={(value) => onChangeRung(focused, clampToRange(value))}
         onClickMinus={() =>
-          onChangeRung(focused, repScheme[focused] - range.step)
+          onChangeRung(focused, clampToRange(repScheme[focused] - range.step))
         }
         onClickPlus={() =>
-          onChangeRung(focused, repScheme[focused] + range.step)
+          onChangeRung(focused, clampToRange(repScheme[focused] + range.step))
         }
       />
 
