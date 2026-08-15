@@ -11,6 +11,7 @@ import * as stories from './HistoryPage.stories';
 vi.mock('~/components', async (importOriginal) => ({
   ...(await importOriginal()),
   WeeklyBalanceContainer: () => <div>Weekly Balance</div>,
+  ModalityBalanceContainer: () => <div>Training Mix</div>,
 }));
 
 vi.mock('~/hooks', async (importOriginal) => ({
@@ -23,6 +24,7 @@ const mockedUseFeatures = vi.mocked(useFeatures);
 
 const allOff = {
   explore: false,
+  modalityBalance: false,
   premium: false,
   programs: false,
   weeklyBalance: false,
@@ -45,5 +47,26 @@ describe('history page weekly balance panel', () => {
     render(<Default />);
     await screen.findAllByText('Clean and Press', { exact: false });
     expect(screen.queryByText('Weekly Balance')).not.toBeInTheDocument();
+  });
+});
+
+describe('history page training mix panel', () => {
+  beforeEach(() => {
+    mockedUseFeatures.mockReset();
+  });
+
+  test('shows the panel when the modality flag is on, independent of weekly balance', async () => {
+    mockedUseFeatures.mockReturnValue({ ...allOff, modalityBalance: true });
+    render(<Default />);
+    await screen.findAllByText('Clean and Press', { exact: false });
+    expect(screen.getByText('Training Mix')).toBeInTheDocument();
+    expect(screen.queryByText('Weekly Balance')).not.toBeInTheDocument();
+  });
+
+  test('hides the panel when the flag is off', async () => {
+    mockedUseFeatures.mockReturnValue(allOff);
+    render(<Default />);
+    await screen.findAllByText('Clean and Press', { exact: false });
+    expect(screen.queryByText('Training Mix')).not.toBeInTheDocument();
   });
 });

@@ -9,6 +9,7 @@ import { createRoutes } from './routes';
 
 const flagsOff: Features = {
   explore: false,
+  modalityBalance: false,
   premium: false,
   programs: false,
   spotify: false,

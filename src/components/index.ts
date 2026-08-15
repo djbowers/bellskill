@@ -4,6 +4,7 @@ export * from './KettlebellGlyph';
 export * from './Loading';
 export * from './LoadingScreen';
 export * from './PageLoading';
+export * from './ModalityBalance';
 export * from './ModifyCountButtons';
 export * from './OverflowMenu';
 export * from './PWAInstallPrompt';

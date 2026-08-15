@@ -45,6 +45,7 @@ interface PatternDebtRow {
   movement_id: string | null;
   movement_name: string;
   pattern_credits: string[] | null;
+  modality_credits: string[] | null;
   last_trained_at: string | null;
   set_count: number;
   total_reps: number;
@@ -512,6 +513,7 @@ test.describe('pattern_debt_movements RPC', () => {
     const tguRow = findRow(rows, 'My Turkish Get-Up');
     expect(tguRow.pattern_credits).toEqual(['get_up', 'push', 'rotation']);
     expect(tgu.pattern_credits).toEqual(['get_up', 'push', 'rotation']);
+    expect(tguRow.modality_credits).toEqual(['grind', 'mobility']);
 
     // 2. Simple one-arm swing: rep_scheme [5,5] × completed_rounds 2, mirrored
     //    ×2 (one-handed) → 4 passes total.
@@ -541,6 +543,7 @@ test.describe('pattern_debt_movements RPC', () => {
     // 5. Unlinked custom movement: row present, credits null.
     const customRow = findRow(rows, 'My Custom Movement');
     expect(customRow.pattern_credits).toBeNull();
+    expect(customRow.modality_credits).toBeNull();
 
     // 6. Outside window, inside baseline: no recency/volume in-window, but
     //    baseline volume is nonzero.

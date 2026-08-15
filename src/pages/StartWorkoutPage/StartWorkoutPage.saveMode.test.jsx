@@ -24,6 +24,7 @@ vi.mock('~/hooks', async (importOriginal) => ({
 
 const allFlagsOff = {
   explore: false,
+  modalityBalance: false,
   premium: false,
   programs: false,
   weeklyBalance: false,

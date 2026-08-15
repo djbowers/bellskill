@@ -29,6 +29,7 @@ export const useLinkUserMovement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERIES.USER_MOVEMENTS] });
       queryClient.invalidateQueries({ queryKey: [QUERIES.PATTERN_DEBT] });
+      queryClient.invalidateQueries({ queryKey: [QUERIES.MODALITY_DEBT] });
     },
   });
 };

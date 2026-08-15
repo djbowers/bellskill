@@ -34,7 +34,7 @@ export type OverallBalance = 'balanced' | `${Pattern}-heavy`;
  */
 export type PatternRpe = 'noEffort' | 'easy' | 'ideal' | 'hard' | 'maxEffort';
 
-const RPE_SEVERITY: Record<PatternRpe, number> = {
+export const RPE_SEVERITY: Record<PatternRpe, number> = {
   noEffort: 0,
   easy: 1,
   ideal: 2,
@@ -48,6 +48,8 @@ export interface MovementAggregate {
   movement_name: string;
   /** Catalog credits; null when the movement has no catalog link. */
   pattern_credits: string[] | null;
+  /** Catalog modality credits; null when unlinked (see modalityDebt.ts). */
+  modality_credits?: string[] | null;
   last_trained_at: string | null;
   set_count: number;
   total_reps: number;

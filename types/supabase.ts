@@ -182,6 +182,7 @@ export type Database = {
           "# Primary Items": number | null
           "Difficulty Level": string | null
           id: string
+          modality_credits: string[] | null
           Movement: string
           "Movement Pattern #1": string | null
           pattern_credits: string[]
@@ -193,6 +194,7 @@ export type Database = {
           "# Primary Items"?: number | null
           "Difficulty Level"?: string | null
           id?: string
+          modality_credits?: string[] | null
           Movement: string
           "Movement Pattern #1"?: string | null
           pattern_credits: string[]
@@ -204,6 +206,7 @@ export type Database = {
           "# Primary Items"?: number | null
           "Difficulty Level"?: string | null
           id?: string
+          modality_credits?: string[] | null
           Movement?: string
           "Movement Pattern #1"?: string | null
           pattern_credits?: string[]
@@ -1020,6 +1023,7 @@ export type Database = {
           baseline_volume_kg: number
           hardest_rpe: Database["public"]["Enums"]["RPE"]
           last_trained_at: string
+          modality_credits: string[]
           movement_id: string
           movement_name: string
           pattern_credits: string[]
