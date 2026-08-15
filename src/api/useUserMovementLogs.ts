@@ -12,30 +12,32 @@ import {
 } from './movementHistory';
 
 /**
- * The signed-in user's full log history for one catalog movement, via their
- * user_movements links. RLS scopes rows to the current user.
+ * Every log attached to one `user_movements` row. Unlike `useMovementHistory`,
+ * this works for custom movements too — they have no catalog link to filter on.
  */
-export const useMovementHistory = (functionalMovementId: string) => {
+export const useUserMovementLogs = (userMovementId: string | null) => {
   const session = useSession();
   const userId = session?.user?.id;
 
   return useQuery({
-    queryKey: [QUERIES.MOVEMENT_HISTORY, userId, functionalMovementId],
-    queryFn: () => fetchMovementHistory(functionalMovementId),
-    enabled: functionalMovementId !== '' && !!userId,
+    queryKey: [
+      QUERIES.MOVEMENT_HISTORY,
+      userId,
+      'userMovement',
+      userMovementId,
+    ],
+    queryFn: () => fetchUserMovementLogs(userMovementId!),
+    enabled: !!userMovementId && !!userId,
   });
 };
 
-const fetchMovementHistory = async (
-  functionalMovementId: string,
+const fetchUserMovementLogs = async (
+  userMovementId: string,
 ): Promise<MovementHistoryEntry[]> => {
   const { data: rows, error } = await supabase
     .from('movement_logs')
-    .select(
-      `${MOVEMENT_HISTORY_SELECT},
-       user_movements!inner(functional_movement_id)`,
-    )
-    .eq('user_movements.functional_movement_id', functionalMovementId);
+    .select(MOVEMENT_HISTORY_SELECT)
+    .eq('user_movement_id', userMovementId);
 
   if (error) {
     console.error(error);
