@@ -3,6 +3,7 @@ export * from './useCreateCheckoutSession';
 export * from './useCreatePortalSession';
 export * from './useDeleteWorkoutLog';
 export * from './useEntitlement';
+export * from './useExportTrainingData';
 export * from './useFeatureFlags';
 export * from './useLinkMovementLog';
 export * from './useLinkUserMovement';
