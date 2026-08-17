@@ -30,6 +30,8 @@ const {
   StraightSetsOneHanded,
   StraightSetsUnevenLadders,
   TwoHanded,
+  UnilateralLegsSingleBell,
+  UnilateralLegsDoubleBells,
   WorkoutGoalRounds,
   WeightUnitsPounds,
   SingleWeight24Kg,
@@ -737,6 +739,64 @@ describe('active workout page (mixed weights)', () => {
 
     await clickContinue();
     expect(currentSide).toHaveTextContent('Side 1 of 2');
+  });
+});
+
+// The leg axis is independent of the bells: two matched 20kg bells means no
+// weight swapping, but the working leg still alternates every rung.
+describe('active workout page (unilateral legs, double bells)', () => {
+  beforeEach(() => {
+    render(<UnilateralLegsDoubleBells />);
+  });
+
+  test('mirrors each rung per leg without swapping the bells', async () => {
+    const currentSide = screen.getByTestId('current-side');
+    const leftWeight = screen.getByTestId('left-weight');
+    const rightWeight = screen.getByTestId('right-weight');
+
+    expect(currentSide).toHaveTextContent('Left leg · side 1 of 2');
+    expect(leftWeight).toHaveTextContent('20');
+    expect(rightWeight).toHaveTextContent('20');
+
+    await clickContinue();
+
+    expect(currentSide).toHaveTextContent('Right leg · side 2 of 2');
+    expect(leftWeight).toHaveTextContent('20');
+    expect(rightWeight).toHaveTextContent('20');
+
+    await clickContinue();
+    expect(currentSide).toHaveTextContent('Left leg · side 1 of 2');
+    expect(screen.getByTestId('current-round')).toHaveTextContent('2');
+  });
+});
+
+// Both axes on one movement — a single bell racked in one hand while one leg
+// works. The axes are ORed, not multiplied: two sides, not four.
+describe('active workout page (unilateral legs, single bell)', () => {
+  beforeEach(() => {
+    render(<UnilateralLegsSingleBell />);
+  });
+
+  test('pairs the working leg with the racked hand as one set of two sides', async () => {
+    const currentSide = screen.getByTestId('current-side');
+    const leftWeight = screen.getByTestId('left-weight');
+    const rightWeight = screen.getByTestId('right-weight');
+
+    // The hand is named, not the leg: which leg pairs with the bell is the
+    // lifter's call (contralateral or ipsilateral), so the app does not assert it.
+    expect(currentSide).toHaveTextContent('Left hand · side 1 of 2');
+    expect(leftWeight).toHaveTextContent('16');
+
+    await clickContinue();
+
+    expect(currentSide).toHaveTextContent('Right hand · side 2 of 2');
+    expect(rightWeight).toHaveTextContent('16');
+
+    // Two sides completes the rung — the round advances rather than running a
+    // third and fourth side for the leg axis.
+    await clickContinue();
+    expect(currentSide).toHaveTextContent('Left hand · side 1 of 2');
+    expect(screen.getByTestId('current-round')).toHaveTextContent('2');
   });
 });
 

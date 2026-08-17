@@ -25,8 +25,13 @@ import { loadSummary } from '../utils/loadSummary';
 
 import { FieldLabel } from './FieldLabel';
 import { LadderRepScheme } from './LadderRepScheme';
+import { LegModeIndicator } from './LegModeIndicator';
+import { LegModeTabs } from './LegModeTabs';
 import { ModifyCountButtons } from './ModifyCountButtons';
-import { MovementAutocomplete } from './MovementAutocomplete';
+import {
+  MovementAutocomplete,
+  type MovementAutocompleteProps,
+} from './MovementAutocomplete';
 import { MovementSummaryChips } from './MovementSummaryChips';
 import { WeightModeIndicator } from './WeightModeIndicator';
 import { WeightModeTabs } from './WeightModeTabs';
@@ -49,9 +54,11 @@ export interface MovementCardProps {
   repSchemeUnitNoun?: 'rung' | 'set';
   /** The mode the catalog dictates for this movement; null when it has no row. */
   catalogWeightMode?: WeightTabValue | null;
+  /** The catalog settled this movement's laterality; null when it has no row. */
+  catalogUnilateral?: boolean | null;
   onToggleExpanded: () => void;
   onRemove: () => void;
-  onChangeName: (name: string) => void;
+  onChangeName: MovementAutocompleteProps['onChange'];
   onChangeWeightTab: (mode: WeightTabValue) => void;
   onChangeWeightOneValue: (value: number) => void;
   onChangeWeightOneUnit: (unit: WeightUnit) => void;
@@ -61,6 +68,7 @@ export interface MovementCardProps {
   onRemoveRung: (rungIndex: number) => void;
   onAddRung: () => void;
   onToggleTimed: (timed: boolean) => void;
+  onToggleUnilateral: (unilateral: boolean) => void;
 }
 
 export const MovementCard = ({
@@ -74,6 +82,7 @@ export const MovementCard = ({
   hasError = false,
   repSchemeUnitNoun = 'rung',
   catalogWeightMode = null,
+  catalogUnilateral = null,
   onToggleExpanded,
   onRemove,
   onChangeName,
@@ -86,6 +95,7 @@ export const MovementCard = ({
   onRemoveRung,
   onAddRung,
   onToggleTimed,
+  onToggleUnilateral,
 }: MovementCardProps) => {
   const weightTabValue = getWeightTabValue(movement);
   const activeWeightMode = sharedBell ? sharedWeightTabValue : weightTabValue;
@@ -99,6 +109,10 @@ export const MovementCard = ({
   // The mode is a fact, not a choice, when the catalog settled it or the shared
   // bell overrode it — either way there is nothing here to pick.
   const weightModeReadOnly = sharedBell || catalogWeightMode !== null;
+  // Same rule as the weight mode: a cataloged movement's laterality is a fact,
+  // not a setting. Unlike weight it has nothing to say when it is bilateral,
+  // so the whole row drops out rather than reading "Both legs" on every card.
+  const legModeReadOnly = catalogUnilateral !== null;
 
   // Expanded, the Weight and Load rows below already state the mode and the
   // load, so a summary line would only repeat them. Under a shared bell both
@@ -204,6 +218,23 @@ export const MovementCard = ({
               <WeightModeTabs
                 value={activeWeightMode}
                 onValueChange={onChangeWeightTab}
+              />
+            </div>
+          )}
+
+          {legModeReadOnly ? (
+            movement.unilateral && (
+              <div className="flex items-center gap-1">
+                <FieldLabel>Legs</FieldLabel>
+                <LegModeIndicator />
+              </div>
+            )
+          ) : (
+            <div>
+              <FieldLabel className="mb-0.5">Legs</FieldLabel>
+              <LegModeTabs
+                unilateral={Boolean(movement.unilateral)}
+                onValueChange={onToggleUnilateral}
               />
             </div>
           )}

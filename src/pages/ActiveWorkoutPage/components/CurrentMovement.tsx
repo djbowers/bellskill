@@ -84,6 +84,15 @@ export const CurrentMovement = ({
   const oneHandedWeightValue = leftWeightValue ?? rightWeightValue;
   const oneHandedWeightUnit = leftWeightUnit ?? rightWeightUnit;
 
+  // One-handed unilateral-leg work is usually contralateral, so naming a leg
+  // there would be a guess — the hand is the reliable cue. Name the leg only
+  // when the bells stay put and the working leg is the only thing switching.
+  const sideLabel = activeSide
+    ? `${activeSide === 'left' ? 'Left' : 'Right'} hand · side ${currentSide} of ${totalSides}`
+    : currentMovement.unilateral
+      ? `${currentSide === 1 ? 'Left' : 'Right'} leg · side ${currentSide} of ${totalSides}`
+      : `Side ${currentSide} of ${totalSides}`;
+
   // Plain render helper (not a nested component) so React reconciles the
   // cells in place across renders instead of remounting them.
   const renderWeightCell = (side: 'left' | 'right') => {
@@ -193,9 +202,7 @@ export const CurrentMovement = ({
 
           {totalSides > 1 && (
             <CardDescription className="text-center" data-testid="current-side">
-              {activeSide
-                ? `${activeSide === 'left' ? 'Left' : 'Right'} hand · side ${currentSide} of ${totalSides}`
-                : `Side ${currentSide} of ${totalSides}`}
+              {sideLabel}
             </CardDescription>
           )}
 

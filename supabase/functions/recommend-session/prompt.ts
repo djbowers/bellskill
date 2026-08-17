@@ -35,6 +35,9 @@ export function buildSystemPrompt(hasTargets = false): string {
     '- Set each block\'s "bells" to how many kettlebells are held at once: 1, or 2',
     '  only for movements marked "double-bell". weight_kg is the weight of ONE',
     '  bell, so a double at 24kg means two 24kg bells, not 12kg each.',
+    '- Movements marked "one leg at a time" run every rung twice, once per leg,',
+    '  so they cost double the time and volume of the reps you write. Count that',
+    '  when sizing the session, and avoid stacking several of them back to back.',
     '- When a pattern-balance section is provided, prefer movements that train',
     '  the red- and yellow-band (highest-debt) patterns, and say so in the',
     '  rationale when it drives your selection. Readiness, recent RPE, and the',
@@ -78,7 +81,9 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
           c.pattern_credits?.length
             ? ` · pays: ${c.pattern_credits.join(', ')}`
             : ''
-        }${c.supports_doubles ? ' · double-bell' : ''} [user_movement_id: ${c.user_movement_id}]`,
+        }${c.supports_doubles ? ' · double-bell' : ''}${
+          c.unilateral_lower ? ' · one leg at a time' : ''
+        } [user_movement_id: ${c.user_movement_id}]`,
     )
     .join('\n');
 

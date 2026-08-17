@@ -14,6 +14,7 @@ const entry = (
   rpe: null,
   repScheme: [5, 5, 5],
   timedRungs: false,
+  unilateral: false,
   weightOneUnit: 'kilograms',
   weightOneValue: 16,
   weightTwoUnit: null,

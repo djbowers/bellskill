@@ -297,7 +297,10 @@ export const ActiveWorkoutPage = ({
   const isLastRung = currentMovementRungIndex === currentMovementRungs - 1;
   const isStraightSets = workoutMode === 'straightSets';
   const currentRound = completedRounds + 1;
-  const shouldMirrorReps = isOneHanded || isMixedWeights;
+  // A unilateral-leg movement mirrors on the working leg, so it runs each rung
+  // twice whatever the bells are doing — including two-hand and double-bell.
+  const shouldMirrorReps =
+    isOneHanded || isMixedWeights || Boolean(currentMovement.unilateral);
 
   const totalSides = shouldMirrorReps ? 2 : 1;
   const currentSide = isMirrorSet ? 2 : 1; // 1 = first side (left), 2 = second side (right)

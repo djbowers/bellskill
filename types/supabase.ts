@@ -210,6 +210,7 @@ export type Database = {
           movement_name: string
           rep_scheme: number[]
           timed_rungs: boolean
+          unilateral: boolean
           user_id: string
           user_movement_id: string | null
           weight_one_unit: Database["public"]["Enums"]["weight_unit"] | null
@@ -225,6 +226,7 @@ export type Database = {
           movement_name: string
           rep_scheme?: number[]
           timed_rungs?: boolean
+          unilateral?: boolean
           user_id: string
           user_movement_id?: string | null
           weight_one_unit?: Database["public"]["Enums"]["weight_unit"] | null
@@ -240,6 +242,7 @@ export type Database = {
           movement_name?: string
           rep_scheme?: number[]
           timed_rungs?: boolean
+          unilateral?: boolean
           user_id?: string
           user_movement_id?: string | null
           weight_one_unit?: Database["public"]["Enums"]["weight_unit"] | null
@@ -284,6 +287,7 @@ export type Database = {
           "Primary Equipment": string | null
           "Single or Double Arm": string | null
           "Target Muscle Group": string | null
+          unilateral_lower: boolean
         }
         Insert: {
           "# Primary Items"?: number | null
@@ -296,6 +300,7 @@ export type Database = {
           "Primary Equipment"?: string | null
           "Single or Double Arm"?: string | null
           "Target Muscle Group"?: string | null
+          unilateral_lower?: boolean
         }
         Update: {
           "# Primary Items"?: number | null
@@ -308,6 +313,7 @@ export type Database = {
           "Primary Equipment"?: string | null
           "Single or Double Arm"?: string | null
           "Target Muscle Group"?: string | null
+          unilateral_lower?: boolean
         }
         Relationships: []
       }
@@ -1038,6 +1044,7 @@ export type Database = {
           primary_equipment: string | null
           primary_item_count: number | null
           single_or_double_arm: string | null
+          unilateral_lower: boolean | null
         }
         Insert: {
           id?: string | null
@@ -1045,6 +1052,7 @@ export type Database = {
           primary_equipment?: string | null
           primary_item_count?: number | null
           single_or_double_arm?: string | null
+          unilateral_lower?: boolean | null
         }
         Update: {
           id?: string | null
@@ -1052,6 +1060,7 @@ export type Database = {
           primary_equipment?: string | null
           primary_item_count?: number | null
           single_or_double_arm?: string | null
+          unilateral_lower?: boolean | null
         }
         Relationships: []
       }
