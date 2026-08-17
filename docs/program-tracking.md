@@ -195,7 +195,19 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   `pg_temp` helper building the per-session `WorkoutOptions` JSONB
   (`Omit<WorkoutOptions,'startedAt'>`, camelCase). DFW
   (`*_seed_dry_fighting_weight.sql`) is the template; add a focused
-  `e2e/program-<slug>.spec.ts` asserting the seeded shape.
+  `e2e/program-<slug>.spec.ts` asserting the seeded shape. Each `movementName`
+  **must** match `scripts/data/movements.csv` verbatim — beyond weight pre-fill,
+  the exact-string join is what gives the program a modality profile (below).
+- **Modality profile (derived):** `program_modality_movements()` aggregates each
+  program's prescribed movements by the catalog's `modality_credits`, and
+  `src/utils/programModality.ts` turns that into an ordered profile fed to the
+  `recommend-program` prompt. This is a **different axis** from `focus_tags`:
+  focus is the adaptation a prescription buys, modality is how its reps move you,
+  and neither predicts the other (S&S and the 10,000 Swing Challenge share a
+  modality skew and sit at opposite ends of focus and demand). Derived rather than
+  stored, so it needs no editorial backfill — but a `movementName` that does not
+  match the catalog silently contributes nothing. See
+  `docs/modality-debt-scoring-model.md`.
 - **`timedRungs` (timed movements, PROD-200):** a movement with
   `timedRungs: true` reinterprets each `repScheme` entry as **seconds**, not
   reps — `ActiveWorkoutPage` runs a per-rung countdown that auto-fires

@@ -10,6 +10,7 @@ export * from './movementSearch';
 export * from './movementWeightModeFilter';
 export * from './ordinalSuffixOf';
 export * from './programCadenceLabel';
+export * from './programModality';
 export * from './patternDebt';
 export * from './modalityDebt';
 export * from './rankMovements';

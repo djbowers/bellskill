@@ -14,6 +14,7 @@ const baseContext = (over: Partial<ChalkContext> = {}): ChalkContext => ({
   recent_history: [],
   long_range: null,
   pattern_debt: null,
+  modality_debt: null,
   library: [],
   enrolled_programs: [],
   catalog_programs: [],
@@ -154,6 +155,64 @@ describe('chalk prompt — injection surface', () => {
     // Exactly one delimiter pair — the name did not forge a second one.
     expect(block.split(CONTEXT_OPEN)).toHaveLength(2);
     expect(block.split(CONTEXT_CLOSE)).toHaveLength(2);
+  });
+});
+
+describe('chalk prompt — movement mix', () => {
+  const modalityDebt = (): ChalkContext['modality_debt'] => ({
+    overall_balance: 'grind-heavy',
+    modalities: [
+      {
+        modality: 'grind',
+        days_since_last_trained: 1,
+        recent_volume_kg: 3000,
+        baseline_volume_kg: 1500,
+        debt_score: 4,
+        band: 'green',
+        is_new: false,
+      },
+      {
+        modality: 'conditioning',
+        days_since_last_trained: 30,
+        recent_volume_kg: 0,
+        baseline_volume_kg: 900,
+        debt_score: 90,
+        band: 'red',
+        is_new: false,
+      },
+    ],
+  });
+
+  test('section is omitted when the balance fetch degraded to null', () => {
+    expect(buildContextBlock(baseContext())).not.toContain('MOVEMENT MIX');
+  });
+
+  test('renders inside the context block, worst part of the mix first', () => {
+    const block = buildContextBlock(
+      baseContext({ modality_debt: modalityDebt() }),
+    );
+    expect(block.indexOf('MOVEMENT MIX')).toBeGreaterThan(
+      block.indexOf(CONTEXT_OPEN),
+    );
+    expect(block.indexOf('MOVEMENT MIX')).toBeLessThan(
+      block.indexOf(CONTEXT_CLOSE),
+    );
+    const mix = block.slice(block.indexOf('MOVEMENT MIX'));
+    expect(mix.indexOf('- cardio')).toBeLessThan(mix.indexOf('- grind'));
+  });
+
+  test('says cardio, never conditioning — programs use that word for an adaptation', () => {
+    const block = buildContextBlock(
+      baseContext({ modality_debt: modalityDebt() }),
+    );
+    expect(block).toContain('- cardio: score 90 (red)');
+    expect(block).not.toContain('conditioning');
+  });
+
+  test('the static rules separate the mix from pattern balance', () => {
+    const rules = buildStaticRules();
+    expect(rules).toMatch(/two different questions/i);
+    expect(rules).toMatch(/grind is slow strength/i);
   });
 });
 

@@ -1234,6 +1234,14 @@ export type Database = {
           total_volume_kg: number
         }[]
       }
+      program_modality_movements: {
+        Args: never
+        Returns: {
+          modality: string
+          movement_count: number
+          program_id: string
+        }[]
+      }
       reorder_program_sessions: {
         Args: { p_ordered_ids: string[]; p_program_id: string }
         Returns: undefined

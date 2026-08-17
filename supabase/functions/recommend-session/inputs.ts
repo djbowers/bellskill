@@ -12,6 +12,7 @@ import {
   daysBetweenCalendarDays,
   parseLocalDateString,
 } from '../../../src/utils/dateOnly.ts';
+import { computeModalityBalance } from '../../../src/utils/modalityDebt.ts';
 import {
   type MovementAggregate,
   attributeMovement,
@@ -20,6 +21,7 @@ import {
 } from '../../../src/utils/patternDebt.ts';
 import type {
   CandidateMovement,
+  ModalityDebtInput,
   PatternDebtInput,
   RecommenderInputs,
   WorkoutHistoryEntry,
@@ -39,13 +41,18 @@ function formatGoal(goal: number, units: string): string {
 }
 
 /**
- * Fetch and score the caller's pattern-debt balance. Best-effort: any failure
- * degrades to null so a recommendation is never blocked on it.
+ * Fetch and score both balance axes. One RPC round trip serves both: the
+ * aggregation returns pattern_credits and modality_credits side by side, and
+ * each scorer applies its own model. Best-effort: any failure degrades to nulls
+ * so a recommendation is never blocked on it.
  */
-async function gatherPatternDebt(
+async function gatherBalances(
   authClient: SupabaseClient,
   today: Date,
-): Promise<PatternDebtInput | null> {
+): Promise<{
+  pattern_debt: PatternDebtInput | null;
+  modality_debt: ModalityDebtInput | null;
+}> {
   try {
     // Generated DB types don't yet know this function — cast at the RPC
     // boundary only (mirrors src/api/usePatternDebt.ts).
@@ -59,6 +66,7 @@ async function gatherPatternDebt(
         movement_id: (row.movement_id ?? null) as string | null,
         movement_name: row.movement_name as string,
         pattern_credits: (row.pattern_credits ?? null) as string[] | null,
+        modality_credits: (row.modality_credits ?? null) as string[] | null,
         last_trained_at: row.last_trained_at as string | null,
         set_count: Number(row.set_count),
         total_reps: Number(row.total_reps),
@@ -70,25 +78,44 @@ async function gatherPatternDebt(
     );
 
     const balance = computePatternBalance(aggregates, today);
+    const modalityBalance = computeModalityBalance(aggregates, today);
     return {
-      overall_balance: balance.overallBalance,
-      patterns: Object.values(balance.patterns).map((p) => ({
-        pattern: p.pattern,
-        days_since_last_trained:
-          p.daysSinceLastTrained == null
-            ? null
-            : Math.floor(p.daysSinceLastTrained),
-        recent_volume_kg: p.recentVolume,
-        baseline_volume_kg: p.baselineVolume,
-        debt_score: p.debtScore,
-        band: p.band,
-        hardest_rpe: p.hardestRpe,
-        is_new: p.isNew,
-      })),
+      pattern_debt: {
+        overall_balance: balance.overallBalance,
+        patterns: Object.values(balance.patterns).map((p) => ({
+          pattern: p.pattern,
+          days_since_last_trained:
+            p.daysSinceLastTrained == null
+              ? null
+              : Math.floor(p.daysSinceLastTrained),
+          recent_volume_kg: p.recentVolume,
+          baseline_volume_kg: p.baselineVolume,
+          debt_score: p.debtScore,
+          band: p.band,
+          hardest_rpe: p.hardestRpe,
+          is_new: p.isNew,
+        })),
+      },
+      modality_debt: {
+        overall_balance: modalityBalance.overallBalance,
+        modalities: Object.values(modalityBalance.modalities).map((m) => ({
+          modality: m.modality,
+          days_since_last_trained:
+            m.daysSinceLastTrained == null
+              ? null
+              : Math.floor(m.daysSinceLastTrained),
+          recent_volume_kg: m.recentVolume,
+          baseline_volume_kg: m.baselineVolume,
+          debt_score: m.debtScore,
+          band: m.band,
+          hardest_rpe: m.hardestRpe,
+          is_new: m.isNew,
+        })),
+      },
     };
   } catch (err) {
-    console.error('recommend-session pattern_debt fetch failed:', err);
-    return null;
+    console.error('recommend-session balance fetch failed:', err);
+    return { pattern_debt: null, modality_debt: null };
   }
 }
 
@@ -219,7 +246,10 @@ export async function gatherInputs(
       ? daysBetweenCalendarDays(new Date(logs[0].completed_at), clientToday)
       : null;
 
-  const pattern_debt = await gatherPatternDebt(authClient, clientToday);
+  const { pattern_debt, modality_debt } = await gatherBalances(
+    authClient,
+    clientToday,
+  );
   const equipment = await gatherEquipment(admin, userId);
 
   // Deterministic must-cover targets. Degrades to [] (no hard constraint)
@@ -244,6 +274,7 @@ export async function gatherInputs(
     recent_history,
     candidates,
     pattern_debt,
+    modality_debt,
     unlocked_weights: equipment ?? {},
   };
 }

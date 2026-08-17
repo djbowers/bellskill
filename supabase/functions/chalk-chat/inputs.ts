@@ -16,6 +16,7 @@ import {
   daysBetweenCalendarDays,
   parseLocalDateString,
 } from '../../../src/utils/dateOnly.ts';
+import { computeModalityBalance } from '../../../src/utils/modalityDebt.ts';
 import {
   type MovementAggregate,
   attributeMovement,
@@ -26,6 +27,7 @@ import type {
   ChalkContext,
   EnrolledProgram,
   LibraryMovement,
+  ModalityDebtInput,
   PatternDebtInput,
   WorkoutHistoryEntry,
 } from './types.ts';
@@ -68,14 +70,18 @@ function toKg(value: number | null, unit: string | null): number | null {
 }
 
 /**
- * Fetch and score the caller's pattern balance. Best-effort: any failure
- * degrades to null so a reply is never blocked on it, matching
+ * Fetch and score both balance axes from one RPC round trip — the aggregation
+ * returns pattern_credits and modality_credits side by side. Best-effort: any
+ * failure degrades to nulls so a reply is never blocked on it, matching
  * recommend-session's contract.
  */
-async function gatherPatternDebt(
+async function gatherBalances(
   authClient: SupabaseClient,
   today: Date,
-): Promise<PatternDebtInput | null> {
+): Promise<{
+  pattern_debt: PatternDebtInput | null;
+  modality_debt: ModalityDebtInput | null;
+}> {
   try {
     // Generated DB types don't know this function — cast at the RPC boundary
     // only (mirrors src/api/usePatternDebt.ts and recommend-session).
@@ -89,6 +95,7 @@ async function gatherPatternDebt(
         movement_id: (row.movement_id ?? null) as string | null,
         movement_name: row.movement_name as string,
         pattern_credits: (row.pattern_credits ?? null) as string[] | null,
+        modality_credits: (row.modality_credits ?? null) as string[] | null,
         last_trained_at: row.last_trained_at as string | null,
         set_count: Number(row.set_count),
         total_reps: Number(row.total_reps),
@@ -100,25 +107,43 @@ async function gatherPatternDebt(
     );
 
     const balance = computePatternBalance(aggregates, today);
+    const modalityBalance = computeModalityBalance(aggregates, today);
     return {
-      overall_balance: balance.overallBalance,
-      patterns: Object.values(balance.patterns).map((p) => ({
-        pattern: p.pattern,
-        days_since_last_trained:
-          p.daysSinceLastTrained == null
-            ? null
-            : Math.floor(p.daysSinceLastTrained),
-        recent_volume_kg: p.recentVolume,
-        baseline_volume_kg: p.baselineVolume,
-        debt_score: p.debtScore,
-        band: p.band,
-        hardest_rpe: p.hardestRpe,
-        is_new: p.isNew,
-      })),
+      pattern_debt: {
+        overall_balance: balance.overallBalance,
+        patterns: Object.values(balance.patterns).map((p) => ({
+          pattern: p.pattern,
+          days_since_last_trained:
+            p.daysSinceLastTrained == null
+              ? null
+              : Math.floor(p.daysSinceLastTrained),
+          recent_volume_kg: p.recentVolume,
+          baseline_volume_kg: p.baselineVolume,
+          debt_score: p.debtScore,
+          band: p.band,
+          hardest_rpe: p.hardestRpe,
+          is_new: p.isNew,
+        })),
+      },
+      modality_debt: {
+        overall_balance: modalityBalance.overallBalance,
+        modalities: Object.values(modalityBalance.modalities).map((m) => ({
+          modality: m.modality,
+          days_since_last_trained:
+            m.daysSinceLastTrained == null
+              ? null
+              : Math.floor(m.daysSinceLastTrained),
+          recent_volume_kg: m.recentVolume,
+          baseline_volume_kg: m.baselineVolume,
+          debt_score: m.debtScore,
+          band: m.band,
+          is_new: m.isNew,
+        })),
+      },
     };
   } catch (err) {
-    console.error('chalk-chat pattern_debt fetch failed:', err);
-    return null;
+    console.error('chalk-chat balance fetch failed:', err);
+    return { pattern_debt: null, modality_debt: null };
   }
 }
 
@@ -360,14 +385,14 @@ export async function gatherContext(
   }
   const clientToday = parsedClientToday ?? new Date();
 
-  const [profileResult, history, longRange, library, programs, patternDebt, equipment] =
+  const [profileResult, history, longRange, library, programs, balances, equipment] =
     await Promise.all([
       admin.from('profiles').select('training_goal').eq('id', userId).single(),
       gatherHistory(admin, userId, clientToday),
       gatherLongRange(admin, userId, clientToday),
       gatherLibrary(admin, userId),
       gatherPrograms(admin, userId),
-      gatherPatternDebt(authClient, clientToday),
+      gatherBalances(authClient, clientToday),
       gatherEquipment(admin, userId),
     ]);
 
@@ -378,7 +403,8 @@ export async function gatherContext(
     days_since_last_workout: history.daysSinceLast,
     recent_history: history.recent,
     long_range: longRange,
-    pattern_debt: patternDebt,
+    pattern_debt: balances.pattern_debt,
+    modality_debt: balances.modality_debt,
     library,
     enrolled_programs: programs.enrolled,
     catalog_programs: programs.catalog,
