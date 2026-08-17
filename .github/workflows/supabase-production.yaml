@@ -32,7 +32,10 @@ jobs:
           version: latest
 
       - run: supabase link --project-ref $SUPABASE_PROJECT_ID
-      - run: supabase db push
+      # --include-all: parallel branches can merge in a different order than their
+      # migration timestamps; without it, push refuses the earlier-stamped ones and
+      # the whole deploy (including edge functions) stalls.
+      - run: supabase db push --include-all
       - name: Deploy edge functions
         run: |
           for dir in supabase/functions/*/; do
