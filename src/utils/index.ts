@@ -11,6 +11,7 @@ export * from './movementWeightModeFilter';
 export * from './ordinalSuffixOf';
 export * from './programCadenceLabel';
 export * from './patternDebt';
+export * from './modalityDebt';
 export * from './rankMovements';
 export * from './recommendationDraft';
 export * from './resolveAuthSession';

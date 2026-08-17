@@ -7,10 +7,10 @@ import { useFeatures } from '~/hooks';
 import * as stories from './HistoryPage.stories';
 
 // Stub the data-wired panel: this suite exercises HistoryPage's flag/gating
-// logic, not the panel's own fetching (covered by WeeklyBalance.test.tsx).
+// logic, not the panel's own fetching (covered by TrainingBalance.test.tsx).
 vi.mock('~/components', async (importOriginal) => ({
   ...(await importOriginal()),
-  WeeklyBalanceContainer: () => <div>Weekly Balance</div>,
+  TrainingBalanceContainer: () => <div>Balance</div>,
 }));
 
 vi.mock('~/hooks', async (importOriginal) => ({
@@ -23,27 +23,35 @@ const mockedUseFeatures = vi.mocked(useFeatures);
 
 const allOff = {
   explore: false,
+  modalityBalance: false,
   premium: false,
   programs: false,
   weeklyBalance: false,
 };
 
-describe('history page weekly balance panel', () => {
+describe('history page balance panel', () => {
   beforeEach(() => {
     mockedUseFeatures.mockReset();
   });
 
-  test('shows the panel alongside history when the flag is on', async () => {
+  test('shows the panel when the pattern flag is on', async () => {
     mockedUseFeatures.mockReturnValue({ ...allOff, weeklyBalance: true });
     render(<Default />);
     await screen.findAllByText('Clean and Press', { exact: false });
-    expect(screen.getByText('Weekly Balance')).toBeInTheDocument();
+    expect(screen.getByText('Balance')).toBeInTheDocument();
   });
 
-  test('hides the panel when the flag is off', async () => {
+  test('shows the panel when only the modality flag is on', async () => {
+    mockedUseFeatures.mockReturnValue({ ...allOff, modalityBalance: true });
+    render(<Default />);
+    await screen.findAllByText('Clean and Press', { exact: false });
+    expect(screen.getByText('Balance')).toBeInTheDocument();
+  });
+
+  test('hides the panel when both flags are off', async () => {
     mockedUseFeatures.mockReturnValue(allOff);
     render(<Default />);
     await screen.findAllByText('Clean and Press', { exact: false });
-    expect(screen.queryByText('Weekly Balance')).not.toBeInTheDocument();
+    expect(screen.queryByText('Balance')).not.toBeInTheDocument();
   });
 });

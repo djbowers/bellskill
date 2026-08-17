@@ -2,6 +2,7 @@ import { Session } from '@supabase/supabase-js';
 
 export type FeatureName =
   | 'explore'
+  | 'modalityBalance'
   | 'premium'
   | 'programs'
   | 'spotify'
@@ -20,6 +21,7 @@ export type Features = Record<FeatureName, boolean>;
  */
 const baseFeatures: Features = {
   explore: import.meta.env.VITE_FEATURE_EXPLORE === 'true',
+  modalityBalance: import.meta.env.VITE_FEATURE_MODALITY_BALANCE === 'true',
   premium: import.meta.env.VITE_FEATURE_PREMIUM === 'true',
   programs: import.meta.env.VITE_FEATURE_PROGRAMS === 'true',
   spotify: import.meta.env.VITE_FEATURE_SPOTIFY === 'true',
@@ -89,6 +91,7 @@ export const getFeatures = (session?: Session | null): Features => {
   if (isDeployPreview() || isPreviewingAllFeatures(session)) {
     return {
       explore: true,
+      modalityBalance: true,
       premium: true,
       programs: true,
       spotify: true,

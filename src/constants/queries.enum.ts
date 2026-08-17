@@ -7,6 +7,7 @@ export enum QUERIES {
   MOVEMENT_HISTORY = 'movementHistory',
   MOVEMENT_LOGS = 'movementLogs',
   MOVEMENTS = 'movements',
+  MODALITY_DEBT = 'modalityDebt',
   PATTERN_DEBT = 'patternDebt',
   PROGRAM = 'program',
   PROGRAM_PROGRESS = 'programProgress',

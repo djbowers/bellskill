@@ -4,6 +4,7 @@ import { buildTabs } from './buildTabs';
 
 const allOff: Features = {
   explore: false,
+  modalityBalance: false,
   premium: false,
   programs: false,
   spotify: false,

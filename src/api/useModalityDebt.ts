@@ -3,15 +3,15 @@ import { useQuery } from '@tanstack/react-query';
 import { QUERIES } from '~/constants';
 import { useSession } from '~/contexts';
 import {
+  ModalityBalance,
   MovementAggregate,
-  PatternBalance,
   PatternRpe,
-  computePatternBalance,
+  computeModalityBalance,
 } from '~/utils';
 
 import { supabase } from '../supabaseClient';
 
-export interface UsePatternDebtOptions {
+export interface UseModalityDebtOptions {
   /** Recent window the debt is computed over. Defaults to the SQL default (14). */
   windowDays?: number;
   /** Trailing window used to establish the volume baseline. Defaults to 84. */
@@ -25,6 +25,7 @@ interface PatternDebtMovementRow {
   movement_id: string | null;
   movement_name: string;
   pattern_credits: string[] | null;
+  modality_credits: string[] | null;
   last_trained_at: string | null;
   set_count: number | string;
   total_reps: number | string;
@@ -34,28 +35,29 @@ interface PatternDebtMovementRow {
 }
 
 /**
- * Free-tier pattern balance. Calls the `pattern_debt_movements` RPC for the
- * raw per-movement aggregates, then applies the shared scoring model.
+ * Modality balance (grind / ballistic / conditioning / mobility). Calls the
+ * shared `pattern_debt_movements` RPC for the raw per-movement aggregates,
+ * then applies the modality scoring model.
  */
-export const usePatternDebt = ({
+export const useModalityDebt = ({
   windowDays,
   baselineDays,
   enabled = true,
-}: UsePatternDebtOptions = {}) => {
+}: UseModalityDebtOptions = {}) => {
   const session = useSession();
   const userId = session?.user?.id;
 
-  return useQuery<PatternBalance>({
-    queryKey: [QUERIES.PATTERN_DEBT, userId, windowDays, baselineDays],
-    queryFn: () => fetchPatternDebt(windowDays, baselineDays),
+  return useQuery<ModalityBalance>({
+    queryKey: [QUERIES.MODALITY_DEBT, userId, windowDays, baselineDays],
+    queryFn: () => fetchModalityDebt(windowDays, baselineDays),
     enabled: !!userId && enabled,
   });
 };
 
-const fetchPatternDebt = async (
+const fetchModalityDebt = async (
   windowDays?: number,
   baselineDays?: number,
-): Promise<PatternBalance> => {
+): Promise<ModalityBalance> => {
   // Generated types (types/supabase.ts) don't yet know about this function —
   // the local db hasn't been migrated. Cast at the RPC boundary only.
   const { data, error } = await supabase.rpc(
@@ -77,6 +79,7 @@ const fetchPatternDebt = async (
     movement_id: row.movement_id,
     movement_name: row.movement_name,
     pattern_credits: row.pattern_credits,
+    modality_credits: row.modality_credits,
     last_trained_at: row.last_trained_at,
     set_count: Number(row.set_count),
     total_reps: Number(row.total_reps),
@@ -86,5 +89,5 @@ const fetchPatternDebt = async (
     hardest_rpe: row.hardest_rpe ?? null,
   }));
 
-  return computePatternBalance(aggregates);
+  return computeModalityBalance(aggregates);
 };

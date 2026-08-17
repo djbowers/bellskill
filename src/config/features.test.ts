@@ -2,6 +2,7 @@ import { features, getFeatures, isDeployPreview } from './features';
 
 const ALL_ON = {
   explore: true,
+  modalityBalance: true,
   premium: true,
   programs: true,
   spotify: true,

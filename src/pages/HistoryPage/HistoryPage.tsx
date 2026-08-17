@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import { useInfiniteWorkoutLogs } from '~/api';
-import { Loading, Page, WeeklyBalanceContainer } from '~/components';
+import { Loading, Page, TrainingBalanceContainer } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { Separator } from '~/components/ui/separator';
@@ -35,9 +35,8 @@ export const HistoryPage = () => {
       )}
 
       <div className="flex flex-col gap-3">
-        {features.weeklyBalance && workoutLogs.length > 0 && (
-          <WeeklyBalanceContainer />
-        )}
+        {(features.weeklyBalance || features.modalityBalance) &&
+          workoutLogs.length > 0 && <TrainingBalanceContainer />}
 
         {workoutWeeks.map((workoutWeek) => (
           <WorkoutWeekGroup key={workoutWeek.weekKey} {...workoutWeek} />

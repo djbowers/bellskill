@@ -15,6 +15,7 @@ export * from './useMovementHistory';
 export * from './useMovementLogs';
 export * from './useMovementCatalog';
 export * from './useMovements';
+export * from './useModalityDebt';
 export * from './usePatternDebt';
 export * from './useActivePrograms';
 export * from './useCancelProgram';

@@ -31,6 +31,7 @@ vi.mock('~/hooks', async (importOriginal) => ({
 
 const BASE_FEATURES = {
   explore: false,
+  modalityBalance: false,
   premium: false,
   programs: true,
   weeklyBalance: false,
