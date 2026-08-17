@@ -126,6 +126,14 @@
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0));
   }
 
+  /* Full-height surfaces (the Chalk chat) size themselves against the same bar
+     offset `pb-bottomnav` reserves, so an internally-scrolling column ends
+     exactly on top of the nav instead of running behind it. Kept beside
+     `pb-bottomnav` so the 64px bar height lives in one place. */
+  .h-dvh-bottomnav {
+    height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0));
+  }
+
   /* Sticky action bars pin at the viewport edge, so they carry their own
      offsets rather than relying on page padding that scrolls away beneath. */
   .bottom-safe {

@@ -1,5 +1,7 @@
 export enum QUERIES {
   ACTIVE_PROGRAM = 'activeProgram',
+  CHALK_MESSAGES = 'chalkMessages',
+  CHALK_THREADS = 'chalkThreads',
   ENTITLEMENT = 'entitlement',
   FEATURE_FLAGS = 'featureFlags',
   GHOST_SESSION = 'ghostSession',

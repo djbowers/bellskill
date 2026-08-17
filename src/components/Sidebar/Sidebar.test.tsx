@@ -50,14 +50,14 @@ describe('Sidebar', () => {
     mockedUseFeatures.mockReturnValue(featuresWith());
     renderSidebar();
     expect(screen.queryByRole('link', { name: 'Programs' })).toBeNull();
-    expect(screen.queryByRole('link', { name: 'AI' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Chalk' })).toBeNull();
 
     mockedUseFeatures.mockReturnValue(
       featuresWith({ programs: true, premium: true }),
     );
     renderSidebar();
     expect(screen.getByRole('link', { name: 'Programs' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'AI' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Chalk' })).toBeInTheDocument();
   });
 
   test('exposes the Account link, theme toggle and Sign Out', () => {

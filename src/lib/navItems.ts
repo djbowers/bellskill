@@ -65,8 +65,8 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     key: 'ai',
-    label: 'AI',
-    to: '/recommendations',
+    label: 'Chalk',
+    to: '/chalk',
     icon: SparklesIcon,
     activeIcon: SparklesSolidIcon,
     flag: 'premium',

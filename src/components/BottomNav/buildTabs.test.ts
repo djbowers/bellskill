@@ -38,10 +38,10 @@ describe('buildTabs', () => {
     expect(moreKeys(allOff)).toEqual([]);
   });
 
-  test('promotes AI when premium is enabled', () => {
+  test('promotes Chalk when premium is enabled', () => {
     const tabs = buildTabs({ ...allOff, premium: true }).tabs;
     expect(tabs.map((t) => t.key)).toEqual(['home', 'history', 'ai']);
-    expect(tabs[2]).toMatchObject({ label: 'AI', to: '/recommendations' });
+    expect(tabs[2]).toMatchObject({ label: 'Chalk', to: '/chalk' });
   });
 
   test('promotes Movements when only explore is enabled', () => {
@@ -49,7 +49,7 @@ describe('buildTabs', () => {
     expect(tabs.map((t) => t.key)).toEqual(['home', 'history', 'explore']);
   });
 
-  test('AI wins the promoted slot over Movements', () => {
+  test('Chalk wins the promoted slot over Movements', () => {
     const features = {
       ...allOff,
       premium: true,
