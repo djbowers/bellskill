@@ -16,6 +16,8 @@ export interface UsePatternDebtOptions {
   windowDays?: number;
   /** Trailing window used to establish the volume baseline. Defaults to 84. */
   baselineDays?: number;
+  /** Skip fetching entirely (e.g. axis disabled by feature flag). */
+  enabled?: boolean;
 }
 
 /** One row as returned by the `pattern_debt_movements` RPC. */
@@ -38,6 +40,7 @@ interface PatternDebtMovementRow {
 export const usePatternDebt = ({
   windowDays,
   baselineDays,
+  enabled = true,
 }: UsePatternDebtOptions = {}) => {
   const session = useSession();
   const userId = session?.user?.id;
@@ -45,7 +48,7 @@ export const usePatternDebt = ({
   return useQuery<PatternBalance>({
     queryKey: [QUERIES.PATTERN_DEBT, userId, windowDays, baselineDays],
     queryFn: () => fetchPatternDebt(windowDays, baselineDays),
-    enabled: !!userId,
+    enabled: !!userId && enabled,
   });
 };
 
