@@ -12,7 +12,7 @@ import { PROGRAM_MUTATION_ERROR_MESSAGE } from './useProgramMutationErrorHandler
 import { ProgramProgressResult } from './useProgramProgress';
 import { useSetProgramAutoRepeat } from './useSetProgramAutoRepeat';
 
-const USER_PROGRAMS_URL = `${VITE_SUPABASE_URL}/rest/v1/user_programs`;
+const SET_AUTO_REPEAT_URL = `${VITE_SUPABASE_URL}/rest/v1/rpc/set_program_auto_repeat`;
 
 const showToast = vi.fn();
 
@@ -60,13 +60,12 @@ const makeWrapper = () => {
 describe('useSetProgramAutoRepeat', () => {
   beforeEach(() => showToast.mockClear());
 
-  it('patches the enrollment with the new auto_repeat value', async () => {
-    let receivedBody: { auto_repeat?: boolean } = {};
-    let receivedUrl = '';
+  it('calls the set_program_auto_repeat RPC with the enrollment and value', async () => {
+    let receivedBody: { p_user_program_id?: string; p_auto_repeat?: boolean } =
+      {};
     server.use(
-      http.patch(USER_PROGRAMS_URL, async ({ request }) => {
-        receivedBody = (await request.json()) as { auto_repeat?: boolean };
-        receivedUrl = request.url;
+      http.post(SET_AUTO_REPEAT_URL, async ({ request }) => {
+        receivedBody = (await request.json()) as typeof receivedBody;
         return new HttpResponse(null, { status: 204 });
       }),
     );
@@ -78,14 +77,14 @@ describe('useSetProgramAutoRepeat', () => {
 
     await result.current.mutateAsync({ userProgramId: 'up-1', autoRepeat: true });
 
-    expect(receivedUrl).toContain('id=eq.up-1');
-    expect(receivedBody.auto_repeat).toBe(true);
+    expect(receivedBody.p_user_program_id).toBe('up-1');
+    expect(receivedBody.p_auto_repeat).toBe(true);
     expect(showToast).not.toHaveBeenCalled();
   });
 
   it('optimistically flips the cached progress enrollment before the request resolves', async () => {
     server.use(
-      http.patch(USER_PROGRAMS_URL, async () => {
+      http.post(SET_AUTO_REPEAT_URL, async () => {
         await delay(50);
         return new HttpResponse(null, { status: 204 });
       }),
@@ -109,7 +108,7 @@ describe('useSetProgramAutoRepeat', () => {
 
   it('leaves other enrollments untouched', async () => {
     server.use(
-      http.patch(USER_PROGRAMS_URL, async () => {
+      http.post(SET_AUTO_REPEAT_URL, async () => {
         await delay(50);
         return new HttpResponse(null, { status: 204 });
       }),
@@ -135,7 +134,7 @@ describe('useSetProgramAutoRepeat', () => {
 
   it('rolls back the optimistic flip and toasts on failure', async () => {
     server.use(
-      http.patch(USER_PROGRAMS_URL, () =>
+      http.post(SET_AUTO_REPEAT_URL, () =>
         HttpResponse.json({ message: 'boom' }, { status: 400 }),
       ),
     );

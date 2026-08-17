@@ -1250,6 +1250,10 @@ export type Database = {
         Args: { p_replace_user_program_id?: string; p_user_program_id: string }
         Returns: string
       }
+      set_program_auto_repeat: {
+        Args: { p_auto_repeat: boolean; p_user_program_id: string }
+        Returns: undefined
+      }
       set_program_released: {
         Args: { p_program_id: string; p_released: boolean }
         Returns: undefined

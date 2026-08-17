@@ -175,7 +175,7 @@ export const ProgramProgressPage = () => {
           {enrollment?.status === 'active' && nextQueued && (
             <p className="mt-1 border-t border-border pt-1 text-xs text-muted-foreground">
               Next up: {nextQueued.program.title}
-              {isRepeating ? ' (queued programs start before a repeat)' : ''}
+              {isRepeating ? ' (waits while this program repeats)' : ''}
             </p>
           )}
         </CardContent>

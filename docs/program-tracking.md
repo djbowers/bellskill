@@ -65,6 +65,16 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   slot — which is what lets `complete_program_session`'s terminal flip and the
   cancel PATCH stay one-column updates. The write path was already
   enrollment-scoped and needed no change. See `e2e/program-parallel.spec.ts`.
+- **Auto-repeat (`user_programs.auto_repeat`):** when the final session
+  completes, `complete_program_session` checks the flag **before** any queue
+  promotion (`*_repeat_wins_over_queue.sql`) — a repeating enrollment clears its
+  completions, bumps `cycles_completed`, stays `active`, and returns `false`
+  (no completion UI); queued programs promote only when a non-repeating
+  enrollment finishes. Toggling goes through the `set_program_auto_repeat` RPC
+  (`useSetProgramAutoRepeat`): a plain flag flip normally, but enabling it on a
+  `completed` enrollment restarts it atomically — completions cleared, cycle
+  counted, reactivated into the lowest free slot (raises if all 3 slots are
+  taken).
 - **Derived cadence (PROD-237):** `programs.num_weeks`/`days_per_week` are
   **nullable** and no longer asked at creation. `usePrograms` prefers the stored
   columns when a program authored them (the seeded shared programs) and

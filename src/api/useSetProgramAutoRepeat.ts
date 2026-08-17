@@ -16,8 +16,8 @@ export interface SetProgramAutoRepeatInput {
 /**
  * Flips an enrollment's auto-repeat toggle. When on, finishing the program's
  * last session loops back to the first (see complete_program_session) instead of
- * flipping to `completed`. A one-column update on the user's own enrollment; RLS
- * keeps it scoped to them.
+ * flipping to `completed`. Enabling it on an already-completed enrollment
+ * restarts it immediately at session 1 as a new cycle (set_program_auto_repeat).
  */
 export const useSetProgramAutoRepeat = () => {
   const queryClient = useQueryClient();
@@ -25,10 +25,10 @@ export const useSetProgramAutoRepeat = () => {
 
   return useMutation({
     mutationFn: async (input: SetProgramAutoRepeatInput): Promise<void> => {
-      const { error } = await supabase
-        .from('user_programs')
-        .update({ auto_repeat: input.autoRepeat })
-        .eq('id', input.userProgramId);
+      const { error } = await supabase.rpc('set_program_auto_repeat', {
+        p_user_program_id: input.userProgramId,
+        p_auto_repeat: input.autoRepeat,
+      });
       if (error) throw error;
     },
     // Flip the cached progress entry immediately so the Switch doesn't wait on
