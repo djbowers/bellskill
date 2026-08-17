@@ -13,14 +13,18 @@ import {
 } from '../../../src/utils/dateOnly.ts';
 import {
   assessStackFit,
+  computeModalityBalance,
   computePatternBalance,
+  groupProgramModalityProfiles,
   type MovementAggregate,
+  type ProgramModalityRow,
   type ProgramSystemicDemand,
   type StackProgram,
 } from './scoring.ts';
 import type {
   ActiveProgramSummary,
   CandidateProgram,
+  ModalityDebtInput,
   PatternDebtInput,
   QueuedProgramSummary,
   RecommenderInputs,
@@ -45,6 +49,37 @@ const toStackProgram = (p: ProgramRow): StackProgram => ({
   focusTags: p.focus_tags ?? [],
   systemicDemand: p.systemic_demand,
 });
+
+/**
+ * Per-program modality profiles, derived from the movements each program's
+ * sessions prescribe. Best-effort: a failure degrades to empty profiles, which
+ * render as an omitted clause rather than a wrong claim.
+ */
+async function gatherModalityProfiles(
+  userClient: SupabaseClient,
+): Promise<Map<string, string[]>> {
+  try {
+    // Generated DB types don't yet know this function — cast at the RPC
+    // boundary only, as with pattern_debt_movements.
+    const { data, error } = await userClient.rpc(
+      'program_modality_movements' as never,
+    );
+    if (error) throw error;
+
+    const rows: ProgramModalityRow[] = (
+      (data ?? []) as Record<string, unknown>[]
+    ).map((row) => ({
+      program_id: row.program_id as string,
+      modality: row.modality as string,
+      movement_count: Number(row.movement_count),
+    }));
+
+    return groupProgramModalityProfiles(rows);
+  } catch (err) {
+    console.error('recommend-program modality profile fetch failed:', err);
+    return new Map();
+  }
+}
 
 export async function gatherInputs(
   admin: SupabaseClient,
@@ -163,6 +198,8 @@ export async function gatherInputs(
     }
   }
 
+  const modalityProfiles = await gatherModalityProfiles(userClient);
+
   const active_programs: ActiveProgramSummary[] = activeEnrollments.flatMap(
     (e) => {
       const program = programById.get(e.program_id);
@@ -173,6 +210,7 @@ export async function gatherInputs(
           program_id: program.id,
           title: program.title,
           focus_tags: program.focus_tags ?? [],
+          modality_profile: modalityProfiles.get(program.id) ?? [],
           systemic_demand: program.systemic_demand,
           progress: `${done?.count ?? 0}/${sessionCounts.get(program.id) ?? 0}`,
           last_worked_at: done?.lastAt ?? null,
@@ -195,6 +233,7 @@ export async function gatherInputs(
     title: p.title,
     description: p.description,
     focus_tags: p.focus_tags ?? [],
+    modality_profile: modalityProfiles.get(p.id) ?? [],
     systemic_demand: p.systemic_demand,
     session_count: sessionCounts.get(p.id) ?? 0,
     stack_fit: assessStackFit(toStackProgram(p), activeStack),
@@ -214,6 +253,7 @@ export async function gatherInputs(
     movement_id: (row.movement_id ?? null) as string | null,
     movement_name: row.movement_name as string,
     pattern_credits: (row.pattern_credits ?? null) as string[] | null,
+    modality_credits: (row.modality_credits ?? null) as string[] | null,
     last_trained_at: row.last_trained_at as string | null,
     set_count: Number(row.set_count),
     total_reps: Number(row.total_reps),
@@ -236,6 +276,23 @@ export async function gatherInputs(
       band: p.band,
       hardest_rpe: p.hardestRpe,
       is_new: p.isNew,
+    })),
+  };
+
+  const modalityBalance = computeModalityBalance(debtAggregates, clientToday);
+  const modality_debt: ModalityDebtInput = {
+    overall_balance: modalityBalance.overallBalance,
+    modalities: Object.values(modalityBalance.modalities).map((m) => ({
+      modality: m.modality,
+      days_since_last_trained:
+        m.daysSinceLastTrained == null
+          ? null
+          : Math.floor(m.daysSinceLastTrained),
+      recent_volume_kg: m.recentVolume,
+      baseline_volume_kg: m.baselineVolume,
+      debt_score: m.debtScore,
+      band: m.band,
+      is_new: m.isNew,
     })),
   };
 
@@ -290,6 +347,7 @@ export async function gatherInputs(
     queued_programs,
     candidates,
     pattern_debt,
+    modality_debt,
     recent_history,
     equipment: await gatherEquipment(admin, userId),
   };

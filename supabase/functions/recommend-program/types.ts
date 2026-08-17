@@ -6,7 +6,9 @@
 import type { EquipmentSummary } from '../../../src/utils/equipment.ts';
 import type {
   DebtBand,
+  Modality,
   OverallBalance,
+  OverallModalityBalance,
   Pattern,
   PatternRpe,
   StackFit,
@@ -32,11 +34,34 @@ export interface PatternDebtInput {
   patterns: PatternDebtEntry[];
 }
 
+/** One modality's scored balance — how the lifter has been moving. */
+export interface ModalityDebtEntry {
+  modality: Modality;
+  days_since_last_trained: number | null;
+  recent_volume_kg: number;
+  baseline_volume_kg: number | null;
+  debt_score: number;
+  band: DebtBand;
+  is_new: boolean;
+}
+
+export interface ModalityDebtInput {
+  overall_balance: OverallModalityBalance;
+  modalities: ModalityDebtEntry[];
+}
+
 /** One program the user is currently running. */
 export interface ActiveProgramSummary {
   program_id: string;
   title: string;
   focus_tags: string[];
+  /**
+   * The modalities this program's prescribed movements actually train, derived
+   * (src/utils/programModality.ts) rather than authored. A different axis from
+   * focus_tags — what a rep is, not what the prescription buys — and empty when
+   * no prescribed movement matched the catalog.
+   */
+  modality_profile: string[];
   systemic_demand: string | null;
   /** Sessions satisfied / total, e.g. "4/12". */
   progress: string;
@@ -55,6 +80,8 @@ export interface CandidateProgram {
   title: string;
   description: string | null;
   focus_tags: string[];
+  /** See {@link ActiveProgramSummary.modality_profile}. */
+  modality_profile: string[];
   systemic_demand: string | null;
   session_count: number;
   /** Precomputed vs the active stack; null when there is nothing to assess. */
@@ -78,6 +105,12 @@ export interface RecommenderInputs {
   queued_programs: QueuedProgramSummary[];
   candidates: CandidateProgram[];
   pattern_debt: PatternDebtInput;
+  /**
+   * The modality axis, scored from the same RPC rows as pattern_debt. Null when
+   * the catalog credits nothing the lifter has trained — the prompt then omits
+   * the section rather than claiming an even mix.
+   */
+  modality_debt: ModalityDebtInput | null;
   recent_history: WorkoutSummary[];
   /** Null when the user has recorded no equipment — the prompt then omits the section. */
   equipment: EquipmentSummary | null;

@@ -19,6 +19,19 @@ export {
   type PatternRpe,
 } from '../../../src/utils/patternDebt.ts';
 
+export {
+  computeModalityBalance,
+  type Modality,
+  type ModalityBalance,
+  type ModalityDebt,
+  type OverallModalityBalance,
+} from '../../../src/utils/modalityDebt.ts';
+
+export {
+  groupProgramModalityProfiles,
+  type ProgramModalityRow,
+} from '../../../src/utils/programModality.ts';
+
 // ---------------------------------------------------------------------------
 // Stack fit (src/utils/stackFit.ts)
 // ---------------------------------------------------------------------------

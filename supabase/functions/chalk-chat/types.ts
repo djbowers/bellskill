@@ -2,6 +2,7 @@
 // the provider boundary. Chalk is read-only, so unlike the recommenders there is
 // no structured output schema — the model returns prose.
 
+import type { ModalityDebtLineEntry } from '../_shared/modalityPrompt.ts';
 import type { PatternDebtLineEntry } from '../_shared/patternDebtPrompt.ts';
 import type { EquipmentSummary } from '../../../src/utils/equipment.ts';
 
@@ -23,6 +24,12 @@ export interface WorkoutHistoryEntry {
 export interface PatternDebtInput {
   overall_balance: number;
   patterns: PatternDebtLineEntry[];
+}
+
+/** The second balance axis: how the lifter has been moving, not which patterns. */
+export interface ModalityDebtInput {
+  overall_balance: string;
+  modalities: ModalityDebtLineEntry[];
 }
 
 /** A movement in the lifter's own library. */
@@ -56,6 +63,8 @@ export interface ChalkContext {
     top_movements: Array<{ name: string; set_count: number }>;
   } | null;
   pattern_debt: PatternDebtInput | null;
+  /** Scored from the same RPC rows as pattern_debt; null on the same failure. */
+  modality_debt: ModalityDebtInput | null;
   library: LibraryMovement[];
   enrolled_programs: EnrolledProgram[];
   catalog_programs: CatalogProgram[];

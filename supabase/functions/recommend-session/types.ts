@@ -7,6 +7,10 @@
 
 import type { EquipmentSummary } from '../../../src/utils/equipment.ts';
 import type {
+  Modality,
+  OverallModalityBalance,
+} from '../../../src/utils/modalityDebt.ts';
+import type {
   DebtBand,
   OverallBalance,
   Pattern,
@@ -61,6 +65,28 @@ export interface PatternDebtInput {
   patterns: PatternDebtEntry[];
 }
 
+/**
+ * One modality's scored balance, serialized like {@link PatternDebtEntry}. The
+ * second balance axis (src/utils/modalityDebt.ts): what a rep *is* — grind,
+ * ballistic, conditioning, mobility — rather than which pattern it trains.
+ */
+export interface ModalityDebtEntry {
+  modality: Modality;
+  days_since_last_trained: number | null;
+  recent_volume_kg: number;
+  baseline_volume_kg: number | null;
+  debt_score: number;
+  band: DebtBand;
+  hardest_rpe: PatternRpe | null;
+  /** Never trained in the baseline window — treat as neutral, not overdue. */
+  is_new: boolean;
+}
+
+export interface ModalityDebtInput {
+  overall_balance: OverallModalityBalance;
+  modalities: ModalityDebtEntry[];
+}
+
 /** Everything the recommender reasons over. Snapshotted into inputs JSONB. */
 export interface RecommenderInputs {
   /**
@@ -76,6 +102,12 @@ export interface RecommenderInputs {
   candidates: CandidateMovement[];
   /** Null when the pattern_debt_movements RPC fails — never blocks a recommendation. */
   pattern_debt: PatternDebtInput | null;
+  /**
+   * The modality axis, scored from the same RPC rows as pattern_debt and null
+   * on the same failure. A soft signal only: unlike balance_targets it creates
+   * no coverage requirement and no validation retry.
+   */
+  modality_debt: ModalityDebtInput | null;
   /** `{}` when the user has recorded no equipment — the prompt then omits the section. */
   unlocked_weights: EquipmentSummary | Record<string, never>;
 }

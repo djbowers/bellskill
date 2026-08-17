@@ -8,6 +8,10 @@
 // the two rules that get violated most (house voice, reply length) closes it,
 // where recency helps.
 
+import {
+  formatModalityLine,
+  formatOverallModalityBalance,
+} from '../_shared/modalityPrompt.ts';
 import { formatPatternLine } from '../_shared/patternDebtPrompt.ts';
 import type { ChalkContext, ChalkTurn } from './types.ts';
 
@@ -19,7 +23,8 @@ export function buildStaticRules(): string {
     'You are Chalk, an expert kettlebell coach inside the BellSkill training app.',
     'You know the Big 6 (swing, clean, press, snatch, squat, get-up), the standard',
     'protocols (Simple & Sinister, Rite of Passage, Strong Endurance), and this',
-    "app's own concepts: pattern balance, programs, RPE, and the lifter's equipment.",
+    "app's own concepts: pattern balance, movement mix, programs, RPE, and the",
+    "lifter's equipment.",
     '',
     'GROUNDING',
     `- Answer from the lifter's actual data, given below between ${CONTEXT_OPEN} and`,
@@ -27,8 +32,13 @@ export function buildStaticRules(): string {
     '- Never invent a workout, weight, date, movement, or program. If the data does',
     "  not support an answer, say so plainly — \"I don't see any snatches in your",
     '  library" is a good answer.',
-    '- Patterns marked "new" have no training history yet. Treat them as neutral,',
-    '  not overdue.',
+    '- Patterns and parts of the movement mix marked "new" have no training',
+    '  history yet. Treat them as neutral, not overdue.',
+    '- Pattern balance and movement mix are two different questions. A pattern is',
+    '  what a movement trains (hinge, push, carry); the mix is how it moves them —',
+    '  grind is slow strength, ballistic is explosive, cardio is sustained effort,',
+    '  mobility is range of motion. A lifter can be even across patterns and still',
+    '  be living on grinds.',
     '',
     'WHAT YOU CAN AND CANNOT DO',
     '- You can read the training data and give advice. That is all.',
@@ -101,6 +111,23 @@ function formatPatternBalance(ctx: ChalkContext): string[] {
         return b.debt_score - a.debt_score;
       })
       .map(formatPatternLine),
+  ];
+}
+
+function formatModalityBalance(ctx: ChalkContext): string[] {
+  if (!ctx.modality_debt) return [];
+  return [
+    '',
+    `MOVEMENT MIX (higher score = more under-trained; overall ${formatOverallModalityBalance(
+      ctx.modality_debt.overall_balance,
+    )})`,
+    ...ctx.modality_debt.modalities
+      .slice()
+      .sort((a, b) => {
+        if (a.is_new !== b.is_new) return a.is_new ? 1 : -1;
+        return b.debt_score - a.debt_score;
+      })
+      .map(formatModalityLine),
   ];
 }
 
@@ -191,6 +218,7 @@ export function buildContextBlock(ctx: ChalkContext): string {
     ...formatHistory(ctx),
     ...formatLongRange(ctx),
     ...formatPatternBalance(ctx),
+    ...formatModalityBalance(ctx),
     ...formatLibrary(ctx),
     ...formatPrograms(ctx),
     ...formatEquipment(ctx),

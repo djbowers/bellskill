@@ -22,8 +22,45 @@ const baseInputs = (over: Partial<RecommenderInputs> = {}): RecommenderInputs =>
     },
   ],
   pattern_debt: null,
+  modality_debt: null,
   unlocked_weights: {},
   ...over,
+});
+
+const modalityDebt = (): RecommenderInputs['modality_debt'] => ({
+  overall_balance: 'grind-heavy',
+  modalities: [
+    {
+      modality: 'grind',
+      days_since_last_trained: 1,
+      recent_volume_kg: 2000,
+      baseline_volume_kg: 1000,
+      debt_score: 5,
+      band: 'green',
+      hardest_rpe: null,
+      is_new: false,
+    },
+    {
+      modality: 'conditioning',
+      days_since_last_trained: 21,
+      recent_volume_kg: 0,
+      baseline_volume_kg: 800,
+      debt_score: 80,
+      band: 'red',
+      hardest_rpe: null,
+      is_new: false,
+    },
+    {
+      modality: 'mobility',
+      days_since_last_trained: null,
+      recent_volume_kg: 0,
+      baseline_volume_kg: null,
+      debt_score: 0,
+      band: 'green',
+      hardest_rpe: null,
+      is_new: true,
+    },
+  ],
 });
 
 describe('prompt — pattern annotations and balance targets', () => {
@@ -52,5 +89,42 @@ describe('prompt — pattern annotations and balance targets', () => {
 
   test('system prompt bans the word "debt" in rationale copy', () => {
     expect(buildSystemPrompt()).toContain('Never use');
+  });
+});
+
+describe('prompt — movement mix', () => {
+  test('section is omitted entirely when modality data is unavailable', () => {
+    expect(buildUserPrompt(baseInputs())).not.toContain('Movement mix');
+  });
+
+  test('renders modalities worst-first, with new ones last', () => {
+    const prompt = buildUserPrompt(
+      baseInputs({ modality_debt: modalityDebt() }),
+    );
+    const mix = prompt.slice(prompt.indexOf('Movement mix'));
+    expect(mix.indexOf('cardio')).toBeLessThan(mix.indexOf('- grind'));
+    expect(mix.indexOf('- grind')).toBeLessThan(mix.indexOf('- mobility'));
+    expect(mix).toContain('- mobility: new');
+  });
+
+  test('says cardio, never conditioning — programs use that word for something else', () => {
+    const prompt = buildUserPrompt(
+      baseInputs({ modality_debt: modalityDebt() }),
+    );
+    expect(prompt).toContain('overall: grind-heavy');
+    expect(prompt).toContain('- cardio: score 80 (red)');
+    expect(prompt).not.toContain('conditioning');
+  });
+
+  test('never uses the word "debt" in the rendered section', () => {
+    const prompt = buildUserPrompt(
+      baseInputs({ modality_debt: modalityDebt() }),
+    );
+    expect(prompt.slice(prompt.indexOf('Movement mix'))).not.toContain('debt');
+  });
+
+  test('system prompt ranks the mix below pattern balance, readiness and goal', () => {
+    expect(buildSystemPrompt()).toContain('movement-mix section');
+    expect(buildSystemPrompt()).toContain('never outranks');
   });
 });

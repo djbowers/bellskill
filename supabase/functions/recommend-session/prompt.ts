@@ -5,6 +5,10 @@
 
 import type { RecommenderInputs } from './types.ts';
 import { formatEquipmentSection } from '../_shared/equipmentInput.ts';
+import {
+  formatModalityLine,
+  formatOverallModalityBalance,
+} from '../_shared/modalityPrompt.ts';
 import { formatPatternLine } from '../_shared/patternDebtPrompt.ts';
 
 export function buildSystemPrompt(hasTargets = false): string {
@@ -37,10 +41,18 @@ export function buildSystemPrompt(hasTargets = false): string {
     "  lifter's goal still take precedence when they conflict.",
     "- Patterns marked \"new\" have no training history yet — treat them as",
     '  neutral, not overdue; do not count them toward pattern debt.',
+    '- A movement-mix section, when provided, is a second and WEAKER signal: it',
+    '  describes how they have been moving (grind = slow strength, ballistic =',
+    '  explosive, cardio = sustained effort, mobility = range of motion) rather',
+    '  than which patterns they trained. Break a tie between otherwise equal',
+    '  choices in favour of a red or yellow part of the mix. It never outranks',
+    '  pattern balance, readiness, or their goal — and "new" means neutral here',
+    '  too.',
     ...targetRules,
     '- Give a short, concrete rationale a thoughtful coach would give — tie it to',
     '  their goal, recent history, and readiness. Avoid generic filler. Never use',
-    '  the word "debt" — say a pattern is due, overdue, or needs attention.',
+    '  the word "debt" — say a pattern or a kind of work is due, overdue, or',
+    '  needs attention.',
     '',
     'Runnability (these are checked, and a violation is rejected):',
     '- Every movement needs the SAME number of rungs, unless you declare the format',
@@ -98,6 +110,22 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
       ]
     : [];
 
+  const modalitySection = inputs.modality_debt
+    ? [
+        '',
+        `Movement mix (higher score = more under-trained; overall: ${formatOverallModalityBalance(
+          inputs.modality_debt.overall_balance,
+        )}):`,
+        ...inputs.modality_debt.modalities
+          .slice()
+          .sort((a, b) => {
+            if (a.is_new !== b.is_new) return a.is_new ? 1 : -1;
+            return b.debt_score - a.debt_score;
+          })
+          .map(formatModalityLine),
+      ]
+    : [];
+
   const targetSection = inputs.balance_targets.length
     ? [
         '',
@@ -118,6 +146,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
     'Recent workouts (most recent first):',
     historyLines,
     ...patternDebtSection,
+    ...modalitySection,
     ...targetSection,
     ...equipmentSection,
     '',
