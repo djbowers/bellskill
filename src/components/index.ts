@@ -5,6 +5,7 @@ export * from './Loading';
 export * from './LoadingScreen';
 export * from './PageLoading';
 export * from './ModifyCountButtons';
+export * from './MovementLogRow';
 export * from './OverflowMenu';
 export * from './PWAInstallPrompt';
 export * from './Page';

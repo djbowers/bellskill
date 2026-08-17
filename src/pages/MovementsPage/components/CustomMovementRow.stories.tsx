@@ -9,6 +9,8 @@ const meta: Meta<typeof CustomMovementRow> = {
   component: CustomMovementRow,
   args: {
     onClickLink: () => {},
+    onViewLogs: () => {},
+    onDelete: () => {},
   },
   decorators: [
     (Story) => (
@@ -37,6 +39,13 @@ export const SingleLog: Story = {
   args: {
     canonicalName: 'My Homemade Sandbag Carry',
     logCount: 1,
+  },
+};
+
+export const NoLogs: Story = {
+  args: {
+    canonicalName: 'Kettlebel Swng',
+    logCount: 0,
   },
 };
 
