@@ -94,6 +94,7 @@ const enrollmentRow = (
   status: string,
   activeSlot: number | null,
   completedAt: string | null = null,
+  autoRepeat = false,
 ) => ({
   id,
   user_id: 'user-123',
@@ -103,6 +104,7 @@ const enrollmentRow = (
   started_at: '',
   completed_at: completedAt,
   active_slot: activeSlot,
+  auto_repeat: autoRepeat,
 });
 
 /** PostgREST-style `?id=eq.<value>` / `?program_id=eq.<value>` extraction. */
@@ -261,6 +263,94 @@ describe('useActivePrograms', () => {
     expect(result.current.data!.map((p) => p.program.title)).toEqual([
       '10,000 Swing Challenge',
     ]);
+  });
+
+  it('restarts a completed enrollment that has auto-repeat on, then serves session 1', async () => {
+    const stuckRow = enrollmentRow(
+      'up-1',
+      'prog-a',
+      'completed',
+      1,
+      '2026-07-06T00:00:00Z',
+      true,
+    );
+    const restartedRow = { ...stuckRow, status: 'active', completed_at: null };
+    const completions = {
+      'up-1': [
+        { id: 'prog-a-ps-0', at: '2026-07-04T00:00:00Z' },
+        { id: 'prog-a-ps-1', at: '2026-07-05T00:00:00Z' },
+        { id: 'prog-a-ps-2', at: '2026-07-06T00:00:00Z' },
+      ],
+    };
+
+    let restartCalls = 0;
+    mockProgramData([stuckRow], [programRow('prog-a', 'Easy Strength')], completions);
+    server.use(
+      http.post(`${base}/rpc/set_program_auto_repeat`, async ({ request }) => {
+        restartCalls += 1;
+        expect(await request.json()).toEqual({
+          p_user_program_id: 'up-1',
+          p_auto_repeat: true,
+        });
+        // The restart cleared the completions and reactivated the enrollment.
+        completions['up-1'] = [];
+        server.use(
+          http.get(`${base}/user_programs`, () =>
+            HttpResponse.json([restartedRow]),
+          ),
+        );
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    const { result } = renderHook(() => useActivePrograms(), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(restartCalls).toBe(1);
+    const [data] = result.current.data!;
+    expect(data.isComplete).toBe(false);
+    expect(data.nextSession?.session.id).toBe('prog-a-ps-0');
+    expect(data.progress.completed).toBe(0);
+  });
+
+  it('keeps the complete card when the restart fails (e.g. slots full)', async () => {
+    mockProgramData(
+      [
+        enrollmentRow(
+          'up-1',
+          'prog-a',
+          'completed',
+          1,
+          '2026-07-06T00:00:00Z',
+          true,
+        ),
+      ],
+      [programRow('prog-a', 'Easy Strength')],
+      {
+        'up-1': [
+          { id: 'prog-a-ps-0', at: '2026-07-04T00:00:00Z' },
+          { id: 'prog-a-ps-1', at: '2026-07-05T00:00:00Z' },
+          { id: 'prog-a-ps-2', at: '2026-07-06T00:00:00Z' },
+        ],
+      },
+    );
+    server.use(
+      http.post(`${base}/rpc/set_program_auto_repeat`, () =>
+        HttpResponse.json({ message: 'slots full' }, { status: 400 }),
+      ),
+    );
+
+    const { result } = renderHook(() => useActivePrograms(), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const [data] = result.current.data!;
+    expect(data.isComplete).toBe(true);
   });
 
   it('returns an empty list when the user has no active or completed enrollment', async () => {

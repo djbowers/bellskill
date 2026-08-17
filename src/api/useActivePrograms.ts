@@ -87,7 +87,24 @@ export const useActivePrograms = (options?: UseActiveProgramsOptions) => {
 const fetchActivePrograms = async (
   userId: string,
 ): Promise<ActiveProgram[]> => {
-  const { data: enrollments, error } = await supabase
+  let enrollments = await fetchEnrollments(userId);
+  if (await restartStuckRepeaters(enrollments)) {
+    enrollments = await fetchEnrollments(userId);
+  }
+
+  const active = enrollments.filter((row) => row.status === 'active');
+  // Only fall back to the completed enrollment when nothing is running — with a
+  // live program in another slot, Home has something better to show.
+  const rows = active.length > 0 ? active : enrollments.slice(0, 1);
+  if (rows.length === 0) return [];
+
+  const programs = await Promise.all(rows.map(buildActiveProgram));
+
+  return programs.sort(byLeastRecentlyWorked);
+};
+
+const fetchEnrollments = async (userId: string): Promise<EnrollmentRow[]> => {
+  const { data, error } = await supabase
     .from('user_programs')
     .select('*')
     .eq('user_id', userId)
@@ -95,16 +112,32 @@ const fetchActivePrograms = async (
     .order('completed_at', { ascending: false, nullsFirst: true });
 
   if (error) throw error;
+  return data ?? [];
+};
 
-  const active = (enrollments ?? []).filter((row) => row.status === 'active');
-  // Only fall back to the completed enrollment when nothing is running — with a
-  // live program in another slot, Home has something better to show.
-  const rows = active.length > 0 ? active : (enrollments ?? []).slice(0, 1);
-  if (rows.length === 0) return [];
-
-  const programs = await Promise.all(rows.map(buildActiveProgram));
-
-  return programs.sort(byLeastRecentlyWorked);
+/**
+ * A repeating enrollment should never sit in `completed` — that state predates
+ * repeat-beats-queue (or the toggle was flipped on a device that missed the
+ * restart). Re-asserting auto-repeat through `set_program_auto_repeat` restarts
+ * it at session 1. Failures (e.g. all slots taken) are swallowed: Home then
+ * falls back to the ordinary complete card. Returns whether anything restarted.
+ */
+const restartStuckRepeaters = async (
+  enrollments: EnrollmentRow[],
+): Promise<boolean> => {
+  const stuck = enrollments.filter(
+    (row) => row.status === 'completed' && row.auto_repeat,
+  );
+  const results = await Promise.all(
+    stuck.map(async (row) => {
+      const { error } = await supabase.rpc('set_program_auto_repeat', {
+        p_user_program_id: row.id,
+        p_auto_repeat: true,
+      });
+      return !error;
+    }),
+  );
+  return results.some(Boolean);
 };
 
 /** Nulls (never worked) first, then oldest completion first; slot breaks ties. */
