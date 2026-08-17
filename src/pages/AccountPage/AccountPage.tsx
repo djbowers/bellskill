@@ -7,6 +7,7 @@ import {
   useConnectSpotify,
   useCreatePortalSession,
   useDisconnectSpotify,
+  useExportTrainingData,
   useSetSubscription,
   useSpotifyConnection,
 } from '~/api';
@@ -36,6 +37,7 @@ export const AccountPage = () => {
     useCreatePortalSession();
   const { mutate: setSubscription, isPending: settingSubscription } =
     useSetSubscription();
+  const { mutate: exportData, isPending: exporting } = useExportTrainingData();
 
   const [username, setUsername] = useState<string>('');
   const [previewEnabled, setPreviewEnabled] = useState<boolean>(
@@ -178,6 +180,21 @@ export const AccountPage = () => {
         </p>
         <Button variant="outline" onClick={handleToggleSound}>
           {soundEnabled ? 'Disable timer sounds' : 'Enable timer sounds'}
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-1 border-t pt-2">
+        <Label>My Data</Label>
+        <p className="text-xs text-muted-foreground">
+          Download your training history as a JSON file you can share with an
+          AI assistant for analysis and coaching.
+        </p>
+        <Button
+          variant="outline"
+          onClick={() => exportData()}
+          loading={exporting}
+        >
+          Export my data
         </Button>
       </div>
 

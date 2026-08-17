@@ -14,4 +14,11 @@ describe('account page', () => {
     const emailInput = await screen.findByRole('textbox', { name: 'Email' });
     expect(emailInput).toHaveDisplayValue('luke@skywalker.com');
   });
+
+  test('renders the data export section', async () => {
+    const exportButton = await screen.findByRole('button', {
+      name: 'Export my data',
+    });
+    expect(exportButton).toBeInTheDocument();
+  });
 });
