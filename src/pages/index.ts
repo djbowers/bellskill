@@ -1,5 +1,6 @@
 export * from './AccountPage';
 export * from './ActiveWorkoutPage';
+export * from './ChalkPage';
 export * from './CheckoutCancelPage';
 export * from './CheckoutSuccessPage';
 export * from './CompletedWorkoutPage';

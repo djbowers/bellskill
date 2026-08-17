@@ -63,8 +63,8 @@ describe('getNavItems', () => {
 describe('navItemByKey', () => {
   test('resolves a known destination', () => {
     expect(navItemByKey('ai')).toMatchObject({
-      label: 'AI',
-      to: '/recommendations',
+      label: 'Chalk',
+      to: '/chalk',
     });
   });
 

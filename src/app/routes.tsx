@@ -4,6 +4,7 @@ import { Features, features } from '../config/features';
 import {
   AccountPage,
   ActiveWorkoutPage,
+  ChalkPage,
   CheckoutCancelPage,
   CheckoutSuccessPage,
   CompletedWorkoutPage,
@@ -81,7 +82,10 @@ export const createRoutes = (flags: Features = features): RouteObject[] => [
           ]
         : []),
       ...(flags.premium
-        ? [{ path: 'recommendations', element: <RecommendationsPage /> }]
+        ? [
+            { path: 'chalk', element: <ChalkPage /> },
+            { path: 'recommendations', element: <RecommendationsPage /> },
+          ]
         : []),
       ...(flags.programs
         ? [

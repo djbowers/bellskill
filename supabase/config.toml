@@ -285,6 +285,19 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/recommend-session/deno.json"
 
+# Chalk, the AI kettlebell coach chat. Premium-gated; calls the Anthropic API.
+# Sole writer of chalk_threads / chalk_messages via the service role.
+[functions.chalk-chat]
+enabled = true
+verify_jwt = true
+import_map = "./functions/chalk-chat/deno.json"
+
+# AI Program Recommender. Premium-gated; calls the Anthropic API.
+[functions.recommend-program]
+enabled = true
+verify_jwt = true
+import_map = "./functions/recommend-program/deno.json"
+
 # Owner-only subscription toggle (QA + friends/family grants). Writes the
 # write-locked subscription columns via the service role.
 [functions.set-subscription]

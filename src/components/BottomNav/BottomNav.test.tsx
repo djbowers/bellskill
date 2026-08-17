@@ -45,10 +45,10 @@ describe('BottomNav', () => {
     expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
   });
 
-  test('promotes the AI tab when premium is enabled', () => {
+  test('promotes the Chalk tab when premium is enabled', () => {
     mockedUseFeatures.mockReturnValue(featuresWith({ premium: true }));
     renderNav();
-    expect(screen.getByRole('link', { name: 'AI' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Chalk' })).toBeInTheDocument();
   });
 
   test('marks the active route with aria-current', () => {
@@ -84,7 +84,7 @@ describe('BottomNav', () => {
   });
 
   test('More sheet rows carry their resolved row classes', () => {
-    // AI wins the promoted slot, so Movements is the one that overflows.
+    // Chalk wins the promoted slot, so Movements is the one that overflows.
     mockedUseFeatures.mockReturnValue(
       featuresWith({ premium: true, explore: true }),
     );
@@ -115,8 +115,8 @@ describe('BottomNav', () => {
       featuresWith({ premium: true, explore: true }),
     );
     renderNav();
-    // AI is promoted into the bar; Movements overflows into More.
-    expect(screen.getByRole('link', { name: 'AI' })).toBeInTheDocument();
+    // Chalk is promoted into the bar; Movements overflows into More.
+    expect(screen.getByRole('link', { name: 'Chalk' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));
     expect(screen.getByRole('link', { name: /Movements/ })).toBeInTheDocument();
   });

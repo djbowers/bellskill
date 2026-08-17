@@ -49,4 +49,20 @@ export const handlers = [
   http.post(`${VITE_SUPABASE_URL}/functions/v1/spotify-player`, () =>
     HttpResponse.json({ connected: false }),
   ),
+  // Chalk defaults to an empty conversation. `onUnhandledRequest: 'error'`
+  // means any suite that renders ChalkPage needs these present.
+  http.get(`${VITE_SUPABASE_URL}/rest/v1/chalk_threads`, () =>
+    HttpResponse.json([]),
+  ),
+  http.get(`${VITE_SUPABASE_URL}/rest/v1/chalk_messages`, () =>
+    HttpResponse.json([]),
+  ),
+  http.post(`${VITE_SUPABASE_URL}/functions/v1/chalk-chat`, () =>
+    HttpResponse.json({
+      thread_id: 'thread-1',
+      user_message_id: 'user-1',
+      assistant_message_id: 'assistant-1',
+      reply: 'Your hinge is overdue — swings would be a good call today.',
+    }),
+  ),
 ];
