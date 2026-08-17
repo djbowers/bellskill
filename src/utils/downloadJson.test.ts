@@ -2,7 +2,11 @@ import { downloadJson } from './downloadJson';
 
 describe('downloadJson', () => {
   test('downloads the data as a JSON file and revokes the object URL', () => {
-    const createObjectURL = vi.fn((_blob: Blob) => 'blob:mock-url');
+    let capturedBlob: Blob | undefined;
+    const createObjectURL = vi.fn((blob: Blob) => {
+      capturedBlob = blob;
+      return 'blob:mock-url';
+    });
     const revokeObjectURL = vi.fn();
     vi.stubGlobal('URL', {
       ...URL,
@@ -17,8 +21,7 @@ describe('downloadJson', () => {
     downloadJson({ hello: 'world' }, 'export.json');
 
     expect(createObjectURL).toHaveBeenCalledOnce();
-    const blob = createObjectURL.mock.calls[0][0];
-    expect(blob.type).toBe('application/json');
+    expect(capturedBlob?.type).toBe('application/json');
     expect(click).toHaveBeenCalledOnce();
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
 
