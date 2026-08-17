@@ -94,9 +94,9 @@ async function rpc<T = unknown>(
     },
     body: JSON.stringify(args),
   });
-  if (!res.ok)
-    throw new Error(`rpc ${fn} failed (${res.status}): ${await res.text()}`);
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  if (!res.ok) throw new Error(`rpc ${fn} failed (${res.status}): ${text}`);
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 /** An owned program with `count` sessions, so enroll takes the no-clone path. */
@@ -148,12 +148,13 @@ interface EnrollmentRow {
   queue_position: number | null;
   auto_repeat: boolean;
   cycles_completed: number;
+  completed_at: string | null;
 }
 
 async function listEnrollments(user: TestUser): Promise<EnrollmentRow[]> {
   return restJson<EnrollmentRow[]>(
     'GET',
-    'user_programs?select=id,program_id,status,active_slot,queue_position,auto_repeat,cycles_completed&order=id.asc',
+    'user_programs?select=id,program_id,status,active_slot,queue_position,auto_repeat,cycles_completed,completed_at&order=id.asc',
     user.token,
   );
 }
@@ -254,7 +255,7 @@ test.describe('program queue — queueing and promotion', () => {
     }
   });
 
-  test('a queued program beats auto_repeat: promotion, not a loop', async () => {
+  test('auto_repeat beats a queued program: loop, not promotion', async () => {
     const user = await signUpThrowawayUser('queue-vs-repeat');
     const repeating = await createOwnedProgram(user, 'Repeating', 1);
     const next = await createOwnedProgram(user, 'Next', 1);
@@ -272,15 +273,45 @@ test.describe('program queue — queueing and promotion', () => {
       p_user_program_id: repeatingId,
       p_program_session_id: repeating.sessionIds[0],
     });
+    expect(done).toBe(false);
+
+    const looped = await enrollmentById(user, repeatingId);
+    expect(looped.status).toBe('active');
+    expect(looped.cycles_completed).toBe(1);
+
+    const stillQueued = await enrollmentById(user, queuedId);
+    expect(stillQueued.status).toBe('queued');
+    expect(stillQueued.queue_position).toBe(1);
+  });
+
+  test('enabling auto_repeat on a completed enrollment restarts it', async () => {
+    const user = await signUpThrowawayUser('queue-late-repeat');
+    const { programId, sessionIds } = await createOwnedProgram(
+      user,
+      'Finished',
+      1,
+    );
+    const enrollmentId = await rpc<string>('enroll_in_program', user.token, {
+      p_program_id: programId,
+    });
+
+    const done = await rpc<boolean>('complete_program_session', user.token, {
+      p_user_program_id: enrollmentId,
+      p_program_session_id: sessionIds[0],
+    });
     expect(done).toBe(true);
+    expect((await enrollmentById(user, enrollmentId)).status).toBe('completed');
 
-    const finished = await enrollmentById(user, repeatingId);
-    expect(finished.status).toBe('completed');
-    expect(finished.cycles_completed).toBe(0);
+    await rpc('set_program_auto_repeat', user.token, {
+      p_user_program_id: enrollmentId,
+      p_auto_repeat: true,
+    });
 
-    const promoted = await enrollmentById(user, queuedId);
-    expect(promoted.status).toBe('active');
-    expect(promoted.active_slot).toBe(1);
+    const restarted = await enrollmentById(user, enrollmentId);
+    expect(restarted.status).toBe('active');
+    expect(restarted.active_slot).toBe(1);
+    expect(restarted.cycles_completed).toBe(1);
+    expect(restarted.completed_at).toBeNull();
   });
 
   test('empty queue: auto_repeat still loops (regression)', async () => {
