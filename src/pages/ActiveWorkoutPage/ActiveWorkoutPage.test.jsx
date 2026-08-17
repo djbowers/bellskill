@@ -53,6 +53,7 @@ const {
   MaxTimedRung,
   FixedRepsForAdjustment,
   IntervalTimer,
+  GhostPaced,
 } = composeStories(stories);
 
 describe('finishing a workout', () => {
@@ -60,6 +61,9 @@ describe('finishing a workout', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -89,6 +93,7 @@ describe('finishing a workout', () => {
       completedRungs: expect.any(Number),
       completedSides: expect.any(Number),
       completedVolume: expect.any(Number),
+      roundSplits: [],
     });
   });
 
@@ -109,6 +114,7 @@ describe('finishing a workout', () => {
       completedRungs: expect.any(Number),
       completedSides: expect.any(Number),
       completedVolume: expect.any(Number),
+      roundSplits: [],
     });
   });
 
@@ -128,6 +134,7 @@ describe('finishing a workout', () => {
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 34,
+      roundSplits: [],
     });
   });
 });
@@ -137,6 +144,9 @@ describe('integration tests for previous volume persistence', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -169,6 +179,7 @@ describe('integration tests for previous volume persistence', () => {
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 120,
+      roundSplits: [],
     });
   });
 
@@ -186,6 +197,7 @@ describe('integration tests for previous volume persistence', () => {
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 120,
+      roundSplits: [],
     });
   });
 
@@ -207,6 +219,7 @@ describe('integration tests for previous volume persistence', () => {
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 120, // 120.4 rounds to 120
+      roundSplits: [],
     });
   });
 });
@@ -216,6 +229,9 @@ describe('volume calculation with kilogram weights', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -246,6 +262,7 @@ describe('volume calculation with kilogram weights', () => {
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 120,
+      roundSplits: [],
     });
   });
 
@@ -265,6 +282,7 @@ describe('volume calculation with kilogram weights', () => {
       completedRungs: 0,
       completedSides: expect.any(Number),
       completedVolume: 140,
+      roundSplits: [],
     });
   });
 });
@@ -274,6 +292,9 @@ describe('volume calculation with pound weights', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -304,6 +325,7 @@ describe('volume calculation with pound weights', () => {
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: expect.any(Number),
+      roundSplits: [],
     });
 
     // Verify conversion accuracy: 53lb × 0.453592 × 5 reps ≈ 120.2kg (rounded to 120)
@@ -317,6 +339,9 @@ describe('volume calculation with mixed weight units', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -347,6 +372,7 @@ describe('volume calculation with mixed weight units', () => {
       completedRungs: 0,
       completedSides: expect.any(Number),
       completedVolume: expect.any(Number),
+      roundSplits: [],
     });
 
     // Verify: (16 + 26.5 × 0.453592) × 5 ≈ 140kg
@@ -370,6 +396,7 @@ describe('volume calculation with mixed weight units', () => {
       completedRungs: 0,
       completedSides: expect.any(Number),
       completedVolume: expect.any(Number),
+      roundSplits: [],
     });
 
     // Verify: (35 × 0.453592 + 12) × 5 ≈ 139kg (rounded)
@@ -383,6 +410,9 @@ describe('volume calculation with one-handed movements', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -414,6 +444,7 @@ describe('volume calculation with one-handed movements', () => {
       completedRungs: 0,
       completedSides: 1, // finished one side of the one-handed movement
       completedVolume: 80,
+      roundSplits: [],
     });
   });
 });
@@ -423,6 +454,9 @@ describe('volume calculation with bodyweight movements', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -453,6 +487,7 @@ describe('volume calculation with bodyweight movements', () => {
       completedRungs: 0,
       completedSides: expect.any(Number),
       completedVolume: 0,
+      roundSplits: [],
     });
   });
 });
@@ -462,6 +497,9 @@ describe('volume accumulation across multiple rungs', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -499,6 +537,7 @@ describe('volume accumulation across multiple rungs', () => {
       completedRungs: 3,
       completedSides: 3, // two-handed: one side per rung across [1, 2, 3]
       completedVolume: 96, // 16 + 32 + 48
+      roundSplits: [],
     });
   });
 });
@@ -797,6 +836,9 @@ describe('automatic workout completion with volume goals', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -825,6 +867,7 @@ describe('automatic workout completion with volume goals', () => {
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 120,
+      roundSplits: [],
     });
   });
 
@@ -842,6 +885,7 @@ describe('automatic workout completion with volume goals', () => {
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 120,
+      roundSplits: [],
     });
   });
 });
@@ -851,6 +895,9 @@ describe('volume rounding on workout completion', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -882,6 +929,7 @@ describe('volume rounding on workout completion', () => {
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 120, // 120.4 rounds down to 120
+      roundSplits: [],
     });
   });
 
@@ -902,6 +950,7 @@ describe('volume rounding on workout completion', () => {
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 121, // 120.6 rounds up to 121
+      roundSplits: [],
     });
   });
 });
@@ -911,6 +960,9 @@ describe('volume does not trigger completion for non-volume goals', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -955,6 +1007,9 @@ describe('edge case and boundary tests', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -986,6 +1041,7 @@ describe('edge case and boundary tests', () => {
         completedRungs: 1,
         completedSides: expect.any(Number),
         completedVolume: 0,
+        roundSplits: [],
       });
     });
   });
@@ -1011,6 +1067,7 @@ describe('edge case and boundary tests', () => {
         completedRungs: 3,
         completedSides: expect.any(Number),
         completedVolume: 360,
+        roundSplits: [],
       });
     });
 
@@ -1045,6 +1102,7 @@ describe('edge case and boundary tests', () => {
         completedRungs: 1,
         completedSides: expect.any(Number),
         completedVolume: 123,
+        roundSplits: [],
       });
     });
 
@@ -1068,6 +1126,7 @@ describe('edge case and boundary tests', () => {
         completedRungs: 3,
         completedSides: expect.any(Number),
         completedVolume: 369,
+        roundSplits: [],
       });
     });
 
@@ -1090,6 +1149,7 @@ describe('edge case and boundary tests', () => {
         completedRungs: 2,
         completedSides: expect.any(Number),
         completedVolume: 246,
+        roundSplits: [],
       });
     });
   });
@@ -1100,6 +1160,9 @@ describe('volume calculation for complex mode', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   const logWorkout = vi.fn();
@@ -1132,6 +1195,7 @@ describe('volume calculation for complex mode', () => {
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 360,
+      roundSplits: [],
     });
   });
 
@@ -1157,6 +1221,7 @@ describe('volume calculation for complex mode', () => {
       completedRungs: 5,
       completedSides: expect.any(Number),
       completedVolume: 1080,
+      roundSplits: [],
     });
   });
 
@@ -1182,6 +1247,7 @@ describe('volume calculation for complex mode', () => {
       completedRungs: 5, // 1 rung per round × 5
       completedSides: expect.any(Number),
       completedVolume: 1440,
+      roundSplits: [],
     });
   });
 
@@ -1202,6 +1268,7 @@ describe('volume calculation for complex mode', () => {
       completedRungs: 1,
       completedSides: expect.any(Number),
       completedVolume: 360,
+      roundSplits: [],
     });
   });
 });
@@ -1385,6 +1452,9 @@ describe('active workout page (A+A Protocol interval EMOM cadence)', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   beforeEach(() => {
@@ -1436,6 +1506,9 @@ describe('active workout page (single-arm complex EMOM cadence)', () => {
     useLogWorkout: vi.fn(),
     trackEvent: vi.fn(),
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
   }));
 
   beforeEach(() => {
@@ -1586,9 +1659,7 @@ describe('active workout page (timed rungs)', () => {
     expect(screen.getByTestId('current-round')).toHaveTextContent('1');
 
     // Start it: 3s lead-in countdown, then the 1:00 rung runs and hands swap.
-    act(() =>
-      screen.getByRole('button', { name: 'Start workout' }).click(),
-    );
+    act(() => screen.getByRole('button', { name: 'Start workout' }).click());
     act(() => vi.advanceTimersByTime(3_000));
     act(() => vi.advanceTimersByTime(60_000));
     expect(leftWeight).toHaveAttribute('data-active', 'false');
@@ -1847,6 +1918,7 @@ describe('active workout page (straight sets)', () => {
       completedRungs: 10,
       completedSides: 10,
       completedVolume: 2400, // 48kg x 5 reps x 10 sets
+      roundSplits: [],
     });
   });
 
@@ -1942,6 +2014,69 @@ describe('cancelling a workout', () => {
     );
 
     expect(logWorkout).not.toHaveBeenCalled();
+  });
+});
+
+describe('ghost pacing', () => {
+  vi.mock('~/api', () => ({
+    useLogWorkout: vi.fn(),
+    trackEvent: vi.fn(),
+    AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
+    // These fixtures assert the un-raced workout, which is also what any
+    // workout that isn't a repeat renders.
+    useGhostSession: () => ({ data: null }),
+  }));
+
+  const logWorkout = vi.fn();
+
+  beforeEach(() =>
+    useLogWorkout.mockReturnValue({
+      mutate: logWorkout,
+      data: null,
+      isLoading: false,
+    }),
+  );
+
+  afterEach(() => vi.clearAllMocks());
+
+  test('records one split per completed round, timed from the workout start', async () => {
+    render(<GhostPaced />);
+
+    // Four rounds of a single one-rung movement: each continue is a round.
+    await clickContinue();
+    await clickContinue();
+    await clickContinue();
+    await clickContinue();
+
+    const { roundSplits } = logWorkout.mock.calls.at(-1)[0];
+
+    expect(roundSplits.map((split) => split.roundIndex)).toEqual([0, 1, 2, 3]);
+    // Elapsed is measured from startedAt, so every stamp is non-negative and
+    // the sequence only ever moves forward.
+    expect(roundSplits.every((split) => split.elapsedMs >= 0)).toBe(true);
+    expect([...roundSplits].sort((a, b) => a.elapsedMs - b.elapsedMs)).toEqual(
+      roundSplits,
+    );
+  });
+
+  test('records no splits for a workout that never completes a round', async () => {
+    render(<GhostPaced />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /finish workout/i }),
+    );
+
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({ roundSplits: [] }),
+    );
+  });
+
+  test('shows no rail or lap pill when there is nothing to race', async () => {
+    render(<GhostPaced />);
+    await clickContinue();
+
+    expect(screen.queryByTestId('ghost-rail')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('lap-delta-pill')).not.toBeInTheDocument();
   });
 });
 

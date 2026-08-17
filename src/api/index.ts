@@ -60,5 +60,6 @@ export * from './useAddUserEquipment';
 export * from './useUpdateUserEquipment';
 export * from './useDeleteUserEquipment';
 export * from './useInfiniteWorkoutLogs';
+export * from './useGhostSession';
 export * from './useWorkoutLog';
 export * from './useWorkoutLogs';

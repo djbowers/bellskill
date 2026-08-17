@@ -60,5 +60,8 @@ export const workoutLogToWorkoutOptions = (
     previousVolume,
     previousMinutes,
     previousRounds,
+    // The log being repeated is also the pace to race against. Program starts
+    // find their own ghost from the session id instead; see useGhostSession.
+    previousWorkoutLogId: workoutLog.id,
   });
 };

@@ -22,4 +22,5 @@ export interface WorkoutOptions {
   previousVolume?: number; // previous completed volume (kg) for volume goal calculations
   previousMinutes?: number; // actual completed duration in minutes from repeated workout
   previousRounds?: number; // actual completed rounds from repeated workout
+  previousWorkoutLogId?: number; // log this repeats, used to find the pacing ghost
 }

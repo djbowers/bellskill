@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERIES } from '~/constants';
 import { useProgramSession, useSession, useWorkoutOptions } from '~/contexts';
-import { WorkoutLog, WorkoutOptions } from '~/types';
+import { RoundSplit, WorkoutLog, WorkoutOptions } from '~/types';
 import { fromWorkoutMode, usesSharedBell } from '~/utils';
 
 import { supabase } from '../supabaseClient';
@@ -17,6 +17,8 @@ interface LogWorkoutInput {
   completedRungs: number;
   completedSides: number;
   completedVolume: number;
+  /** Lap times, for the next run of this workout to race against. */
+  roundSplits: RoundSplit[];
 }
 
 export const useLogWorkout = () => {
@@ -33,6 +35,7 @@ export const useLogWorkout = () => {
       completedRungs,
       completedSides,
       completedVolume,
+      roundSplits,
     }: LogWorkoutInput) =>
       logWorkout({
         completedReps,
@@ -41,6 +44,8 @@ export const useLogWorkout = () => {
         completedRungs,
         completedSides,
         completedVolume,
+        roundSplits,
+        programSessionId: programSession?.programSessionId ?? null,
         userId: user.id,
         workoutOptions,
       }),
@@ -130,6 +135,8 @@ const logWorkout = async ({
   completedRungs,
   completedSides,
   completedVolume,
+  roundSplits,
+  programSessionId,
   userId,
   workoutOptions,
 }: {
@@ -139,6 +146,8 @@ const logWorkout = async ({
   completedRungs: number;
   completedSides: number;
   completedVolume: number;
+  roundSplits: RoundSplit[];
+  programSessionId: string | null;
   userId: string;
   workoutOptions: WorkoutOptions;
 }) => {
@@ -189,6 +198,11 @@ const logWorkout = async ({
       shared_weight_two_unit: sharedWeightTwoUnit,
       shared_weight_two_value: sharedWeightTwoValue,
       started_at: (startedAt ?? new Date()).toISOString(),
+      // Provenance, not progress: program_session_completions stays the source
+      // of truth for what's finished. This records which prescription produced
+      // the log, so a later run of the same session can find it to race against
+      // — including after an auto-repeat loop wipes the completions.
+      program_session_id: programSessionId,
       user_id: userId,
       title,
       pre_workout_notes: preWorkoutNotes,
@@ -225,6 +239,24 @@ const logWorkout = async ({
   if (movementLogError) {
     console.error(movementLogError);
     throw movementLogError;
+  }
+
+  if (roundSplits.length > 0) {
+    const { error: roundSplitError } = await supabase
+      .from('workout_round_splits')
+      .insert(
+        roundSplits.map((split) => ({
+          workout_log_id: workoutLogId,
+          user_id: userId,
+          round_index: split.roundIndex,
+          elapsed_ms: split.elapsedMs,
+        })),
+      );
+
+    // Splits only feed the next session's ghost — losing them costs pacing on a
+    // future workout, not this one's record. Never fail a finished workout over
+    // them: the user has already put the bell down.
+    if (roundSplitError) console.error(roundSplitError);
   }
 
   return workoutLogId;

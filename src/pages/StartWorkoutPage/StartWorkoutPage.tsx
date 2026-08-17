@@ -301,6 +301,13 @@ export const StartWorkoutPage = ({
   const [startSourceProps, setStartSourceProps] = useState<
     Record<string, string | number | boolean | null>
   >({});
+  // Log this workout will be paced against, when it came from one. Survives
+  // edits, like startSource above. Seeded from context for the paths that write
+  // options straight there (the history detail page's Repeat), and updated by
+  // loadIntoBuilder for the paths that go through the builder (recent repeats).
+  const [ghostWorkoutLogId, setGhostWorkoutLogId] = useState<
+    number | undefined
+  >(workoutOptions.previousWorkoutLogId);
   // Program session the builder was loaded from (Slice 3), carried into the log
   // step so completion advances the program. Cleared whenever a non-program
   // surface loads the builder, so a stale session never attaches.
@@ -444,6 +451,11 @@ export const StartWorkoutPage = ({
     setSharedWeightOneUnit(options.sharedWeightOneUnit);
     setSharedWeightTwoValue(options.sharedWeightTwoValue);
     setSharedWeightTwoUnit(options.sharedWeightTwoUnit);
+    // The builder rebuilds options from its own state on start, so anything not
+    // held here is dropped. The other `previous*` hints are read once to prefill
+    // the goal and are meant to be dropped; the ghost id has to outlive the
+    // builder to reach the active workout, so it gets kept.
+    setGhostWorkoutLogId(options.previousWorkoutLogId);
   };
 
   // Load a chosen program session into the builder for review/edits, tagged so
@@ -920,6 +932,7 @@ export const StartWorkoutPage = ({
         preWorkoutNotes: preWorkoutNotes?.trim() || null,
         workoutGoal: effectiveWorkoutGoal,
         workoutGoalUnits: effectiveWorkoutGoalUnits,
+        previousWorkoutLogId: ghostWorkoutLogId,
       }),
       startSource,
       {

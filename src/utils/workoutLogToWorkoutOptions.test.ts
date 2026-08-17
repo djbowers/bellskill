@@ -75,6 +75,7 @@ describe('workoutLogToWorkoutOptions', () => {
       previousVolume: undefined,
       previousMinutes: 10,
       previousRounds: 5,
+      previousWorkoutLogId: 1,
     });
   });
 

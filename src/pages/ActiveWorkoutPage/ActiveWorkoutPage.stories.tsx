@@ -1106,18 +1106,44 @@ export const StraightSetsOneHanded: Story = {
       workoutMode: 'straightSets',
       workoutGoal: 4,
       workoutGoalUnits: 'rounds',
+      movements: ['One-Arm Kettlebell Press', 'One-Arm Kettlebell Row'].map(
+        (movementName) => ({
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName,
+          repScheme: [5, 5],
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms' as const,
+          weightTwoValue: 0,
+          weightTwoUnit: null,
+        }),
+      ) satisfies MovementOptions[],
+    },
+  },
+};
+
+/**
+ * A workout being raced against a previous run of itself. `startedAt` is set
+ * because the ghost and the lap splits are both measured from it — without one
+ * there is no clock to compare against.
+ */
+export const GhostPaced: Story = {
+  parameters: {
+    workoutOptions: {
+      workoutGoal: 4,
+      workoutGoalUnits: 'rounds',
+      startedAt: new Date(),
+      previousWorkoutLogId: 99,
       movements: [
-        'One-Arm Kettlebell Press',
-        'One-Arm Kettlebell Row',
-      ].map((movementName) => ({
-        ...DEFAULT_MOVEMENT_OPTIONS,
-        movementName,
-        repScheme: [5, 5],
-        weightOneValue: 24,
-        weightOneUnit: 'kilograms' as const,
-        weightTwoValue: 0,
-        weightTwoUnit: null,
-      })) satisfies MovementOptions[],
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Kettlebell Swing',
+          repScheme: [5],
+          weightOneValue: 24,
+          weightOneUnit: 'kilograms' as const,
+          weightTwoValue: 24,
+          weightTwoUnit: 'kilograms' as const,
+        },
+      ] satisfies MovementOptions[],
     },
   },
 };
