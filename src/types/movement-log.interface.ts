@@ -12,6 +12,8 @@ export interface MovementLog {
    * index-aligned with `repScheme`.
    */
   completedRepScheme?: number[];
+  /** Every rung was run once per leg. */
+  unilateral?: boolean;
   userMovementId: string | null;
   functionalMovementId: string | null;
   weightOneUnit: WeightUnit | null;

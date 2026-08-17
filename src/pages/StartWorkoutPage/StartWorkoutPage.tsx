@@ -294,6 +294,11 @@ export const StartWorkoutPage = ({
   const getCatalogWeightMode = (movementName: string) =>
     getWeightModeFromCatalogFields(movementCatalog.get(movementName));
 
+  // null, not false, for a movement we have no catalog row for — an unknown
+  // movement must leave the user's own Legs choice alone.
+  const getCatalogUnilateral = (movementName: string) =>
+    movementCatalog.get(movementName)?.unilateralLower ?? null;
+
   const gatesPending = !programSaveMode && programGatePending && !editWorkout;
   // Where the (eventual) start originated, carried through any edits the user
   // makes in the builder so `workout_started` stays attributed to the surface.
@@ -635,22 +640,35 @@ export const StartWorkoutPage = ({
     });
   };
 
-  // The catalog knows how a movement is held, so naming one settles its loading
-  // mode too — applied in the same update so the name and its weights can never
-  // disagree. A movement we have no catalog row for keeps whatever mode it had.
+  // The catalog knows how a movement is held and whether it runs one leg at a
+  // time, so naming one settles both — applied in the same update so the name
+  // and its settings can never disagree. A movement we have no catalog row for
+  // keeps whatever it had.
   const handleChangeMovementName = (
     index: number,
     value: string,
     weightMode: WeightTabValue | null,
+    unilateral: boolean | null,
   ) =>
     setMovements((prev) =>
       prev.map((movement, i) => {
         if (i !== index) return movement;
-        const renamed = { ...movement, movementName: value };
+        const renamed = {
+          ...movement,
+          movementName: value,
+          ...(unilateral === null ? {} : { unilateral }),
+        };
         return weightMode
           ? applyWeightMode(renamed, weightMode, WEIGHT_MODE_DEFAULTS)
           : renamed;
       }),
+    );
+
+  const handleToggleUnilateral = (index: number, unilateral: boolean) =>
+    setMovements((prev) =>
+      prev.map((movement, i) =>
+        i === index ? { ...movement, unilateral } : movement,
+      ),
     );
 
   const handleClickRemoveMovement = (index: number) => {
@@ -1222,11 +1240,13 @@ export const StartWorkoutPage = ({
               onRemove={() => handleClickRemoveMovement(index)}
               hasError={erroredMovementIndexes.has(index)}
               catalogWeightMode={getCatalogWeightMode(movement.movementName)}
+              catalogUnilateral={getCatalogUnilateral(movement.movementName)}
               onChangeName={(name) =>
                 handleChangeMovementName(
                   index,
                   name,
                   sharedBellActive ? null : getCatalogWeightMode(name),
+                  getCatalogUnilateral(name),
                 )
               }
               onChangeWeightTab={(mode) =>
@@ -1252,6 +1272,9 @@ export const StartWorkoutPage = ({
               onRemoveRung={(rungIndex) => handleRemoveRung(index, rungIndex)}
               onAddRung={() => handleAddRung(index)}
               onToggleTimed={(timed) => handleToggleTimedRungs(index, timed)}
+              onToggleUnilateral={(unilateral) =>
+                handleToggleUnilateral(index, unilateral)
+              }
             />
           ))}
 

@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import React from 'react';
 
@@ -60,6 +61,7 @@ const baseProps: MovementCardProps = {
   onRemoveRung: noop,
   onAddRung: noop,
   onToggleTimed: noop,
+  onToggleUnilateral: noop,
 };
 
 const renderCard = (overrides: Partial<MovementCardProps> = {}) => {
@@ -176,5 +178,51 @@ describe('MovementCard weight mode control', () => {
     renderCard({ sharedBell: true, catalogWeightMode: '2h' });
 
     expect(screen.getByText('Shared bell · 24 kg')).toBeInTheDocument();
+  });
+
+  // The leg axis is its own control: it stays available whatever the bells are
+  // doing, including a shared bell where the weight tabs are hidden.
+  // The leg axis follows the weight axis: a cataloged movement's laterality is
+  // a fact, so it reads out; a movement we have no row for is the lifter's call.
+  test('the legs toggle is offered for a movement with no catalog row', async () => {
+    const onToggleUnilateral = vi.fn();
+    renderCard({ catalogUnilateral: null, onToggleUnilateral });
+
+    await userEvent.click(
+      screen.getByRole('tab', { name: 'One leg at a time' }),
+    );
+
+    expect(onToggleUnilateral).toHaveBeenCalledWith(true);
+  });
+
+  test('the legs toggle is offered even with a shared bell', () => {
+    renderCard({ sharedBell: true, catalogUnilateral: null });
+
+    expect(
+      screen.getByRole('tab', { name: 'One leg at a time' }),
+    ).toBeInTheDocument();
+  });
+
+  test('a cataloged per-leg movement reads out instead of offering tabs', () => {
+    renderCard({
+      catalogUnilateral: true,
+      movement: { ...movement, unilateral: true },
+    });
+
+    expect(screen.getByText('Per leg')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('tab', { name: 'One leg at a time' }),
+    ).not.toBeInTheDocument();
+  });
+
+  // Most movements are bilateral; a row saying so on every card is noise.
+  test('a cataloged bilateral movement shows no legs row at all', () => {
+    renderCard({ catalogUnilateral: false });
+
+    expect(screen.queryByText('Legs')).not.toBeInTheDocument();
+    expect(screen.queryByText('Per leg')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('tab', { name: 'One leg at a time' }),
+    ).not.toBeInTheDocument();
   });
 });

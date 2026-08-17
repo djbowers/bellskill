@@ -20,17 +20,28 @@ const catalogRow = (fields: Partial<Movement>): Movement => ({
   difficultyLevel: null,
   movementPattern1: null,
   patternCredits: [],
+  unilateralLower: false,
   ...fields,
 });
 
 const DOUBLE_KB_FRONT_SQUAT = 'Front Squat With Two Kettlebells';
 const TWO_HAND_SWING = 'Kettlebell Swing';
 const SINGLE_ARM_PRESS = 'One-Arm Kettlebell Military Press';
+const DOUBLE_KB_SL_RDL = 'Double Kettlebell Single-Leg Romanian Deadlift';
 
 const catalog: RecommendationCatalog = new Map<
   string,
-  MovementWeightModeFields
+  MovementWeightModeFields & { unilateralLower?: boolean }
 >([
+  [
+    DOUBLE_KB_SL_RDL,
+    {
+      primaryEquipment: 'Kettlebell',
+      primaryItemCount: 2,
+      singleOrDoubleArm: 'Double Arm',
+      unilateralLower: true,
+    },
+  ],
   [
     DOUBLE_KB_FRONT_SQUAT,
     {
@@ -223,6 +234,19 @@ describe('buildRecommendationCatalog', () => {
     expect(built.size).toBe(1);
   });
 
+  // The builder reads `unilateralLower` off this same map to seed the Legs
+  // toggle when a movement is picked, so it has to survive the mapping.
+  test('exposes the leg axis for the builder to seed from', () => {
+    const built = buildRecommendationCatalog([
+      catalogRow({ movementName: DOUBLE_KB_SL_RDL, unilateralLower: true }),
+      catalogRow({ movementName: TWO_HAND_SWING }),
+    ]);
+
+    expect(built.get(DOUBLE_KB_SL_RDL)?.unilateralLower).toBe(true);
+    expect(built.get(TWO_HAND_SWING)?.unilateralLower).toBe(false);
+    expect(built.get('Not In The Catalog')?.unilateralLower).toBeUndefined();
+  });
+
   test('warns loudly when the catalog paginated past one page', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
@@ -302,5 +326,26 @@ describe('recommendationToMovements — declared bell count', () => {
     );
 
     expect(getWeightTabValue(movement)).toBe('double');
+  });
+
+  // The leg axis is independent of the bells: a double-bell block can still be
+  // one leg at a time.
+  test('carries the catalog unilateral flag onto the movement', () => {
+    const [movement] = recommendationToMovements(
+      withBells(DOUBLE_KB_SL_RDL, 24, 2),
+      catalog,
+    );
+
+    expect(getWeightTabValue(movement)).toBe('double');
+    expect(movement.unilateral).toBe(true);
+  });
+
+  test('leaves unilateral off for a bilateral movement', () => {
+    const [movement] = recommendationToMovements(
+      withBells(TWO_HAND_SWING, 24, 1),
+      catalog,
+    );
+
+    expect(movement.unilateral).toBe(false);
   });
 });

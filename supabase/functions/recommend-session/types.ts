@@ -25,6 +25,11 @@ export interface CandidateMovement {
    * movement is unlinked and we simply do not know — never enforced in that case.
    */
   supports_doubles: boolean | null;
+  /**
+   * Whether the catalog says this movement is done one leg at a time. Null when
+   * the movement is unlinked and we simply do not know.
+   */
+  unilateral_lower: boolean | null;
 }
 
 /** A compact summary of one past workout, for history context. */

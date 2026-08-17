@@ -61,4 +61,18 @@ describe('getRepSchemeDisplayValue', () => {
       '0:05 / 0:05, 1:00 / 1:00',
     );
   });
+
+  // The leg axis is independent of the bells: a double kettlebell single-leg
+  // RDL and a bodyweight lunge both run every rung twice.
+  test('duplicates reps for unilateral legs with double bells', () => {
+    expect(getRepSchemeDisplayValue([5, 3], [24, 24], false, true)).toBe(
+      '5 / 5, 3 / 3',
+    );
+  });
+
+  test('duplicates reps for unilateral legs with no bells', () => {
+    expect(getRepSchemeDisplayValue([8], [null, null], false, true)).toBe(
+      '8 / 8',
+    );
+  });
 });

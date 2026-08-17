@@ -1,7 +1,7 @@
 # Movement Catalog (PROD-153)
 
 The `movements` table is a self-authored, commercially-clean Kettlebell +
-Bodyweight catalog (~250 rows, slim 8-field schema; the old ~3,000-row
+Bodyweight catalog (~265 rows, slim 9-field schema; the old ~3,000-row
 non-commercial "Functional Fitness Exercise Database" source and its ~24 unused
 columns / enum wall were removed). The controlled fields (`Primary Equipment`,
 `Single or Double Arm`, `Target Muscle Group`, `Difficulty Level`,
@@ -9,9 +9,9 @@ columns / enum wall were removed). The controlled fields (`Primary Equipment`,
 Postgres enums — so `~/types` defines `Equipment` / `MuscleGroup` /
 `DifficultyLevel` as hand-authored unions, not `Supabase['...']['Enums']`.
 
-- **Source of truth:** `scripts/data/movements.csv` (9 authored columns incl.
-  `Pattern Credits` and `Modality Credits`; `id` is generated).
-  `scripts/ingest-movements.mjs` validates every row against the app
+- **Source of truth:** `scripts/data/movements.csv` (10 authored columns incl.
+  `Pattern Credits`, `Modality Credits` and `Unilateral Lower`; `id` is
+  generated). `scripts/ingest-movements.mjs` validates every row against the app
   vocabularies + Kettlebell weight-mode reachability
   (`src/utils/movementWeightModeFilter.ts`) and the pattern-debt rules: legal
   `Movement Pattern #1`, well-formed non-empty credits, and credits ⊇
@@ -19,6 +19,16 @@ Postgres enums — so `~/types` defines `Equipment` / `MuscleGroup` /
   is a non-empty `|`-separated subset of grind / ballistic / conditioning /
   mobility (see docs/modality-debt-scoring-model.md); backfill UPDATEs come
   from `--emit-modality-sql`. Run `npm run movements:check`.
+- **`Unilateral Lower` (the leg axis):** `TRUE` when the movement runs one leg
+  at a time, so the builder mirrors every rung and history renders `5 / 5`. It is
+  deliberately **independent** of `# Primary Items` / `Single or Double Arm` — a
+  double kettlebell single-leg RDL is `2 + Double Arm + TRUE`. The one-hand
+  sentinel (`weightTwoValue === 0`) still mirrors on its own; either one is
+  enough. The column post-dates the slim-catalog reload, so `movements:emit-sql`
+  omits it and `movements:emit-unilateral-sql` regenerates the backfill in
+  `*_add_unilateral_lower_to_movements.sql` (missing rows inserted by name, then
+  the TRUE set flagged). Adding rows to the CSV means regenerating that block
+  too, not just the reload's VALUES.
 - **How it loads:** the migration `*_slim_movements_catalog.sql` reloads the
   whole catalog (its INSERT block is regenerated with `npm run movements:emit-sql`),
   so it is reproducible on `supabase db reset` and auto-deploys. There is **no**

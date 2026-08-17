@@ -1,266 +1,279 @@
-Movement,Primary Equipment,# Primary Items,Single or Double Arm,Target Muscle Group,Difficulty Level,Movement Pattern #1,Pattern Credits,Modality Credits
-Kettlebell Swing,Kettlebell,1,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,ballistic|conditioning
-One-Arm Kettlebell Swing,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic|conditioning
-Double Kettlebell Swing,Kettlebell,2,Double Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic|conditioning
-Alternating Kettlebell Swing,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic|conditioning
-Kettlebell Dead Clean,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic
-Kettlebell Hang Clean,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic
-One-Arm Kettlebell Clean,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic
-Bottoms-Up Kettlebell Clean,Kettlebell,1,Single Arm,Forearms,Intermediate,Hip Hinge,hinge,ballistic
-Bottoms-Up Kettlebell Clean From Hang,Kettlebell,1,Single Arm,Forearms,Intermediate,Hip Hinge,hinge,ballistic
-Double Kettlebell Clean,Kettlebell,2,Double Arm,Shoulders,Intermediate,Hip Hinge,hinge,ballistic
-Double Kettlebell Dead Clean,Kettlebell,2,Double Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic
-Double Kettlebell Alternating Hang Clean,Kettlebell,2,Double Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic
-Alternating Kettlebell Hang Clean,Kettlebell,2,Double Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic
-One-Arm Kettlebell Snatch,Kettlebell,1,Single Arm,Shoulders,Expert,Hip Hinge,hinge,ballistic|conditioning
-One-Arm Kettlebell Split Snatch,Kettlebell,1,Single Arm,Shoulders,Expert,Hip Hinge,hinge,ballistic|conditioning
-Kettlebell Dead Snatch,Kettlebell,1,Single Arm,Shoulders,Expert,Hip Hinge,hinge,ballistic|conditioning
-Kettlebell Hang Snatch,Kettlebell,1,Single Arm,Shoulders,Expert,Hip Hinge,hinge,ballistic|conditioning
-Double Kettlebell Snatch,Kettlebell,2,Double Arm,Shoulders,Expert,Hip Hinge,hinge,ballistic|conditioning
-Kettlebell Sumo High Pull,Kettlebell,1,Double Arm,Trapezius,Intermediate,Hip Hinge,hinge,ballistic
-One-Arm Kettlebell High Pull,Kettlebell,1,Single Arm,Trapezius,Intermediate,Hip Hinge,hinge,ballistic
-Double Kettlebell High Pull,Kettlebell,2,Double Arm,Trapezius,Intermediate,Hip Hinge,hinge,ballistic
-Kettlebell Snatch Pull,Kettlebell,1,Single Arm,Trapezius,Intermediate,Hip Hinge,hinge,ballistic|conditioning
-Kettlebell Figure 8,Kettlebell,1,Double Arm,Abdominals,Intermediate,Hip Hinge,hinge,mobility
-Kettlebell Pass Between The Legs,Kettlebell,1,Double Arm,Abdominals,Intermediate,Hip Hinge,hinge,mobility
-Kettlebell Pirate Ships,Kettlebell,1,Double Arm,Shoulders,Beginner,Hip Hinge,hinge,mobility
-Kettlebell Hike Pass,Kettlebell,1,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,ballistic
-Kettlebell Deadlift,Kettlebell,1,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,grind
-Kettlebell Sumo Deadlift,Kettlebell,1,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,grind
-Kettlebell Suitcase Deadlift,Kettlebell,2,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,grind
-Kettlebell Romanian Deadlift,Kettlebell,2,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,grind
-Double Kettlebell Romanian Deadlift,Kettlebell,2,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,grind
-Kettlebell Single-Leg Deadlift,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,grind
-Kettlebell Single-Leg Romanian Deadlift,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,grind
-Kettlebell Staggered Deadlift,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,grind
-Kettlebell Good Morning,Kettlebell,1,Double Arm,Hamstrings,Intermediate,Hip Hinge,hinge,grind
-Goblet Squat,Kettlebell,1,Double Arm,Quadriceps,Beginner,Knee Dominant,squat,grind
-Double Kettlebell Front Squat,Kettlebell,2,Double Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind
-Kettlebell Pistol Squat,Kettlebell,1,Double Arm,Quadriceps,Expert,Knee Dominant,squat,grind
-One-Arm Overhead Kettlebell Squat,Kettlebell,1,Single Arm,Quadriceps,Expert,Knee Dominant,squat,grind
-Kettlebell Front Rack Squat,Kettlebell,1,Single Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind
-Kettlebell Cossack Squat,Kettlebell,1,Double Arm,Adductors,Intermediate,Knee Dominant,squat,grind|mobility
-Kettlebell Goblet Reverse Lunge,Kettlebell,1,Double Arm,Quadriceps,Beginner,Knee Dominant,squat,grind
-Kettlebell Racked Reverse Lunge,Kettlebell,1,Single Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind
-Kettlebell Goblet Forward Lunge,Kettlebell,1,Double Arm,Quadriceps,Beginner,Knee Dominant,squat,grind
-Kettlebell Racked Forward Lunge,Kettlebell,1,Single Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind
-Kettlebell Goblet Walking Lunge,Kettlebell,1,Double Arm,Quadriceps,Beginner,Knee Dominant,squat,grind
-Kettlebell Overhead Reverse Lunge,Kettlebell,1,Single Arm,Shoulders,Intermediate,Knee Dominant,squat,grind
-Double Kettlebell Front Rack Reverse Lunge,Kettlebell,2,Double Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind
-Kettlebell Curtsy Lunge,Kettlebell,1,Single Arm,Glutes,Intermediate,Knee Dominant,squat,grind
-Kettlebell Bulgarian Split Squat,Kettlebell,1,Double Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind
-Kettlebell Front Rack Bulgarian Split Squat,Kettlebell,1,Single Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind
-Double Kettlebell Bulgarian Split Squat,Kettlebell,2,Double Arm,Quadriceps,Expert,Knee Dominant,squat,grind
-Kettlebell Goblet Step-Up,Kettlebell,1,Double Arm,Quadriceps,Beginner,Knee Dominant,squat,grind
-Kettlebell Lateral Lunge,Kettlebell,1,Double Arm,Adductors,Intermediate,Knee Dominant,squat,grind
-Kettlebell Lunge Pass Through,Kettlebell,1,Double Arm,Quadriceps,Intermediate,Knee Dominant,squat,mobility
-Double Kettlebell Military Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,grind
-One-Arm Kettlebell Military Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind
-Alternating Kettlebell Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,grind
-Kettlebell Seesaw Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,grind
-Kettlebell See-Saw Push Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic
-Kettlebell Arnold Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind
-Kettlebell Seated Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind
-Kettlebell Half-Kneeling Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind
-Kettlebell Tall-Kneeling Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind
-Kettlebell Z Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind
-Double Kettlebell Z Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,grind
-One-Arm Kettlebell Para Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind
-One-Arm Kettlebell Push Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic
-Double Kettlebell Push Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic
-Double Kettlebell Push Jerk,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic
-One-Arm Kettlebell Jerk,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic
-One-Arm Kettlebell Split Jerk,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic
-One-Arm Kettlebell Clean and Jerk,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|grind
-Double Kettlebell Jerk,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic
-Kettlebell Thruster,Kettlebell,1,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|conditioning
-Double Kettlebell Thruster,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|conditioning
-Kettlebell Clean and Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|grind
-Double Kettlebell Clean and Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|grind
-Kettlebell Sots Press,Kettlebell,1,Single Arm,Shoulders,Expert,Vertical Push,push,grind
-Kettlebell Bottoms-Up Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind
-Kettlebell Bent Press,Kettlebell,1,Single Arm,Shoulders,Expert,Vertical Push,push,grind
-One-Arm Kettlebell Floor Press,Kettlebell,1,Single Arm,Chest,Intermediate,Horizontal Push,push,grind
-Extended Range One-Arm Kettlebell Floor Press,Kettlebell,1,Single Arm,Chest,Beginner,Horizontal Push,push,grind
-Leg-Over Kettlebell Floor Press,Kettlebell,1,Single Arm,Chest,Intermediate,Horizontal Push,push,grind
-Alternating Kettlebell Floor Press,Kettlebell,2,Double Arm,Chest,Beginner,Horizontal Push,push,grind
-Double Kettlebell Floor Press,Kettlebell,2,Double Arm,Chest,Beginner,Horizontal Push,push,grind
-Kettlebell Bench Press,Kettlebell,1,Single Arm,Chest,Intermediate,Horizontal Push,push,grind
-Double Kettlebell Bench Press,Kettlebell,2,Double Arm,Chest,Intermediate,Horizontal Push,push,grind
-Kettlebell Push-Up,Kettlebell,2,Double Arm,Chest,Intermediate,Horizontal Push,push,grind
-Plyo Kettlebell Push-Up,Kettlebell,2,Double Arm,Chest,Expert,Horizontal Push,push,ballistic|conditioning
-One-Arm Kettlebell Row,Kettlebell,1,Single Arm,Back,Intermediate,Horizontal Pull,pull,grind
-Double Kettlebell Row,Kettlebell,2,Double Arm,Back,Intermediate,Horizontal Pull,pull,grind
-Alternating Kettlebell Row,Kettlebell,2,Double Arm,Back,Intermediate,Horizontal Pull,pull,grind
-Kettlebell Renegade Row,Kettlebell,2,Double Arm,Back,Expert,Horizontal Pull,pull,grind
-Alternating Renegade Row,Kettlebell,2,Double Arm,Back,Expert,Horizontal Pull,pull,grind
-Kettlebell Gorilla Row,Kettlebell,2,Double Arm,Back,Intermediate,Horizontal Pull,pull,grind
-Kettlebell Suitcase Carry,Kettlebell,1,Single Arm,Forearms,Beginner,Loaded Carry,carry,grind|conditioning
-Kettlebell Farmer's Carry,Kettlebell,2,Double Arm,Forearms,Beginner,Loaded Carry,carry,grind|conditioning
-Kettlebell Racked Carry,Kettlebell,1,Single Arm,Shoulders,Intermediate,Loaded Carry,carry,grind|conditioning
-Kettlebell Double Rack Carry,Kettlebell,2,Double Arm,Shoulders,Intermediate,Loaded Carry,carry,grind|conditioning
-Kettlebell Overhead Carry,Kettlebell,1,Single Arm,Shoulders,Intermediate,Loaded Carry,carry,grind|conditioning
-Kettlebell Double Overhead Carry,Kettlebell,2,Double Arm,Shoulders,Expert,Loaded Carry,carry,grind|conditioning
-Kettlebell Waiter Carry,Kettlebell,1,Single Arm,Shoulders,Intermediate,Loaded Carry,carry,grind|conditioning
-Kettlebell Bottoms-Up Carry,Kettlebell,1,Single Arm,Forearms,Intermediate,Loaded Carry,carry,grind|conditioning
-Kettlebell Mixed Rack Carry,Kettlebell,2,Double Arm,Forearms,Intermediate,Loaded Carry,carry,grind|conditioning
-Kettlebell Suitcase March,Kettlebell,1,Single Arm,Abdominals,Beginner,Loaded Carry,carry,grind|conditioning
-Double Kettlebell Farmer March,Kettlebell,2,Double Arm,Forearms,Beginner,Loaded Carry,carry,grind|conditioning
-Kettlebell Windmill,Kettlebell,1,Single Arm,Abdominals,Intermediate,Rotational,rotation,grind|mobility
-Advanced Kettlebell Windmill,Kettlebell,1,Single Arm,Abdominals,Intermediate,Rotational,rotation,grind|mobility
-Kettlebell Overhead Windmill,Kettlebell,1,Single Arm,Abdominals,Expert,Rotational,rotation,grind|mobility
-Double Kettlebell Windmill,Kettlebell,2,Double Arm,Abdominals,Intermediate,Rotational,rotation,grind|mobility
-Kettlebell Halo,Kettlebell,1,Double Arm,Shoulders,Beginner,Rotational,rotation,mobility
-Kettlebell Half-Kneeling Halo,Kettlebell,1,Double Arm,Shoulders,Beginner,Rotational,rotation,mobility
-Kettlebell Around The Body,Kettlebell,1,Double Arm,Abdominals,Beginner,Rotational,rotation,mobility
-Kettlebell Russian Twist,Kettlebell,1,Double Arm,Abdominals,Intermediate,Rotational,rotation,grind
-Kettlebell Wood Chop,Kettlebell,1,Double Arm,Abdominals,Beginner,Rotational,rotation,grind
-Kettlebell Side Bend,Kettlebell,1,Single Arm,Abdominals,Beginner,Anti-Rotation,core,grind
-Kettlebell Turkish Get-Up,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,get_up|push|rotation,grind|mobility
-Kettlebell Turkish Get-Up (Lunge Style),Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,get_up|push|rotation,grind|mobility
-Kettlebell Turkish Get-Up (Squat Style),Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,get_up|push|rotation,grind|mobility
-Half Kettlebell Get-Up,Kettlebell,1,Single Arm,Shoulders,Beginner,Vertical Push,get_up|push|rotation,grind|mobility
-Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind
-Wide-Grip Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind
-Close-Grip Push-Up,Bodyweight,1,Double Arm,Triceps,Intermediate,Horizontal Push,push,grind
-Diamond Push-Up,Bodyweight,1,Double Arm,Triceps,Intermediate,Horizontal Push,push,grind
-Incline Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind
-Decline Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind
-Knee Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind
-Wall Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind
-Staggered Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind
-Clock Push-Up,Bodyweight,1,Double Arm,Chest,Intermediate,Horizontal Push,push,grind
-Spiderman Push-Up,Bodyweight,1,Double Arm,Chest,Intermediate,Horizontal Push,push,grind
-Hindu Push-Up,Bodyweight,1,Double Arm,Chest,Intermediate,Horizontal Push,push,mobility
-Plyometric Push-Up,Bodyweight,1,Double Arm,Chest,Intermediate,Horizontal Push,push,ballistic|conditioning
-Clap Push-Up,Bodyweight,1,Double Arm,Chest,Intermediate,Horizontal Push,push,ballistic|conditioning
-Archer Push-Up,Bodyweight,1,Double Arm,Chest,Expert,Horizontal Push,push,grind
-Pseudo Planche Push-Up,Bodyweight,1,Double Arm,Shoulders,Expert,Horizontal Push,push,grind
-Single-Arm Push-Up,Bodyweight,1,Single Arm,Chest,Expert,Horizontal Push,push,grind
-Push-Up to Side Plank,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind
-Body Triceps Press,Bodyweight,1,Double Arm,Triceps,Beginner,Horizontal Push,push,grind
-Bench Dips,Bodyweight,1,Double Arm,Triceps,Beginner,Vertical Push,push,grind
-Triceps Dips,Bodyweight,1,Double Arm,Triceps,Beginner,Vertical Push,push,grind
-Straight Bar Dip,Bodyweight,1,Double Arm,Triceps,Intermediate,Vertical Push,push,grind
-Korean Dip,Bodyweight,1,Double Arm,Triceps,Expert,Vertical Push,push,grind
-Handstand Push-Up,Bodyweight,1,Double Arm,Shoulders,Expert,Vertical Push,push,grind
-Pike Push-Up,Bodyweight,1,Double Arm,Shoulders,Intermediate,Vertical Push,push,grind
-Wall Walk,Bodyweight,1,Double Arm,Shoulders,Intermediate,Vertical Push,push,conditioning
-Wall Handstand Hold,Bodyweight,1,Double Arm,Shoulders,Intermediate,Vertical Push,push,grind
-Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind
-Chin-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind
-Neutral-Grip Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind
-Wide-Grip Pull-Up,Bodyweight,1,Double Arm,Back,Intermediate,Vertical Pull,pull,grind
-V-Bar Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind
-Commando Pull-Up,Bodyweight,1,Double Arm,Back,Intermediate,Vertical Pull,pull,grind
-Scapular Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind
-Negative Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind
-L-Sit Pull-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull,grind
-Archer Pull-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull,grind
-Muscle-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull,grind
-Gorilla Chin-Up Crunch,Bodyweight,1,Double Arm,Abdominals,Intermediate,Vertical Pull,pull,grind
-Band Pull-Down,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind
-Single-Arm Band Pull-Down,Bodyweight,1,Single Arm,Back,Beginner,Vertical Pull,pull,grind
-Inverted Row,Bodyweight,1,Double Arm,Back,Beginner,Horizontal Pull,pull,grind
-Wide-Grip Inverted Row,Bodyweight,1,Double Arm,Back,Beginner,Horizontal Pull,pull,grind
-Underhand Inverted Row,Bodyweight,1,Double Arm,Back,Beginner,Horizontal Pull,pull,grind
-Single-Arm Inverted Row,Bodyweight,1,Single Arm,Back,Intermediate,Horizontal Pull,pull,grind
-Bodyweight Squat,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,grind
-Jump Squat,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning
-Bodyweight Pistol Squat,Bodyweight,1,No Arms,Quadriceps,Expert,Knee Dominant,squat,grind
-Sissy Squat,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,grind
-Shrimp Squat,Bodyweight,1,No Arms,Quadriceps,Expert,Knee Dominant,squat,grind
-Single-Leg Box Squat,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,grind
-Wall Sit,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,grind
-Cossack Squat,Bodyweight,1,No Arms,Adductors,Intermediate,Knee Dominant,squat,grind|mobility
-Forward Lunge,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,grind
-Reverse Lunge,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,grind
-Walking Lunge,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,grind
-Curtsy Lunge,Bodyweight,1,No Arms,Glutes,Beginner,Knee Dominant,squat,grind
-Lateral Lunge,Bodyweight,1,No Arms,Adductors,Beginner,Knee Dominant,squat,grind
-Bodyweight Bulgarian Split Squat,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,grind
-Step-Up with Knee Raise,Bodyweight,1,No Arms,Glutes,Beginner,Knee Dominant,squat,grind
-Duck Walk,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,conditioning
-High Knees,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,conditioning
-Squat Thrust,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning
-Burpee,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning
-Bench Jump,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning
-Box Jump,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning
-Freehand Jump Squat,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning
-Split Jump,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning
-Scissors Jump,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning
-Star Jump,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning
-Rocket Jump,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning
-Knee Tuck Jump,Bodyweight,1,No Arms,Hamstrings,Beginner,Knee Dominant,squat,ballistic|conditioning
-Standing Long Jump,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning
-Lateral Bound,Bodyweight,1,No Arms,Adductors,Beginner,Knee Dominant,squat,ballistic|conditioning
-Standing Calf Raise,Bodyweight,1,No Arms,Calves,Beginner,Knee Dominant,squat,grind
-Single-Leg Calf Raise,Bodyweight,1,No Arms,Calves,Beginner,Knee Dominant,squat,grind
-Glute Bridge,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind
-Single-Leg Glute Bridge,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind
-Bodyweight Hip Thrust,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind
-Single-Leg Hip Thrust,Bodyweight,1,No Arms,Glutes,Intermediate,Hip Extension,hinge,grind
-Frog Pump,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind
-Glute Kickback,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind
-Donkey Kick,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind
-Fire Hydrant,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind
-Rear Leg Raise,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind
-Superman,Bodyweight,1,No Arms,Back,Beginner,Hip Extension,hinge,grind
-Prone Cobra,Bodyweight,1,No Arms,Back,Beginner,Hip Extension,hinge,grind
-Bodyweight Hyperextension,Bodyweight,1,No Arms,Back,Intermediate,Hip Extension,hinge,grind
-Reverse Hyperextension,Bodyweight,1,No Arms,Glutes,Intermediate,Hip Extension,hinge,grind
-Bird Dog,Bodyweight,1,No Arms,Back,Beginner,Hip Extension,hinge,grind
-Natural Glute-Ham Raise,Bodyweight,1,No Arms,Hamstrings,Intermediate,Hip Hinge,hinge,grind
-Nordic Curl,Bodyweight,1,No Arms,Hamstrings,Expert,Hip Hinge,hinge,grind
-Bodyweight Good Morning,Bodyweight,1,No Arms,Hamstrings,Beginner,Hip Hinge,hinge,grind
-Bodyweight Single-Leg Deadlift,Bodyweight,1,No Arms,Hamstrings,Beginner,Hip Hinge,hinge,grind
-Inchworm,Bodyweight,1,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,mobility
-Plank,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core,grind
-Side Plank,Bodyweight,1,Single Arm,Abdominals,Beginner,Anti-Rotation,core,grind
-Bear Plank,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core,grind
-Plank Shoulder Tap,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Rotation,core,grind
-Plank Up-Down,Bodyweight,1,Double Arm,Abdominals,Intermediate,Anti-Extension,core,grind
-Copenhagen Plank,Bodyweight,1,Single Arm,Adductors,Expert,Anti-Rotation,core,grind
-Hollow Hold,Bodyweight,1,No Arms,Abdominals,Intermediate,Anti-Extension,core,grind
-Hollow Rock,Bodyweight,1,No Arms,Abdominals,Intermediate,Anti-Extension,core,grind
-Mountain Climber,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core,conditioning
-Bear Crawl,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core,conditioning
-Spider Crawl,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core,conditioning
-Dead Bug,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind
-Russian Twist,Bodyweight,1,No Arms,Abdominals,Intermediate,Rotational,rotation,grind
-Bicycle Crunch,Bodyweight,1,No Arms,Abdominals,Beginner,Rotational,rotation,grind
-Cross-Body Crunch,Bodyweight,1,No Arms,Abdominals,Beginner,Rotational,rotation,grind
-Oblique Crunch,Bodyweight,1,No Arms,Abdominals,Beginner,Rotational,rotation,grind
-Side Jackknife,Bodyweight,1,No Arms,Abdominals,Beginner,Rotational,rotation,grind
-Heel Touches,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Rotation,core,grind
-Toe Touches,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind
-Groiners,Bodyweight,1,Double Arm,Adductors,Intermediate,Anti-Extension,core,grind
-Crunch,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind
-Decline Crunch,Bodyweight,1,No Arms,Abdominals,Intermediate,Anti-Extension,core,grind
-Reverse Crunch,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind
-V-Up,Bodyweight,1,No Arms,Abdominals,Intermediate,Anti-Extension,core,grind
-Sit-Up,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind
-Jackknife Sit-Up,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind
-Lying Leg Raise,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind
-Hanging Leg Raise,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Extension,core,grind
-Hanging Knee Raise,Bodyweight,1,Double Arm,Abdominals,Intermediate,Anti-Extension,core,grind
-Hanging Pike,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Extension,core,grind
-Toes to Bar,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Extension,core,grind
-Leg Pull-In,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind
-Flutter Kicks,Bodyweight,1,No Arms,Glutes,Beginner,Anti-Extension,core,grind
-Scissor Kick,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind
-Windshield Wipers,Bodyweight,1,No Arms,Abdominals,Expert,Rotational,rotation,grind
-Dragon Flag,Bodyweight,1,No Arms,Abdominals,Expert,Anti-Extension,core,grind
-L-Sit,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Extension,core,grind
-Stomach Vacuum,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind
-Side Leg Raise,Bodyweight,1,No Arms,Adductors,Beginner,Anti-Rotation,core,grind
-Ab Wheel Rollout,Bodyweight,1,Double Arm,Abdominals,Intermediate,Anti-Extension,core,grind
-Standing Ab Wheel Rollout,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Extension,core,grind
-Ab Wheel Oblique Rollout,Bodyweight,1,Double Arm,Abdominals,Intermediate,Anti-Rotation,core,grind
-Reverse Plank,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core,grind
-Side Plank Hip Dip,Bodyweight,1,Single Arm,Abdominals,Intermediate,Anti-Rotation,core,grind
-Hanging Windshield Wipers,Bodyweight,1,Double Arm,Abdominals,Expert,Rotational,rotation,grind
-Kettlebell Plank Drag,Kettlebell,1,Single Arm,Abdominals,Intermediate,Anti-Rotation,core,grind
-Pallof Press,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Rotation,core,grind
-Half-Kneeling Pallof Press,Bodyweight,1,Double Arm,Abdominals,Intermediate,Anti-Rotation,core,grind
-Single-Leg Pallof Press,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Rotation,core,grind
+Movement,Primary Equipment,# Primary Items,Single or Double Arm,Target Muscle Group,Difficulty Level,Movement Pattern #1,Pattern Credits,Modality Credits,Unilateral Lower
+Kettlebell Swing,Kettlebell,1,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,ballistic|conditioning,FALSE
+One-Arm Kettlebell Swing,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic|conditioning,FALSE
+Double Kettlebell Swing,Kettlebell,2,Double Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic|conditioning,FALSE
+Alternating Kettlebell Swing,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic|conditioning,FALSE
+Kettlebell Dead Clean,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic,FALSE
+Kettlebell Hang Clean,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic,FALSE
+One-Arm Kettlebell Clean,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic,FALSE
+Bottoms-Up Kettlebell Clean,Kettlebell,1,Single Arm,Forearms,Intermediate,Hip Hinge,hinge,ballistic,FALSE
+Bottoms-Up Kettlebell Clean From Hang,Kettlebell,1,Single Arm,Forearms,Intermediate,Hip Hinge,hinge,ballistic,FALSE
+Double Kettlebell Clean,Kettlebell,2,Double Arm,Shoulders,Intermediate,Hip Hinge,hinge,ballistic,FALSE
+Double Kettlebell Dead Clean,Kettlebell,2,Double Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic,FALSE
+Double Kettlebell Alternating Hang Clean,Kettlebell,2,Double Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic,FALSE
+Alternating Kettlebell Hang Clean,Kettlebell,2,Double Arm,Hamstrings,Intermediate,Hip Hinge,hinge,ballistic,FALSE
+One-Arm Kettlebell Snatch,Kettlebell,1,Single Arm,Shoulders,Expert,Hip Hinge,hinge,ballistic|conditioning,FALSE
+One-Arm Kettlebell Split Snatch,Kettlebell,1,Single Arm,Shoulders,Expert,Hip Hinge,hinge,ballistic|conditioning,FALSE
+Kettlebell Dead Snatch,Kettlebell,1,Single Arm,Shoulders,Expert,Hip Hinge,hinge,ballistic|conditioning,FALSE
+Kettlebell Hang Snatch,Kettlebell,1,Single Arm,Shoulders,Expert,Hip Hinge,hinge,ballistic|conditioning,FALSE
+Double Kettlebell Snatch,Kettlebell,2,Double Arm,Shoulders,Expert,Hip Hinge,hinge,ballistic|conditioning,FALSE
+Kettlebell Sumo High Pull,Kettlebell,1,Double Arm,Trapezius,Intermediate,Hip Hinge,hinge,ballistic,FALSE
+One-Arm Kettlebell High Pull,Kettlebell,1,Single Arm,Trapezius,Intermediate,Hip Hinge,hinge,ballistic,FALSE
+Double Kettlebell High Pull,Kettlebell,2,Double Arm,Trapezius,Intermediate,Hip Hinge,hinge,ballistic,FALSE
+Kettlebell Snatch Pull,Kettlebell,1,Single Arm,Trapezius,Intermediate,Hip Hinge,hinge,ballistic|conditioning,FALSE
+Kettlebell Figure 8,Kettlebell,1,Double Arm,Abdominals,Intermediate,Hip Hinge,hinge,mobility,FALSE
+Kettlebell Pass Between The Legs,Kettlebell,1,Double Arm,Abdominals,Intermediate,Hip Hinge,hinge,mobility,FALSE
+Kettlebell Pirate Ships,Kettlebell,1,Double Arm,Shoulders,Beginner,Hip Hinge,hinge,mobility,FALSE
+Kettlebell Hike Pass,Kettlebell,1,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,ballistic,FALSE
+Kettlebell Deadlift,Kettlebell,1,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,grind,FALSE
+Kettlebell Sumo Deadlift,Kettlebell,1,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,grind,FALSE
+Kettlebell Suitcase Deadlift,Kettlebell,2,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,grind,FALSE
+Kettlebell Romanian Deadlift,Kettlebell,2,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,grind,FALSE
+Double Kettlebell Romanian Deadlift,Kettlebell,2,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,grind,FALSE
+Kettlebell Single-Leg Deadlift,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,grind,TRUE
+Kettlebell Single-Leg Romanian Deadlift,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,grind,TRUE
+Kettlebell Goblet Single-Leg Romanian Deadlift,Kettlebell,1,Double Arm,Hamstrings,Intermediate,Hip Hinge,hinge,grind,TRUE
+Double Kettlebell Single-Leg Romanian Deadlift,Kettlebell,2,Double Arm,Hamstrings,Expert,Hip Hinge,hinge,grind,TRUE
+Kettlebell Staggered Deadlift,Kettlebell,1,Single Arm,Hamstrings,Intermediate,Hip Hinge,hinge,grind,FALSE
+Kettlebell Good Morning,Kettlebell,1,Double Arm,Hamstrings,Intermediate,Hip Hinge,hinge,grind,FALSE
+Goblet Squat,Kettlebell,1,Double Arm,Quadriceps,Beginner,Knee Dominant,squat,grind,FALSE
+Double Kettlebell Front Squat,Kettlebell,2,Double Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind,FALSE
+Kettlebell Pistol Squat,Kettlebell,1,Double Arm,Quadriceps,Expert,Knee Dominant,squat,grind,TRUE
+One-Arm Overhead Kettlebell Squat,Kettlebell,1,Single Arm,Quadriceps,Expert,Knee Dominant,squat,grind,FALSE
+Kettlebell Front Rack Squat,Kettlebell,1,Single Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind,FALSE
+Kettlebell Cossack Squat,Kettlebell,1,Double Arm,Adductors,Intermediate,Knee Dominant,squat,grind|mobility,TRUE
+Kettlebell Goblet Reverse Lunge,Kettlebell,1,Double Arm,Quadriceps,Beginner,Knee Dominant,squat,grind,TRUE
+Kettlebell Racked Reverse Lunge,Kettlebell,1,Single Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind,TRUE
+Kettlebell Goblet Forward Lunge,Kettlebell,1,Double Arm,Quadriceps,Beginner,Knee Dominant,squat,grind,TRUE
+Kettlebell Racked Forward Lunge,Kettlebell,1,Single Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind,TRUE
+Kettlebell Goblet Walking Lunge,Kettlebell,1,Double Arm,Quadriceps,Beginner,Knee Dominant,squat,grind,TRUE
+Kettlebell Overhead Reverse Lunge,Kettlebell,1,Single Arm,Shoulders,Intermediate,Knee Dominant,squat,grind,TRUE
+Double Kettlebell Front Rack Reverse Lunge,Kettlebell,2,Double Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind,TRUE
+Kettlebell Curtsy Lunge,Kettlebell,1,Single Arm,Glutes,Intermediate,Knee Dominant,squat,grind,TRUE
+Kettlebell Bulgarian Split Squat,Kettlebell,1,Double Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind,TRUE
+Kettlebell Front Rack Bulgarian Split Squat,Kettlebell,1,Single Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind,TRUE
+Double Kettlebell Bulgarian Split Squat,Kettlebell,2,Double Arm,Quadriceps,Expert,Knee Dominant,squat,grind,TRUE
+Kettlebell Goblet Step-Up,Kettlebell,1,Double Arm,Quadriceps,Beginner,Knee Dominant,squat,grind,TRUE
+Kettlebell Lateral Lunge,Kettlebell,1,Double Arm,Adductors,Intermediate,Knee Dominant,squat,grind,TRUE
+Kettlebell Lunge Pass Through,Kettlebell,1,Double Arm,Quadriceps,Intermediate,Knee Dominant,squat,mobility,TRUE
+Kettlebell Goblet Split Squat,Kettlebell,1,Double Arm,Quadriceps,Beginner,Knee Dominant,squat,grind,TRUE
+Kettlebell Racked Split Squat,Kettlebell,1,Single Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind,TRUE
+Kettlebell Racked Step-Up,Kettlebell,1,Single Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind,TRUE
+Kettlebell Goblet Curtsy Lunge,Kettlebell,1,Double Arm,Glutes,Beginner,Knee Dominant,squat,grind,TRUE
+Double Kettlebell Front Rack Split Squat,Kettlebell,2,Double Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind,TRUE
+Double Kettlebell Front Rack Step-Up,Kettlebell,2,Double Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind,TRUE
+Double Kettlebell Suitcase Reverse Lunge,Kettlebell,2,Double Arm,Quadriceps,Intermediate,Knee Dominant,squat,grind,TRUE
+Double Kettlebell Front Rack Cossack Squat,Kettlebell,2,Double Arm,Adductors,Expert,Knee Dominant,squat,grind,TRUE
+Double Kettlebell Military Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+One-Arm Kettlebell Military Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+Alternating Kettlebell Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+Kettlebell Seesaw Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+Kettlebell See-Saw Push Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic,FALSE
+Kettlebell Arnold Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+Kettlebell Seated Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+Kettlebell Half-Kneeling Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+Kettlebell Tall-Kneeling Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+Kettlebell Z Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+Double Kettlebell Z Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+One-Arm Kettlebell Para Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+One-Arm Kettlebell Push Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic,FALSE
+Double Kettlebell Push Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic,FALSE
+Double Kettlebell Push Jerk,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic,FALSE
+One-Arm Kettlebell Jerk,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic,FALSE
+One-Arm Kettlebell Split Jerk,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic,FALSE
+One-Arm Kettlebell Clean and Jerk,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|grind,FALSE
+Double Kettlebell Jerk,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic,FALSE
+Kettlebell Thruster,Kettlebell,1,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|conditioning,FALSE
+Double Kettlebell Thruster,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|conditioning,FALSE
+Kettlebell Clean and Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|grind,FALSE
+Double Kettlebell Clean and Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|grind,FALSE
+Kettlebell Sots Press,Kettlebell,1,Single Arm,Shoulders,Expert,Vertical Push,push,grind,FALSE
+Kettlebell Bottoms-Up Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+Kettlebell Bent Press,Kettlebell,1,Single Arm,Shoulders,Expert,Vertical Push,push,grind,FALSE
+One-Arm Kettlebell Floor Press,Kettlebell,1,Single Arm,Chest,Intermediate,Horizontal Push,push,grind,FALSE
+Extended Range One-Arm Kettlebell Floor Press,Kettlebell,1,Single Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
+Leg-Over Kettlebell Floor Press,Kettlebell,1,Single Arm,Chest,Intermediate,Horizontal Push,push,grind,FALSE
+Alternating Kettlebell Floor Press,Kettlebell,2,Double Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
+Double Kettlebell Floor Press,Kettlebell,2,Double Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
+Kettlebell Bench Press,Kettlebell,1,Single Arm,Chest,Intermediate,Horizontal Push,push,grind,FALSE
+Double Kettlebell Bench Press,Kettlebell,2,Double Arm,Chest,Intermediate,Horizontal Push,push,grind,FALSE
+Kettlebell Push-Up,Kettlebell,2,Double Arm,Chest,Intermediate,Horizontal Push,push,grind,FALSE
+Plyo Kettlebell Push-Up,Kettlebell,2,Double Arm,Chest,Expert,Horizontal Push,push,ballistic|conditioning,FALSE
+One-Arm Kettlebell Row,Kettlebell,1,Single Arm,Back,Intermediate,Horizontal Pull,pull,grind,FALSE
+Double Kettlebell Row,Kettlebell,2,Double Arm,Back,Intermediate,Horizontal Pull,pull,grind,FALSE
+Alternating Kettlebell Row,Kettlebell,2,Double Arm,Back,Intermediate,Horizontal Pull,pull,grind,FALSE
+Kettlebell Renegade Row,Kettlebell,2,Double Arm,Back,Expert,Horizontal Pull,pull,grind,FALSE
+Alternating Renegade Row,Kettlebell,2,Double Arm,Back,Expert,Horizontal Pull,pull,grind,FALSE
+Kettlebell Gorilla Row,Kettlebell,2,Double Arm,Back,Intermediate,Horizontal Pull,pull,grind,FALSE
+Kettlebell Suitcase Carry,Kettlebell,1,Single Arm,Forearms,Beginner,Loaded Carry,carry,grind|conditioning,FALSE
+Kettlebell Farmer's Carry,Kettlebell,2,Double Arm,Forearms,Beginner,Loaded Carry,carry,grind|conditioning,FALSE
+Kettlebell Racked Carry,Kettlebell,1,Single Arm,Shoulders,Intermediate,Loaded Carry,carry,grind|conditioning,FALSE
+Kettlebell Double Rack Carry,Kettlebell,2,Double Arm,Shoulders,Intermediate,Loaded Carry,carry,grind|conditioning,FALSE
+Kettlebell Overhead Carry,Kettlebell,1,Single Arm,Shoulders,Intermediate,Loaded Carry,carry,grind|conditioning,FALSE
+Kettlebell Double Overhead Carry,Kettlebell,2,Double Arm,Shoulders,Expert,Loaded Carry,carry,grind|conditioning,FALSE
+Kettlebell Waiter Carry,Kettlebell,1,Single Arm,Shoulders,Intermediate,Loaded Carry,carry,grind|conditioning,FALSE
+Kettlebell Bottoms-Up Carry,Kettlebell,1,Single Arm,Forearms,Intermediate,Loaded Carry,carry,grind|conditioning,FALSE
+Kettlebell Mixed Rack Carry,Kettlebell,2,Double Arm,Forearms,Intermediate,Loaded Carry,carry,grind|conditioning,FALSE
+Kettlebell Suitcase March,Kettlebell,1,Single Arm,Abdominals,Beginner,Loaded Carry,carry,grind|conditioning,FALSE
+Double Kettlebell Farmer March,Kettlebell,2,Double Arm,Forearms,Beginner,Loaded Carry,carry,grind|conditioning,FALSE
+Kettlebell Windmill,Kettlebell,1,Single Arm,Abdominals,Intermediate,Rotational,rotation,grind|mobility,FALSE
+Advanced Kettlebell Windmill,Kettlebell,1,Single Arm,Abdominals,Intermediate,Rotational,rotation,grind|mobility,FALSE
+Kettlebell Overhead Windmill,Kettlebell,1,Single Arm,Abdominals,Expert,Rotational,rotation,grind|mobility,FALSE
+Double Kettlebell Windmill,Kettlebell,2,Double Arm,Abdominals,Intermediate,Rotational,rotation,grind|mobility,FALSE
+Kettlebell Halo,Kettlebell,1,Double Arm,Shoulders,Beginner,Rotational,rotation,mobility,FALSE
+Kettlebell Half-Kneeling Halo,Kettlebell,1,Double Arm,Shoulders,Beginner,Rotational,rotation,mobility,FALSE
+Kettlebell Around The Body,Kettlebell,1,Double Arm,Abdominals,Beginner,Rotational,rotation,mobility,FALSE
+Kettlebell Russian Twist,Kettlebell,1,Double Arm,Abdominals,Intermediate,Rotational,rotation,grind,FALSE
+Kettlebell Wood Chop,Kettlebell,1,Double Arm,Abdominals,Beginner,Rotational,rotation,grind,FALSE
+Kettlebell Side Bend,Kettlebell,1,Single Arm,Abdominals,Beginner,Anti-Rotation,core,grind,FALSE
+Kettlebell Turkish Get-Up,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,get_up|push|rotation,grind|mobility,FALSE
+Kettlebell Turkish Get-Up (Lunge Style),Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,get_up|push|rotation,grind|mobility,FALSE
+Kettlebell Turkish Get-Up (Squat Style),Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,get_up|push|rotation,grind|mobility,FALSE
+Half Kettlebell Get-Up,Kettlebell,1,Single Arm,Shoulders,Beginner,Vertical Push,get_up|push|rotation,grind|mobility,FALSE
+Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
+Wide-Grip Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
+Close-Grip Push-Up,Bodyweight,1,Double Arm,Triceps,Intermediate,Horizontal Push,push,grind,FALSE
+Diamond Push-Up,Bodyweight,1,Double Arm,Triceps,Intermediate,Horizontal Push,push,grind,FALSE
+Incline Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
+Decline Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
+Knee Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
+Wall Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
+Staggered Push-Up,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
+Clock Push-Up,Bodyweight,1,Double Arm,Chest,Intermediate,Horizontal Push,push,grind,FALSE
+Spiderman Push-Up,Bodyweight,1,Double Arm,Chest,Intermediate,Horizontal Push,push,grind,FALSE
+Hindu Push-Up,Bodyweight,1,Double Arm,Chest,Intermediate,Horizontal Push,push,mobility,FALSE
+Plyometric Push-Up,Bodyweight,1,Double Arm,Chest,Intermediate,Horizontal Push,push,ballistic|conditioning,FALSE
+Clap Push-Up,Bodyweight,1,Double Arm,Chest,Intermediate,Horizontal Push,push,ballistic|conditioning,FALSE
+Archer Push-Up,Bodyweight,1,Double Arm,Chest,Expert,Horizontal Push,push,grind,FALSE
+Pseudo Planche Push-Up,Bodyweight,1,Double Arm,Shoulders,Expert,Horizontal Push,push,grind,FALSE
+Single-Arm Push-Up,Bodyweight,1,Single Arm,Chest,Expert,Horizontal Push,push,grind,FALSE
+Push-Up to Side Plank,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
+Body Triceps Press,Bodyweight,1,Double Arm,Triceps,Beginner,Horizontal Push,push,grind,FALSE
+Bench Dips,Bodyweight,1,Double Arm,Triceps,Beginner,Vertical Push,push,grind,FALSE
+Triceps Dips,Bodyweight,1,Double Arm,Triceps,Beginner,Vertical Push,push,grind,FALSE
+Straight Bar Dip,Bodyweight,1,Double Arm,Triceps,Intermediate,Vertical Push,push,grind,FALSE
+Korean Dip,Bodyweight,1,Double Arm,Triceps,Expert,Vertical Push,push,grind,FALSE
+Handstand Push-Up,Bodyweight,1,Double Arm,Shoulders,Expert,Vertical Push,push,grind,FALSE
+Pike Push-Up,Bodyweight,1,Double Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+Wall Walk,Bodyweight,1,Double Arm,Shoulders,Intermediate,Vertical Push,push,conditioning,FALSE
+Wall Handstand Hold,Bodyweight,1,Double Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
+Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind,FALSE
+Chin-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind,FALSE
+Neutral-Grip Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind,FALSE
+Wide-Grip Pull-Up,Bodyweight,1,Double Arm,Back,Intermediate,Vertical Pull,pull,grind,FALSE
+V-Bar Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind,FALSE
+Commando Pull-Up,Bodyweight,1,Double Arm,Back,Intermediate,Vertical Pull,pull,grind,FALSE
+Scapular Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind,FALSE
+Negative Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind,FALSE
+L-Sit Pull-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull,grind,FALSE
+Archer Pull-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull,grind,FALSE
+Muscle-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull,grind,FALSE
+Gorilla Chin-Up Crunch,Bodyweight,1,Double Arm,Abdominals,Intermediate,Vertical Pull,pull,grind,FALSE
+Band Pull-Down,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind,FALSE
+Single-Arm Band Pull-Down,Bodyweight,1,Single Arm,Back,Beginner,Vertical Pull,pull,grind,FALSE
+Inverted Row,Bodyweight,1,Double Arm,Back,Beginner,Horizontal Pull,pull,grind,FALSE
+Wide-Grip Inverted Row,Bodyweight,1,Double Arm,Back,Beginner,Horizontal Pull,pull,grind,FALSE
+Underhand Inverted Row,Bodyweight,1,Double Arm,Back,Beginner,Horizontal Pull,pull,grind,FALSE
+Single-Arm Inverted Row,Bodyweight,1,Single Arm,Back,Intermediate,Horizontal Pull,pull,grind,FALSE
+Bodyweight Squat,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,grind,FALSE
+Jump Squat,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning,FALSE
+Bodyweight Pistol Squat,Bodyweight,1,No Arms,Quadriceps,Expert,Knee Dominant,squat,grind,TRUE
+Sissy Squat,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,grind,FALSE
+Shrimp Squat,Bodyweight,1,No Arms,Quadriceps,Expert,Knee Dominant,squat,grind,TRUE
+Single-Leg Box Squat,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,grind,TRUE
+Wall Sit,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,grind,FALSE
+Cossack Squat,Bodyweight,1,No Arms,Adductors,Intermediate,Knee Dominant,squat,grind|mobility,TRUE
+Forward Lunge,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,grind,TRUE
+Reverse Lunge,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,grind,TRUE
+Walking Lunge,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,grind,TRUE
+Curtsy Lunge,Bodyweight,1,No Arms,Glutes,Beginner,Knee Dominant,squat,grind,TRUE
+Lateral Lunge,Bodyweight,1,No Arms,Adductors,Beginner,Knee Dominant,squat,grind,TRUE
+Bodyweight Bulgarian Split Squat,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,grind,TRUE
+Step-Up with Knee Raise,Bodyweight,1,No Arms,Glutes,Beginner,Knee Dominant,squat,grind,TRUE
+Bodyweight Split Squat,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,grind,TRUE
+Bodyweight Step-Up,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,grind,TRUE
+Duck Walk,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,conditioning,FALSE
+High Knees,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,conditioning,FALSE
+Squat Thrust,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning,FALSE
+Burpee,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning,FALSE
+Bench Jump,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning,FALSE
+Box Jump,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning,FALSE
+Freehand Jump Squat,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning,FALSE
+Split Jump,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning,FALSE
+Scissors Jump,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning,FALSE
+Star Jump,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning,FALSE
+Rocket Jump,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning,FALSE
+Knee Tuck Jump,Bodyweight,1,No Arms,Hamstrings,Beginner,Knee Dominant,squat,ballistic|conditioning,FALSE
+Standing Long Jump,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning,FALSE
+Lateral Bound,Bodyweight,1,No Arms,Adductors,Beginner,Knee Dominant,squat,ballistic|conditioning,FALSE
+Standing Calf Raise,Bodyweight,1,No Arms,Calves,Beginner,Knee Dominant,squat,grind,FALSE
+Single-Leg Calf Raise,Bodyweight,1,No Arms,Calves,Beginner,Knee Dominant,squat,grind,TRUE
+Glute Bridge,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind,FALSE
+Single-Leg Glute Bridge,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind,TRUE
+Bodyweight Hip Thrust,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind,FALSE
+Single-Leg Hip Thrust,Bodyweight,1,No Arms,Glutes,Intermediate,Hip Extension,hinge,grind,TRUE
+Frog Pump,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind,FALSE
+Glute Kickback,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind,TRUE
+Donkey Kick,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind,TRUE
+Fire Hydrant,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind,TRUE
+Rear Leg Raise,Bodyweight,1,No Arms,Glutes,Beginner,Hip Extension,hinge,grind,TRUE
+Superman,Bodyweight,1,No Arms,Back,Beginner,Hip Extension,hinge,grind,FALSE
+Prone Cobra,Bodyweight,1,No Arms,Back,Beginner,Hip Extension,hinge,grind,FALSE
+Bodyweight Hyperextension,Bodyweight,1,No Arms,Back,Intermediate,Hip Extension,hinge,grind,FALSE
+Reverse Hyperextension,Bodyweight,1,No Arms,Glutes,Intermediate,Hip Extension,hinge,grind,FALSE
+Bird Dog,Bodyweight,1,No Arms,Back,Beginner,Hip Extension,hinge,grind,TRUE
+Natural Glute-Ham Raise,Bodyweight,1,No Arms,Hamstrings,Intermediate,Hip Hinge,hinge,grind,FALSE
+Nordic Curl,Bodyweight,1,No Arms,Hamstrings,Expert,Hip Hinge,hinge,grind,FALSE
+Bodyweight Good Morning,Bodyweight,1,No Arms,Hamstrings,Beginner,Hip Hinge,hinge,grind,FALSE
+Bodyweight Single-Leg Deadlift,Bodyweight,1,No Arms,Hamstrings,Beginner,Hip Hinge,hinge,grind,TRUE
+Bodyweight Single-Leg Romanian Deadlift,Bodyweight,1,No Arms,Hamstrings,Beginner,Hip Hinge,hinge,grind,TRUE
+Inchworm,Bodyweight,1,Double Arm,Hamstrings,Beginner,Hip Hinge,hinge,mobility,FALSE
+Plank,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+Side Plank,Bodyweight,1,Single Arm,Abdominals,Beginner,Anti-Rotation,core,grind,FALSE
+Bear Plank,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+Plank Shoulder Tap,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Rotation,core,grind,FALSE
+Plank Up-Down,Bodyweight,1,Double Arm,Abdominals,Intermediate,Anti-Extension,core,grind,FALSE
+Copenhagen Plank,Bodyweight,1,Single Arm,Adductors,Expert,Anti-Rotation,core,grind,FALSE
+Hollow Hold,Bodyweight,1,No Arms,Abdominals,Intermediate,Anti-Extension,core,grind,FALSE
+Hollow Rock,Bodyweight,1,No Arms,Abdominals,Intermediate,Anti-Extension,core,grind,FALSE
+Mountain Climber,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core,conditioning,FALSE
+Bear Crawl,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core,conditioning,FALSE
+Spider Crawl,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core,conditioning,FALSE
+Dead Bug,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+Russian Twist,Bodyweight,1,No Arms,Abdominals,Intermediate,Rotational,rotation,grind,FALSE
+Bicycle Crunch,Bodyweight,1,No Arms,Abdominals,Beginner,Rotational,rotation,grind,FALSE
+Cross-Body Crunch,Bodyweight,1,No Arms,Abdominals,Beginner,Rotational,rotation,grind,FALSE
+Oblique Crunch,Bodyweight,1,No Arms,Abdominals,Beginner,Rotational,rotation,grind,FALSE
+Side Jackknife,Bodyweight,1,No Arms,Abdominals,Beginner,Rotational,rotation,grind,FALSE
+Heel Touches,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Rotation,core,grind,FALSE
+Toe Touches,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+Groiners,Bodyweight,1,Double Arm,Adductors,Intermediate,Anti-Extension,core,grind,FALSE
+Crunch,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+Decline Crunch,Bodyweight,1,No Arms,Abdominals,Intermediate,Anti-Extension,core,grind,FALSE
+Reverse Crunch,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+V-Up,Bodyweight,1,No Arms,Abdominals,Intermediate,Anti-Extension,core,grind,FALSE
+Sit-Up,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+Jackknife Sit-Up,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+Lying Leg Raise,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+Hanging Leg Raise,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Extension,core,grind,FALSE
+Hanging Knee Raise,Bodyweight,1,Double Arm,Abdominals,Intermediate,Anti-Extension,core,grind,FALSE
+Hanging Pike,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Extension,core,grind,FALSE
+Toes to Bar,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Extension,core,grind,FALSE
+Leg Pull-In,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+Flutter Kicks,Bodyweight,1,No Arms,Glutes,Beginner,Anti-Extension,core,grind,FALSE
+Scissor Kick,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+Windshield Wipers,Bodyweight,1,No Arms,Abdominals,Expert,Rotational,rotation,grind,FALSE
+Dragon Flag,Bodyweight,1,No Arms,Abdominals,Expert,Anti-Extension,core,grind,FALSE
+L-Sit,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Extension,core,grind,FALSE
+Stomach Vacuum,Bodyweight,1,No Arms,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+Side Leg Raise,Bodyweight,1,No Arms,Adductors,Beginner,Anti-Rotation,core,grind,FALSE
+Ab Wheel Rollout,Bodyweight,1,Double Arm,Abdominals,Intermediate,Anti-Extension,core,grind,FALSE
+Standing Ab Wheel Rollout,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Extension,core,grind,FALSE
+Ab Wheel Oblique Rollout,Bodyweight,1,Double Arm,Abdominals,Intermediate,Anti-Rotation,core,grind,FALSE
+Reverse Plank,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core,grind,FALSE
+Side Plank Hip Dip,Bodyweight,1,Single Arm,Abdominals,Intermediate,Anti-Rotation,core,grind,FALSE
+Hanging Windshield Wipers,Bodyweight,1,Double Arm,Abdominals,Expert,Rotational,rotation,grind,FALSE
+Kettlebell Plank Drag,Kettlebell,1,Single Arm,Abdominals,Intermediate,Anti-Rotation,core,grind,FALSE
+Pallof Press,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Rotation,core,grind,FALSE
+Half-Kneeling Pallof Press,Bodyweight,1,Double Arm,Abdominals,Intermediate,Anti-Rotation,core,grind,FALSE
+Single-Leg Pallof Press,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Rotation,core,grind,TRUE

@@ -92,6 +92,49 @@ export const DoubleWeights: Story = {
   },
 };
 
+/** Two matched bells up top, one leg at a time down below. */
+export const UnilateralLegsDoubleBells: Story = {
+  parameters: {
+    workoutOptions: {
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Double Kettlebell Single-Leg Romanian Deadlift',
+          repScheme: [5],
+          unilateral: true,
+          weightOneValue: 20,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 20,
+          weightTwoUnit: 'kilograms',
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
+/**
+ * Both axes at once: one bell racked in one hand, one leg working. The two
+ * still make a single pair of sides, not four permutations.
+ */
+export const UnilateralLegsSingleBell: Story = {
+  parameters: {
+    workoutOptions: {
+      movements: [
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Kettlebell Racked Reverse Lunge',
+          repScheme: [5],
+          unilateral: true,
+          weightOneValue: 16,
+          weightOneUnit: 'kilograms',
+          weightTwoValue: 0,
+          weightTwoUnit: null,
+        },
+      ] satisfies MovementOptions[],
+    },
+  },
+};
+
 export const OneHanded: Story = {
   parameters: {
     workoutOptions: {
