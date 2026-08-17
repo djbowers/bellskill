@@ -104,6 +104,8 @@ Kettlebell Double Overhead Carry,Kettlebell,2,Double Arm,Shoulders,Expert,Loaded
 Kettlebell Waiter Carry,Kettlebell,1,Single Arm,Shoulders,Intermediate,Loaded Carry,carry
 Kettlebell Bottoms-Up Carry,Kettlebell,1,Single Arm,Forearms,Intermediate,Loaded Carry,carry
 Kettlebell Mixed Rack Carry,Kettlebell,2,Double Arm,Forearms,Intermediate,Loaded Carry,carry
+Kettlebell Suitcase March,Kettlebell,1,Single Arm,Abdominals,Beginner,Loaded Carry,carry
+Double Kettlebell Farmer March,Kettlebell,2,Double Arm,Forearms,Beginner,Loaded Carry,carry
 Kettlebell Windmill,Kettlebell,1,Single Arm,Abdominals,Intermediate,Rotational,rotation
 Advanced Kettlebell Windmill,Kettlebell,1,Single Arm,Abdominals,Intermediate,Rotational,rotation
 Kettlebell Overhead Windmill,Kettlebell,1,Single Arm,Abdominals,Expert,Rotational,rotation
@@ -157,6 +159,8 @@ L-Sit Pull-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull
 Archer Pull-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull
 Muscle-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull
 Gorilla Chin-Up Crunch,Bodyweight,1,Double Arm,Abdominals,Intermediate,Vertical Pull,pull
+Band Pull-Down,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull
+Single-Arm Band Pull-Down,Bodyweight,1,Single Arm,Back,Beginner,Vertical Pull,pull
 Inverted Row,Bodyweight,1,Double Arm,Back,Beginner,Horizontal Pull,pull
 Wide-Grip Inverted Row,Bodyweight,1,Double Arm,Back,Beginner,Horizontal Pull,pull
 Underhand Inverted Row,Bodyweight,1,Double Arm,Back,Beginner,Horizontal Pull,pull
@@ -257,3 +261,6 @@ Reverse Plank,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Extension,core
 Side Plank Hip Dip,Bodyweight,1,Single Arm,Abdominals,Intermediate,Anti-Rotation,core
 Hanging Windshield Wipers,Bodyweight,1,Double Arm,Abdominals,Expert,Rotational,rotation
 Kettlebell Plank Drag,Kettlebell,1,Single Arm,Abdominals,Intermediate,Anti-Rotation,core
+Pallof Press,Bodyweight,1,Double Arm,Abdominals,Beginner,Anti-Rotation,core
+Half-Kneeling Pallof Press,Bodyweight,1,Double Arm,Abdominals,Intermediate,Anti-Rotation,core
+Single-Leg Pallof Press,Bodyweight,1,Double Arm,Abdominals,Expert,Anti-Rotation,core
