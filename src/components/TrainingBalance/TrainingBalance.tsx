@@ -243,7 +243,7 @@ const BalanceRow = ({
         }
         className="flex min-h-[40px] w-full items-center gap-x-1.5 rounded-sm text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <span className="w-8 shrink-0 text-sm font-medium">{row.label}</span>
+        <span className="w-7 shrink-0 text-sm font-medium">{row.label}</span>
         <span
           className={cn(
             'h-1.5 flex-1 overflow-hidden rounded-full',
