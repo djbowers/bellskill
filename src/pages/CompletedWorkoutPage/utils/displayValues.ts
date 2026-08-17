@@ -30,9 +30,11 @@ export const getRepSchemeDisplayValue = (
   repScheme: number[],
   weights: [number | null, number | null],
   timedRungs = false,
+  unilateralLegs = false,
 ) =>
   repScheme.reduce((reps, rung) => {
-    const unilateral = (weights[0] ?? 0) > 0 && weights[1] === 0;
+    const unilateral =
+      unilateralLegs || ((weights[0] ?? 0) > 0 && weights[1] === 0);
     const rungValue = timedRungs ? formatRungDuration(rung) : rung.toString();
     const rungDisplayValue = unilateral
       ? `${rungValue} / ${rungValue}`

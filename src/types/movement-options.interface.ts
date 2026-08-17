@@ -9,6 +9,13 @@ export interface MovementOptions {
   repScheme: number[];
   /** Carries, planks, marches: each rung runs on a countdown instead of reps. */
   timedRungs?: boolean;
+  /**
+   * Lunges, split squats, single-leg hinges: every rung runs once per leg.
+   * Seeded from the catalog and overridable. Distinct from the one-hand
+   * sentinel (`weightTwoValue === 0`) — either one mirrors a rung, and a
+   * double-bell single-leg RDL is unilateral without being one-handed.
+   */
+  unilateral?: boolean;
   weightOneUnit: WeightUnit | null;
   weightOneValue: number | null;
   weightTwoUnit: WeightUnit | null;

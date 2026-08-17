@@ -11,10 +11,15 @@ import {
   recommendationGoal,
 } from '~/utils';
 
-/** Catalog weight-mode metadata keyed by canonical movement name. */
+/** Catalog entry the mapper reads: weight-mode fields plus the leg axis. */
+export type RecommendationCatalogEntry = MovementWeightModeFields & {
+  unilateralLower?: boolean;
+};
+
+/** Catalog metadata keyed by canonical movement name. */
 export type RecommendationCatalog = ReadonlyMap<
   string,
-  MovementWeightModeFields
+  RecommendationCatalogEntry
 >;
 
 /**
@@ -46,7 +51,7 @@ export const buildRecommendationCatalog = (
 // Blocks from before `bells` existed fall back to inferring Double from the
 // catalog, which is what the mapper always did.
 const inferSecondWeight = (
-  fields: MovementWeightModeFields | undefined,
+  fields: RecommendationCatalogEntry | undefined,
   weightKg: number,
   bells: number | undefined,
 ): Pick<MovementOptions, 'weightTwoUnit' | 'weightTwoValue'> => {
@@ -72,17 +77,17 @@ export const recommendationToMovements = (
   recommendation: Recommendation,
   catalog?: RecommendationCatalog,
 ): MovementOptions[] =>
-  recommendation.blocks.map((block) => ({
-    movementName: block.movement_name,
-    repScheme: block.rep_scheme,
-    weightOneUnit: 'kilograms',
-    weightOneValue: block.weight_kg,
-    ...inferSecondWeight(
-      catalog?.get(block.movement_name),
-      block.weight_kg,
-      block.bells,
-    ),
-  }));
+  recommendation.blocks.map((block) => {
+    const fields = catalog?.get(block.movement_name);
+    return {
+      movementName: block.movement_name,
+      repScheme: block.rep_scheme,
+      unilateral: Boolean(fields?.unilateralLower),
+      weightOneUnit: 'kilograms' as const,
+      weightOneValue: block.weight_kg,
+      ...inferSecondWeight(fields, block.weight_kg, block.bells),
+    };
+  });
 
 /**
  * Maps a recommendation onto a full set of workout options ready to load into

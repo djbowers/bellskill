@@ -17,4 +17,6 @@ export interface Movement {
   difficultyLevel: DifficultyLevel | null;
   movementPattern1: string | null;
   patternCredits: string[];
+  /** One leg at a time — independent of how many bells are held up top. */
+  unilateralLower: boolean;
 }

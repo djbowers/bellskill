@@ -10,6 +10,8 @@ export interface MovementHistoryEntry {
   /** Reps per rung, or seconds per rung when `timedRungs` is set. */
   repScheme: number[];
   timedRungs: boolean;
+  /** Every rung was run once per leg. */
+  unilateral: boolean;
   weightOneUnit: WeightUnit | null;
   weightOneValue: number | null;
   weightTwoUnit: WeightUnit | null;
@@ -17,7 +19,7 @@ export interface MovementHistoryEntry {
 }
 
 /** The `movement_logs` columns a history list needs, plus its parent workout. */
-export const MOVEMENT_HISTORY_SELECT = `id, rep_scheme, timed_rungs, workout_log_id,
+export const MOVEMENT_HISTORY_SELECT = `id, rep_scheme, timed_rungs, unilateral, workout_log_id,
    weight_one_unit, weight_one_value, weight_two_unit, weight_two_value,
    workout_logs!inner(started_at, title, rpe)`;
 
@@ -25,6 +27,7 @@ export interface MovementHistoryRow {
   id: number;
   rep_scheme: number[];
   timed_rungs: boolean;
+  unilateral: boolean;
   workout_log_id: number;
   weight_one_unit: WeightUnit | null;
   weight_one_value: number | null;
@@ -51,6 +54,7 @@ export const mapMovementHistoryRows = (
       rpe: (workoutLog?.rpe ?? null) as RpeOptions | null,
       repScheme: row.rep_scheme,
       timedRungs: row.timed_rungs,
+      unilateral: row.unilateral ?? false,
       weightOneUnit: row.weight_one_unit,
       weightOneValue: row.weight_one_value,
       weightTwoUnit: row.weight_two_unit,

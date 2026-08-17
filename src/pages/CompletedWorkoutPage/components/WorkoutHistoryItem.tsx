@@ -211,6 +211,7 @@ export const WorkoutHistoryItem = ({
                           ]
                         : [movement.weightOneValue, movement.weightTwoValue],
                       movement.timedRungs,
+                      movement.unilateral,
                     )}
                   </div>
                 </div>

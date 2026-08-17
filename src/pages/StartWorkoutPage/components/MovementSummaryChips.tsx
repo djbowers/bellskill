@@ -57,6 +57,11 @@ export const MovementSummaryChips = ({
       <span className="inline-flex items-center rounded-full bg-muted/70 px-1 py-0.5 text-xs font-medium">
         {repSummary(movement)}
       </span>
+      {movement.unilateral && (
+        <span className="inline-flex items-center rounded-full bg-muted/70 px-1 py-0.5 text-xs font-medium">
+          Per leg
+        </span>
+      )}
     </div>
   );
 };

@@ -136,15 +136,17 @@ export async function gatherInputs(
   ];
   const creditsByCatalogId = new Map<string, string[]>();
   const doublesByCatalogId = new Map<string, boolean>();
+  const unilateralByCatalogId = new Map<string, boolean>();
   if (catalogIds.length > 0) {
     const { data: catalogRows, error: catErr } = await admin
       .from('movements')
-      .select('id, pattern_credits, "# Primary Items"')
+      .select('id, pattern_credits, "# Primary Items", unilateral_lower')
       .in('id', catalogIds);
     if (catErr) throw catErr;
     for (const row of catalogRows ?? []) {
       creditsByCatalogId.set(row.id, row.pattern_credits);
       doublesByCatalogId.set(row.id, row['# Primary Items'] === 2);
+      unilateralByCatalogId.set(row.id, Boolean(row.unilateral_lower));
     }
   }
 
@@ -162,6 +164,8 @@ export async function gatherInputs(
       pattern_credits: credited.length > 0 ? credited : null,
       supports_doubles:
         doublesByCatalogId.get(m.functional_movement_id ?? '') ?? null,
+      unilateral_lower:
+        unilateralByCatalogId.get(m.functional_movement_id ?? '') ?? null,
     };
   });
 

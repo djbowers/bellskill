@@ -14,7 +14,7 @@ const EXPORT_SCHEMA = {
   workout_logs:
     'One row per completed workout session. `rep_scheme` is the planned ladder — rep counts per rung, e.g. [1,2,3]; a rung is one element. `movements` lists movement names done as a circuit (or as straight sets when `straight_sets` is true). `complex_set` means movements were done back-to-back without setting the bell down. `workout_goal` + `workout_goal_units` describe the target (time in minutes, rounds, or volume). `completed_volume` is total weight moved.',
   movement_logs:
-    'One row per movement within a workout (`workout_log_id` links to workout_logs). `completed_rep_scheme` holds actual reps per set. `timed_rungs` means rungs were seconds of work rather than reps. Two weight slots support double-bell work: weight_one and weight_two.',
+    'One row per movement within a workout (`workout_log_id` links to workout_logs). `completed_rep_scheme` holds actual reps per set. `timed_rungs` means rungs were seconds of work rather than reps. Two weight slots support double-bell work: weight_one and weight_two. `unilateral` means the movement ran one leg at a time, so every rung was performed twice — once per leg — and the logged rep counts are PER LEG, not the total.',
   user_movements:
     'The user\'s personal movement library; `functional_movement_id` links to a shared movement catalog when matched.',
   user_equipment: 'Kettlebells and other equipment the user owns.',

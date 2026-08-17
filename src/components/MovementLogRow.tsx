@@ -23,6 +23,7 @@ export const MovementLogRow = ({ entry }: { entry: MovementHistoryEntry }) => (
           entry.repScheme,
           [entry.weightOneValue, entry.weightTwoValue],
           entry.timedRungs,
+          entry.unilateral,
         )}{' '}
         @{' '}
         {getWeightsDisplayValue(

@@ -61,6 +61,7 @@ export const mapMovementRow = (movement: MovementRow): Movement => ({
     'Single or Double Arm'
   ] as Movement['singleOrDoubleArm'],
   targetMuscleGroup: movement['Target Muscle Group'] as MuscleGroup | null,
+  unilateralLower: movement['unilateral_lower'] ?? false,
 });
 
 const fetchMovements = async ({

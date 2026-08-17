@@ -227,6 +227,7 @@ const logWorkout = async ({
         rep_scheme: movement.repScheme,
         completed_rep_scheme: completedRepsByMovement[movementIndex] ?? [],
         timed_rungs: movement.timedRungs ?? false,
+        unilateral: movement.unilateral ?? false,
         weight_one_unit: movement.weightOneUnit,
         weight_one_value: movement.weightOneValue,
         weight_two_unit: movement.weightTwoUnit,
