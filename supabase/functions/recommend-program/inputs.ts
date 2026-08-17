@@ -59,8 +59,8 @@ async function gatherModalityProfiles(
   userClient: SupabaseClient,
 ): Promise<Map<string, string[]>> {
   try {
-    // Generated DB types don't yet know this function — cast at the RPC
-    // boundary only, as with pattern_debt_movements.
+    // The edge runtime resolves `~/types` differently from the app, so the RPC
+    // name is cast at this boundary only — as with pattern_debt_movements.
     const { data, error } = await userClient.rpc(
       'program_modality_movements' as never,
     );
