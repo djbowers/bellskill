@@ -24,6 +24,8 @@ export const EXPERIMENT_FLAG_KEYS = [
   'curated_first_workout',
   'repeat_previous',
   'recommender',
+  // Ghost pacing rail + lap deltas in the workout runner.
+  'ghost_pacing',
 ] as const;
 
 export type ExperimentFlagKey = (typeof EXPERIMENT_FLAG_KEYS)[number];
@@ -38,6 +40,7 @@ export interface ExperimentFeatures {
   curatedFirstWorkout: boolean;
   repeatPrevious: boolean;
   recommender: boolean;
+  ghostPacing: boolean;
 }
 
 /** DB flag key → app-facing boolean field. */
@@ -46,6 +49,7 @@ const KEY_TO_FEATURE: Record<ExperimentFlagKey, keyof ExperimentFeatures> = {
   curated_first_workout: 'curatedFirstWorkout',
   repeat_previous: 'repeatPrevious',
   recommender: 'recommender',
+  ghost_pacing: 'ghostPacing',
 };
 
 /**
@@ -60,6 +64,7 @@ export const SAFE_DEFAULT_FEATURES: ExperimentFeatures = {
   curatedFirstWorkout: false,
   repeatPrevious: false,
   recommender: false,
+  ghostPacing: false,
 };
 
 /** Every experiment feature ON — used only for the owner preview override. */
@@ -68,6 +73,7 @@ export const ALL_EXPERIMENT_FEATURES_ON: ExperimentFeatures = {
   curatedFirstWorkout: true,
   repeatPrevious: true,
   recommender: true,
+  ghostPacing: true,
 };
 
 /**

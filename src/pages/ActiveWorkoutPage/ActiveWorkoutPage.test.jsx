@@ -5,6 +5,26 @@ import { vi } from 'vitest';
 
 import { useLogWorkout } from '~/api';
 
+// Shared across every vi.mock('~/api') factory below. Defaults: no previous
+// run to race (the un-raced workout is also what any non-repeat renders) and
+// the ghost_pacing flag ON so the raced path stays exercised; individual tests
+// override with mockReturnValue and restore in their afterEach.
+const { mockUseGhostSession, mockUseFeatureFlags } = vi.hoisted(() => ({
+  mockUseGhostSession: vi.fn(() => ({ data: null })),
+  mockUseFeatureFlags: vi.fn(() => ({
+    features: { ghostPacing: true },
+    isPending: false,
+  })),
+}));
+
+beforeEach(() => {
+  mockUseGhostSession.mockImplementation(() => ({ data: null }));
+  mockUseFeatureFlags.mockImplementation(() => ({
+    features: { ghostPacing: true },
+    isPending: false,
+  }));
+});
+
 import * as stories from './ActiveWorkoutPage.stories';
 
 const {
@@ -65,7 +85,8 @@ describe('finishing a workout', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -148,7 +169,8 @@ describe('integration tests for previous volume persistence', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -233,7 +255,8 @@ describe('volume calculation with kilogram weights', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -296,7 +319,8 @@ describe('volume calculation with pound weights', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -343,7 +367,8 @@ describe('volume calculation with mixed weight units', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -414,7 +439,8 @@ describe('volume calculation with one-handed movements', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -458,7 +484,8 @@ describe('volume calculation with bodyweight movements', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -501,7 +528,8 @@ describe('volume accumulation across multiple rungs', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -898,7 +926,8 @@ describe('automatic workout completion with volume goals', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -957,7 +986,8 @@ describe('volume rounding on workout completion', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -1022,7 +1052,8 @@ describe('volume does not trigger completion for non-volume goals', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -1069,7 +1100,8 @@ describe('edge case and boundary tests', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -1222,7 +1254,8 @@ describe('volume calculation for complex mode', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -1514,7 +1547,8 @@ describe('active workout page (A+A Protocol interval EMOM cadence)', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   beforeEach(() => {
@@ -1568,7 +1602,8 @@ describe('active workout page (single-arm complex EMOM cadence)', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   beforeEach(() => {
@@ -2084,7 +2119,8 @@ describe('ghost pacing', () => {
     AnalyticsEvent: { WorkoutCancelled: 'workout_cancelled' },
     // These fixtures assert the un-raced workout, which is also what any
     // workout that isn't a repeat renders.
-    useGhostSession: () => ({ data: null }),
+    useGhostSession: mockUseGhostSession,
+    useFeatureFlags: mockUseFeatureFlags,
   }));
 
   const logWorkout = vi.fn();
@@ -2137,6 +2173,48 @@ describe('ghost pacing', () => {
 
     expect(screen.queryByTestId('ghost-rail')).not.toBeInTheDocument();
     expect(screen.queryByTestId('lap-delta-pill')).not.toBeInTheDocument();
+  });
+
+  const previousRun = {
+    workoutLogId: 99,
+    completedAt: new Date(),
+    totalRounds: 4,
+    totalDurationMs: 240_000,
+    splits: [],
+  };
+
+  test('shows the rail when the flag is on and there is a previous run', () => {
+    mockUseGhostSession.mockReturnValue({ data: previousRun });
+
+    render(<GhostPaced />);
+
+    expect(screen.getByTestId('ghost-rail')).toBeInTheDocument();
+  });
+
+  test('shows no rail when the ghost_pacing flag is off, even with a previous run', () => {
+    mockUseFeatureFlags.mockReturnValue({
+      features: { ghostPacing: false },
+      isPending: false,
+    });
+    mockUseGhostSession.mockReturnValue({ data: previousRun });
+
+    render(<GhostPaced />);
+
+    expect(mockUseGhostSession).toHaveBeenCalledWith(
+      expect.objectContaining({ enabled: false }),
+    );
+    expect(screen.queryByTestId('ghost-rail')).not.toBeInTheDocument();
+  });
+
+  test('never races a straight-sets workout, even with the flag on', () => {
+    mockUseGhostSession.mockReturnValue({ data: previousRun });
+
+    render(<StraightSets />);
+
+    expect(mockUseGhostSession).toHaveBeenCalledWith(
+      expect.objectContaining({ enabled: false }),
+    );
+    expect(screen.queryByTestId('ghost-rail')).not.toBeInTheDocument();
   });
 });
 

@@ -58,6 +58,7 @@ describe('fetchExperimentFeatures', () => {
       curatedFirstWorkout: true,
       repeatPrevious: false,
       recommender: true,
+      ghostPacing: false,
     });
   });
 
@@ -81,6 +82,7 @@ describe('fetchExperimentFeatures', () => {
       curatedFirstWorkout: true,
       repeatPrevious: true,
       recommender: false,
+      ghostPacing: false,
     });
   });
 
@@ -119,6 +121,7 @@ describe('useFeatureFlags', () => {
         curatedFirstWorkout: true,
         repeatPrevious: false,
         recommender: false,
+        ghostPacing: false,
       }),
     );
     expect(result.current.isPending).toBe(false);
