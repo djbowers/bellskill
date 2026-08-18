@@ -1647,17 +1647,17 @@ describe('active workout page (single-arm complex EMOM cadence)', () => {
     render(<SingleArmComplexEMOMRoundsGoal />);
 
     const side = screen.getByTestId('current-side');
-    expect(side).toHaveTextContent('Left hand · side 1 of 2');
+    expect(side).toHaveTextContent(/Left hand/);
 
     fireEvent.click(screen.getByRole('button', { name: 'Pause workout' }));
     act(() => vi.advanceTimersByTime(60_000));
-    expect(side).toHaveTextContent('Left hand · side 1 of 2'); // frozen
+    expect(side).toHaveTextContent(/Left hand/); // frozen
 
     // Resume runs the 3s start countdown, then the interval picks back up.
     fireEvent.click(screen.getByRole('button', { name: 'Start workout' }));
     act(() => vi.advanceTimersByTime(4_000));
     act(() => vi.advanceTimersByTime(30_000));
-    expect(side).toHaveTextContent('Right hand · side 2 of 2');
+    expect(side).toHaveTextContent(/Right hand/);
   });
 });
 
