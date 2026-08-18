@@ -89,12 +89,24 @@ export const ComplexMovementDisplay = ({
 
       <CardContent>
         {totalSides > 1 && (
-          <CardDescription
-            className="pb-1 text-center"
+          <div
+            className="flex flex-col items-center pb-2 pt-1"
             data-testid="current-side"
           >
-            {activeHand} hand · side {currentSide} of {totalSides}
-          </CardDescription>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-4xl font-bold tracking-tight">
+                {activeHand}
+              </span>{' '}
+              <span className="text-lg font-medium text-muted-foreground">
+                hand
+              </span>
+            </div>
+            <CardDescription>
+              {/* Keeps the node's text "Left hand · side 1 of 2" for screen readers. */}
+              <span className="sr-only">{' · '}</span>
+              side {currentSide} of {totalSides}
+            </CardDescription>
+          </div>
         )}
 
         <div className="divide-y">
