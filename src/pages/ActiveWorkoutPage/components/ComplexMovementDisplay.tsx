@@ -37,7 +37,8 @@ export const ComplexMovementDisplay = ({
 
   // Single-arm complex: the whole chain is done on one hand, then the other on
   // the next set. currentSide 1 = left, 2 = right.
-  const activeHand = currentSide === 1 ? 'Left' : 'Right';
+  const activeHand = currentSide === 1 ? 'L' : 'R';
+  const activeHandLabel = currentSide === 1 ? 'Left hand' : 'Right hand';
 
   return (
     <Card>
@@ -56,6 +57,21 @@ export const ComplexMovementDisplay = ({
               </div>
             </div>
           </CardTitle>
+
+          {totalSides > 1 && (
+            <div
+              className="flex flex-col items-center"
+              data-testid="current-side"
+            >
+              <span aria-hidden className="text-4xl font-bold leading-none">
+                {activeHand}
+              </span>
+              <span className="sr-only">{activeHandLabel}</span>
+              <CardDescription>
+                side {currentSide} of {totalSides}
+              </CardDescription>
+            </div>
+          )}
 
           {hasWeightOne && (
             <div className="flex items-end gap-1">
@@ -88,15 +104,6 @@ export const ComplexMovementDisplay = ({
       </CardHeader>
 
       <CardContent>
-        {totalSides > 1 && (
-          <CardDescription
-            className="pb-1 text-center"
-            data-testid="current-side"
-          >
-            {activeHand} hand · side {currentSide} of {totalSides}
-          </CardDescription>
-        )}
-
         <div className="divide-y">
           {movements.map((movement, index) => {
             const repIndex = Math.min(rungIndex, movement.repScheme.length - 1);

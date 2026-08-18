@@ -1627,17 +1627,20 @@ describe('active workout page (single-arm complex EMOM cadence)', () => {
     const round = screen.getByTestId('current-round');
 
     // Left hand does the whole complex "on the minute".
-    expect(side).toHaveTextContent('Left hand · side 1 of 2');
+    expect(side).toHaveTextContent('Left hand');
+    expect(side).toHaveTextContent('side 1 of 2');
     expect(round).toHaveTextContent('1');
 
     // 30s later the interval fires a continue on its own -> right hand.
     act(() => vi.advanceTimersByTime(30_000));
-    expect(side).toHaveTextContent('Right hand · side 2 of 2');
+    expect(side).toHaveTextContent('Right hand');
+    expect(side).toHaveTextContent('side 2 of 2');
     expect(round).toHaveTextContent('1');
 
     // Another 30s completes the L+R pair -> back to left, round 2.
     act(() => vi.advanceTimersByTime(30_000));
-    expect(side).toHaveTextContent('Left hand · side 1 of 2');
+    expect(side).toHaveTextContent('Left hand');
+    expect(side).toHaveTextContent('side 1 of 2');
     expect(round).toHaveTextContent('2');
   });
 
