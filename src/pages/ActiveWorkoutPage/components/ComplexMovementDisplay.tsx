@@ -37,7 +37,8 @@ export const ComplexMovementDisplay = ({
 
   // Single-arm complex: the whole chain is done on one hand, then the other on
   // the next set. currentSide 1 = left, 2 = right.
-  const activeHand = currentSide === 1 ? 'Left' : 'Right';
+  const activeHand = currentSide === 1 ? 'L' : 'R';
+  const activeHandLabel = currentSide === 1 ? 'Left hand' : 'Right hand';
 
   return (
     <Card>
@@ -56,6 +57,21 @@ export const ComplexMovementDisplay = ({
               </div>
             </div>
           </CardTitle>
+
+          {totalSides > 1 && (
+            <div
+              className="flex flex-col items-center"
+              data-testid="current-side"
+            >
+              <span aria-hidden className="text-4xl font-bold leading-none">
+                {activeHand}
+              </span>
+              <span className="sr-only">{activeHandLabel}</span>
+              <CardDescription>
+                side {currentSide} of {totalSides}
+              </CardDescription>
+            </div>
+          )}
 
           {hasWeightOne && (
             <div className="flex items-end gap-1">
@@ -88,27 +104,6 @@ export const ComplexMovementDisplay = ({
       </CardHeader>
 
       <CardContent>
-        {totalSides > 1 && (
-          <div
-            className="flex flex-col items-center pb-2 pt-1"
-            data-testid="current-side"
-          >
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-4xl font-bold tracking-tight">
-                {activeHand}
-              </span>{' '}
-              <span className="text-lg font-medium text-muted-foreground">
-                hand
-              </span>
-            </div>
-            <CardDescription>
-              {/* Keeps the node's text "Left hand · side 1 of 2" for screen readers. */}
-              <span className="sr-only">{' · '}</span>
-              side {currentSide} of {totalSides}
-            </CardDescription>
-          </div>
-        )}
-
         <div className="divide-y">
           {movements.map((movement, index) => {
             const repIndex = Math.min(rungIndex, movement.repScheme.length - 1);
