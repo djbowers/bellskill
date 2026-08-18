@@ -808,6 +808,14 @@ export const ActiveWorkoutPage = ({
     goToPreviousSet();
   };
 
+  // Next only exists where Continue doesn't: the rest, interval, and timed-rung
+  // states replace the control slot with a progress bar, leaving no way to
+  // advance by hand. When Continue is on screen it already is the way forward.
+  const showNextButton =
+    !workoutTimerPaused &&
+    !isCountdownActive &&
+    (isRestActive || intervalTimer > 0 || isTimedRung);
+
   // Next completes the current set early (counting its planned reps), except
   // during rest, where the set is already counted and only the remaining rest
   // is skipped.
@@ -1059,16 +1067,17 @@ export const ActiveWorkoutPage = ({
             setIsEffectActive={setIsEffectActive}
             workoutTimerPaused={workoutTimerPaused}
           />
-          <Button
-            aria-label="Next set"
-            variant="ghost"
-            size="lg"
-            className="px-1"
-            disabled={workoutTimerPaused || isCountdownActive}
-            onClick={handleClickNext}
-          >
-            <ChevronRightIcon className="h-2.5 w-2.5" />
-          </Button>
+          {showNextButton && (
+            <Button
+              aria-label="Next set"
+              variant="ghost"
+              size="lg"
+              className="px-1"
+              onClick={handleClickNext}
+            >
+              <ChevronRightIcon className="h-2.5 w-2.5" />
+            </Button>
+          )}
         </div>
 
         <WorkoutSummary

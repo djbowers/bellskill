@@ -2469,19 +2469,15 @@ describe('navigating between sets with previous and next', () => {
     );
   });
 
-  test('next completes the set with its planned reps', async () => {
+  test('next is absent while Continue is on screen', async () => {
     render(<DoubleWeights />);
 
-    await clickNext();
-    await finish();
-
-    expect(logWorkout).toHaveBeenCalledWith(
-      expect.objectContaining({
-        completedReps: 5,
-        completedRounds: 1,
-        completedSides: 1,
-      }),
-    );
+    expect(
+      screen.getByRole('button', { name: 'Continue' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Next set' }),
+    ).not.toBeInTheDocument();
   });
 
   test('next during rest skips the rest without counting the set again', async () => {
@@ -2527,15 +2523,5 @@ describe('navigating between sets with previous and next', () => {
         completedSides: 1,
       }),
     );
-  });
-
-  test('next on a max rung still asks for the count', async () => {
-    render(<MaxReps />);
-
-    await clickNext();
-
-    expect(
-      screen.getByRole('heading', { name: /how many reps/i }),
-    ).toBeInTheDocument();
   });
 });
