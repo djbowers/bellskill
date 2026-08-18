@@ -45,6 +45,7 @@ const {
   TimedRungsVaryingDurations,
   TimedRungsVolumeGoal,
   RepLadders,
+  RestTimer,
   CircuitMultipleMovements,
   StraightSets,
   StraightSetsOneHanded,
@@ -2421,5 +2422,187 @@ describe('reporting reps actually completed', () => {
     // Seconds are not reps: a timed rung still contributes neither.
     expect(logged.completedReps).toBe(0);
     expect(logged.completedVolume).toBe(0);
+  });
+});
+
+describe('navigating between sets with previous and next', () => {
+  const logWorkout = vi.fn();
+
+  beforeEach(() =>
+    useLogWorkout.mockReturnValue({
+      mutate: logWorkout,
+      data: null,
+      isLoading: false,
+    }),
+  );
+
+  afterEach(() => vi.clearAllMocks());
+
+  const clickPrevious = () =>
+    userEvent.click(screen.getByRole('button', { name: 'Previous set' }));
+
+  const clickNext = () =>
+    userEvent.click(screen.getByRole('button', { name: 'Next set' }));
+
+  const finish = () =>
+    userEvent.click(screen.getByRole('button', { name: /finish workout/i }));
+
+  test('previous is disabled until a set has been completed', async () => {
+    render(<DoubleWeights />);
+
+    expect(screen.getByRole('button', { name: 'Previous set' })).toBeDisabled();
+
+    await clickContinue();
+
+    expect(screen.getByRole('button', { name: 'Previous set' })).toBeEnabled();
+  });
+
+  test('previous rewinds everything a set counted, all the way to the start', async () => {
+    render(<DoubleWeights />);
+
+    await clickContinue();
+    await clickContinue();
+    await clickPrevious();
+    await clickPrevious();
+    await finish();
+
+    expect(logWorkout).toHaveBeenCalledWith({
+      completedReps: 0,
+      completedRepsByMovement: [[]],
+      completedRounds: 0,
+      completedRungs: 0,
+      completedSides: 0,
+      completedVolume: 0,
+      roundSplits: [],
+    });
+  });
+
+  test('previous across a round boundary pops the round and its split', async () => {
+    render(<GhostPaced />);
+
+    // Single one-rung movement: each continue is a round.
+    await clickContinue();
+    await clickContinue();
+    await clickPrevious();
+    await finish();
+
+    const logged = logWorkout.mock.calls.at(-1)[0];
+    expect(logged.completedRounds).toBe(1);
+    expect(logged.roundSplits.map((split) => split.roundIndex)).toEqual([0]);
+  });
+
+  test('a one-handed set rewound and redone logs the same as never rewinding', async () => {
+    render(<OneHanded />);
+
+    await clickContinue(); // left side done
+    await clickPrevious(); // back to left side
+    await clickContinue();
+    await clickContinue(); // right side completes the round
+    await finish();
+
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completedReps: 10,
+        completedRepsByMovement: [[5, 5]],
+        completedRounds: 1,
+        completedSides: 2,
+        completedVolume: 200,
+      }),
+    );
+  });
+
+  test('a complex set rewound leaves every movement uncounted', async () => {
+    render(<ComplexMode />);
+
+    await clickCompleteSet();
+    await clickPrevious();
+    await finish();
+
+    const logged = logWorkout.mock.calls.at(-1)[0];
+    expect(logged.completedReps).toBe(0);
+    expect(
+      logged.completedRepsByMovement.every((row) => row.length === 0),
+    ).toBe(true);
+  });
+
+  test('rewinding a max set re-asks, seeded with the count that was entered', async () => {
+    render(<MaxReps />);
+
+    await clickContinue();
+    const minus = screen.getByRole('button', {
+      name: '- reps — Two-Arm Kettlebell Military Press',
+    });
+    await userEvent.click(minus);
+    await userEvent.click(minus);
+    await userEvent.click(minus);
+    await userEvent.click(screen.getByRole('button', { name: 'Complete set' })); // reported 7
+
+    await clickPrevious();
+    await clickContinue();
+    await userEvent.click(screen.getByRole('button', { name: 'Complete set' })); // seeded from the 7 just entered
+    await finish();
+
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completedReps: 7,
+        completedRepsByMovement: [[7]],
+      }),
+    );
+  });
+
+  test('next is absent while Continue is on screen', async () => {
+    render(<DoubleWeights />);
+
+    expect(
+      screen.getByRole('button', { name: 'Continue' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Next set' }),
+    ).not.toBeInTheDocument();
+  });
+
+  test('next during rest skips the rest without counting the set again', async () => {
+    render(<RestTimer />);
+
+    await clickContinue();
+    // Resting: the control slot is the rest bar, not the Continue button.
+    expect(
+      screen.queryByRole('button', { name: 'Continue' }),
+    ).not.toBeInTheDocument();
+
+    await clickNext();
+
+    expect(
+      screen.getByRole('button', { name: 'Continue' }),
+    ).toBeInTheDocument();
+
+    await finish();
+
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completedReps: 5,
+        completedSides: 1,
+      }),
+    );
+  });
+
+  test('next during an interval ends the set early with its planned reps', async () => {
+    render(<IntervalTimer />);
+
+    // Interval mode: no Continue button, the interval auto-advances.
+    expect(
+      screen.queryByRole('button', { name: 'Continue' }),
+    ).not.toBeInTheDocument();
+
+    await clickNext();
+    await finish();
+
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completedReps: 5,
+        completedRounds: 1,
+        completedSides: 1,
+      }),
+    );
   });
 });
