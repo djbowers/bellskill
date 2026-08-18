@@ -33,6 +33,7 @@ const meta = {
     ),
   ],
   args: {
+    id: 'movement-1',
     index: 0,
     movement: swing,
     sharedBell: false,

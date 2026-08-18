@@ -37,6 +37,7 @@ const movement: MovementOptions = {
 const noop = () => {};
 
 const baseProps: MovementCardProps = {
+  id: 'movement-1',
   index: 0,
   movement,
   sharedBell: false,

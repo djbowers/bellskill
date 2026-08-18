@@ -1,3 +1,23 @@
+import {
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  MeasuringStrategy,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import type { Announcements } from '@dnd-kit/core';
+import {
+  restrictToParentElement,
+  restrictToVerticalAxis,
+} from '@dnd-kit/modifiers';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -18,8 +38,8 @@ import { Page, PageLoading } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
-import { Textarea } from '~/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import { Textarea } from '~/components/ui/textarea';
 import { CURATED_WORKOUTS_VERSION } from '~/constants';
 import {
   DEFAULT_MOVEMENT_OPTIONS,
@@ -42,6 +62,7 @@ import {
   WorkoutOptions,
 } from '~/types';
 import {
+  MAX_RUNG,
   WEIGHT_MODE_LABELS,
   applySharedWeights,
   applyWeightMode,
@@ -50,7 +71,6 @@ import {
   getWeightTabValue,
   getWeightUnitLabel,
   isMaxRung,
-  MAX_RUNG,
   resolveMovementWeights,
   usesSharedBell,
   validateWorkout,
@@ -85,6 +105,7 @@ import {
   buildRecommendationCatalog,
   recommendationToWorkoutOptions,
 } from './utils/recommendationToMovements';
+import { reorderMovements } from './utils/reorderMovements';
 
 // One page comfortably covers the whole ~250-row catalog, so weight-mode
 // inference never has to paginate.
@@ -402,6 +423,11 @@ export const StartWorkoutPage = ({
   const [movements, setMovements] = useState<MovementOptions[]>(
     workoutOptions.movements,
   );
+  // Drag-and-drop needs stable row identity, but MovementOptions is persisted
+  // as-is, so ids live in a parallel index-aligned array instead of the object.
+  const [movementIds, setMovementIds] = useState<string[]>(() =>
+    workoutOptions.movements.map(() => crypto.randomUUID()),
+  );
   // Movements are expanded by default; collapsing one folds it to a scannable
   // summary. Tracked by index, so removing a movement reindexes the set.
   const [collapsedMovements, setCollapsedMovements] = useState<Set<number>>(
@@ -444,6 +470,7 @@ export const StartWorkoutPage = ({
     setCollapsedSections(new Set());
     setCollapsedMovements(new Set());
     setMovements(options.movements);
+    setMovementIds(options.movements.map(() => crypto.randomUUID()));
     setWorkoutGoal(options.workoutGoal);
     setWorkoutGoalUnits(options.workoutGoalUnits);
     setTitle(options.title);
@@ -507,7 +534,11 @@ export const StartWorkoutPage = ({
       const chosen = navState?.startProgramSession;
       if (!chosen) return;
       navigate(location.pathname, { replace: true, state: null });
-      applyProgramStart(chosen.session, chosen.userProgramId, chosen.programTitle);
+      applyProgramStart(
+        chosen.session,
+        chosen.userProgramId,
+        chosen.programTitle,
+      );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot per navigation; the handlers close over stable setters only.
     [location.key],
@@ -673,6 +704,7 @@ export const StartWorkoutPage = ({
 
   const handleClickRemoveMovement = (index: number) => {
     setMovements((prev) => prev.filter((_, i) => i !== index));
+    setMovementIds((prev) => prev.filter((_, i) => i !== index));
     setCollapsedMovements((prev) => {
       const next = new Set<number>();
       prev.forEach((i) => {
@@ -683,8 +715,56 @@ export const StartWorkoutPage = ({
     });
   };
 
-  const handleClickAddMovement = () =>
+  const handleClickAddMovement = () => {
     setMovements((prev) => [...prev, DEFAULT_MOVEMENT_OPTIONS]);
+    setMovementIds((prev) => [...prev, crypto.randomUUID()]);
+  };
+
+  // Expanded cards make poor drop targets on a phone, so every card folds to
+  // its summary for the duration of a drag and reopens on drop.
+  const [isDragActive, setIsDragActive] = useState(false);
+
+  const dragSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const movementPosition = (id: string | number) =>
+    movementIds.indexOf(String(id)) + 1;
+  const movementLabel = (id: string | number) => {
+    const position = movementPosition(id);
+    const name = movements[position - 1]?.movementName;
+    return name ? `${name} (movement ${position})` : `movement ${position}`;
+  };
+  const dragAnnouncements: Announcements = {
+    onDragStart: ({ active }) =>
+      `Picked up ${movementLabel(active.id)} of ${movements.length}.`,
+    onDragOver: ({ active, over }) =>
+      over
+        ? `${movementLabel(active.id)} is over position ${movementPosition(over.id)}.`
+        : `${movementLabel(active.id)} is no longer over a position.`,
+    onDragEnd: ({ active, over }) =>
+      over
+        ? `${movementLabel(active.id)} dropped at position ${movementPosition(over.id)}.`
+        : `${movementLabel(active.id)} dropped.`,
+    onDragCancel: ({ active }) =>
+      `Reordering cancelled. ${movementLabel(active.id)} returned to its position.`,
+  };
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    setIsDragActive(false);
+    if (!over) return;
+    const next = reorderMovements(
+      { movements, ids: movementIds, collapsed: collapsedMovements },
+      movementIds.indexOf(String(active.id)),
+      movementIds.indexOf(String(over.id)),
+    );
+    setMovements(next.movements);
+    setMovementIds(next.ids);
+    setCollapsedMovements(next.collapsed);
+  };
 
   const handleToggleMovementExpanded = (index: number) =>
     setCollapsedMovements((prev) => {
@@ -1220,63 +1300,90 @@ export const StartWorkoutPage = ({
 
           <MovementsHeader count={movements.length} />
 
-          {movements.map((movement, index) => (
-            <MovementCard
-              key={index}
-              index={index}
-              movement={movement}
-              sharedBell={sharedBellActive}
-              sharedWeightTabValue={sharedWeightTabValue}
-              sharedWeights={{
-                sharedWeightOneUnit,
-                sharedWeightOneValue,
-                sharedWeightTwoUnit,
-                sharedWeightTwoValue,
-              }}
-              repSchemeUnitNoun={isStraightSets ? 'set' : 'rung'}
-              expanded={!collapsedMovements.has(index)}
-              intervalActive={intervalTimer > 0}
-              onToggleExpanded={() => handleToggleMovementExpanded(index)}
-              onRemove={() => handleClickRemoveMovement(index)}
-              hasError={erroredMovementIndexes.has(index)}
-              catalogWeightMode={getCatalogWeightMode(movement.movementName)}
-              catalogUnilateral={getCatalogUnilateral(movement.movementName)}
-              onChangeName={(name) =>
-                handleChangeMovementName(
-                  index,
-                  name,
-                  sharedBellActive ? null : getCatalogWeightMode(name),
-                  getCatalogUnilateral(name),
-                )
-              }
-              onChangeWeightTab={(mode) =>
-                sharedBellActive
-                  ? handleChangeSharedWeightTab(mode)
-                  : handleChangeWeightTab(index, mode)
-              }
-              onChangeWeightOneValue={(value) =>
-                handleChangeWeightOneValue(index, value)
-              }
-              onChangeWeightOneUnit={(value) =>
-                handleChangeWeightOneUnit(index, value)
-              }
-              onChangeWeightTwoValue={(value) =>
-                handleChangeWeightTwoValue(index, value)
-              }
-              onChangeWeightTwoUnit={(value) =>
-                handleChangeWeightTwoUnit(index, value)
-              }
-              onChangeRung={(rungIndex, value) =>
-                handleChangeRepScheme(index, rungIndex, value)
-              }
-              onRemoveRung={(rungIndex) => handleRemoveRung(index, rungIndex)}
-              onAddRung={() => handleAddRung(index)}
-              onToggleTimed={(timed) => handleToggleTimedRungs(index, timed)}
-              onToggleUnilateral={(unilateral) =>
-                handleToggleUnilateral(index, unilateral)
-              }
-            />
-          ))}
+          <DndContext
+            sensors={dragSensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+            // Every card folds to its summary when a drag starts, so droppable
+            // rects go stale the moment measured — keep re-measuring instead.
+            measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+            accessibility={{ announcements: dragAnnouncements }}
+            onDragStart={() => setIsDragActive(true)}
+            onDragCancel={() => setIsDragActive(false)}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={movementIds}
+              strategy={verticalListSortingStrategy}
+            >
+              {movements.map((movement, index) => (
+                <MovementCard
+                  key={movementIds[index]}
+                  id={movementIds[index]}
+                  index={index}
+                  movement={movement}
+                  sharedBell={sharedBellActive}
+                  sharedWeightTabValue={sharedWeightTabValue}
+                  sharedWeights={{
+                    sharedWeightOneUnit,
+                    sharedWeightOneValue,
+                    sharedWeightTwoUnit,
+                    sharedWeightTwoValue,
+                  }}
+                  repSchemeUnitNoun={isStraightSets ? 'set' : 'rung'}
+                  expanded={!collapsedMovements.has(index) && !isDragActive}
+                  intervalActive={intervalTimer > 0}
+                  onToggleExpanded={() => handleToggleMovementExpanded(index)}
+                  onRemove={() => handleClickRemoveMovement(index)}
+                  hasError={erroredMovementIndexes.has(index)}
+                  catalogWeightMode={getCatalogWeightMode(
+                    movement.movementName,
+                  )}
+                  catalogUnilateral={getCatalogUnilateral(
+                    movement.movementName,
+                  )}
+                  onChangeName={(name) =>
+                    handleChangeMovementName(
+                      index,
+                      name,
+                      sharedBellActive ? null : getCatalogWeightMode(name),
+                      getCatalogUnilateral(name),
+                    )
+                  }
+                  onChangeWeightTab={(mode) =>
+                    sharedBellActive
+                      ? handleChangeSharedWeightTab(mode)
+                      : handleChangeWeightTab(index, mode)
+                  }
+                  onChangeWeightOneValue={(value) =>
+                    handleChangeWeightOneValue(index, value)
+                  }
+                  onChangeWeightOneUnit={(value) =>
+                    handleChangeWeightOneUnit(index, value)
+                  }
+                  onChangeWeightTwoValue={(value) =>
+                    handleChangeWeightTwoValue(index, value)
+                  }
+                  onChangeWeightTwoUnit={(value) =>
+                    handleChangeWeightTwoUnit(index, value)
+                  }
+                  onChangeRung={(rungIndex, value) =>
+                    handleChangeRepScheme(index, rungIndex, value)
+                  }
+                  onRemoveRung={(rungIndex) =>
+                    handleRemoveRung(index, rungIndex)
+                  }
+                  onAddRung={() => handleAddRung(index)}
+                  onToggleTimed={(timed) =>
+                    handleToggleTimedRungs(index, timed)
+                  }
+                  onToggleUnilateral={(unilateral) =>
+                    handleToggleUnilateral(index, unilateral)
+                  }
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
 
           <Button variant="secondary" onClick={handleClickAddMovement}>
             + Movement
@@ -1288,7 +1395,6 @@ export const StartWorkoutPage = ({
             movementNames={movements.map((movement) => movement.movementName)}
             onApplySuggestion={handleApplySuggestion}
           />
-
 
           <AddToWorkoutSection
             hasNotes={preWorkoutNotes !== null}

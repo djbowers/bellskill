@@ -1,3 +1,5 @@
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   ChevronDownIcon,
   ChevronUpIcon,
@@ -7,11 +9,7 @@ import {
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { cn } from '~/lib/utils';
-import {
-  MovementOptions,
-  WeightTabValue,
-  WeightUnit,
-} from '~/types';
+import { MovementOptions, WeightTabValue, WeightUnit } from '~/types';
 import {
   SharedWeightOptions,
   WEIGHT_MODE_LABELS,
@@ -22,7 +20,6 @@ import {
 } from '~/utils';
 
 import { loadSummary } from '../utils/loadSummary';
-
 import { FieldLabel } from './FieldLabel';
 import { LadderRepScheme } from './LadderRepScheme';
 import { LegModeIndicator } from './LegModeIndicator';
@@ -38,6 +35,8 @@ import { WeightModeTabs } from './WeightModeTabs';
 import { WeightUnitTabs } from './WeightUnitTabs';
 
 export interface MovementCardProps {
+  /** Stable sortable identity — builder-local, never persisted. */
+  id: string;
   index: number;
   movement: MovementOptions;
   /** The workout runs off one bell, so the card reflects the shared weight. */
@@ -72,6 +71,7 @@ export interface MovementCardProps {
 }
 
 export const MovementCard = ({
+  id,
   index,
   movement,
   sharedBell,
@@ -114,6 +114,16 @@ export const MovementCard = ({
   // so the whole row drops out rather than reading "Both legs" on every card.
   const legModeReadOnly = catalogUnilateral !== null;
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
   // Expanded, the Weight and Load rows below already state the mode and the
   // load, so a summary line would only repeat them. Under a shared bell both
   // rows are gone, so this is the one place the movement's load appears — and
@@ -132,16 +142,26 @@ export const MovementCard = ({
 
   return (
     <Card
-      className={cn('overflow-hidden', hasError && 'border-destructive')}
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={cn(
+        'overflow-hidden',
+        hasError && 'border-destructive',
+        isDragging && 'relative z-10 opacity-70 shadow-lg',
+      )}
       aria-invalid={hasError || undefined}
     >
       <div className="flex items-start gap-1 p-1.5">
-        <div
-          className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground shadow"
-          aria-hidden
+        <button
+          type="button"
+          ref={setActivatorNodeRef}
+          {...attributes}
+          {...listeners}
+          aria-label={`Reorder movement ${index + 1}`}
+          className="flex h-4 w-4 shrink-0 cursor-grab touch-none items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground shadow active:cursor-grabbing"
         >
           {index + 1}
-        </div>
+        </button>
 
         <div className="min-w-0 flex-1">
           {expanded ? (
@@ -165,7 +185,9 @@ export const MovementCard = ({
                 {named ? (
                   movement.movementName
                 ) : (
-                  <span className="text-muted-foreground">Untitled movement</span>
+                  <span className="text-muted-foreground">
+                    Untitled movement
+                  </span>
                 )}
               </div>
               <div className="mt-0.5">

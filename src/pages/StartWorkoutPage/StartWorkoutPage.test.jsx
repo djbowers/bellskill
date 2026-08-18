@@ -279,6 +279,78 @@ describe('start workout page', () => {
     expect(movementInputs).toHaveLength(1);
   });
 
+  test('renders a drag handle per movement for reordering', async () => {
+    await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Reorder movement 1' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Reorder movement 2' }),
+    ).toBeInTheDocument();
+  });
+
+  test('can reorder movements with the keyboard', async () => {
+    await userEvent.type(
+      screen.getByLabelText('Movement Input'),
+      'Clean and Press',
+    );
+    await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
+    await userEvent.type(
+      screen.getAllByLabelText('Movement Input')[1],
+      'Swings',
+    );
+
+    // jsdom reports zero-size rects, which leaves the keyboard sensor with no
+    // droppable to move toward — give each card a distinct vertical slot.
+    const rect = (top, height) => () => ({
+      x: 0,
+      y: top,
+      top,
+      bottom: top + height,
+      left: 0,
+      right: 300,
+      width: 300,
+      height,
+      toJSON: () => {},
+    });
+    const mockCardRects = () => {
+      const handles = screen.getAllByRole('button', {
+        name: /Reorder movement/,
+      });
+      handles.forEach((h, i) => {
+        const card = h.closest('.overflow-hidden');
+        card.getBoundingClientRect = rect(i * 100, 90);
+      });
+      const list = handles[0].closest('.overflow-hidden').parentElement;
+      list.getBoundingClientRect = rect(0, 1000);
+    };
+    mockCardRects();
+
+    const handle = screen.getByRole('button', { name: 'Reorder movement 1' });
+    handle.focus();
+    await userEvent.keyboard('{Enter}{ArrowDown}{Enter}');
+
+    const movementInputs = screen.getAllByLabelText('Movement Input');
+    expect(movementInputs[0]).toHaveValue('Swings');
+    expect(movementInputs[1]).toHaveValue('Clean and Press');
+
+    // Collapse state follows the movement, not the slot: fold the moved
+    // movement (now second), drag it back up, and it stays folded.
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'Collapse movement' })[1],
+    );
+    mockCardRects();
+    const handle2 = screen.getByRole('button', { name: 'Reorder movement 2' });
+    handle2.focus();
+    await userEvent.keyboard('{Enter}{ArrowUp}{Enter}');
+
+    expect(
+      screen.getByRole('button', { name: 'Expand Clean and Press' }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Movement Input')).toHaveLength(1);
+  });
+
   test('can change movement name', async () => {
     const movementInput = screen.getByLabelText('Movement Input');
     await userEvent.type(movementInput, 'Clean and Press');

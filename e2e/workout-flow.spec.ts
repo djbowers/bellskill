@@ -281,6 +281,64 @@ test.describe('full workout flow', () => {
     expect(workoutLog!.straight_sets).toBe(false);
   });
 
+  test('movements can be reordered by dragging the index badge', async ({
+    page,
+  }) => {
+    await injectAuthSession(page, authSession);
+    await page.goto('/');
+
+    const buildWorkoutButton = page.getByRole('button', {
+      name: /build a workout/i,
+    });
+    await expect(buildWorkoutButton).toBeVisible({ timeout: 10_000 });
+    await buildWorkoutButton.click();
+
+    const movementInputs = page.getByLabel('Movement Input');
+    await movementInputs.fill('Clean and Press');
+    await movementInputs.last().blur();
+    await page.getByRole('button', { name: '+ Movement' }).click();
+    await movementInputs.nth(1).fill('Kettlebell Swing');
+    await movementInputs.last().blur();
+
+    // Fold both cards first so the drag geometry is deterministic — expanded
+    // cards auto-collapse when the drag starts, which moves the target mid-drag.
+    // Each click renames the button to "Expand movement", so always take the
+    // first remaining match rather than iterating a stale list.
+    const collapseButtons = page.getByRole('button', {
+      name: 'Collapse movement',
+    });
+    await collapseButtons.first().click();
+    await collapseButtons.first().click();
+
+    // The pointer sensor arms after 8px of travel, so a plain dragTo (single
+    // hop) can miss activation — walk the handle down in steps instead.
+    const handle = page.getByRole('button', { name: 'Reorder movement 1' });
+    const from = (await handle.boundingBox())!;
+    const target = (await page
+      .getByRole('button', { name: 'Reorder movement 2' })
+      .boundingBox())!;
+    const startX = from.x + from.width / 2;
+    const startY = from.y + from.height / 2;
+    const endY = target.y + target.height / 2 + 10;
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    for (let step = 1; step <= 10; step++) {
+      await page.mouse.move(startX, startY + ((endY - startY) * step) / 10);
+    }
+    await page.mouse.up();
+
+    // Cards are collapsed, so order reads from the summary buttons.
+    const summaries = page.getByRole('button', {
+      name: /^Expand (Kettlebell Swing|Clean and Press)$/,
+    });
+    await expect(summaries.first()).toHaveAccessibleName(
+      'Expand Kettlebell Swing',
+    );
+    await expect(summaries.nth(1)).toHaveAccessibleName(
+      'Expand Clean and Press',
+    );
+  });
+
   test('a straight-sets workout traverses and persists as straight sets', async ({
     page,
   }) => {
