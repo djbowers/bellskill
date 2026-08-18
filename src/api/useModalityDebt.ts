@@ -32,6 +32,10 @@ interface PatternDebtMovementRow {
   total_volume_kg: number | string;
   baseline_volume_kg: number | string | null;
   hardest_rpe: PatternRpe | null;
+  total_unloaded_reps?: number | string;
+  baseline_unloaded_reps?: number | string | null;
+  total_seconds?: number | string;
+  baseline_seconds?: number | string | null;
 }
 
 /**
@@ -87,6 +91,14 @@ const fetchModalityDebt = async (
     baseline_volume_kg:
       row.baseline_volume_kg == null ? null : Number(row.baseline_volume_kg),
     hardest_rpe: row.hardest_rpe ?? null,
+    total_unloaded_reps: Number(row.total_unloaded_reps ?? 0),
+    baseline_unloaded_reps:
+      row.baseline_unloaded_reps == null
+        ? null
+        : Number(row.baseline_unloaded_reps),
+    total_seconds: Number(row.total_seconds ?? 0),
+    baseline_seconds:
+      row.baseline_seconds == null ? null : Number(row.baseline_seconds),
   }));
 
   return computeModalityBalance(aggregates);

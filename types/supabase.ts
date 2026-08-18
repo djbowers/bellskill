@@ -1222,6 +1222,8 @@ export type Database = {
       pattern_debt_movements: {
         Args: { p_baseline_days?: number; p_window_days?: number }
         Returns: {
+          baseline_seconds: number
+          baseline_unloaded_reps: number
           baseline_volume_kg: number
           hardest_rpe: Database["public"]["Enums"]["RPE"]
           last_trained_at: string
@@ -1231,6 +1233,8 @@ export type Database = {
           pattern_credits: string[]
           set_count: number
           total_reps: number
+          total_seconds: number
+          total_unloaded_reps: number
           total_volume_kg: number
         }[]
       }

@@ -1,9 +1,11 @@
 import {
   BALANCE_TARGET_LIMIT,
+  EMPTY_TRACKS,
   type BalanceTargetPattern,
   MovementAggregate,
   OVERDUE_DAYS,
   TARGET_CADENCE_DAYS,
+  type WorkTracks,
   attributeMovement,
   classifyBand,
   computeDebtScore,
@@ -279,6 +281,122 @@ describe('computePatternBalance', () => {
       now,
     );
     expect(patterns.pull.daysSinceLastTrained).toBe(1);
+  });
+});
+
+describe('computeDebtScore — bodyweight & timed work tracks', () => {
+  const tracks = (over: Partial<WorkTracks>): WorkTracks => ({
+    ...EMPTY_TRACKS,
+    ...over,
+  });
+
+  test('empty tracks reduce to the kg-only formula (regression guard)', () => {
+    expect(computeDebtScore(10, 500, 1000, EMPTY_TRACKS)).toBe(63);
+    expect(computeDebtScore(2, 1000, 1000, EMPTY_TRACKS)).toBe(9);
+  });
+
+  test('bodyweight-only pattern scores on its rep baseline, not pinned', () => {
+    // 10 days ago, half of rep baseline -> same 63 as the kg worked example.
+    expect(
+      computeDebtScore(
+        10,
+        0,
+        null,
+        tracks({ recentUnloadedReps: 200, baselineUnloadedReps: 400 }),
+      ),
+    ).toBe(63);
+    // Trained 2 days ago at rep baseline -> green, not permanently "Due".
+    expect(
+      computeDebtScore(
+        2,
+        0,
+        null,
+        tracks({ recentUnloadedReps: 400, baselineUnloadedReps: 400 }),
+      ),
+    ).toBe(9);
+  });
+
+  test('timed-only pattern scores on its seconds baseline', () => {
+    expect(
+      computeDebtScore(
+        2,
+        0,
+        null,
+        tracks({ recentSeconds: 60, baselineSeconds: 120 }),
+      ),
+    ).toBe(29); // 0.6×(2/14) + 0.4×0.5
+  });
+
+  test('mixed kg + reps: deficit is the mean of active tracks', () => {
+    expect(
+      computeDebtScore(
+        0,
+        500,
+        1000,
+        tracks({ recentUnloadedReps: 200, baselineUnloadedReps: 200 }),
+      ),
+    ).toBe(10); // deficits 0.5 (kg) and 0 (reps) -> mean 0.25
+  });
+
+  test('new-but-active bodyweight pattern gets grace (deficit 0)', () => {
+    expect(
+      computeDebtScore(7, 0, null, tracks({ recentUnloadedReps: 50 })),
+    ).toBe(30); // recency only, same as the kg new-but-active case
+  });
+});
+
+describe('computePatternBalance — bodyweight & timed rows', () => {
+  test('push-up-only push pattern burns down like weighted work', () => {
+    const { patterns } = computePatternBalance(
+      [
+        mov({
+          movement_name: 'Push-Up',
+          pattern_credits: ['push'],
+          last_trained_at: daysAgo(10),
+          total_reps: 200,
+          total_unloaded_reps: 200,
+          baseline_unloaded_reps: 400,
+        }),
+      ],
+      NOW,
+    );
+    expect(patterns.push.debtScore).toBe(63);
+    expect(patterns.push.band).toBe('yellow');
+    expect(patterns.push.tracks.recentUnloadedReps).toBe(200);
+    expect(patterns.push.tracks.baselineUnloadedReps).toBe(400);
+  });
+
+  test('timed carry contributes seconds instead of staying recency-only', () => {
+    const { patterns } = computePatternBalance(
+      [
+        mov({
+          movement_name: 'Suitcase Carry',
+          pattern_credits: ['carry'],
+          last_trained_at: daysAgo(2),
+          total_seconds: 60,
+          baseline_seconds: 120,
+        }),
+      ],
+      NOW,
+    );
+    expect(patterns.carry.debtScore).toBe(29);
+    expect(patterns.carry.tracks.recentSeconds).toBe(60);
+    expect(patterns.carry.tracks.baselineSeconds).toBe(120);
+  });
+
+  test('rows without track fields (pre-migration) behave as before', () => {
+    const { patterns } = computePatternBalance(
+      [
+        mov({
+          pattern_credits: ['hinge'],
+          last_trained_at: daysAgo(10),
+          total_volume_kg: 500,
+          baseline_volume_kg: 1000,
+        }),
+      ],
+      NOW,
+    );
+    expect(patterns.hinge.debtScore).toBe(63);
   });
 });
 

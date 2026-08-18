@@ -177,3 +177,38 @@ describe('computeModalityBalance', () => {
     expect(overallBalance).toBe('grind-heavy');
   });
 });
+
+describe('computeModalityBalance — bodyweight & timed rows', () => {
+  test('bodyweight-only modality scores on its rep baseline', () => {
+    const { modalities } = computeModalityBalance(
+      [
+        mov({
+          movement_name: 'Push-Up',
+          modality_credits: ['grind'],
+          last_trained_at: daysAgo(10),
+          total_unloaded_reps: 200,
+          baseline_unloaded_reps: 400,
+        }),
+      ],
+      NOW,
+    );
+    expect(modalities.grind.debtScore).toBe(63);
+    expect(modalities.grind.band).toBe('yellow');
+  });
+
+  test('timed-only modality scores on its seconds baseline', () => {
+    const { modalities } = computeModalityBalance(
+      [
+        mov({
+          movement_name: 'Plank',
+          modality_credits: ['conditioning'],
+          last_trained_at: daysAgo(2),
+          total_seconds: 60,
+          baseline_seconds: 120,
+        }),
+      ],
+      NOW,
+    );
+    expect(modalities.conditioning.debtScore).toBe(29);
+  });
+});

@@ -104,6 +104,12 @@ The RPC returns one row per distinct movement the user logged inside
   over `baselineDays`, scaled to a single window
   (`Σ volume × windowDays / baselineDays`). `null` when no baseline history.
 - `hardest_rpe` — hardest session RPE that included the movement in the window.
+- `total_unloaded_reps`, `baseline_unloaded_reps` — the **bodyweight track**:
+  reps from non-timed sets whose effective load is zero (both weights null/0
+  after the shared-bell rule). Weighted reps never enter this track. Baseline
+  scaled like `baseline_volume_kg`.
+- `total_seconds`, `baseline_seconds` — the **timed track**: timed-rung seconds
+  (`rep_scheme` values × rounds passes). Baseline scaled the same way.
 
 Rollout note: `pattern_debt_movements` is a **new** function; the legacy
 7-pattern `pattern_debt_window` stays live until the PWA and both recommender
@@ -139,12 +145,27 @@ per-pattern override replaces the scalar with a map (X5).
 - Untrained in window (`lastTrainedAt = null`) → `recency = 1`.
 - Otherwise `d = daysSince(lastTrainedAt)` and `recency = clamp(d / OVERDUE_DAYS, 0, 1)`.
 
-**Volume-deficit component** (`0..1`):
+**Work-deficit component** (`0..1`) — three tracks so bodyweight and timed
+work pay down debt like loaded kilograms:
 
-- No baseline (`baselineVolumeKg` null or 0):
-  - trained this window (`totalVolumeKg > 0`) → `deficit = 0` (a new but active pattern isn't "in debt").
+| Track     | Recent               | Baseline                 |
+| --------- | -------------------- | ------------------------ |
+| kg        | `totalVolumeKg`      | `baselineVolumeKg`       |
+| reps      | `totalUnloadedReps`  | `baselineUnloadedReps`   |
+| seconds   | `totalSeconds`       | `baselineSeconds`        |
+
+- Each track with a **positive baseline** contributes
+  `d = clamp(1 - recent / baseline, 0, 1)`.
+- `deficit` = the **unweighted mean** of contributing tracks (units are
+  incomparable, so no magnitude weighting; `min` would let one track mask
+  neglect in another).
+- No track has a baseline:
+  - any recent activity on any track → `deficit = 0` (a new but active pattern isn't "in debt").
   - otherwise → `deficit = 1`.
-- With a baseline → `deficit = clamp(1 - totalVolumeKg / baselineVolumeKg, 0, 1)`.
+
+Because weighted reps never enter the rep track, pure-weighted patterns have
+rep/second baselines of exactly 0 and this reduces to the original kg-only
+formula — worked examples 1–4 below are unchanged.
 
 **Debt score** (`0..100`, integer):
 
@@ -206,3 +227,11 @@ Assume `now` such that a log "5 days ago" means `d = 5`. Encoded as tests in
    pattern is `isNew` instead — grace state, not red.)
 4. **One TGU session 2 days ago at baseline volume** → `get_up`, `push`, and
    `rotation` each score as example 1; no phantom rotation debt.
+5. **Bodyweight-only pattern, trained 10 days ago at half its rep baseline**
+   (200 recent / 400 baseline reps, 0 kg) → same math as example 2 on the rep
+   track → `debtScore = 63` → `yellow`. (Previously pinned at ~44 forever.)
+6. **Timed-only pattern (plank), trained 2 days ago at half its seconds
+   baseline** (60/120 s) → `recency = 2/14`, `deficit = 0.5` → `debtScore = 29`.
+7. **Mixed kg + bodyweight, trained today, kg at half baseline, reps at
+   baseline** → deficits `0.5` (kg) and `0` (reps), mean `0.25` →
+   `debtScore = 10`.
