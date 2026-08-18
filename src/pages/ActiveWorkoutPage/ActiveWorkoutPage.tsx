@@ -1,3 +1,4 @@
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +11,7 @@ import {
 } from '~/api';
 import { Page, SpotifyMiniPlayer } from '~/components';
 import { ConfirmDialog } from '~/components/ConfirmDialog';
+import { Button } from '~/components/ui/button';
 import { useProgramSession, useSession, useWorkoutOptions } from '~/contexts';
 import { useCountdownTimer, useFeatures } from '~/hooks';
 import { MovementOptions, RoundSplit } from '~/types';
@@ -164,6 +166,25 @@ export const ActiveWorkoutPage = ({
   const [lastMaxReported, setLastMaxReported] = useState<
     Record<number, number>
   >({});
+
+  // Undo history: one snapshot of the pre-advance state per completed set, so
+  // Previous restores by popping rather than inverting the mode-specific
+  // traversal. lastMaxReported is deliberately left out — an undone max set
+  // should still seed the re-asked dialog with the count that was entered.
+  interface SetSnapshot {
+    currentMovementIndex: number;
+    currentMovementRungIndex: number;
+    isMirrorSet: boolean;
+    completedReps: number;
+    completedRounds: number;
+    completedRungs: number;
+    completedSides: number;
+    completedVolume: number;
+    completedRepsByMovement: number[][];
+    roundSplitsLength: number;
+    lastLap: { roundIndex: number; lapMs: number } | null;
+  }
+  const [setHistory, setSetHistory] = useState<SetSnapshot[]>([]);
 
   // Lap times for this session, written once at finish. A ref so stamping a
   // round costs no render mid-set.
@@ -553,13 +574,17 @@ export const ActiveWorkoutPage = ({
     if (hasTimedMovements) pauseRungTimer();
   };
 
-  const finishRest = () => {
-    playDing();
+  const endRest = () => {
     pauseRestTimer();
     resetRestTimer();
     setIsRestActive(false);
     if (intervalTimer > 0) startIntervalTimer();
     if (hasTimedMovements) startRungTimer();
+  };
+
+  const finishRest = () => {
+    playDing();
+    endRest();
   };
 
   const finishInterval = () => {
@@ -587,6 +612,23 @@ export const ActiveWorkoutPage = ({
   const continueWorkout = (reported?: Record<number, number>) => {
     if (!advanceArmedRef.current) return;
     advanceArmedRef.current = false;
+
+    // Built eagerly: the updater below runs after the advance has pushed this
+    // set's round split, so a lazy roundSplitsRef read would be one too long.
+    const snapshot: SetSnapshot = {
+      currentMovementIndex,
+      currentMovementRungIndex,
+      isMirrorSet,
+      completedReps,
+      completedRounds,
+      completedRungs,
+      completedSides,
+      completedVolume,
+      completedRepsByMovement,
+      roundSplitsLength: roundSplitsRef.current.length,
+      lastLap,
+    };
+    setSetHistory((prev) => [...prev, snapshot]);
 
     requestWakeLock();
     incrementSides(); // each continue completes one side of work
@@ -726,6 +768,62 @@ export const ActiveWorkoutPage = ({
     unlockAudio();
     startCountdownTimer();
     setIsCountdownActive(true);
+  };
+
+  // Rewind one completed set: pop its snapshot and restore everything the
+  // advance changed. Shares the one-advance-per-render guard with
+  // continueWorkout so an interval tick can't advance from the same render.
+  // The rung timer and max-timed stopwatch re-arm themselves — their arming
+  // effects key on completedSides, which every undo changes.
+  const goToPreviousSet = () => {
+    if (!advanceArmedRef.current) return;
+    const snapshot = setHistory[setHistory.length - 1];
+    if (!snapshot) return;
+    advanceArmedRef.current = false;
+
+    setSetHistory((prev) => prev.slice(0, -1));
+    setCurrentMovementIndex(snapshot.currentMovementIndex);
+    setCurrentMovementRungIndex(snapshot.currentMovementRungIndex);
+    setIsMirrorSet(snapshot.isMirrorSet);
+    setCompletedReps(snapshot.completedReps);
+    setCompletedRounds(snapshot.completedRounds);
+    setCompletedRungs(snapshot.completedRungs);
+    setCompletedSides(snapshot.completedSides);
+    setCompletedVolume(snapshot.completedVolume);
+    setCompletedRepsByMovement(snapshot.completedRepsByMovement);
+    roundSplitsRef.current = roundSplitsRef.current.slice(
+      0,
+      snapshot.roundSplitsLength,
+    );
+    setLastLap(snapshot.lastLap);
+
+    // The restored set gets a fresh work period, whether we were resting or
+    // mid-interval.
+    if (isRestActive) endRest();
+    if (intervalTimer > 0) resetIntervalTimer();
+  };
+
+  const handleClickPrevious = () => {
+    unlockAudio();
+    goToPreviousSet();
+  };
+
+  // Next completes the current set early (counting its planned reps), except
+  // during rest, where the set is already counted and only the remaining rest
+  // is skipped.
+  const handleClickNext = () => {
+    unlockAudio();
+    if (isRestActive) {
+      endRest();
+      return;
+    }
+    if (requiresRepsPrompt) {
+      openRepsPrompt();
+      return;
+    }
+    setIsEffectActive(true);
+    continueWorkout();
+    if (intervalTimer > 0) resetIntervalTimer();
   };
 
   const handleClickPause = () => pauseWorkout();
@@ -927,7 +1025,19 @@ export const ActiveWorkoutPage = ({
           <LapDeltaPill deltaMs={lapDeltaMs} lapKey={lastLap.roundIndex} />
         )}
 
-        <div className="flex h-5 items-center justify-center">
+        <div className="flex h-5 items-center justify-center gap-1">
+          <Button
+            aria-label="Previous set"
+            variant="ghost"
+            size="lg"
+            className="px-1"
+            disabled={
+              setHistory.length === 0 || workoutTimerPaused || isCountdownActive
+            }
+            onClick={handleClickPrevious}
+          >
+            <ChevronLeftIcon className="h-2.5 w-2.5" />
+          </Button>
           <ActiveWorkoutControls
             formattedCountdownRemaining={formattedCountdownRemaining}
             formattedIntervalRemaining={formattedIntervalRemaining}
@@ -949,6 +1059,16 @@ export const ActiveWorkoutPage = ({
             setIsEffectActive={setIsEffectActive}
             workoutTimerPaused={workoutTimerPaused}
           />
+          <Button
+            aria-label="Next set"
+            variant="ghost"
+            size="lg"
+            className="px-1"
+            disabled={workoutTimerPaused || isCountdownActive}
+            onClick={handleClickNext}
+          >
+            <ChevronRightIcon className="h-2.5 w-2.5" />
+          </Button>
         </div>
 
         <WorkoutSummary
