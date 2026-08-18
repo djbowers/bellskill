@@ -62,7 +62,7 @@ describe('StartWorkoutPage program-gate skeleton', () => {
 
     renderPage();
 
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText('Loading…')).toBeInTheDocument();
     expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
   });
 
@@ -71,7 +71,7 @@ describe('StartWorkoutPage program-gate skeleton', () => {
 
     renderPage();
 
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     expect(await screen.findByText('Start a workout')).toBeInTheDocument();
     expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
   });
@@ -81,7 +81,7 @@ describe('StartWorkoutPage program-gate skeleton', () => {
 
     renderPage({ editWorkout: true });
 
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     expect(await screen.findByLabelText('Movement Input')).toBeInTheDocument();
   });
 
@@ -94,7 +94,7 @@ describe('StartWorkoutPage program-gate skeleton', () => {
 
     renderPage();
 
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     expect(await screen.findByText('Start a workout')).toBeInTheDocument();
   });
 });

@@ -65,7 +65,7 @@ describe('StartWorkoutPage hooks-order stability', () => {
 
     const { rerender } = renderPage();
 
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText('Loading…')).toBeInTheDocument();
     expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
 
     mockUseActivePrograms.mockReturnValue({ data: [], isError: false });
@@ -84,7 +84,7 @@ describe('StartWorkoutPage hooks-order stability', () => {
       ),
     ).not.toThrow();
 
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     // No active program → the quick-start hub, not the raw builder.
     expect(screen.getByText('Start a workout')).toBeInTheDocument();
   });
