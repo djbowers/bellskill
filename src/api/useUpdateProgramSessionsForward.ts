@@ -22,7 +22,10 @@ export interface UpdateProgramSessionsForwardInput {
  * useUpdateProgramSession), then propagates only its movement prescription —
  * movements, shared weights, workout mode — onto every later not-yet-completed
  * session via the `update_program_sessions_forward` RPC. Each later session
- * keeps its own title, notes, goal, duration, and rest settings.
+ * keeps its own title, notes, goal, duration, and rest settings, and the RPC
+ * re-bases weights per session (offset-preserving, like
+ * `adjust_program_weights`) so deload/test-day sessions keep their authored
+ * offset from the new working weight.
  *
  * Returns the number of later sessions rewritten.
  */
