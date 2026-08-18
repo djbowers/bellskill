@@ -34,6 +34,7 @@ describe('resolveExperimentFeatures', () => {
         curated_first_workout: 'treatment',
         repeat_previous: 'treatment',
         recommender: 'treatment',
+        ghost_pacing: 'treatment',
       }),
     ).toEqual(ALL_EXPERIMENT_FEATURES_ON);
   });

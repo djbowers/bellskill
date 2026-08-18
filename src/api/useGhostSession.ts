@@ -23,13 +23,16 @@ import { supabase } from '../supabaseClient';
 export const useGhostSession = ({
   previousWorkoutLogId,
   programSessionId,
+  enabled = true,
 }: {
   previousWorkoutLogId?: number;
   programSessionId?: string | null;
+  enabled?: boolean;
 }) =>
   useQuery({
     queryKey: [QUERIES.GHOST_SESSION, previousWorkoutLogId, programSessionId],
-    enabled: previousWorkoutLogId != null || programSessionId != null,
+    enabled:
+      enabled && (previousWorkoutLogId != null || programSessionId != null),
     // A finished workout never changes, so the ghost is stable for the session.
     staleTime: Infinity,
     queryFn: () =>

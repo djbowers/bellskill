@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   AnalyticsEvent,
   trackEvent,
+  useFeatureFlags,
   useGhostSession,
   useLogWorkout,
 } from '~/api';
@@ -178,9 +179,15 @@ export const ActiveWorkoutPage = ({
   // Ghost pacing: the previous run of this workout, if there is one. Resolves
   // after the page mounts — nothing needs it until the first round lands, and
   // waiting on it would put a network round trip in front of the Start button.
+  // Off for straight sets: those sessions chase added weight or reps, not a
+  // prior clock, so racing the previous run's pace is the wrong incentive.
+  const { features: experimentFeatures } = useFeatureFlags();
+  const ghostPacingEnabled =
+    experimentFeatures.ghostPacing && workoutMode !== 'straightSets';
   const { data: ghost } = useGhostSession({
     previousWorkoutLogId,
     programSessionId: programSession?.programSessionId,
+    enabled: ghostPacingEnabled,
   });
 
   const [isMirrorSet, setIsMirrorSet] = useState<boolean>(false); // for one-handed movements and mixed weights
@@ -842,8 +849,10 @@ export const ActiveWorkoutPage = ({
     [countdownRemainingMilliseconds],
   );
 
+  const showGhost = Boolean(ghostPacingEnabled && ghost && startedAt);
+
   const lapDeltaMs =
-    ghost && lastLap
+    ghostPacingEnabled && ghost && lastLap
       ? getLapDelta(ghost, lastLap.roundIndex, lastLap.lapMs)
       : null;
 
@@ -853,12 +862,9 @@ export const ActiveWorkoutPage = ({
           room to its left. Both only exist when there is a ghost, leaving the
           markup of an unraced workout exactly as it was. */}
       <div
-        className={clsx(
-          'flex flex-col gap-2',
-          ghost && startedAt && 'relative pl-2',
-        )}
+        className={clsx('flex flex-col gap-2', showGhost && 'relative pl-2')}
       >
-        {ghost && startedAt && (
+        {showGhost && ghost && startedAt && (
           <GhostRail
             ghost={ghost}
             totalRounds={getRailScale({
