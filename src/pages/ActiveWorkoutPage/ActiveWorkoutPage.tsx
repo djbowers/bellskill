@@ -877,6 +877,7 @@ export const ActiveWorkoutPage = ({
           completedVolume={completedVolume}
           formattedTimeRemaining={formattedTimeRemaining}
           handleClickPause={handleClickPause}
+          intervalTimer={intervalTimer}
           remainingMilliseconds={remainingMilliseconds}
           completedSets={setProgress?.completedSets}
           totalSets={setProgress?.totalSets}

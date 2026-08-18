@@ -9,6 +9,8 @@ interface WorkoutProgressProps {
   completedVolume: number;
   formattedTimeRemaining: string;
   handleClickPause: () => void;
+  /** Interval length in seconds; > 0 means an interval timer is running */
+  intervalTimer: number;
   onClickCancel: () => void;
   remainingMilliseconds: number;
   /**
@@ -29,6 +31,7 @@ export const WorkoutProgress = ({
   completedVolume,
   formattedTimeRemaining,
   handleClickPause,
+  intervalTimer,
   onClickCancel,
   remainingMilliseconds,
   completedSets,
@@ -95,9 +98,11 @@ export const WorkoutProgress = ({
         value={workoutGoal > 0 ? progressBarValue : undefined}
       />
 
-      {workoutGoalUnits === 'minutes' && workoutGoal > 0 && (
+      {((workoutGoalUnits === 'minutes' && workoutGoal > 0) ||
+        intervalTimer > 0) && (
         <div>
           <Button
+            aria-label="Pause workout"
             disabled={workoutTimerPaused}
             onClick={handleClickPause}
             size="icon"
