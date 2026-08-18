@@ -7,7 +7,7 @@ import { expect, test } from '@playwright/test';
 //
 // 025 is the catalog's first program with AUTOREGULATED volume, so the
 // assertions pin the modeling decisions that would silently break it: the
-// minutes CEILINGS (50/40/30) standing in for "no target", the OTM cadence
+// rounds CEILINGS (25/20/15) standing in for "no target", the OTM cadence
 // (intervalTimer 60 + one-handed loading so arms alternate by the minute), the
 // repeating one-week block (default_auto_repeat), and the notes that carry the
 // real governor -- the talk test / StrongFirst Stop Signs and the 80%/60%
@@ -100,9 +100,10 @@ interface SessionRow {
   workout_options: WorkoutOpts;
 }
 
-// Each ceiling is that day's share of the terminal 50-set high day: high 50,
-// medium 40 (80%), low 30 (60%). Ceilings, not targets -- the notes govern.
-const EXPECTED_CEILING_MINUTES = [50, 40, 30];
+// Each ceiling is that day's share of the terminal 50-set high day, in rounds
+// (one round = a left+right pair = two OTM sets): high 25, medium 20 (80%),
+// low 15 (60%). Ceilings, not targets -- the notes govern.
+const EXPECTED_CEILING_ROUNDS = [25, 20, 15];
 const EXPECTED_TITLES = ['High volume', 'Medium volume', 'Low volume'];
 
 test.describe('program schema — Strong Endurance Plan 025 seed', () => {
@@ -183,10 +184,11 @@ test.describe('program schema — Strong Endurance Plan 025 seed', () => {
       expect(movements[0].weightTwoValue).toBe(0);
 
       // Autoregulation seam: the app has no "no target" unit, so each day
-      // carries a minutes CEILING sized to its share of the terminal 50-set
-      // high day. The countdown is the backstop; the notes are the governor.
-      expect(opts.workoutGoalUnits).toBe('minutes');
-      expect(opts.workoutGoal).toBe(EXPECTED_CEILING_MINUTES[i]);
+      // carries a rounds CEILING sized to its share of the terminal 50-set
+      // high day. Auto-finish is the backstop; the notes are the governor.
+      // Rounds, not minutes: a backgrounded minutes countdown ends short.
+      expect(opts.workoutGoalUnits).toBe('rounds');
+      expect(opts.workoutGoal).toBe(EXPECTED_CEILING_ROUNDS[i]);
 
       expect(opts.complexSet).toBe(false);
     });
