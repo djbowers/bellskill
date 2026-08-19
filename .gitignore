@@ -49,3 +49,4 @@ supabase/functions/.env
 # Playwright
 playwright-report
 test-results
+.gstack/
