@@ -287,10 +287,11 @@ export const IntervalTimer: Story = {
   },
 };
 
-// Mirrors a seeded A+A Protocol "Plan A" session at the program's 30-minute
-// target: single-KB one-arm clean & jerk, EMOM-paced at a 30s interval so
-// consecutive auto-fires alternate hands (left on the minute, right 30s later).
-// First shipped program to use intervalTimer.
+// Mirrors a seeded A+A Protocol "Plan A" session at the program's 30-round
+// ceiling (one round = a left+right pair = one minute): single-KB one-arm clean
+// & jerk, EMOM-paced at a 30s interval so consecutive auto-fires alternate
+// hands (left on the minute, right 30s later). First shipped program to use
+// intervalTimer.
 export const AAProtocolPlanASession: Story = {
   parameters: {
     workoutOptions: {
@@ -298,7 +299,7 @@ export const AAProtocolPlanASession: Story = {
       restTimer: 0,
       workoutMode: 'circuit',
       workoutGoal: 30,
-      workoutGoalUnits: 'minutes',
+      workoutGoalUnits: 'rounds',
       movements: [
         {
           ...DEFAULT_MOVEMENT_OPTIONS,
@@ -327,7 +328,7 @@ export const SingleArmComplexEMOM: Story = {
       intervalTimer: 30,
       restTimer: 0,
       workoutGoal: 30,
-      workoutGoalUnits: 'minutes',
+      workoutGoalUnits: 'rounds',
       sharedWeightOneValue: 24,
       sharedWeightOneUnit: 'kilograms',
       sharedWeightTwoValue: 0,
@@ -352,6 +353,17 @@ export const SingleArmComplexEMOM: Story = {
           weightTwoUnit: 'kilograms',
         },
       ] satisfies MovementOptions[],
+    },
+  },
+};
+
+// The same single-arm EMOM at a tiny rounds ceiling, for asserting that a
+// rounds goal auto-finishes an interval workout (two L+R pairs = four fires).
+export const SingleArmComplexEMOMRoundsGoal: Story = {
+  parameters: {
+    workoutOptions: {
+      ...SingleArmComplexEMOM.parameters?.workoutOptions,
+      workoutGoal: 2,
     },
   },
 };

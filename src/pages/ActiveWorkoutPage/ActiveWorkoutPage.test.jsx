@@ -1,5 +1,5 @@
 import { composeStories } from '@storybook/react';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
@@ -41,6 +41,7 @@ const {
   OneHanded,
   AAProtocolPlanASession,
   SingleArmComplexEMOM,
+  SingleArmComplexEMOMRoundsGoal,
   KettlebellMileSession,
   TimedRungsVaryingDurations,
   TimedRungsVolumeGoal,
@@ -1656,6 +1657,46 @@ describe('active workout page (single-arm complex EMOM cadence)', () => {
     act(() => vi.advanceTimersByTime(30_000)); // right -> 96kg, one L+R round
 
     expect(summary).toHaveTextContent('96 kg');
+  });
+
+  // Interval programs prescribe a rounds ceiling (minutes goals end short when
+  // the app is backgrounded: the countdown burns wall-clock time the interval
+  // timer doesn't credit as rounds). Two L+R pairs = four interval fires.
+  test('a rounds goal auto-finishes the EMOM after the prescribed pairs', () => {
+    const logWorkout = vi.fn();
+    useLogWorkout.mockReturnValue({
+      mutate: logWorkout,
+      data: null,
+      isLoading: false,
+    });
+    render(<SingleArmComplexEMOMRoundsGoal />);
+
+    act(() => vi.advanceTimersByTime(30_000)); // left, pair 1
+    act(() => vi.advanceTimersByTime(30_000)); // right -> round 1
+    act(() => vi.advanceTimersByTime(30_000)); // left, pair 2
+    expect(logWorkout).not.toHaveBeenCalled();
+
+    act(() => vi.advanceTimersByTime(30_000)); // right -> round 2 = goal
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({ completedRounds: 2 }),
+    );
+  });
+
+  test('pause freezes the interval under a rounds goal and resume continues it', () => {
+    render(<SingleArmComplexEMOMRoundsGoal />);
+
+    const side = screen.getByTestId('current-side');
+    expect(side).toHaveTextContent(/Left hand/);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pause workout' }));
+    act(() => vi.advanceTimersByTime(60_000));
+    expect(side).toHaveTextContent(/Left hand/); // frozen
+
+    // Resume runs the 3s start countdown, then the interval picks back up.
+    fireEvent.click(screen.getByRole('button', { name: 'Start workout' }));
+    act(() => vi.advanceTimersByTime(4_000));
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(side).toHaveTextContent(/Right hand/);
   });
 });
 

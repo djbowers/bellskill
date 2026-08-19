@@ -9,6 +9,7 @@ const meta = {
     completedVolume: 0,
     formattedTimeRemaining: '10:00',
     handleClickPause: () => {},
+    intervalTimer: 0,
     onClickCancel: () => {},
     remainingMilliseconds: 600000,
     workoutGoal: 1000,
@@ -132,6 +133,15 @@ export const RoundsGoal: Story = {
     workoutGoalUnits: 'rounds',
     workoutGoal: 5,
     completedRounds: 2,
+  },
+};
+
+export const RoundsGoalWithInterval: Story = {
+  args: {
+    workoutGoalUnits: 'rounds',
+    workoutGoal: 30,
+    completedRounds: 2,
+    intervalTimer: 30,
   },
 };
 

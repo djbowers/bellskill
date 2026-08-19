@@ -17,8 +17,32 @@ const {
   VolumeGoalZero,
   TimeGoal,
   RoundsGoal,
+  RoundsGoalWithInterval,
   SetsRemaining,
 } = composeStories(stories);
+
+describe('WorkoutProgress - pause button', () => {
+  const pauseButton = () =>
+    screen.queryByRole('button', { name: 'Pause workout' });
+
+  test('shows pause for a minutes goal', () => {
+    render(<TimeGoal />);
+
+    expect(pauseButton()).toBeInTheDocument();
+  });
+
+  test('shows pause for a rounds goal with an interval timer', () => {
+    render(<RoundsGoalWithInterval />);
+
+    expect(pauseButton()).toBeInTheDocument();
+  });
+
+  test('hides pause for a rounds goal without an interval timer', () => {
+    render(<RoundsGoal />);
+
+    expect(pauseButton()).not.toBeInTheDocument();
+  });
+});
 
 describe('WorkoutProgress - sets', () => {
   test('counts sets remaining when a set count is supplied', () => {
