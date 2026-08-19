@@ -162,6 +162,14 @@ async function deleteWorkoutLog(
   }
 }
 
+// Reaching a goal opens a confirm dialog instead of finishing outright;
+// accept it to log the workout and move on to the completed page.
+async function confirmGoalReached(page: Page): Promise<void> {
+  const dialog = page.getByRole('dialog', { name: /goal reached/i });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'Finish workout' }).click();
+}
+
 // ── Test ─────────────────────────────────────────────────────────────────────
 
 test.describe('full workout flow', () => {
@@ -240,13 +248,14 @@ test.describe('full workout flow', () => {
     //   workoutTimerPaused = false → "Continue" renders immediately
     //
     // Clicking once: completedRounds→1 ≥ workoutGoal→1
-    //   → handleRoundsGoalReached → finishWorkout() → logWorkout()
-    //   → handleFinishWorkout → navigate('/history/{id}')
+    //   → handleRoundsGoalReached → goal confirm dialog → finishWorkout()
+    //   → logWorkout() → handleFinishWorkout → navigate('/history/{id}')
     const continueButton = page.getByRole('button', { name: 'Continue' });
     await expect(continueButton).toBeVisible();
     await continueButton.click();
 
     // ── 8. Assert navigation to CompletedWorkoutPage ──────────────────────
+    await confirmGoalReached(page);
     await expect(page).toHaveURL(/\/history\/\d+$/, { timeout: 10_000 });
 
     const match = page.url().match(/\/history\/(\d+)$/);
@@ -395,6 +404,7 @@ test.describe('full workout flow', () => {
     await expect(currentMovement).toContainText('Goblet Squat');
     await continueButton.click();
 
+    await confirmGoalReached(page);
     await expect(page).toHaveURL(/\/history\/\d+$/, { timeout: 10_000 });
     const match = page.url().match(/\/history\/(\d+)$/);
     const workoutLogId = parseInt(match![1], 10);
@@ -476,6 +486,7 @@ test.describe('full workout flow', () => {
       await continueButton.click();
     }
 
+    await confirmGoalReached(page);
     await expect(page).toHaveURL(/\/history\/\d+$/, { timeout: 10_000 });
     const workoutLogId = parseInt(page.url().match(/\/history\/(\d+)$/)![1], 10);
 
@@ -527,6 +538,7 @@ test.describe('full workout flow', () => {
     await expect(continueButton).toBeVisible();
     await continueButton.click();
 
+    await confirmGoalReached(page);
     await expect(page).toHaveURL(/\/history\/\d+$/, { timeout: 10_000 });
     const workoutLogId = parseInt(page.url().match(/\/history\/(\d+)$/)![1], 10);
     sharedBellWorkoutLogId = workoutLogId;
