@@ -8,6 +8,8 @@ commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/styl
 ## 2026-08
 
 ### Added
+- Next/previous set navigation mid-workout ([#268](https://github.com/djbowers/bellskill/pull/268))
+- Confirmation before a workout finishes at its goal ([#273](https://github.com/djbowers/bellskill/pull/273))
 - AI coach chat ("Chalk") over your training data ([#259](https://github.com/djbowers/bellskill/pull/259))
 - Ghost pacing on the active workout page, now flag-gated and skipped for straight sets ([#258](https://github.com/djbowers/bellskill/pull/258), [#266](https://github.com/djbowers/bellskill/pull/266))
 - Training Mix modality balance card on the history page ([#255](https://github.com/djbowers/bellskill/pull/255))
@@ -42,6 +44,8 @@ commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/styl
 - Larger hand indicator in complex mode ([#265](https://github.com/djbowers/bellskill/pull/265))
 
 ### Fixed
+- Interval program goals counted in rounds instead of minutes, so backgrounding the app no longer ends a session short ([#267](https://github.com/djbowers/bellskill/pull/267))
+- Deload and test-day weight offsets preserved when a session edit is applied forward ([#270](https://github.com/djbowers/bellskill/pull/270))
 - Repeating programs actually repeat ([#261](https://github.com/djbowers/bellskill/pull/261))
 - Timed rungs validated in seconds ([#257](https://github.com/djbowers/bellskill/pull/257))
 - Shared weight shown on complex-set cards ([#204](https://github.com/djbowers/bellskill/pull/204))
@@ -57,6 +61,9 @@ commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/styl
 - Regenerate removed and the recommender's two modes collapsed into one ([#241](https://github.com/djbowers/bellskill/pull/241))
 
 ### Infrastructure
+- Claude auto-review on every non-draft PR, plus an @claude mention workflow for follow-ups ([#274](https://github.com/djbowers/bellskill/pull/274))
+- Full changelog history backfilled and a weekly changelog-update skill added ([#269](https://github.com/djbowers/bellskill/pull/269))
+- Linear ticket checks and status sync required in every agent session ([#272](https://github.com/djbowers/bellskill/pull/272))
 - Unit and e2e tests split into separate workflows ([#211](https://github.com/djbowers/bellskill/pull/211))
 - Deploys auto-sync develop with main; prod Supabase env moved to Netlify UI; edge functions deployed by glob ([#221](https://github.com/djbowers/bellskill/pull/221), [#223](https://github.com/djbowers/bellskill/pull/223))
 - Production db push accepts out-of-order migrations; migration version collisions resolved ([#262](https://github.com/djbowers/bellskill/pull/262), [#263](https://github.com/djbowers/bellskill/pull/263))
