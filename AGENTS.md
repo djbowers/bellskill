@@ -22,6 +22,9 @@ One folder per route under `src/pages/` (`Page.tsx`, `.test.tsx`, `.stories.tsx`
 - **Weight config**: up to two weights — tabs None / 2H / 1H / Double.
 - **Workout goal**: time, rounds, or volume. **Workout options**: full session config in `WorkoutOptionsContext`, written to Supabase on completion.
 
+## Linear workflow
+Work is tracked in Linear (ticket refs `CB-*`, `PROD-*`). At the start of a task, check Linear for related tickets (via the Linear MCP). Keep statuses in sync with reality: move a ticket to In Progress when starting on it, and to Done when its PR merges — link the PR on the ticket.
+
 ## Conventions
 - Data fetching lives in `src/api/`: `useQuery`/`useMutation` (`@tanstack/react-query` v5 — object-form signature `useQuery({ queryKey, queryFn })`, filters take a filter object, mutation pending is `isPending` not `isLoading`), `supabase` from `~/supabaseClient`, query keys in `src/constants/queries.enum.ts`.
 - `npm run gen:types` writes repo-root `types/supabase.ts` (commit after schema changes; needs `supabase start`). `src/types/supabase.ts` is a 3-line alias.
