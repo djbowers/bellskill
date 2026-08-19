@@ -11,8 +11,9 @@ import { expect, test } from '@playwright/test';
 //
 // The layout asserted here is the refit one from
 // *_refit_aa_protocol_plan_a_autoregulated.sql (PROD-245): a single 4-week
-// clean & jerk block. Duration is autoregulated (every session a 30-minute
-// ceiling, not a ramp) and every session is the same single-arm C+J complex
+// clean & jerk block. Duration is autoregulated (every session a 30-round
+// ceiling — one round is a left+right pair, so 30 minutes of work — not a
+// ramp) and every session is the same single-arm C+J complex
 // (One-Arm Clean + One-Arm Jerk, one bell / weightTwoValue 0) so it alternates
 // hands under EMOM and sums volume per lift. The 4th week is a deload one bell
 // size lighter. The later complexes (C+J+C, C+J+C+J) live in the program
@@ -184,9 +185,10 @@ test.describe('program schema — A+A Protocol "Plan A" seed', () => {
       expect(wo.intervalTimer).toBe(EMOM_INTERVAL_SECONDS);
       expect(wo.restTimer).toBe(0);
 
-      // Autoregulated duration: a 30-minute ceiling on every session (the note,
+      // Autoregulated duration: a 30-round ceiling on every session (the note,
       // not the goal, tells the athlete to stop early on a failed talk test).
-      expect(wo.workoutGoalUnits).toBe('minutes');
+      // Rounds, not minutes: a backgrounded minutes countdown ends short.
+      expect(wo.workoutGoalUnits).toBe('rounds');
       expect(wo.workoutGoal).toBe(GOAL_CEILING);
 
       // Single-arm complex: one shared bell (weightTwo 0), decomposed lifts.
@@ -224,7 +226,7 @@ test.describe('program schema — A+A Protocol "Plan A" seed', () => {
       ]);
     }
 
-    // Duration is autoregulated, not a ramp: every session shares the 30-minute
+    // Duration is autoregulated, not a ramp: every session shares the 30-round
     // ceiling, deloads included.
     expect(
       sessions.every((s) => s.workout_options.workoutGoal === GOAL_CEILING),
