@@ -1,5 +1,5 @@
 import { composeStories } from '@storybook/react';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
@@ -128,8 +128,9 @@ describe('finishing a workout', () => {
     for (let i = 0; i < workoutOptions.workoutGoal; i++) {
       await clickContinue();
     }
+    await confirmGoalReached();
 
-    // Should call logWorkout mutation
+    // Confirming the goal dialog should call logWorkout mutation
     expect(logWorkout).toHaveBeenCalledWith({
       completedRepsByMovement: expect.any(Array),
       completedReps: expect.any(Number),
@@ -139,6 +140,34 @@ describe('finishing a workout', () => {
       completedVolume: expect.any(Number),
       roundSplits: [],
     });
+  });
+
+  test('keeps going past the goal when the confirm is dismissed, without re-prompting', async () => {
+    const { workoutOptions } = WorkoutGoalRounds.parameters;
+    render(<WorkoutGoalRounds />);
+
+    for (let i = 0; i < workoutOptions.workoutGoal; i++) {
+      await clickContinue();
+    }
+
+    const dialog = await screen.findByRole('dialog', {
+      name: /goal reached/i,
+    });
+    await userEvent.click(
+      within(dialog).getByRole('button', { name: 'Keep going' }),
+    );
+    expect(logWorkout).not.toHaveBeenCalled();
+
+    // Extra rounds past the goal must not reopen the dialog.
+    await clickContinue();
+    expect(
+      screen.queryByRole('dialog', { name: /goal reached/i }),
+    ).not.toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /finish workout/i }),
+    );
+    expect(logWorkout).toHaveBeenCalled();
   });
 
   test('logs correct volume when using pounds as weight units', async () => {
@@ -212,8 +241,9 @@ describe('integration tests for previous volume persistence', () => {
 
     // Complete one set: 24kg × 5 reps = 120kg (exactly matches goal)
     await clickContinue();
+    await confirmGoalReached();
 
-    // Should automatically call logWorkout with completedVolume
+    // Should call logWorkout with completedVolume
     expect(logWorkout).toHaveBeenCalledWith({
       completedRepsByMovement: expect.any(Array),
       completedReps: 5,
@@ -947,8 +977,9 @@ describe('automatic workout completion with volume goals', () => {
 
     // Complete one set: 24kg × 5 reps = 120kg (exactly matches goal)
     await clickContinue();
+    await confirmGoalReached();
 
-    // Should automatically call logWorkout mutation
+    // Should call logWorkout mutation after confirming
     expect(logWorkout).toHaveBeenCalledWith({
       completedRepsByMovement: expect.any(Array),
       completedReps: 5,
@@ -965,8 +996,9 @@ describe('automatic workout completion with volume goals', () => {
 
     // Complete one set: 24kg × 5 reps = 120kg (exceeds goal of 100kg)
     await clickContinue();
+    await confirmGoalReached();
 
-    // Should automatically call logWorkout mutation
+    // Should call logWorkout mutation after confirming
     expect(logWorkout).toHaveBeenCalledWith({
       completedRepsByMovement: expect.any(Array),
       completedReps: 5,
@@ -1328,9 +1360,10 @@ describe('volume calculation for complex mode', () => {
     await clickCompleteSet(); // round 2
     await clickCompleteSet(); // round 3
     await clickCompleteSet(); // round 4
-    await clickCompleteSet(); // round 5 → rounds goal reached, auto-finish
+    await clickCompleteSet(); // round 5 → rounds goal reached, confirm dialog opens
+    await confirmGoalReached();
 
-    // No manual "finish workout" click needed — the rounds goal ends it.
+    // The rounds goal prompts the finish confirm; accepting it ends the workout.
     // Per round: (2+1+3) reps = 6; double 24kg bells = 48kg/movement.
     // Volume/round = 48×(2+1+3) = 288kg; ×5 rounds = 1440kg.
     expect(logWorkout).toHaveBeenCalledWith({
@@ -2009,6 +2042,7 @@ describe('active workout page (straight sets)', () => {
     expect(logWorkout).not.toHaveBeenCalled();
 
     await clickContinue();
+    await confirmGoalReached();
     expect(logWorkout).toHaveBeenCalledWith({
       completedRepsByMovement: expect.any(Array),
       completedReps: 50, // 10 sets x 5 reps
@@ -2146,6 +2180,7 @@ describe('ghost pacing', () => {
     await clickContinue();
     await clickContinue();
     await clickContinue();
+    await confirmGoalReached();
 
     const { roundSplits } = logWorkout.mock.calls.at(-1)[0];
 
@@ -2229,6 +2264,15 @@ const clickContinue = async () => {
 const clickCompleteSet = async () => {
   const button = screen.getByRole('button', { name: 'Complete Set' });
   await userEvent.click(button);
+};
+
+// Reaching a goal no longer logs the workout directly — it opens a confirm
+// dialog; this accepts it.
+const confirmGoalReached = async () => {
+  const dialog = await screen.findByRole('dialog', { name: /goal reached/i });
+  await userEvent.click(
+    within(dialog).getByRole('button', { name: 'Finish workout' }),
+  );
 };
 
 describe('reporting reps actually completed', () => {

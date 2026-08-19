@@ -80,6 +80,8 @@ export const ActiveWorkoutPage = ({
   const session = useSession();
   const userId = session?.user?.id;
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  const hasPromptedGoalRef = useRef(false);
 
   const hasTimedMovements = movements.some((movement) => movement.timedRungs);
 
@@ -739,37 +741,41 @@ export const ActiveWorkoutPage = ({
 
   const handleClickFinish = () => finishWorkout();
 
+  // Prompts once per workout: goal counters keep climbing past the goal, so
+  // without the guard every later round or rep would reopen a dismissed dialog.
+  const promptGoalReached = () => {
+    if (hasPromptedGoalRef.current) return;
+    hasPromptedGoalRef.current = true;
+    setGoalDialogOpen(true);
+  };
+
   useEffect(
     function handleRoundsGoalReached() {
       if (workoutGoalUnits !== 'rounds' || logWorkoutLoading) return;
-      if (completedRounds >= workoutGoal) finishWorkout();
+      if (completedRounds >= workoutGoal) promptGoalReached();
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each completedRounds tick; finishWorkout and the goal reads must stay fresh without retriggering
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each completedRounds tick; the goal reads must stay fresh without retriggering
     [completedRounds],
   );
-
-  const finishWorkoutRef = useRef(finishWorkout);
-  finishWorkoutRef.current = finishWorkout;
 
   useEffect(
     function handleMinutesGoalReached() {
       if (workoutGoalUnits !== 'minutes' || logWorkoutLoading) return;
       if (remainingMilliseconds > 0) return;
-      // small delay for all rounds to be counted from interval timer; the ref
-      // keeps the logged counts fresh across that delay
-      const grace = setTimeout(() => finishWorkoutRef.current(), 500);
+      // small delay for all rounds to be counted from interval timer
+      const grace = setTimeout(promptGoalReached, 500);
       return () => clearTimeout(grace);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each remainingMilliseconds tick; finishWorkout and the goal reads must stay fresh without retriggering
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each remainingMilliseconds tick; the goal reads must stay fresh without retriggering
     [remainingMilliseconds],
   );
 
   useEffect(
     function handleKilogramsGoalReached() {
       if (workoutGoalUnits !== 'kilograms' || logWorkoutLoading) return;
-      if (completedVolume >= workoutGoal) finishWorkout();
+      if (completedVolume >= workoutGoal) promptGoalReached();
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each completedVolume tick; finishWorkout and the goal reads must stay fresh without retriggering
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on each completedVolume tick; the goal reads must stay fresh without retriggering
     [completedVolume],
   );
 
@@ -975,6 +981,21 @@ export const ActiveWorkoutPage = ({
         movements={promptMovements}
         required={requiresRepsPrompt}
         onConfirm={handleConfirmReps}
+      />
+
+      <ConfirmDialog
+        open={goalDialogOpen}
+        onOpenChange={setGoalDialogOpen}
+        title="Goal reached!"
+        description="Nice work — you hit your workout goal. Finish and log it, or keep going and finish manually when you're done."
+        confirmLabel="Finish workout"
+        dismissLabel="Keep going"
+        isPending={logWorkoutLoading}
+        onConfirm={() => {
+          setGoalDialogOpen(false);
+          finishWorkout();
+        }}
+        onDismiss={() => setGoalDialogOpen(false)}
       />
 
       <ConfirmDialog
