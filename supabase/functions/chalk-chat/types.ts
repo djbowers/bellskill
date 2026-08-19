@@ -76,3 +76,25 @@ export interface ChalkTurn {
   role: 'user' | 'assistant';
   content: string;
 }
+
+/** One corpus chunk surfaced by chalk_hybrid_search, sanitized for the prompt. */
+export interface RetrievedChunk {
+  id: string;
+  title: string | null;
+  content: string;
+  rrf_score: number;
+}
+
+/**
+ * The full retrieval outcome for one turn. Persisted (minus chunk text) into
+ * the assistant row's context snapshot so the eval harness can replay exactly
+ * what the model saw. Best-effort: `error` set and `chunks` empty on failure.
+ */
+export interface RetrievalResult {
+  query: string;
+  chunks: RetrievedChunk[];
+  chunk_ids: string[];
+  scores: number[];
+  latency_ms: number;
+  error: string | null;
+}

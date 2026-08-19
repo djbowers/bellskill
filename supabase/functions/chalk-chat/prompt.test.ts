@@ -1,8 +1,11 @@
 import {
   CONTEXT_CLOSE,
   CONTEXT_OPEN,
+  REFERENCE_CLOSE,
+  REFERENCE_OPEN,
   buildContextBlock,
   buildMessages,
+  buildReferenceBlock,
   buildStaticRules,
   buildSystemPrompt,
 } from './prompt.ts';
@@ -230,5 +233,73 @@ describe('chalk prompt — message assembly', () => {
       { role: 'assistant', content: 'reply' },
       { role: 'user', content: 'second' },
     ]);
+  });
+});
+
+describe('chalk prompt — coaching reference (RAG)', () => {
+  const chunks = [
+    {
+      id: 'a',
+      title: 'Simple & Sinister',
+      content:
+        'Simple & Sinister — Standards: 100 one-hand swings in 5 minutes with 32 kg for men.',
+      rrf_score: 0.04,
+    },
+    {
+      id: 'b',
+      title: null,
+      content: 'Move up one bell size when every set is crisp.',
+      rrf_score: 0.02,
+    },
+  ];
+
+  test('static prefix is byte-identical with and without retrieval', () => {
+    const bare = buildSystemPrompt(baseContext());
+    const withRag = buildSystemPrompt(baseContext(), chunks);
+    const prefixLength = buildStaticRules().length;
+    expect(withRag.slice(0, prefixLength)).toBe(bare.slice(0, prefixLength));
+  });
+
+  test('renders retrieved chunks inside the reference block, after the context', () => {
+    const prompt = buildSystemPrompt(baseContext(), chunks);
+    // The static rules also NAME the delimiters, so take the last occurrence —
+    // the rendered block itself.
+    const open = prompt.lastIndexOf(REFERENCE_OPEN);
+    const close = prompt.lastIndexOf(REFERENCE_CLOSE);
+    expect(open).toBeGreaterThan(prompt.indexOf(CONTEXT_CLOSE));
+    expect(close).toBeGreaterThan(open);
+    const block = prompt.slice(open, close);
+    expect(block).toContain('[1] Simple & Sinister:');
+    expect(block).toContain('100 one-hand swings in 5 minutes');
+    expect(block).toContain('[2] Move up one bell size');
+  });
+
+  test('empty retrieval renders no reference block at all', () => {
+    const bare = buildSystemPrompt(baseContext(), []);
+    const withRag = buildSystemPrompt(baseContext(), chunks);
+    // Same delimiter mentions as the static rules carry — no rendered block.
+    expect(bare.split(REFERENCE_OPEN).length).toBe(
+      buildStaticRules().split(REFERENCE_OPEN).length,
+    );
+    expect(withRag.split(REFERENCE_OPEN).length).toBe(
+      buildStaticRules().split(REFERENCE_OPEN).length + 1,
+    );
+    expect(buildReferenceBlock([])).toBe('');
+  });
+
+  test('static rules name the reference delimiters as data, not instructions', () => {
+    const rules = buildStaticRules();
+    expect(rules).toContain(REFERENCE_OPEN);
+    expect(rules).toContain(REFERENCE_CLOSE);
+    expect(rules).toMatch(/never\s+instructions to you/i);
+  });
+
+  test('static rules no longer hard-code protocol names as priors', () => {
+    // Protocol knowledge now arrives retrieved and grounded; the rules should
+    // not assert it from memory.
+    const rules = buildStaticRules();
+    expect(rules).not.toContain('Simple & Sinister');
+    expect(rules).not.toContain('Rite of Passage');
+    expect(rules).not.toContain('Strong Endurance');
   });
 });

@@ -15,6 +15,7 @@ import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { gatherContext } from './inputs.ts';
 import { generateReply, LLMError, MODEL } from './llm.ts';
 import { buildMessages, buildSystemPrompt } from './prompt.ts';
+import { retrieveKnowledge } from './retrieval.ts';
 import type { ChalkTurn } from './types.ts';
 
 /** Prior turns replayed into the prompt. Bounds cost per turn. */
@@ -210,10 +211,29 @@ Deno.serve(async (req: Request) => {
       .single();
     if (userInsErr) throw userInsErr;
 
-    // (9) Assemble context and generate.
-    const context = await gatherContext(admin, authClient, user.id, body);
-    const system = buildSystemPrompt(context);
+    // (9) Assemble context and retrieve corpus excerpts concurrently — the
+    // hybrid search rides along with the context reads, adding ~0 wall-clock.
+    // Retrieval is best-effort (returns empty chunks on failure), so a turn
+    // never fails because of it.
+    const [context, retrieval] = await Promise.all([
+      gatherContext(admin, authClient, user.id, body),
+      retrieveKnowledge(admin, user.id, message),
+    ]);
+    const system = buildSystemPrompt(context, retrieval.chunks);
     const messages = buildMessages(history, message);
+
+    // The context snapshot gets the retrieval trace (ids + scores + latency,
+    // not chunk text) so the eval harness can replay what the model saw.
+    const contextSnapshot = {
+      ...context,
+      retrieval: {
+        query: retrieval.query,
+        chunk_ids: retrieval.chunk_ids,
+        scores: retrieval.scores,
+        latency_ms: retrieval.latency_ms,
+        error: retrieval.error,
+      },
+    };
 
     try {
       const reply = await generateReply(system, messages);
@@ -229,7 +249,7 @@ Deno.serve(async (req: Request) => {
           model: MODEL,
           input_tokens: reply.input_tokens,
           output_tokens: reply.output_tokens,
-          context,
+          context: contextSnapshot,
         })
         .select('id')
         .single();
@@ -261,7 +281,7 @@ Deno.serve(async (req: Request) => {
           status: 'error',
           error: genErr.message,
           model: MODEL,
-          context,
+          context: contextSnapshot,
         });
         console.error('chalk-chat generation error:', genErr);
         return json({ error: 'chalk_failed', thread_id: resolved.id }, 502);

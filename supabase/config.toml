@@ -298,6 +298,14 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/recommend-program/deno.json"
 
+# Infra-only embedding endpoint for Chalk RAG tooling (ingestion + evals).
+# verify_jwt rejects anonymous calls; the function itself additionally
+# requires the service-role key as bearer, so ordinary users get 403.
+[functions.embed-text]
+enabled = true
+verify_jwt = true
+import_map = "./functions/embed-text/deno.json"
+
 # Owner-only subscription toggle (QA + friends/family grants). Writes the
 # write-locked subscription columns via the service role.
 [functions.set-subscription]

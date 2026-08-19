@@ -20,6 +20,7 @@
     "coverage": "vitest run --coverage",
     "compile:ts": "npx tsc --noEmit",
     "start:server": "supabase start",
+    "chalk:ingest": "node scripts/ingest-chalk-knowledge.mjs",
     "movements:check": "node scripts/ingest-movements.mjs",
     "movements:emit-sql": "node scripts/ingest-movements.mjs --emit-sql",
     "prettier": "prettier --write .",
