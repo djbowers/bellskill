@@ -140,9 +140,14 @@ const parseFrontmatter = (raw) => {
 };
 
 const gatherPrograms = async (admin) => {
+  // Official catalog programs only (owner_id IS NULL, how seeds create them).
+  // Any authenticated user can flip is_public/released_at on their OWN row,
+  // so ingesting user-owned programs would let a user plant text in the
+  // shared corpus that chalk-chat renders into every lifter's prompt.
   const { data: programs, error } = await admin
     .from('programs')
     .select('id, title, description')
+    .is('owner_id', null)
     .eq('is_public', true)
     .not('released_at', 'is', null);
   if (error) throw error;
@@ -259,6 +264,11 @@ const upsertDocument = async (admin, doc, chunks) => {
     embeddings.push(...(await embedBatch(chunks.slice(i, i + EMBED_BATCH_SIZE))));
   }
 
+  // The hash is written LAST: the delete + insert below are separate,
+  // non-transactional calls, and a partial failure with the new hash already
+  // stored would make the skip-check treat a half-ingested document as up to
+  // date forever. 'pending' never equals a sha256, so an interrupted run
+  // re-ingests on the next pass.
   const { data: docRow, error: docErr } = await admin
     .from('chalk_documents')
     .upsert(
@@ -266,7 +276,7 @@ const upsertDocument = async (admin, doc, chunks) => {
         source_type: doc.source_type,
         source_id: doc.source_id,
         title: doc.title,
-        content_hash: contentHash,
+        content_hash: 'pending',
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'source_type,source_id' },
@@ -294,6 +304,12 @@ const upsertDocument = async (admin, doc, chunks) => {
     })),
   );
   if (insErr) throw insErr;
+
+  const { error: hashErr } = await admin
+    .from('chalk_documents')
+    .update({ content_hash: contentHash })
+    .eq('id', docRow.id);
+  if (hashErr) throw hashErr;
 
   return { id: docRow.id, skipped: false };
 };

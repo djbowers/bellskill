@@ -85,6 +85,38 @@ function composeChunk(
   return lines.join('\n');
 }
 
+/** PostgREST caps responses at config.toml's max_rows (1000); a query that
+ *  can exceed it must page or rows silently vanish. */
+const PAGE_SIZE = 1000;
+
+// deno-lint-ignore no-explicit-any
+async function fetchAllRows<T>(buildQuery: () => any): Promise<T[]> {
+  const rows: T[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data, error } = await buildQuery().range(
+      offset,
+      offset + PAGE_SIZE - 1,
+    );
+    if (error) throw error;
+    rows.push(...((data ?? []) as T[]));
+    if ((data ?? []).length < PAGE_SIZE) return rows;
+  }
+}
+
+async function deleteChunk(
+  admin: SupabaseClient,
+  userId: string,
+  workoutLogId: number,
+): Promise<void> {
+  const { error } = await admin.from('chalk_chunks').delete().match({
+    scope: 'user_history',
+    user_id: userId,
+    source_table: 'workout_logs',
+    source_id: String(workoutLogId),
+  });
+  if (error) throw error;
+}
+
 async function embedWorkouts(
   admin: SupabaseClient,
   userId: string,
@@ -92,17 +124,20 @@ async function embedWorkouts(
 ): Promise<number> {
   if (workouts.length === 0) return 0;
 
-  const { data: moves, error: mvErr } = await admin
-    .from('movement_logs')
-    .select('workout_log_id, movement_name, rep_scheme')
-    .in(
-      'workout_log_id',
-      workouts.map((w) => w.id),
-    );
-  if (mvErr) throw mvErr;
+  const workoutIds = workouts.map((w) => w.id);
+  const moves = await fetchAllRows<{
+    workout_log_id: number;
+    movement_name: string;
+    rep_scheme: number[] | null;
+  }>(() =>
+    admin
+      .from('movement_logs')
+      .select('workout_log_id, movement_name, rep_scheme')
+      .in('workout_log_id', workoutIds),
+  );
 
   const movesByLog = new Map<number, Array<{ movement_name: string; rep_scheme: number[] | null }>>();
-  for (const m of moves ?? []) {
+  for (const m of moves) {
     const list = movesByLog.get(m.workout_log_id) ?? [];
     list.push(m);
     movesByLog.set(m.workout_log_id, list);
@@ -111,7 +146,12 @@ async function embedWorkouts(
   let embedded = 0;
   for (const workout of workouts) {
     const content = composeChunk(workout, movesByLog.get(workout.id) ?? []);
-    if (!content) continue;
+    if (!content) {
+      // Notes were cleared since the chunk was written — deleted text must
+      // stop being retrievable, so drop the stale chunk rather than skip.
+      await deleteChunk(admin, userId, workout.id);
+      continue;
+    }
 
     const embedding = await embedText(content);
     const { error } = await admin.from('chalk_chunks').upsert(
@@ -167,25 +207,32 @@ Deno.serve(async (req: Request) => {
     if (body.backfill === true) {
       // Oldest chunks-less workouts first; the unique upsert makes re-running
       // a page harmless. Embedded chunk ids double as the progress cursor.
-      const { data: existing, error: exErr } = await admin
-        .from('chalk_chunks')
-        .select('source_id')
-        .eq('scope', 'user_history')
-        .eq('user_id', user.id)
-        .eq('source_table', 'workout_logs');
-      if (exErr) throw exErr;
-      const done = new Set((existing ?? []).map((c) => c.source_id));
+      const existing = await fetchAllRows<{ source_id: string | null }>(() =>
+        admin
+          .from('chalk_chunks')
+          .select('source_id')
+          .eq('scope', 'user_history')
+          .eq('user_id', user.id)
+          .eq('source_table', 'workout_logs'),
+      );
+      const done = new Set(existing.map((c) => c.source_id));
 
-      const { data: logs, error: logErr } = await admin
-        .from('workout_logs')
-        .select(WORKOUT_COLUMNS)
-        .eq('user_id', user.id)
-        .or('pre_workout_notes.not.is.null,post_workout_notes.not.is.null')
-        .order('completed_at', { ascending: true });
-      if (logErr) throw logErr;
+      const logs = await fetchAllRows<WorkoutRow>(() =>
+        admin
+          .from('workout_logs')
+          .select(WORKOUT_COLUMNS)
+          .eq('user_id', user.id)
+          .or('pre_workout_notes.not.is.null,post_workout_notes.not.is.null')
+          .order('completed_at', { ascending: true }),
+      );
 
-      const pending = ((logs ?? []) as WorkoutRow[]).filter(
-        (w) => !done.has(String(w.id)),
+      // Blank-but-non-null notes produce no chunk, so counting them as
+      // pending would leave `remaining` stuck above zero forever and the
+      // client backfill loop spinning.
+      const hasProse = (w: WorkoutRow) =>
+        Boolean(w.pre_workout_notes?.trim() || w.post_workout_notes?.trim());
+      const pending = logs.filter(
+        (w) => hasProse(w) && !done.has(String(w.id)),
       );
       const page = pending.slice(0, BACKFILL_LIMIT);
       const embedded = await embedWorkouts(admin, user.id, page);
@@ -208,8 +255,15 @@ Deno.serve(async (req: Request) => {
       .eq('id', workoutLogId)
       .maybeSingle();
     if (logErr) throw logErr;
-    if (!log || log.user_id !== user.id) {
+    if (log && log.user_id !== user.id) {
       return json({ error: 'workout_not_found' }, 404);
+    }
+    if (!log) {
+      // The workout was deleted — its chunk must not stay retrievable. The
+      // delete is scoped to the caller's own user_id, so a guessed id can at
+      // most remove the caller's own chunk for a workout they deleted.
+      await deleteChunk(admin, user.id, workoutLogId);
+      return json({ embedded: 0, removed: true }, 200);
     }
 
     const embedded = await embedWorkouts(admin, user.id, [log as WorkoutRow]);

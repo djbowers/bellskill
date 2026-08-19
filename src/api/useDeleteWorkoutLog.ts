@@ -3,14 +3,19 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERIES } from '~/constants';
 
 import { supabase } from '../supabaseClient';
+import { embedWorkoutHistory } from './embedWorkoutHistory';
 
 export const useDeleteWorkoutLog = (workoutLogId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: () => deleteWorkoutLog(workoutLogId),
-    onSuccess: () =>
-      queryClient.refetchQueries({ queryKey: [QUERIES.WORKOUT_LOGS] }),
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: [QUERIES.WORKOUT_LOGS] });
+      // Chalk history retrieval (PROD-248): the log is gone, so the embed
+      // function removes its chunk — deleted notes must stop being retrievable.
+      embedWorkoutHistory(parseInt(workoutLogId));
+    },
   });
 };
 

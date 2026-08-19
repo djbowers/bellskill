@@ -46,6 +46,21 @@ for (const [name, value] of [
   }
 }
 
+// This script admin-creates a confirmed user with a well-known password and
+// grants it premium — acceptable on a local stack, never silently on a live
+// project (which a leftover staging/prod SUPABASE_URL export would hit).
+const isLocalUrl = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(
+  SUPABASE_URL,
+);
+if (!isLocalUrl && !process.argv.includes('--allow-remote')) {
+  console.error(
+    `Refusing to run against non-local SUPABASE_URL (${SUPABASE_URL}). ` +
+      'Pass --allow-remote if you really mean it — this creates a premium ' +
+      'eval user with a fixed password on the target project.',
+  );
+  process.exit(1);
+}
+
 const EVAL_USER_EMAIL = process.env.EVAL_USER_EMAIL ?? 'chalk-eval@bellskill.local';
 const EVAL_USER_PASSWORD =
   process.env.EVAL_USER_PASSWORD ?? 'chalk-eval-local-only';
