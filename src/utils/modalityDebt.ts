@@ -11,9 +11,12 @@ import { daysBetweenCalendarDays } from './dateOnly.ts';
 import {
   BALANCE_SPREAD,
   DebtBand,
+  EMPTY_TRACKS,
   MovementAggregate,
   PatternRpe,
   RPE_SEVERITY,
+  WorkTracks,
+  accumulateTracks,
   classifyBand,
   computeDebtScore,
 } from './patternDebt.ts';
@@ -36,6 +39,8 @@ export interface ModalityDebt {
   daysSinceLastTrained: number | null;
   recentVolume: number;
   baselineVolume: number | null;
+  /** Bodyweight (unloaded-rep) and timed (seconds) work tracks. */
+  tracks: WorkTracks;
   debtScore: number;
   band: DebtBand;
   hardestRpe: PatternRpe | null;
@@ -67,6 +72,7 @@ interface ModalityAccumulator {
   lastTrained: Date | null;
   recentVolume: number;
   baselineVolume: number | null;
+  tracks: WorkTracks;
   hardestRpe: PatternRpe | null;
   hasHistory: boolean;
 }
@@ -75,6 +81,7 @@ const emptyAccumulator = (): ModalityAccumulator => ({
   lastTrained: null,
   recentVolume: 0,
   baselineVolume: null,
+  tracks: { ...EMPTY_TRACKS },
   hardestRpe: null,
   hasHistory: false,
 });
@@ -91,6 +98,7 @@ const scoreModality = (
     daysSinceLastTrained,
     acc.recentVolume,
     acc.baselineVolume,
+    acc.tracks,
   );
 
   return {
@@ -99,6 +107,7 @@ const scoreModality = (
     daysSinceLastTrained,
     recentVolume: acc.recentVolume,
     baselineVolume: acc.baselineVolume,
+    tracks: acc.tracks,
     debtScore,
     band: classifyBand(debtScore),
     hardestRpe: acc.hardestRpe,
@@ -146,6 +155,7 @@ export const computeModalityBalance = (
       acc.recentVolume += row.total_volume_kg;
       if (row.baseline_volume_kg != null)
         acc.baselineVolume = (acc.baselineVolume ?? 0) + row.baseline_volume_kg;
+      accumulateTracks(acc.tracks, row);
       if (
         row.hardest_rpe &&
         (!acc.hardestRpe ||

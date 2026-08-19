@@ -56,6 +56,12 @@ export interface MovementAggregate {
   total_volume_kg: number;
   baseline_volume_kg: number | null;
   hardest_rpe?: PatternRpe | null;
+  /** Reps from non-timed sets with zero effective load (bodyweight track). */
+  total_unloaded_reps?: number;
+  baseline_unloaded_reps?: number | null;
+  /** Timed-rung seconds under tension (× rounds passes). */
+  total_seconds?: number;
+  baseline_seconds?: number | null;
 }
 
 /** Scored, display-ready view of a single pattern. */
@@ -65,6 +71,8 @@ export interface PatternDebt {
   daysSinceLastTrained: number | null;
   recentVolume: number;
   baselineVolume: number | null;
+  /** Bodyweight (unloaded-rep) and timed (seconds) work tracks. */
+  tracks: WorkTracks;
   debtScore: number;
   band: DebtBand;
   hardestRpe: PatternRpe | null;
@@ -127,24 +135,65 @@ const recencyComponent = (daysSince: number | null): number => {
   return clamp01(daysSince / OVERDUE_DAYS);
 };
 
-const volumeDeficitComponent = (
+/**
+ * Non-kg work tracks so bodyweight (unloaded reps) and timed work (seconds
+ * under tension) pay down volume debt like loaded kilograms do.
+ */
+export interface WorkTracks {
+  recentUnloadedReps: number;
+  baselineUnloadedReps: number | null;
+  recentSeconds: number;
+  baselineSeconds: number | null;
+}
+
+export const EMPTY_TRACKS: WorkTracks = {
+  recentUnloadedReps: 0,
+  baselineUnloadedReps: null,
+  recentSeconds: 0,
+  baselineSeconds: null,
+};
+
+/**
+ * Work-deficit across the kg / unloaded-rep / seconds tracks: each track with
+ * a positive baseline contributes `1 - recent/baseline`, combined by
+ * unweighted mean (units are incomparable). Weighted reps never enter the rep
+ * track, so pure-kg users reduce exactly to the original kg-only formula.
+ */
+const workDeficitComponent = (
   recentVolume: number,
   baselineVolume: number | null,
+  tracks: WorkTracks,
 ): number => {
-  if (baselineVolume === null || baselineVolume <= 0) {
-    // No baseline: an active-but-new pattern isn't in debt; an idle one is.
-    return recentVolume > 0 ? 0 : 1;
+  const perTrack: number[] = [];
+  if (baselineVolume != null && baselineVolume > 0)
+    perTrack.push(clamp01(1 - recentVolume / baselineVolume));
+  if (tracks.baselineUnloadedReps != null && tracks.baselineUnloadedReps > 0)
+    perTrack.push(
+      clamp01(1 - tracks.recentUnloadedReps / tracks.baselineUnloadedReps),
+    );
+  if (tracks.baselineSeconds != null && tracks.baselineSeconds > 0)
+    perTrack.push(clamp01(1 - tracks.recentSeconds / tracks.baselineSeconds));
+
+  if (perTrack.length === 0) {
+    // No baseline on any track: an active-but-new pattern isn't in debt; an
+    // idle one is.
+    const anyRecentActivity =
+      recentVolume > 0 ||
+      tracks.recentUnloadedReps > 0 ||
+      tracks.recentSeconds > 0;
+    return anyRecentActivity ? 0 : 1;
   }
-  return clamp01(1 - recentVolume / baselineVolume);
+  return perTrack.reduce((sum, d) => sum + d, 0) / perTrack.length;
 };
 
 export const computeDebtScore = (
   daysSince: number | null,
   recentVolume: number,
   baselineVolume: number | null,
+  tracks: WorkTracks = EMPTY_TRACKS,
 ): number => {
   const recency = recencyComponent(daysSince);
-  const deficit = volumeDeficitComponent(recentVolume, baselineVolume);
+  const deficit = workDeficitComponent(recentVolume, baselineVolume, tracks);
   return Math.round(100 * (W_RECENCY * recency + W_VOLUME * deficit));
 };
 
@@ -189,6 +238,7 @@ interface PatternAccumulator {
   lastTrained: Date | null;
   recentVolume: number;
   baselineVolume: number | null;
+  tracks: WorkTracks;
   hardestRpe: PatternRpe | null;
   hasHistory: boolean;
 }
@@ -197,9 +247,25 @@ const emptyAccumulator = (): PatternAccumulator => ({
   lastTrained: null,
   recentVolume: 0,
   baselineVolume: null,
+  tracks: { ...EMPTY_TRACKS },
   hardestRpe: null,
   hasHistory: false,
 });
+
+/** Fold one aggregate row's rep/seconds tracks into an accumulator's tracks. */
+export const accumulateTracks = (
+  tracks: WorkTracks,
+  row: MovementAggregate,
+): void => {
+  tracks.recentUnloadedReps += row.total_unloaded_reps ?? 0;
+  if (row.baseline_unloaded_reps != null)
+    tracks.baselineUnloadedReps =
+      (tracks.baselineUnloadedReps ?? 0) + row.baseline_unloaded_reps;
+  tracks.recentSeconds += row.total_seconds ?? 0;
+  if (row.baseline_seconds != null)
+    tracks.baselineSeconds =
+      (tracks.baselineSeconds ?? 0) + row.baseline_seconds;
+};
 
 const scorePattern = (
   pattern: Pattern,
@@ -213,6 +279,7 @@ const scorePattern = (
     daysSinceLastTrained,
     acc.recentVolume,
     acc.baselineVolume,
+    acc.tracks,
   );
 
   return {
@@ -221,6 +288,7 @@ const scorePattern = (
     daysSinceLastTrained,
     recentVolume: acc.recentVolume,
     baselineVolume: acc.baselineVolume,
+    tracks: acc.tracks,
     debtScore,
     band: classifyBand(debtScore),
     hardestRpe: acc.hardestRpe,
@@ -272,6 +340,7 @@ export const computePatternBalance = (
       if (row.baseline_volume_kg != null)
         acc.baselineVolume =
           (acc.baselineVolume ?? 0) + row.baseline_volume_kg;
+      accumulateTracks(acc.tracks, row);
       if (
         row.hardest_rpe &&
         (!acc.hardestRpe ||

@@ -5,8 +5,9 @@ scores the four **training modalities** and surfaces them as the "Training Mix"
 card on the History page (flag: `modalityBalance` / `VITE_FEATURE_MODALITY_BALANCE`).
 
 All scoring math is **identical to the pattern model** — windows, recency and
-volume-deficit components, weights, bands, grace state, and spread all reuse the
-constants and functions exported by `src/utils/patternDebt.ts`. Read
+work-deficit components (kg / unloaded-rep / seconds tracks, so bodyweight and
+timed work pay down modality debt too), weights, bands, grace state, and spread
+all reuse the constants and functions exported by `src/utils/patternDebt.ts`. Read
 `docs/pattern-debt-scoring-model.md` first; this doc only records what differs.
 
 ## Taxonomy

@@ -9,6 +9,8 @@ import {
   PatternBalance,
   PatternDebt,
   PatternRpe,
+  WorkTracks,
+  formatVolume,
 } from '~/utils';
 
 /** Free users need a little history before a balance read is meaningful. */
@@ -95,6 +97,7 @@ export interface BalanceRowModel {
   daysSinceLastTrained: number | null;
   recentVolume: number;
   baselineVolume: number | null;
+  tracks: WorkTracks;
   debtScore: number;
   band: DebtBand;
   hardestRpe: PatternRpe | null;
@@ -150,6 +153,7 @@ const toRow = (
   daysSinceLastTrained: debt.daysSinceLastTrained,
   recentVolume: debt.recentVolume,
   baselineVolume: debt.baselineVolume,
+  tracks: debt.tracks,
   debtScore: debt.debtScore,
   band: debt.band,
   hardestRpe: debt.hardestRpe,
@@ -176,3 +180,34 @@ export const lastTrainedLabel = (lastTrained: Date | null): string => {
 };
 
 export { formatVolume } from '~/utils';
+
+/**
+ * Recent work across all tracks: kg volume, plus bodyweight reps and timed
+ * seconds when the row has them — so bodyweight/timed rows don't read "0 kg".
+ */
+export const formatRecentWork = (row: BalanceRowModel): string => {
+  const parts: string[] = [];
+  if (row.recentVolume > 0) parts.push(formatVolume(row.recentVolume));
+  if (row.tracks.recentUnloadedReps > 0)
+    parts.push(`${row.tracks.recentUnloadedReps.toLocaleString()} reps`);
+  if (row.tracks.recentSeconds > 0)
+    parts.push(formatSeconds(row.tracks.recentSeconds));
+  return parts.length > 0 ? parts.join(' · ') : formatVolume(0);
+};
+
+/** Baseline counterpart of formatRecentWork; null when no track has one. */
+export const formatBaselineWork = (row: BalanceRowModel): string | null => {
+  const parts: string[] = [];
+  if (row.baselineVolume != null && row.baselineVolume > 0)
+    parts.push(formatVolume(row.baselineVolume));
+  if (row.tracks.baselineUnloadedReps != null && row.tracks.baselineUnloadedReps > 0)
+    parts.push(`${Math.round(row.tracks.baselineUnloadedReps).toLocaleString()} reps`);
+  if (row.tracks.baselineSeconds != null && row.tracks.baselineSeconds > 0)
+    parts.push(formatSeconds(row.tracks.baselineSeconds));
+  return parts.length > 0 ? parts.join(' · ') : null;
+};
+
+const formatSeconds = (seconds: number): string => {
+  const s = Math.round(seconds);
+  return s >= 90 ? `${Math.round(s / 60)} min` : `${s}s`;
+};

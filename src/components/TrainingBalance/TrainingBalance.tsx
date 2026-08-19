@@ -21,7 +21,8 @@ import {
   MIN_WORKOUTS_FOR_BALANCE,
   RPE_DOT_CLASS,
   RPE_DOT_LABEL,
-  formatVolume,
+  formatBaselineWork,
+  formatRecentWork,
   lastTrainedLabel,
   modalityRows,
   nextFocusLabel,
@@ -302,16 +303,12 @@ const BalanceRow = ({
               />
               <Detail term="Balance" value={`${balanceValue}/100`} />
               <Detail
-                term="Recent volume"
-                value={formatVolume(row.recentVolume)}
+                term="Recent work"
+                value={formatRecentWork(row)}
               />
               <Detail
                 term="Baseline"
-                value={
-                  row.baselineVolume == null
-                    ? 'No baseline yet'
-                    : formatVolume(row.baselineVolume)
-                }
+                value={formatBaselineWork(row) ?? 'No baseline yet'}
               />
             </dl>
           )}

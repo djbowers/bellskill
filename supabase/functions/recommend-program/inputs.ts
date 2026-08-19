@@ -261,6 +261,14 @@ export async function gatherInputs(
     baseline_volume_kg:
       row.baseline_volume_kg == null ? null : Number(row.baseline_volume_kg),
     hardest_rpe: (row.hardest_rpe ?? null) as MovementAggregate['hardest_rpe'],
+    total_unloaded_reps: Number(row.total_unloaded_reps ?? 0),
+    baseline_unloaded_reps:
+      row.baseline_unloaded_reps == null
+        ? null
+        : Number(row.baseline_unloaded_reps),
+    total_seconds: Number(row.total_seconds ?? 0),
+    baseline_seconds:
+      row.baseline_seconds == null ? null : Number(row.baseline_seconds),
   }));
 
   const debtBalance = computePatternBalance(debtAggregates, clientToday);
