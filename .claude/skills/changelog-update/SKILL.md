@@ -39,8 +39,9 @@ matching month's release notes in `~/Code/bellskill.com/src/content/release/`.
 - Update or create `src/content/release/YYYY-MM.md` for the current month from the same
   set of merges, **user-facing only**: features and fixes a user would notice. Skip
   chores, CI, migrations, refactors, flags that shipped nothing visible.
-- Voice: read `~/Second Brain/20 Areas/DJ Bowers/My Writing Voice — Guide for AI Drafts.md`
-  first and write highlights in that voice — short, warm, reader-addressed. Match the
+- Voice: read the voice guide from the djbowers/Notes repo first —
+  `gh api 'repos/djbowers/Notes/contents/20 Areas/DJ Bowers/My Writing Voice — Guide for AI Drafts.md' --jq .content | base64 -d`
+  — and write highlights in that voice — short, warm, reader-addressed. Match the
   frontmatter shape of existing files in `src/content/release/`.
 - Commit as `content(changelog): YYYY-MM release notes through bellskill#NNN`, push, and
   open a PR the same way.
