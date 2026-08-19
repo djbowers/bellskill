@@ -41,7 +41,9 @@ CREATE TABLE chalk_chunks (
   document_id UUID REFERENCES chalk_documents(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   source_table TEXT,
-  source_id UUID,
+  -- TEXT, not UUID: workout_logs.id is an integer PK, and future sources may
+  -- key differently.
+  source_id TEXT,
   chunk_index INTEGER NOT NULL DEFAULT 0,
   content TEXT NOT NULL,
   metadata JSONB NOT NULL DEFAULT '{}',
@@ -57,9 +59,10 @@ CREATE TABLE chalk_chunks (
 );
 
 -- Idempotent upserts for the history embedder (one row per workout per user).
+-- Not partial: PostgREST's on_conflict cannot target a partial index, and
+-- knowledge rows are all-NULL on these columns so they never collide anyway.
 CREATE UNIQUE INDEX idx_chalk_chunks_history_source
-  ON chalk_chunks (user_id, source_table, source_id, chunk_index)
-  WHERE scope = 'user_history';
+  ON chalk_chunks (user_id, source_table, source_id, chunk_index);
 
 CREATE INDEX idx_chalk_chunks_embedding ON chalk_chunks
   USING hnsw (embedding extensions.vector_cosine_ops);

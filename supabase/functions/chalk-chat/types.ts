@@ -8,6 +8,8 @@ import type { EquipmentSummary } from '../../../src/utils/equipment.ts';
 
 /** One logged workout, flattened for the prompt. */
 export interface WorkoutHistoryEntry {
+  /** workout_logs integer PK — used to dedupe retrieved history chunks. */
+  log_id: number;
   completed_at: string;
   goal: string;
   rpe: string | null;
@@ -81,6 +83,9 @@ export interface ChalkTurn {
 export interface RetrievedChunk {
   id: string;
   title: string | null;
+  /** user_history scope: the workout_logs id, for deduping against the
+   *  recent-history block. Null for knowledge chunks. */
+  source_id: string | null;
   content: string;
   rrf_score: number;
 }

@@ -4,6 +4,7 @@ import { QUERIES } from '~/constants';
 import { WorkoutLog } from '~/types';
 
 import { supabase } from '../supabaseClient';
+import { embedWorkoutHistory } from './embedWorkoutHistory';
 
 export const useUpdatePostWorkoutNotes = (workoutLogId: string) => {
   const queryClient = useQueryClient();
@@ -13,6 +14,8 @@ export const useUpdatePostWorkoutNotes = (workoutLogId: string) => {
     },
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: [QUERIES.WORKOUT_LOG] });
+      // Post-notes are the main prose Chalk retrieves on — refresh the chunk.
+      embedWorkoutHistory(parseInt(workoutLogId));
     },
   });
 };

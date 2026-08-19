@@ -29,7 +29,7 @@ CREATE OR REPLACE FUNCTION chalk_hybrid_search(
   metadata JSONB,
   document_id UUID,
   source_table TEXT,
-  source_id UUID,
+  source_id TEXT,
   rrf_score DOUBLE PRECISION
 )
 LANGUAGE plpgsql

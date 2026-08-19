@@ -223,13 +223,32 @@ function formatLongRange(ctx: ChalkContext): string[] {
   ];
 }
 
-export function buildContextBlock(ctx: ChalkContext): string {
+/**
+ * Older sessions retrieved from the lifter's full embedded history because
+ * they match this question — beyond the recent-history window above. Rendered
+ * inside the context block: it is the lifter's own data, so the existing
+ * data-not-instructions rules cover it.
+ */
+function formatRetrievedPastSessions(chunks: RetrievedChunk[]): string[] {
+  if (chunks.length === 0) return [];
+  return [
+    '',
+    'EARLIER SESSIONS MATCHING THIS QUESTION (retrieved from full history)',
+    ...chunks.map((c) => `- ${c.content}`),
+  ];
+}
+
+export function buildContextBlock(
+  ctx: ChalkContext,
+  pastSessions: RetrievedChunk[] = [],
+): string {
   return [
     CONTEXT_OPEN,
     `TRAINING GOAL: ${ctx.training_goal ?? '(none set)'}`,
     `DAYS SINCE LAST WORKOUT: ${ctx.days_since_last_workout ?? '(unknown)'}`,
     '',
     ...formatHistory(ctx),
+    ...formatRetrievedPastSessions(pastSessions),
     ...formatLongRange(ctx),
     ...formatPatternBalance(ctx),
     ...formatModalityBalance(ctx),
@@ -267,12 +286,13 @@ export function buildClosingReminder(): string {
 export function buildSystemPrompt(
   ctx: ChalkContext,
   retrieved: RetrievedChunk[] = [],
+  pastSessions: RetrievedChunk[] = [],
 ): string {
   const reference = buildReferenceBlock(retrieved);
   return [
     buildStaticRules(),
     '',
-    buildContextBlock(ctx),
+    buildContextBlock(ctx, pastSessions),
     ...(reference ? ['', reference] : []),
     '',
     buildClosingReminder(),

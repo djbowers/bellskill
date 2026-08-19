@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useChalkChat, useChalkMessages } from '~/api';
+import { backfillWorkoutHistory } from '~/api/embedWorkoutHistory';
 import { PremiumGate, useBottomNavVisible } from '~/components';
 import { Button } from '~/components/ui/button';
 
@@ -57,6 +58,13 @@ const ChalkConversation = () => {
   useEffect(() => {
     if (error?.code === 'premium_required') navigate('/paywall');
   }, [error, navigate]);
+
+  // Chalk history retrieval (PROD-248): embed any pre-RAG workouts the first
+  // time Chalk opens. Fire-and-forget and idempotent server-side, so mounting
+  // twice is harmless.
+  useEffect(() => {
+    backfillWorkoutHistory();
+  }, []);
 
   const isEmpty = !isLoading && messages.length === 0 && !pendingMessage;
 
