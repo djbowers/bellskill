@@ -3,11 +3,12 @@ import { expect, test } from '@playwright/test';
 // update_program_sessions_forward backend behavior, hit directly against local
 // Supabase (auth + REST/RPC helpers mirror program-in-program-flow.spec.ts).
 // The RPC is the "this and all future sessions" half of the session-edit save:
-// the client rewrites the edited session in full, then the RPC jsonb-merges
-// only the movement prescription (movements, shared weights, complexSet) into
-// every LATER session the caller hasn't completed — each later session keeps
-// its own title, goal, and other workout_options keys, and completed sessions
-// are never touched.
+// the client rewrites the edited session in full, then the RPC propagates the
+// movement prescription (movements, shared weights, complexSet) into every
+// LATER session the caller hasn't completed — each later session keeps its own
+// title, goal, and other workout_options keys, completed sessions are never
+// touched, and weights are re-based per session so deload/test-day offsets
+// survive the edit.
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY!;
@@ -121,16 +122,17 @@ async function orderedSessions(
   );
 }
 
-async function enrollInDfw(
+async function enrollInProgram(
   user: TestUser,
+  slug: string,
 ): Promise<{ userProgramId: string; cloneId: string }> {
-  const [dfw] = await restJson<Array<{ id: string }>>(
+  const [program] = await restJson<Array<{ id: string }>>(
     'GET',
-    `programs?slug=eq.${DFW_SLUG}&select=id`,
+    `programs?slug=eq.${slug}&select=id`,
     user.token,
   );
   const userProgramId = await rpc<string>('enroll_in_program', user.token, {
-    p_program_id: dfw.id,
+    p_program_id: program.id,
   });
   const [enrollment] = await restJson<Array<{ program_id: string }>>(
     'GET',
@@ -192,7 +194,7 @@ const FORWARD_OPTIONS = {
 test.describe('update_program_sessions_forward', () => {
   test('rewrites later incomplete sessions only, preserving their own titles and goals', async () => {
     const user = await signUpThrowawayUser();
-    const { userProgramId, cloneId } = await enrollInDfw(user);
+    const { userProgramId, cloneId } = await enrollInProgram(user, DFW_SLUG);
     const before = await orderedSessions(user.token, cloneId);
     expect(before.length).toBeGreaterThan(3);
 
@@ -230,9 +232,120 @@ test.describe('update_program_sessions_forward', () => {
     }
   });
 
+  test('shared-bell: deload sessions keep their authored offset from the new weight', async () => {
+    const user = await signUpThrowawayUser();
+    const { cloneId } = await enrollInProgram(user, 'aa-protocol-plan-a');
+    const before = await orderedSessions(user.token, cloneId);
+    // A+A: 6 working sessions at 24, then 2 'Deload weeks' sessions at 16.
+    expect(before.length).toBe(8);
+
+    const cj = (weight: number) =>
+      ['One-Arm Kettlebell Clean', 'One-Arm Kettlebell Jerk'].map((name) => ({
+        movementName: name,
+        repScheme: [1],
+        weightOneValue: weight,
+        weightOneUnit: 'kilograms',
+        weightTwoValue: 0,
+        weightTwoUnit: 'kilograms',
+      }));
+
+    // Edit session 0 up a bell: 24 -> 28.
+    const updated = await rpc<number>(
+      'update_program_sessions_forward',
+      user.token,
+      {
+        p_session_id: before[0].id,
+        p_forward_options: {
+          movements: cj(28),
+          sharedWeightOneValue: 28,
+          sharedWeightOneUnit: 'kilograms',
+          sharedWeightTwoValue: 0,
+          sharedWeightTwoUnit: 'kilograms',
+          complexSet: true,
+          workoutMode: 'complex',
+          sharedBell: true,
+        },
+      },
+    );
+    expect(updated).toBe(7);
+
+    const after = await orderedSessions(user.token, cloneId);
+    for (const session of after.slice(1)) {
+      const deload = session.title.startsWith('Deload');
+      // Working sessions take the edit verbatim; deloads stay one size lighter.
+      const expected = deload ? 20 : 28;
+      expect(session.workout_options.sharedWeightOneValue).toBe(expected);
+      expect(session.workout_options.sharedWeightTwoValue).toBe(0);
+      for (const movement of session.workout_options.movements) {
+        expect(movement.weightOneValue).toBe(expected);
+        expect(movement.weightTwoValue).toBe(0);
+      }
+    }
+  });
+
+  test('per-movement: the test-day session keeps its authored offset from the new weight', async () => {
+    const user = await signUpThrowawayUser();
+    const { cloneId } = await enrollInProgram(user, DFW_SLUG);
+    const before = await orderedSessions(user.token, cloneId);
+    // DFW: 13 working sessions at 24/24 doubles, then the 'Test day' at 28/28.
+    expect(before.length).toBe(14);
+
+    const doubles = (weight: number) =>
+      [
+        'Double Kettlebell Clean and Press',
+        'Front Squat With Two Kettlebells',
+      ].map((name) => ({
+        movementName: name,
+        repScheme: [1, 2, 3],
+        weightOneValue: weight,
+        weightOneUnit: 'kilograms',
+        weightTwoValue: weight,
+        weightTwoUnit: 'kilograms',
+      }));
+
+    // Edit session 0 up: 24 -> 26 on the same movement names.
+    const updated = await rpc<number>(
+      'update_program_sessions_forward',
+      user.token,
+      {
+        p_session_id: before[0].id,
+        p_forward_options: {
+          movements: doubles(26),
+          sharedWeightOneValue: null,
+          sharedWeightOneUnit: null,
+          sharedWeightTwoValue: null,
+          sharedWeightTwoUnit: null,
+          complexSet: false,
+        },
+      },
+    );
+    expect(updated).toBe(13);
+
+    const after = await orderedSessions(user.token, cloneId);
+    const testDay = after[13];
+    const press = testDay.workout_options.movements.find(
+      (m) => m.movementName === 'Double Kettlebell Clean and Press',
+    );
+    // Authored +4 over the working 24 -> stays +4 over the new 26.
+    expect(press?.weightOneValue).toBe(30);
+    expect(press?.weightTwoValue).toBe(30);
+    // The squat wasn't in the old test day, so it takes the edit verbatim.
+    const squat = testDay.workout_options.movements.find(
+      (m) => m.movementName === 'Front Squat With Two Kettlebells',
+    );
+    expect(squat?.weightOneValue).toBe(26);
+
+    for (const session of after.slice(1, 13)) {
+      for (const movement of session.workout_options.movements) {
+        expect(movement.weightOneValue).toBe(26);
+        expect(movement.weightTwoValue).toBe(26);
+      }
+    }
+  });
+
   test('rejects a caller who does not own the program', async () => {
     const owner = await signUpThrowawayUser();
-    const { cloneId } = await enrollInDfw(owner);
+    const { cloneId } = await enrollInProgram(owner, DFW_SLUG);
     const [first] = await orderedSessions(owner.token, cloneId);
 
     const stranger = await signUpThrowawayUser();
@@ -246,7 +359,7 @@ test.describe('update_program_sessions_forward', () => {
 
   test('rejects empty options', async () => {
     const user = await signUpThrowawayUser();
-    const { cloneId } = await enrollInDfw(user);
+    const { cloneId } = await enrollInProgram(user, DFW_SLUG);
     const [first] = await orderedSessions(user.token, cloneId);
 
     const res = await rpcRaw('update_program_sessions_forward', user.token, {

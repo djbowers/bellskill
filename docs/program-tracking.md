@@ -136,9 +136,15 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   into every later session of the program the caller hasn't completed (no
   completion row via any of their enrollments), so each later session keeps its
   own title, notes, goal, duration, and rest settings and completed sessions
-  are never rewritten. This deliberately overwrites per-session weight offsets
-  on future sessions with the edited session's weights; `adjust_program_weights`
-  is the offset-preserving counterpart for weight-only changes. Its modal
+  are never rewritten. Weights are **offset-preserving**
+  (`*_update_program_sessions_forward_preserve_offsets.sql`): the structure
+  propagates verbatim, but each target session's weights are the edit's weights
+  shifted by that session's current offset from the label-aware working
+  baseline (the same tiered modal + delta math as `adjust_program_weights`,
+  shared-bell and per-movement paths alike) — a working session takes the edit
+  verbatim, a deload/test-day session keeps its relationship to the working
+  load. The original flat-merge version stamped absolute weights forward and
+  erased A+A's −8 kg deload offset in live use. Its modal
   baseline is the mode over **unlabeled working sessions** (`weight_label IS
   NULL`): incomplete first, else completed (so A+A week-4 deload-only still
   offsets from the last working load), else incomplete when every session is
