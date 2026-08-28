@@ -306,11 +306,12 @@ verify_jwt = true
 import_map = "./functions/chalk-embed-history/deno.json"
 
 # Infra-only embedding endpoint for Chalk RAG tooling (ingestion + evals).
-# verify_jwt rejects anonymous calls; the function itself additionally
-# requires the service-role key as bearer, so ordinary users get 403.
+# verify_jwt is OFF (like stripe-webhook): the EMBED_TEXT_TOKEN secret is the
+# sole gate, and the gateway's JWT check would reject that random-string
+# bearer before the function's own check could run.
 [functions.embed-text]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/embed-text/deno.json"
 
 # Owner-only subscription toggle (QA + friends/family grants). Writes the

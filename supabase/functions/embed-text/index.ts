@@ -14,8 +14,9 @@
 // key system may inject a service-key value that differs from the dashboard's
 // legacy JWT, which is exactly why the dedicated token is the primary path:
 // this endpoint's authorization should not depend on platform key plumbing.
-// verify_jwt=true in config.toml already rejects anonymous calls; this check
-// additionally rejects ordinary logged-in users.
+// verify_jwt is OFF for this function (stripe-webhook precedent): the
+// gateway's JWT validation would reject the random-string token before this
+// check could run, so the in-function compare is the sole gate.
 
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { embedText } from '../_shared/embeddings.ts';
