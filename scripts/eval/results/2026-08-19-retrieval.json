@@ -1,0 +1,2412 @@
+{
+  "run_at": "2026-08-19T19:26:19.547Z",
+  "modes": {
+    "hybrid": {
+      "summary": {
+        "2": {
+          "hit_rate": 0.7619047619047619,
+          "mean_recall": 0.7619047619047619
+        },
+        "4": {
+          "hit_rate": 0.9047619047619048,
+          "mean_recall": 0.9047619047619048
+        },
+        "6": {
+          "hit_rate": 0.9047619047619048,
+          "mean_recall": 0.9047619047619048
+        }
+      },
+      "mean_latency_ms": 2,
+      "mean_top1_groundable": 0.0260028163283805,
+      "mean_top1_ooc": 0.0196078431372549,
+      "items": [
+        {
+          "id": "sns-swing-standard",
+          "category": "protocol",
+          "latency_ms": 20,
+          "top_ids": [
+            "895c1840-01dd-4568-991a-27fc14fc73ec",
+            "38cf6bde-de38-4d36-b1b4-5bf937433442",
+            "fd6f50db-6ebf-4dec-8792-5f29b4c6227f",
+            "9d3b364c-c72c-4002-8a40-909da93e2bd7",
+            "cda958ef-c60b-44dd-bbff-ae97ad278baa",
+            "4a0a3cc8-47ab-46e4-93dd-dda442dd8d18"
+          ],
+          "top_scores": [
+            0.0392156862745098,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "sns-structure",
+          "category": "protocol",
+          "latency_ms": 3,
+          "top_ids": [
+            "fd6f50db-6ebf-4dec-8792-5f29b4c6227f",
+            "38cf6bde-de38-4d36-b1b4-5bf937433442",
+            "895c1840-01dd-4568-991a-27fc14fc73ec",
+            "05cfbdbf-e589-4daf-9e0b-ea60750e5205",
+            "a5a27cd5-9ba4-41af-9e8d-cb45cb0ebc8b",
+            "5872a1c6-537a-4654-9c30-56005a39bf49"
+          ],
+          "top_scores": [
+            0.0388386123680241,
+            0.0196078431372549,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "sns-progression",
+          "category": "protocol",
+          "latency_ms": 2,
+          "top_ids": [
+            "149308f2-af3f-4314-a4aa-fb5334ce114f",
+            "fe93d713-05eb-4467-b66f-ccafcc995cc4",
+            "8bfb08cc-bd47-4aa3-8f67-97cbd5e0682b",
+            "a453f57d-8de4-4dff-970d-2645b2d52f43",
+            "2775066e-d00c-4715-a9ad-5aca5209677c",
+            "420ad2f6-5eec-4735-97fe-c8953a0106a4"
+          ],
+          "top_scores": [
+            0.0388386123680241,
+            0.0196078431372549,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "weight, not reps"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "weight, not reps"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "weight, not reps"
+              ]
+            }
+          }
+        },
+        {
+          "id": "rop-ladders",
+          "category": "protocol",
+          "latency_ms": 2,
+          "top_ids": [
+            "1d8e23c1-866a-4b2a-a24c-36df89f9b5fd",
+            "5753a843-7fce-471e-a5ee-4abf96fe0710",
+            "56e31db9-e047-461d-86ef-7e1964d0d278",
+            "1afdf0f6-96f5-4298-a740-eab6b30b2de9",
+            "8bfb08cc-bd47-4aa3-8f67-97cbd5e0682b",
+            "b98367b0-4553-437e-9e5c-1e0bf67147e6"
+          ],
+          "top_scores": [
+            0.0384757676655568,
+            0.0384615384615385,
+            0.0374649859943978,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "rop-days",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "8bfb08cc-bd47-4aa3-8f67-97cbd5e0682b",
+            "5753a843-7fce-471e-a5ee-4abf96fe0710",
+            "1d8e23c1-866a-4b2a-a24c-36df89f9b5fd",
+            "1afdf0f6-96f5-4298-a740-eab6b30b2de9",
+            "fe93d713-05eb-4467-b66f-ccafcc995cc4",
+            "126c2992-1633-4511-b395-bd63a95b0fa7"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "heavy day: 5 ladders"
+              ]
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "rop-progression",
+          "category": "protocol",
+          "latency_ms": 2,
+          "top_ids": [
+            "5753a843-7fce-471e-a5ee-4abf96fe0710",
+            "1afdf0f6-96f5-4298-a740-eab6b30b2de9",
+            "1d8e23c1-866a-4b2a-a24c-36df89f9b5fd",
+            "149308f2-af3f-4314-a4aa-fb5334ce114f",
+            "126c2992-1633-4511-b395-bd63a95b0fa7",
+            "b98367b0-4553-437e-9e5c-1e0bf67147e6"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "75 presses"
+              ]
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "se-idea",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "748d7f01-4d2b-4302-ac0b-070474a81589",
+            "fa0a61e2-f1ab-4ca8-ab9c-e3f9659576d5",
+            "9f83be5f-3eac-416c-94a1-f9a8e8d89767",
+            "05cfbdbf-e589-4daf-9e0b-ea60750e5205",
+            "ca0fad54-fe2a-4a5b-be17-0c5ec1a8fb52",
+            "56e31db9-e047-461d-86ef-7e1964d0d278"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "se-session",
+          "category": "protocol",
+          "latency_ms": 2,
+          "top_ids": [
+            "05cfbdbf-e589-4daf-9e0b-ea60750e5205",
+            "c3bd7ca2-17a1-472b-a3c8-d7f0993c8130",
+            "fa0a61e2-f1ab-4ca8-ab9c-e3f9659576d5",
+            "748d7f01-4d2b-4302-ac0b-070474a81589",
+            "126c2992-1633-4511-b395-bd63a95b0fa7",
+            "fd6f50db-6ebf-4dec-8792-5f29b4c6227f"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "swing-fault-squat",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "9d3b364c-c72c-4002-8a40-909da93e2bd7",
+            "4a0a3cc8-47ab-46e4-93dd-dda442dd8d18",
+            "cda958ef-c60b-44dd-bbff-ae97ad278baa",
+            "f18c457c-06c6-442d-b8e0-e8a02290118d",
+            "fa68f1f5-14ad-46fd-ad4c-fb7df39e85c9",
+            "126c2992-1633-4511-b395-bd63a95b0fa7"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "swing-fault-back",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "cda958ef-c60b-44dd-bbff-ae97ad278baa",
+            "9d3b364c-c72c-4002-8a40-909da93e2bd7",
+            "4a0a3cc8-47ab-46e4-93dd-dda442dd8d18",
+            "144daa28-01e8-4cb1-9e9a-ff494402f997",
+            "fd6f50db-6ebf-4dec-8792-5f29b4c6227f",
+            "b98367b0-4553-437e-9e5c-1e0bf67147e6"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "tgu-steps",
+          "category": "protocol",
+          "latency_ms": 2,
+          "top_ids": [
+            "b98367b0-4553-437e-9e5c-1e0bf67147e6",
+            "90beba27-a2d9-4d69-acca-bcf903d20d7d",
+            "144daa28-01e8-4cb1-9e9a-ff494402f997",
+            "c429b271-2f6f-4cea-b87c-cb7dac26574b",
+            "0e45a44c-975c-4e21-94e9-9ff03232e8ae",
+            "fd6f50db-6ebf-4dec-8792-5f29b4c6227f"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "tgu-elbow",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "90beba27-a2d9-4d69-acca-bcf903d20d7d",
+            "c429b271-2f6f-4cea-b87c-cb7dac26574b",
+            "f18c457c-06c6-442d-b8e0-e8a02290118d",
+            "b98367b0-4553-437e-9e5c-1e0bf67147e6",
+            "144daa28-01e8-4cb1-9e9a-ff494402f997",
+            "4a05af5e-610a-45fd-babb-eae1074a32e7"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "load-start-men",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "2775066e-d00c-4715-a9ad-5aca5209677c",
+            "e93293f2-2cee-445f-b30b-487925e7ceba",
+            "149308f2-af3f-4314-a4aa-fb5334ce114f",
+            "420ad2f6-5eec-4735-97fe-c8953a0106a4",
+            "f18c457c-06c6-442d-b8e0-e8a02290118d",
+            "fa68f1f5-14ad-46fd-ad4c-fb7df39e85c9"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "load-doubles",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "420ad2f6-5eec-4735-97fe-c8953a0106a4",
+            "2775066e-d00c-4715-a9ad-5aca5209677c",
+            "149308f2-af3f-4314-a4aa-fb5334ce114f",
+            "ca0fad54-fe2a-4a5b-be17-0c5ec1a8fb52",
+            "9e0b8e19-e50d-4831-bd90-5c2e82f05dbd",
+            "e93293f2-2cee-445f-b30b-487925e7ceba"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "snatch-test-standard",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "e93293f2-2cee-445f-b30b-487925e7ceba",
+            "9b9bf6bc-72cb-4b27-b8c9-a17595f5b424",
+            "7feec3a5-abcd-48f5-82b4-443a6cf8b3b2",
+            "a16e00b8-23da-484f-bc1e-ff4c0dace0c9",
+            "4a05af5e-610a-45fd-babb-eae1074a32e7",
+            "9f83be5f-3eac-416c-94a1-f9a8e8d89767"
+          ],
+          "top_scores": [
+            0.0392156862745098,
+            0.0384615384615385,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "snatch-test-pacing",
+          "category": "protocol",
+          "latency_ms": 2,
+          "top_ids": [
+            "9f83be5f-3eac-416c-94a1-f9a8e8d89767",
+            "e93293f2-2cee-445f-b30b-487925e7ceba",
+            "9b9bf6bc-72cb-4b27-b8c9-a17595f5b424",
+            "7feec3a5-abcd-48f5-82b4-443a6cf8b3b2",
+            "4a05af5e-610a-45fd-babb-eae1074a32e7",
+            "126c2992-1633-4511-b395-bd63a95b0fa7"
+          ],
+          "top_scores": [
+            0.0392156862745098,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "program-pick-minimal",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "f18c457c-06c6-442d-b8e0-e8a02290118d",
+            "9b9bf6bc-72cb-4b27-b8c9-a17595f5b424",
+            "a16e00b8-23da-484f-bc1e-ff4c0dace0c9",
+            "8479131d-40b7-4f9c-b446-2ea7b02017a7",
+            "ca0fad54-fe2a-4a5b-be17-0c5ec1a8fb52",
+            "fa68f1f5-14ad-46fd-ad4c-fb7df39e85c9"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "daily-practice",
+                "minimal"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "daily-practice",
+                "minimal"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "daily-practice",
+                "minimal"
+              ]
+            }
+          }
+        },
+        {
+          "id": "program-hopping",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "09127f9d-32d2-486a-beb2-359bce7765a2",
+            "8f70be32-cd61-4e60-836f-82a65cf11d97",
+            "748d7f01-4d2b-4302-ac0b-070474a81589",
+            "ca0fad54-fe2a-4a5b-be17-0c5ec1a8fb52",
+            "fe93d713-05eb-4467-b66f-ccafcc995cc4",
+            "126c2992-1633-4511-b395-bd63a95b0fa7"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "concept-pattern-balance",
+          "category": "app-concept",
+          "latency_ms": 1,
+          "top_ids": [
+            "8f70be32-cd61-4e60-836f-82a65cf11d97",
+            "97188a65-588a-467f-9317-668ed98e2cae",
+            "3ea3bcde-033c-48c9-b9bf-d888ff655afa",
+            "97a50248-d904-4714-b43e-340700d64b0d",
+            "5872a1c6-537a-4654-9c30-56005a39bf49",
+            "f364c42e-fe12-41cf-87ad-750159298c49"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "concept-eight-patterns",
+          "category": "app-concept",
+          "latency_ms": 1,
+          "top_ids": [
+            "b52ead35-beb4-466f-bb7a-9e26562454c6",
+            "cc47a92c-97cd-478f-b6c3-9091219bbd4b",
+            "97188a65-588a-467f-9317-668ed98e2cae",
+            "97a50248-d904-4714-b43e-340700d64b0d",
+            "3ea3bcde-033c-48c9-b9bf-d888ff655afa",
+            "f364c42e-fe12-41cf-87ad-750159298c49"
+          ],
+          "top_scores": [
+            0.0377492877492877,
+            0.0352328431372549,
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0181818181818182
+          ],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "hinge"
+              ]
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "concept-modality",
+          "category": "app-concept",
+          "latency_ms": 1,
+          "top_ids": [
+            "8f70be32-cd61-4e60-836f-82a65cf11d97",
+            "1afdf0f6-96f5-4298-a740-eab6b30b2de9",
+            "7a90e11e-10fc-47a8-a3c1-a1fceae63f22",
+            "4a0a3cc8-47ab-46e4-93dd-dda442dd8d18",
+            "5753a843-7fce-471e-a5ee-4abf96fe0710",
+            "05cfbdbf-e589-4daf-9e0b-ea60750e5205"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        }
+      ],
+      "ooc_top_scores": [
+        {
+          "id": "ooc-barbell",
+          "top_score": 0.0196078431372549
+        },
+        {
+          "id": "ooc-nutrition",
+          "top_score": 0.0196078431372549
+        },
+        {
+          "id": "ooc-running",
+          "top_score": 0.0196078431372549
+        },
+        {
+          "id": "ooc-crossfit",
+          "top_score": 0.0196078431372549
+        }
+      ]
+    },
+    "dense": {
+      "summary": {
+        "2": {
+          "hit_rate": 0.8095238095238095,
+          "mean_recall": 0.8095238095238095
+        },
+        "4": {
+          "hit_rate": 0.9047619047619048,
+          "mean_recall": 0.9047619047619048
+        },
+        "6": {
+          "hit_rate": 0.9047619047619048,
+          "mean_recall": 0.9047619047619048
+        }
+      },
+      "mean_latency_ms": 1,
+      "mean_top1_groundable": 0.019607843137254895,
+      "mean_top1_ooc": 0.0196078431372549,
+      "items": [
+        {
+          "id": "sns-swing-standard",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "895c1840-01dd-4568-991a-27fc14fc73ec",
+            "38cf6bde-de38-4d36-b1b4-5bf937433442",
+            "fd6f50db-6ebf-4dec-8792-5f29b4c6227f",
+            "9d3b364c-c72c-4002-8a40-909da93e2bd7",
+            "cda958ef-c60b-44dd-bbff-ae97ad278baa",
+            "4a0a3cc8-47ab-46e4-93dd-dda442dd8d18"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "sns-structure",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "38cf6bde-de38-4d36-b1b4-5bf937433442",
+            "fd6f50db-6ebf-4dec-8792-5f29b4c6227f",
+            "895c1840-01dd-4568-991a-27fc14fc73ec",
+            "05cfbdbf-e589-4daf-9e0b-ea60750e5205",
+            "a5a27cd5-9ba4-41af-9e8d-cb45cb0ebc8b",
+            "5872a1c6-537a-4654-9c30-56005a39bf49"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "sns-progression",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "fe93d713-05eb-4467-b66f-ccafcc995cc4",
+            "149308f2-af3f-4314-a4aa-fb5334ce114f",
+            "8bfb08cc-bd47-4aa3-8f67-97cbd5e0682b",
+            "a453f57d-8de4-4dff-970d-2645b2d52f43",
+            "2775066e-d00c-4715-a9ad-5aca5209677c",
+            "420ad2f6-5eec-4735-97fe-c8953a0106a4"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "weight, not reps"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "weight, not reps"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "weight, not reps"
+              ]
+            }
+          }
+        },
+        {
+          "id": "rop-ladders",
+          "category": "protocol",
+          "latency_ms": 2,
+          "top_ids": [
+            "1d8e23c1-866a-4b2a-a24c-36df89f9b5fd",
+            "5753a843-7fce-471e-a5ee-4abf96fe0710",
+            "1afdf0f6-96f5-4298-a740-eab6b30b2de9",
+            "8bfb08cc-bd47-4aa3-8f67-97cbd5e0682b",
+            "b98367b0-4553-437e-9e5c-1e0bf67147e6",
+            "56e31db9-e047-461d-86ef-7e1964d0d278"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "rop-days",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "8bfb08cc-bd47-4aa3-8f67-97cbd5e0682b",
+            "5753a843-7fce-471e-a5ee-4abf96fe0710",
+            "1d8e23c1-866a-4b2a-a24c-36df89f9b5fd",
+            "1afdf0f6-96f5-4298-a740-eab6b30b2de9",
+            "fe93d713-05eb-4467-b66f-ccafcc995cc4",
+            "126c2992-1633-4511-b395-bd63a95b0fa7"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "heavy day: 5 ladders"
+              ]
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "rop-progression",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "5753a843-7fce-471e-a5ee-4abf96fe0710",
+            "1afdf0f6-96f5-4298-a740-eab6b30b2de9",
+            "1d8e23c1-866a-4b2a-a24c-36df89f9b5fd",
+            "149308f2-af3f-4314-a4aa-fb5334ce114f",
+            "126c2992-1633-4511-b395-bd63a95b0fa7",
+            "b98367b0-4553-437e-9e5c-1e0bf67147e6"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "75 presses"
+              ]
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "se-idea",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "748d7f01-4d2b-4302-ac0b-070474a81589",
+            "fa0a61e2-f1ab-4ca8-ab9c-e3f9659576d5",
+            "9f83be5f-3eac-416c-94a1-f9a8e8d89767",
+            "05cfbdbf-e589-4daf-9e0b-ea60750e5205",
+            "ca0fad54-fe2a-4a5b-be17-0c5ec1a8fb52",
+            "56e31db9-e047-461d-86ef-7e1964d0d278"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "se-session",
+          "category": "protocol",
+          "latency_ms": 0,
+          "top_ids": [
+            "05cfbdbf-e589-4daf-9e0b-ea60750e5205",
+            "c3bd7ca2-17a1-472b-a3c8-d7f0993c8130",
+            "fa0a61e2-f1ab-4ca8-ab9c-e3f9659576d5",
+            "748d7f01-4d2b-4302-ac0b-070474a81589",
+            "126c2992-1633-4511-b395-bd63a95b0fa7",
+            "fd6f50db-6ebf-4dec-8792-5f29b4c6227f"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "swing-fault-squat",
+          "category": "protocol",
+          "latency_ms": 2,
+          "top_ids": [
+            "9d3b364c-c72c-4002-8a40-909da93e2bd7",
+            "4a0a3cc8-47ab-46e4-93dd-dda442dd8d18",
+            "cda958ef-c60b-44dd-bbff-ae97ad278baa",
+            "f18c457c-06c6-442d-b8e0-e8a02290118d",
+            "fa68f1f5-14ad-46fd-ad4c-fb7df39e85c9",
+            "126c2992-1633-4511-b395-bd63a95b0fa7"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "swing-fault-back",
+          "category": "protocol",
+          "latency_ms": 2,
+          "top_ids": [
+            "cda958ef-c60b-44dd-bbff-ae97ad278baa",
+            "9d3b364c-c72c-4002-8a40-909da93e2bd7",
+            "4a0a3cc8-47ab-46e4-93dd-dda442dd8d18",
+            "144daa28-01e8-4cb1-9e9a-ff494402f997",
+            "fd6f50db-6ebf-4dec-8792-5f29b4c6227f",
+            "b98367b0-4553-437e-9e5c-1e0bf67147e6"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "tgu-steps",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "b98367b0-4553-437e-9e5c-1e0bf67147e6",
+            "90beba27-a2d9-4d69-acca-bcf903d20d7d",
+            "144daa28-01e8-4cb1-9e9a-ff494402f997",
+            "c429b271-2f6f-4cea-b87c-cb7dac26574b",
+            "0e45a44c-975c-4e21-94e9-9ff03232e8ae",
+            "fd6f50db-6ebf-4dec-8792-5f29b4c6227f"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "tgu-elbow",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "90beba27-a2d9-4d69-acca-bcf903d20d7d",
+            "c429b271-2f6f-4cea-b87c-cb7dac26574b",
+            "f18c457c-06c6-442d-b8e0-e8a02290118d",
+            "b98367b0-4553-437e-9e5c-1e0bf67147e6",
+            "144daa28-01e8-4cb1-9e9a-ff494402f997",
+            "4a05af5e-610a-45fd-babb-eae1074a32e7"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "load-start-men",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "2775066e-d00c-4715-a9ad-5aca5209677c",
+            "e93293f2-2cee-445f-b30b-487925e7ceba",
+            "149308f2-af3f-4314-a4aa-fb5334ce114f",
+            "420ad2f6-5eec-4735-97fe-c8953a0106a4",
+            "f18c457c-06c6-442d-b8e0-e8a02290118d",
+            "fa68f1f5-14ad-46fd-ad4c-fb7df39e85c9"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "load-doubles",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "420ad2f6-5eec-4735-97fe-c8953a0106a4",
+            "2775066e-d00c-4715-a9ad-5aca5209677c",
+            "149308f2-af3f-4314-a4aa-fb5334ce114f",
+            "ca0fad54-fe2a-4a5b-be17-0c5ec1a8fb52",
+            "9e0b8e19-e50d-4831-bd90-5c2e82f05dbd",
+            "e93293f2-2cee-445f-b30b-487925e7ceba"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "snatch-test-standard",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "e93293f2-2cee-445f-b30b-487925e7ceba",
+            "9b9bf6bc-72cb-4b27-b8c9-a17595f5b424",
+            "7feec3a5-abcd-48f5-82b4-443a6cf8b3b2",
+            "a16e00b8-23da-484f-bc1e-ff4c0dace0c9",
+            "4a05af5e-610a-45fd-babb-eae1074a32e7",
+            "9f83be5f-3eac-416c-94a1-f9a8e8d89767"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "snatch-test-pacing",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "9f83be5f-3eac-416c-94a1-f9a8e8d89767",
+            "e93293f2-2cee-445f-b30b-487925e7ceba",
+            "9b9bf6bc-72cb-4b27-b8c9-a17595f5b424",
+            "7feec3a5-abcd-48f5-82b4-443a6cf8b3b2",
+            "4a05af5e-610a-45fd-babb-eae1074a32e7",
+            "126c2992-1633-4511-b395-bd63a95b0fa7"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "program-pick-minimal",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "f18c457c-06c6-442d-b8e0-e8a02290118d",
+            "9b9bf6bc-72cb-4b27-b8c9-a17595f5b424",
+            "a16e00b8-23da-484f-bc1e-ff4c0dace0c9",
+            "8479131d-40b7-4f9c-b446-2ea7b02017a7",
+            "ca0fad54-fe2a-4a5b-be17-0c5ec1a8fb52",
+            "fa68f1f5-14ad-46fd-ad4c-fb7df39e85c9"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "daily-practice",
+                "minimal"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "daily-practice",
+                "minimal"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "daily-practice",
+                "minimal"
+              ]
+            }
+          }
+        },
+        {
+          "id": "program-hopping",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "09127f9d-32d2-486a-beb2-359bce7765a2",
+            "8f70be32-cd61-4e60-836f-82a65cf11d97",
+            "748d7f01-4d2b-4302-ac0b-070474a81589",
+            "ca0fad54-fe2a-4a5b-be17-0c5ec1a8fb52",
+            "fe93d713-05eb-4467-b66f-ccafcc995cc4",
+            "126c2992-1633-4511-b395-bd63a95b0fa7"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "concept-pattern-balance",
+          "category": "app-concept",
+          "latency_ms": 1,
+          "top_ids": [
+            "8f70be32-cd61-4e60-836f-82a65cf11d97",
+            "97188a65-588a-467f-9317-668ed98e2cae",
+            "3ea3bcde-033c-48c9-b9bf-d888ff655afa",
+            "97a50248-d904-4714-b43e-340700d64b0d",
+            "5872a1c6-537a-4654-9c30-56005a39bf49",
+            "f364c42e-fe12-41cf-87ad-750159298c49"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "concept-eight-patterns",
+          "category": "app-concept",
+          "latency_ms": 1,
+          "top_ids": [
+            "97188a65-588a-467f-9317-668ed98e2cae",
+            "97a50248-d904-4714-b43e-340700d64b0d",
+            "3ea3bcde-033c-48c9-b9bf-d888ff655afa",
+            "b52ead35-beb4-466f-bb7a-9e26562454c6",
+            "f364c42e-fe12-41cf-87ad-750159298c49",
+            "d8730b62-c932-489e-a6fe-a5deafd64c6e"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "concept-modality",
+          "category": "app-concept",
+          "latency_ms": 1,
+          "top_ids": [
+            "8f70be32-cd61-4e60-836f-82a65cf11d97",
+            "1afdf0f6-96f5-4298-a740-eab6b30b2de9",
+            "7a90e11e-10fc-47a8-a3c1-a1fceae63f22",
+            "4a0a3cc8-47ab-46e4-93dd-dda442dd8d18",
+            "5753a843-7fce-471e-a5ee-4abf96fe0710",
+            "05cfbdbf-e589-4daf-9e0b-ea60750e5205"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019,
+            0.0185185185185185,
+            0.0181818181818182,
+            0.0178571428571429
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        }
+      ],
+      "ooc_top_scores": [
+        {
+          "id": "ooc-barbell",
+          "top_score": 0.0196078431372549
+        },
+        {
+          "id": "ooc-nutrition",
+          "top_score": 0.0196078431372549
+        },
+        {
+          "id": "ooc-running",
+          "top_score": 0.0196078431372549
+        },
+        {
+          "id": "ooc-crossfit",
+          "top_score": 0.0196078431372549
+        }
+      ]
+    },
+    "lexical": {
+      "summary": {
+        "2": {
+          "hit_rate": 0.23809523809523808,
+          "mean_recall": 0.23809523809523808
+        },
+        "4": {
+          "hit_rate": 0.23809523809523808,
+          "mean_recall": 0.23809523809523808
+        },
+        "6": {
+          "hit_rate": 0.23809523809523808,
+          "mean_recall": 0.23809523809523808
+        }
+      },
+      "mean_latency_ms": 1,
+      "mean_top1_groundable": 0.006535947712418301,
+      "mean_top1_ooc": 0,
+      "items": [
+        {
+          "id": "sns-swing-standard",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "895c1840-01dd-4568-991a-27fc14fc73ec"
+          ],
+          "top_scores": [
+            0.0196078431372549
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "sns-structure",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "fd6f50db-6ebf-4dec-8792-5f29b4c6227f"
+          ],
+          "top_scores": [
+            0.0196078431372549
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "sns-progression",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "149308f2-af3f-4314-a4aa-fb5334ce114f"
+          ],
+          "top_scores": [
+            0.0196078431372549
+          ],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "weight, not reps"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "weight, not reps"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "weight, not reps"
+              ]
+            }
+          }
+        },
+        {
+          "id": "rop-ladders",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "56e31db9-e047-461d-86ef-7e1964d0d278",
+            "5753a843-7fce-471e-a5ee-4abf96fe0710",
+            "1d8e23c1-866a-4b2a-a24c-36df89f9b5fd"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692,
+            0.0188679245283019
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "rop-days",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "heavy day: 5 ladders"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "heavy day: 5 ladders"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "heavy day: 5 ladders"
+              ]
+            }
+          }
+        },
+        {
+          "id": "rop-progression",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "75 presses"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "75 presses"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "75 presses"
+              ]
+            }
+          }
+        },
+        {
+          "id": "se-idea",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "alactic",
+                "glycolytic"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "alactic",
+                "glycolytic"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "alactic",
+                "glycolytic"
+              ]
+            }
+          }
+        },
+        {
+          "id": "se-session",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "repeats"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "repeats"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "repeats"
+              ]
+            }
+          }
+        },
+        {
+          "id": "swing-fault-squat",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "hinge",
+                "wall"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "hinge",
+                "wall"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "hinge",
+                "wall"
+              ]
+            }
+          }
+        },
+        {
+          "id": "swing-fault-back",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "leaning back at the top"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "leaning back at the top"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "leaning back at the top"
+              ]
+            }
+          }
+        },
+        {
+          "id": "tgu-steps",
+          "category": "protocol",
+          "latency_ms": 2,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "roll to elbow",
+                "lunge"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "roll to elbow",
+                "lunge"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "roll to elbow",
+                "lunge"
+              ]
+            }
+          }
+        },
+        {
+          "id": "tgu-elbow",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "elbow",
+                "locked"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "elbow",
+                "locked"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "elbow",
+                "locked"
+              ]
+            }
+          }
+        },
+        {
+          "id": "load-start-men",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "16 kg"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "16 kg"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "16 kg"
+              ]
+            }
+          }
+        },
+        {
+          "id": "load-doubles",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "one size below"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "one size below"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "one size below"
+              ]
+            }
+          }
+        },
+        {
+          "id": "snatch-test-standard",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "e93293f2-2cee-445f-b30b-487925e7ceba",
+            "9b9bf6bc-72cb-4b27-b8c9-a17595f5b424"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "snatch-test-pacing",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [
+            "9f83be5f-3eac-416c-94a1-f9a8e8d89767"
+          ],
+          "top_scores": [
+            0.0196078431372549
+          ],
+          "at_k": {
+            "2": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "4": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            },
+            "6": {
+              "hit": true,
+              "recall": 1,
+              "missing": []
+            }
+          }
+        },
+        {
+          "id": "program-pick-minimal",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "daily-practice",
+                "minimal"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "daily-practice",
+                "minimal"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "daily-practice",
+                "minimal"
+              ]
+            }
+          }
+        },
+        {
+          "id": "program-hopping",
+          "category": "protocol",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "program-hopping"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "program-hopping"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "program-hopping"
+              ]
+            }
+          }
+        },
+        {
+          "id": "concept-pattern-balance",
+          "category": "app-concept",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "pattern"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "pattern"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "pattern"
+              ]
+            }
+          }
+        },
+        {
+          "id": "concept-eight-patterns",
+          "category": "app-concept",
+          "latency_ms": 2,
+          "top_ids": [
+            "cc47a92c-97cd-478f-b6c3-9091219bbd4b",
+            "b52ead35-beb4-466f-bb7a-9e26562454c6"
+          ],
+          "top_scores": [
+            0.0196078431372549,
+            0.0192307692307692
+          ],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "hinge"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "hinge"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "hinge"
+              ]
+            }
+          }
+        },
+        {
+          "id": "concept-modality",
+          "category": "app-concept",
+          "latency_ms": 1,
+          "top_ids": [],
+          "top_scores": [],
+          "at_k": {
+            "2": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "grind",
+                "ballistic"
+              ]
+            },
+            "4": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "grind",
+                "ballistic"
+              ]
+            },
+            "6": {
+              "hit": false,
+              "recall": 0,
+              "missing": [
+                "grind",
+                "ballistic"
+              ]
+            }
+          }
+        }
+      ],
+      "ooc_top_scores": [
+        {
+          "id": "ooc-barbell",
+          "top_score": 0
+        },
+        {
+          "id": "ooc-nutrition",
+          "top_score": 0
+        },
+        {
+          "id": "ooc-running",
+          "top_score": 0
+        },
+        {
+          "id": "ooc-crossfit",
+          "top_score": 0
+        }
+      ]
+    }
+  }
+}

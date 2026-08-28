@@ -20,6 +20,9 @@
     "coverage": "vitest run --coverage",
     "compile:ts": "npx tsc --noEmit",
     "start:server": "supabase start",
+    "chalk:ingest": "node scripts/ingest-chalk-knowledge.mjs",
+    "eval:retrieval": "node scripts/eval/run-retrieval-eval.mjs",
+    "eval:faithfulness": "node scripts/eval/run-faithfulness-eval.mjs",
     "movements:check": "node scripts/ingest-movements.mjs",
     "movements:emit-sql": "node scripts/ingest-movements.mjs --emit-sql",
     "prettier": "prettier --write .",
@@ -60,6 +63,7 @@
     "use-query-params": "^2.2.1"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.119.0",
     "@playwright/test": "^1.60.0",
     "@storybook/addon-essentials": "^8.6.18",
     "@storybook/addon-interactions": "^8.6.18",

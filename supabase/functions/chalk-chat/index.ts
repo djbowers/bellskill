@@ -15,6 +15,7 @@ import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { gatherContext } from './inputs.ts';
 import { generateReply, LLMError, MODEL } from './llm.ts';
 import { buildMessages, buildSystemPrompt } from './prompt.ts';
+import { retrieveHistory, retrieveKnowledge } from './retrieval.ts';
 import type { ChalkTurn } from './types.ts';
 
 /** Prior turns replayed into the prompt. Bounds cost per turn. */
@@ -210,10 +211,47 @@ Deno.serve(async (req: Request) => {
       .single();
     if (userInsErr) throw userInsErr;
 
-    // (9) Assemble context and generate.
-    const context = await gatherContext(admin, authClient, user.id, body);
-    const system = buildSystemPrompt(context);
+    // (9) Assemble context and run both retrievals concurrently — the hybrid
+    // searches ride along with the context reads, adding ~0 wall-clock.
+    // Retrieval is best-effort (returns empty chunks on failure), so a turn
+    // never fails because of it.
+    const [context, retrieval, historyRetrieval] = await Promise.all([
+      gatherContext(admin, authClient, user.id, body),
+      retrieveKnowledge(admin, user.id, message),
+      retrieveHistory(admin, user.id, message),
+    ]);
+
+    // Recent workouts are already in the context block verbatim — retrieved
+    // history only earns its tokens for sessions beyond that window.
+    const recentLogIds = new Set(
+      context.recent_history.map((w) => String(w.log_id)),
+    );
+    const pastSessions = historyRetrieval.chunks.filter(
+      (c) => !c.source_id || !recentLogIds.has(c.source_id),
+    );
+
+    const system = buildSystemPrompt(context, retrieval.chunks, pastSessions);
     const messages = buildMessages(history, message);
+
+    // The context snapshot gets the retrieval traces (ids + scores + latency,
+    // not chunk text) so the eval harness can replay what the model saw.
+    const contextSnapshot = {
+      ...context,
+      retrieval: {
+        query: retrieval.query,
+        chunk_ids: retrieval.chunk_ids,
+        scores: retrieval.scores,
+        latency_ms: retrieval.latency_ms,
+        error: retrieval.error,
+      },
+      history_retrieval: {
+        query: historyRetrieval.query,
+        chunk_ids: pastSessions.map((c) => c.id),
+        deduped: historyRetrieval.chunks.length - pastSessions.length,
+        latency_ms: historyRetrieval.latency_ms,
+        error: historyRetrieval.error,
+      },
+    };
 
     try {
       const reply = await generateReply(system, messages);
@@ -229,7 +267,7 @@ Deno.serve(async (req: Request) => {
           model: MODEL,
           input_tokens: reply.input_tokens,
           output_tokens: reply.output_tokens,
-          context,
+          context: contextSnapshot,
         })
         .select('id')
         .single();
@@ -261,7 +299,7 @@ Deno.serve(async (req: Request) => {
           status: 'error',
           error: genErr.message,
           model: MODEL,
-          context,
+          context: contextSnapshot,
         });
         console.error('chalk-chat generation error:', genErr);
         return json({ error: 'chalk_failed', thread_id: resolved.id }, 502);

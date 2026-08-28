@@ -7,6 +7,7 @@ import { fromWorkoutMode, usesSharedBell } from '~/utils';
 
 import { supabase } from '../supabaseClient';
 import { AnalyticsEvent, trackEvent } from './analytics';
+import { embedWorkoutHistory } from './embedWorkoutHistory';
 import { completeProgramSession } from './useCompleteProgramSession';
 
 interface LogWorkoutInput {
@@ -50,6 +51,10 @@ export const useLogWorkout = () => {
         workoutOptions,
       }),
     onSuccess: (workoutLogId) => {
+      // Chalk history retrieval (PROD-248): embed this workout for semantic
+      // search over past sessions. Re-fired after post-notes save.
+      embedWorkoutHistory(workoutLogId);
+
       // Program tracking (Slice 3): if this workout was started from a program
       // session, advance the program — write a completion linked to the new
       // workout_logs row (flipping the enrollment to `completed` when it was the

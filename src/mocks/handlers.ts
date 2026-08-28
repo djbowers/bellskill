@@ -65,4 +65,8 @@ export const handlers = [
       reply: 'Your hinge is overdue — swings would be a good call today.',
     }),
   ),
+  // Fired-and-forgotten from ChalkPage mount (backfill) and workout saves.
+  http.post(`${VITE_SUPABASE_URL}/functions/v1/chalk-embed-history`, () =>
+    HttpResponse.json({ embedded: 0, remaining: 0 }),
+  ),
 ];

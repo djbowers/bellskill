@@ -8,6 +8,8 @@ import type { EquipmentSummary } from '../../../src/utils/equipment.ts';
 
 /** One logged workout, flattened for the prompt. */
 export interface WorkoutHistoryEntry {
+  /** workout_logs integer PK — used to dedupe retrieved history chunks. */
+  log_id: number;
   completed_at: string;
   goal: string;
   rpe: string | null;
@@ -75,4 +77,29 @@ export interface ChalkContext {
 export interface ChalkTurn {
   role: 'user' | 'assistant';
   content: string;
+}
+
+/** One corpus chunk surfaced by chalk_hybrid_search, sanitized for the prompt. */
+export interface RetrievedChunk {
+  id: string;
+  title: string | null;
+  /** user_history scope: the workout_logs id, for deduping against the
+   *  recent-history block. Null for knowledge chunks. */
+  source_id: string | null;
+  content: string;
+  rrf_score: number;
+}
+
+/**
+ * The full retrieval outcome for one turn. Persisted (minus chunk text) into
+ * the assistant row's context snapshot so the eval harness can replay exactly
+ * what the model saw. Best-effort: `error` set and `chunks` empty on failure.
+ */
+export interface RetrievalResult {
+  query: string;
+  chunks: RetrievedChunk[];
+  chunk_ids: string[];
+  scores: number[];
+  latency_ms: number;
+  error: string | null;
 }

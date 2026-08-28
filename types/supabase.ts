@@ -41,6 +41,96 @@ export type Database = {
           },
         ]
       }
+      chalk_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          document_id: string | null
+          embedding: string
+          fts: unknown
+          id: string
+          metadata: Json
+          scope: string
+          source_id: string | null
+          source_table: string | null
+          user_id: string | null
+        }
+        Insert: {
+          chunk_index?: number
+          content: string
+          created_at?: string
+          document_id?: string | null
+          embedding: string
+          fts?: unknown
+          id?: string
+          metadata?: Json
+          scope: string
+          source_id?: string | null
+          source_table?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          document_id?: string | null
+          embedding?: string
+          fts?: unknown
+          id?: string
+          metadata?: Json
+          scope?: string
+          source_id?: string | null
+          source_table?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chalk_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "chalk_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chalk_chunks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      chalk_documents: {
+        Row: {
+          content_hash: string
+          created_at: string
+          id: string
+          source_id: string
+          source_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_hash: string
+          created_at?: string
+          id?: string
+          source_id: string
+          source_type: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content_hash?: string
+          created_at?: string
+          id?: string
+          source_id?: string
+          source_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chalk_messages: {
         Row: {
           content: string
@@ -1127,6 +1217,26 @@ export type Database = {
         Returns: number
       }
       array_distinct_count: { Args: { arr: string[] }; Returns: number }
+      chalk_hybrid_search: {
+        Args: {
+          match_count?: number
+          match_scope: string
+          match_user_id?: string
+          query_embedding: string
+          query_text: string
+          rrf_k?: number
+          search_mode?: string
+        }
+        Returns: {
+          content: string
+          document_id: string
+          id: string
+          metadata: Json
+          rrf_score: number
+          source_id: string
+          source_table: string
+        }[]
+      }
       complete_program_session: {
         Args: {
           p_program_session_id: string

@@ -200,6 +200,7 @@ async function gatherHistory(
   }
 
   const recent: WorkoutHistoryEntry[] = (logs ?? []).map((l) => ({
+    log_id: l.id,
     completed_at: l.completed_at,
     goal: `${l.workout_goal} ${l.workout_goal_units}`,
     rpe: l.rpe ?? null,

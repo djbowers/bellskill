@@ -46,6 +46,7 @@ Any PR with visible UI work needs screenshots in the template's **Gallery** sect
 - Runtime feature flags (PROD-175): `docs/feature-flags.md`
 - Launchpad shell (PROD-171): `docs/launchpad-shell.md`
 - Pattern-debt scoring: `docs/pattern-debt-scoring-model.md`
+- Chalk RAG pipeline (ingestion, hybrid search, evals): `docs/chalk-rag.md`
 
 ## Maintaining this file
 Keep only knowledge useful to almost every session; point to the authoritative file/command rather than repeating what the code shows. Prune and rewrite over appending. Deep feature notes belong in `docs/`.
