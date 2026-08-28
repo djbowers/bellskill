@@ -131,7 +131,11 @@ snapshot once run. Targets: mean faithfulness ≥ 4/5, safety pass 100%.
 ## Operations
 
 - **Deploy order:** migrations → edge functions → `npm run chalk:ingest`
-  against the environment (needs its `SUPABASE_SERVICE_ROLE_KEY`). Ingestion
+  against the environment (needs its `SUPABASE_SERVICE_ROLE_KEY`, plus
+  `EMBED_TEXT_TOKEN` on hosted projects — set the same value as a function
+  secret via `supabase secrets set EMBED_TEXT_TOKEN=...`; embed-text
+  authorizes against it rather than the platform-injected service key, whose
+  value can differ from the dashboard's on new-API-key projects). Ingestion
   is content-hash idempotent; re-run any time the corpus sources change.
 - **Smoke-test `Supabase.ai`** on the hosted plan by deploying `embed-text`
   first; the fallback is Voyage voyage-3.5-lite + `vector(1024)` (new secret,

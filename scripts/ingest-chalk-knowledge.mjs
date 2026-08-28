@@ -28,7 +28,9 @@
 // Usage:
 //   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/ingest-chalk-knowledge.mjs
 //   node scripts/ingest-chalk-knowledge.mjs --dry-run   print chunk boundaries, write nothing
-//   (URL defaults to the local stack; get the local service key from `supabase status`)
+//   (URL defaults to the local stack; get the local service key from `supabase status`.
+//    Hosted projects also need EMBED_TEXT_TOKEN — the secret set on the
+//    embed-text function via `supabase secrets set EMBED_TEXT_TOKEN=...`.)
 
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -42,6 +44,9 @@ const ROOT = resolve(HERE, '..');
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? 'http://localhost:54321';
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// embed-text authorizes against its own EMBED_TEXT_TOKEN secret on hosted
+// projects; the service key doubles as the token on the local stack.
+const EMBED_TOKEN = process.env.EMBED_TEXT_TOKEN ?? SERVICE_ROLE_KEY;
 
 const DRY_RUN = process.argv.includes('--dry-run');
 
@@ -227,7 +232,7 @@ const embedBatch = async (texts) => {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/embed-text`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      Authorization: `Bearer ${EMBED_TOKEN}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ texts }),
