@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check-types:
+  supabase-types:
     runs-on: ubuntu-latest
 
     steps:
