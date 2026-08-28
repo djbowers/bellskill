@@ -54,7 +54,11 @@ const DRY_RUN = process.argv.includes('--dry-run');
 // the breadcrumb prefix is included in the budget.
 const CHUNK_TARGET_CHARS = 1200;
 const CHUNK_OVERLAP_CHARS = 180; // ~15%
-const EMBED_BATCH_SIZE = 50;
+// Small on purpose: the hosted edge worker has a per-invocation compute
+// budget, and ~18 embeds in one request tripped WORKER_RESOURCE_LIMIT (546)
+// in prod. 8 stays comfortably inside it; a retry catches worker recycling.
+const EMBED_BATCH_SIZE = 8;
+const EMBED_RETRIES = 3;
 
 const SCORING_DOCS = [
   'docs/pattern-debt-scoring-model.md',
@@ -228,7 +232,7 @@ const gatherArticles = () => {
 
 // --- Embedding + persistence -------------------------------------------------
 
-const embedBatch = async (texts) => {
+const embedBatch = async (texts, attempt = 0) => {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/embed-text`, {
     method: 'POST',
     headers: {
@@ -238,6 +242,12 @@ const embedBatch = async (texts) => {
     body: JSON.stringify({ texts }),
   });
   if (!res.ok) {
+    // 5xx includes 546 WORKER_RESOURCE_LIMIT — a fresh worker gets a fresh
+    // compute budget, so back off and retry before giving up.
+    if (res.status >= 500 && attempt < EMBED_RETRIES) {
+      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+      return embedBatch(texts, attempt + 1);
+    }
     throw new Error(`embed-text ${res.status}: ${await res.text()}`);
   }
   const { embeddings } = await res.json();
