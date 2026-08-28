@@ -24,6 +24,7 @@ commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/styl
 - Users can declare owned kettlebells, feeding both recommenders ([#235](https://github.com/djbowers/bellskill/pull/235))
 - Debt-optimal balance mode in the recommender with coverage validation ([#233](https://github.com/djbowers/bellskill/pull/233))
 - Pattern-debt balance fed into session recommendations ([#219](https://github.com/djbowers/bellskill/pull/219))
+- Bodyweight and timed movements pay down pattern debt via their own rep/time tracks ([#271](https://github.com/djbowers/bellskill/pull/271))
 - 8-pattern boolean-credit ledger with per-movement RPC ([#229](https://github.com/djbowers/bellskill/pull/229))
 - Shared runnability verifier for the builder and recommender ([#238](https://github.com/djbowers/bellskill/pull/238))
 - AI program recommender on the Programs page ([#217](https://github.com/djbowers/bellskill/pull/217))
