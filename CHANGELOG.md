@@ -8,6 +8,7 @@ commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/styl
 ## 2026-08
 
 ### Added
+- Chalk RAG pipeline: hybrid retrieval over coaching knowledge and training history, with an eval harness ([#277](https://github.com/djbowers/bellskill/pull/277))
 - Next/previous set navigation mid-workout ([#268](https://github.com/djbowers/bellskill/pull/268))
 - Confirmation before a workout finishes at its goal ([#273](https://github.com/djbowers/bellskill/pull/273))
 - AI coach chat ("Chalk") over your training data ([#259](https://github.com/djbowers/bellskill/pull/259))
@@ -45,6 +46,7 @@ commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/styl
 - Larger hand indicator in complex mode ([#265](https://github.com/djbowers/bellskill/pull/265))
 
 ### Fixed
+- Chalk embedding worker: dedicated token for embed-text auth, and smaller batches with retry under the hosted compute limit ([#279](https://github.com/djbowers/bellskill/pull/279), [#281](https://github.com/djbowers/bellskill/pull/281))
 - Interval program goals counted in rounds instead of minutes, so backgrounding the app no longer ends a session short ([#267](https://github.com/djbowers/bellskill/pull/267))
 - Deload and test-day weight offsets preserved when a session edit is applied forward ([#270](https://github.com/djbowers/bellskill/pull/270))
 - Repeating programs actually repeat ([#261](https://github.com/djbowers/bellskill/pull/261))
@@ -62,6 +64,7 @@ commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/styl
 - Regenerate removed and the recommender's two modes collapsed into one ([#241](https://github.com/djbowers/bellskill/pull/241))
 
 ### Infrastructure
+- Merges to main gated on six required checks — unit tests, lint, a new tsc typecheck job, e2e, and always-run Supabase guards — documented in the dev guidelines ([#280](https://github.com/djbowers/bellskill/pull/280), [#282](https://github.com/djbowers/bellskill/pull/282))
 - Claude auto-review on every non-draft PR, plus an @claude mention workflow for follow-ups ([#274](https://github.com/djbowers/bellskill/pull/274))
 - Full changelog history backfilled and a weekly changelog-update skill added ([#269](https://github.com/djbowers/bellskill/pull/269))
 - Linear ticket checks and status sync required in every agent session ([#272](https://github.com/djbowers/bellskill/pull/272))
