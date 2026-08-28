@@ -37,6 +37,9 @@ Any PR with visible UI work needs screenshots in the template's **Gallery** sect
 - **Capture:** `preview_start` the `bellskill-dev` config in `.claude/launch.json` (port 5173; run `start:server` first), drive to the affected screen, and use the browser `computer {action: "screenshot"}` tool, saving to the session scratchpad. For a "before", capture on `main` or stash the change first. `bellskill-storybook` (port 6006) is the cheaper surface for isolated components.
 - **Embed:** run the `uploading-attachments` skill on the saved files for GitHub CDN URLs, then put those in Gallery — don't commit screenshots. If browser login for that skill isn't set up, save to the scratchpad and ask DJ to drag-drop instead. Flag that CDN uploads are permanent; GitHub can't delete them.
 
+## CI required checks
+Merges to `main` are gated on six status checks (GitHub ruleset "Required checks on main"): `unit-tests`, `lint`, `typecheck` (`tsc --noEmit` — `vite build` doesn't typecheck), `e2e-tests`, `check-order` (migration ordering), and `supabase-types` (committed types match schema). The Supabase checks run on every PR and early-exit when no schema files changed. Run `npm run compile:ts`, `lint`, and `test` locally before pushing.
+
 ## Commands
 `npm run dev` · `npm test` / `test-watch` · `compile:ts` · `lint` · `storybook` · `start:server` (local Supabase, before `gen:types`) · `diff-db`. Full list in `package.json`. `npm run dev` reads local Supabase defaults (`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`) from `.env.development`, so run `start:server` first; override via a gitignored `.env.local`.
 
