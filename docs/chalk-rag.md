@@ -115,9 +115,15 @@ separation between groundable and out-of-corpus queries is small
 which is why the prompt requires the model to say when the reference doesn't
 cover the question and the faithfulness eval checks that it does.
 
-Faithfulness eval (`npm run eval:faithfulness`) requires `ANTHROPIC_API_KEY`
-(judge + chalk-chat itself); record its baseline alongside the retrieval
-snapshot once run. Targets: mean faithfulness ≥ 4/5, safety pass 100%.
+Faithfulness eval baseline (2026-08-28, 24/28 items judged — 4 hit a
+judge-JSON parse bug in the harness, a known follow-up):
+**faithfulness 4.92/5, relevance 4.92/5, safety pass 100%**, mean turn
+latency ~4.5s, $0.44 in Opus turns + $0.05 in Haiku judgments for the run
+(`scripts/eval/results/2026-08-28-faithfulness.json`). The one sub-5 item
+(3/5): the reply extrapolated the pattern-balance aggregation formula beyond
+what the retrieved scoring-model chunks stated — a real, correctly-caught
+grounding gap and a good candidate for a corpus addition. Targets: mean
+faithfulness ≥ 4/5, safety pass 100% — both met.
 
 ## Cost model per chat turn
 
