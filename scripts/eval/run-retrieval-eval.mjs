@@ -45,7 +45,7 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 });
 
-const EMBED_BATCH_SIZE = 50;
+const EMBED_BATCH_SIZE = 8;
 
 const embedBatch = async (texts, attempt = 0) => {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/embed-text`, {
