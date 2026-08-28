@@ -5,15 +5,15 @@ name: Validate Supabase Types
 # applies every migration), regenerates the types with the same `gen:types`
 # script developers run locally, and fails if the working tree changed.
 #
-# Path-filtered: types can only drift from a schema change, so this runs only
-# when a PR touches supabase/** or the generated types file itself.
+# Runs on every PR so it can be a required status check (a path-filtered
+# required check never reports on non-matching PRs and blocks the merge
+# forever). Types can only drift from a schema change, so the expensive steps
+# (local Supabase stack, type regeneration) are skipped unless the PR touches
+# supabase/** or the generated types file — non-matching PRs pass in seconds.
 
 on:
   pull_request:
     branches: [main]
-    paths:
-      - supabase/**
-      - types/supabase.ts
   workflow_dispatch:
 
 concurrency:
@@ -21,31 +21,51 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check-types:
+  supabase-types:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect schema-relevant changes
+        id: changes
+        run: |
+          base="origin/${{ github.base_ref || 'main' }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] \
+            || git diff --name-only "$base"...HEAD -- supabase types/supabase.ts | grep -q .; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "No supabase/** or types/supabase.ts changes; skipping type regeneration."
+          fi
 
       - name: Use Node.js 24.x
+        if: steps.changes.outputs.relevant == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
           cache: 'npm'
-      - run: npm ci
+      - if: steps.changes.outputs.relevant == 'true'
+        run: npm ci
 
       - name: Set up Supabase CLI
+        if: steps.changes.outputs.relevant == 'true'
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
       - name: Start local Supabase
+        if: steps.changes.outputs.relevant == 'true'
         run: supabase start
 
       - name: Regenerate types from local schema
+        if: steps.changes.outputs.relevant == 'true'
         run: npm run gen:types
 
       - name: Fail if committed types are stale
+        if: steps.changes.outputs.relevant == 'true'
         run: |
           if ! git diff --exit-code -- types/supabase.ts; then
             echo "::error::types/supabase.ts is out of date. Run 'npm run gen:types' locally and commit the result."
