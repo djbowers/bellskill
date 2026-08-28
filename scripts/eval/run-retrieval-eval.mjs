@@ -31,6 +31,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? 'http://localhost:54321';
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const EMBED_TOKEN = process.env.EMBED_TEXT_TOKEN ?? SERVICE_ROLE_KEY;
 if (!SERVICE_ROLE_KEY) {
   console.error('SUPABASE_SERVICE_ROLE_KEY is required (local: `supabase status`).');
   process.exit(1);
@@ -50,7 +51,7 @@ const embedBatch = async (texts, attempt = 0) => {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/embed-text`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      Authorization: `Bearer ${EMBED_TOKEN}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ texts }),

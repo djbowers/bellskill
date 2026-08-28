@@ -50,3 +50,6 @@ supabase/functions/.env
 playwright-report
 test-results
 .gstack/
+
+# Lavish review artifacts (local-only review surfaces)
+.lavish/

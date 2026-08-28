@@ -7,9 +7,16 @@
 // impossible. Clients never call this; chalk-chat embeds in-process via
 // _shared/embeddings.ts, not over HTTP.
 //
-// Auth: the caller must present the service-role key as the bearer token.
-// verify_jwt=true in config.toml already rejects anonymous calls; this check
-// additionally rejects ordinary logged-in users.
+// Auth: the caller must present the EMBED_TEXT_TOKEN secret as the bearer
+// token (set via `supabase secrets set EMBED_TEXT_TOKEN=...`; any long random
+// string). The service-role key is accepted as a fallback so the local stack
+// works with zero setup — but hosted projects migrated to Supabase's new API
+// key system may inject a service-key value that differs from the dashboard's
+// legacy JWT, which is exactly why the dedicated token is the primary path:
+// this endpoint's authorization should not depend on platform key plumbing.
+// verify_jwt is OFF for this function (stripe-webhook precedent): the
+// gateway's JWT validation would reject the random-string token before this
+// check could run, so the in-function compare is the sole gate.
 
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { embedText } from '../_shared/embeddings.ts';
@@ -31,12 +38,16 @@ Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   try {
+    const embedToken = Deno.env.get('EMBED_TEXT_TOKEN') ?? '';
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const bearer = (req.headers.get('Authorization') ?? '').replace(
       /^Bearer\s+/i,
       '',
     );
-    if (!serviceRoleKey || bearer !== serviceRoleKey) {
+    const authorized =
+      (embedToken !== '' && bearer === embedToken) ||
+      (serviceRoleKey !== '' && bearer === serviceRoleKey);
+    if (!authorized) {
       return json({ error: 'Forbidden' }, 403);
     }
 
