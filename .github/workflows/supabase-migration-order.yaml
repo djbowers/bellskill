@@ -8,12 +8,14 @@ name: Validate Supabase migration order
 #
 # Staging doesn't need this guard -- it is rebuilt with `db reset`, which replays
 # every migration in order from an empty database.
+#
+# Runs on every PR (no path filter) so it can be a required status check: a
+# path-filtered required check never reports on non-matching PRs and blocks the
+# merge forever. PRs adding no migrations pass trivially in the script below.
 
 on:
   pull_request:
     branches: [main]
-    paths:
-      - supabase/migrations/**
   workflow_dispatch:
 
 concurrency:
