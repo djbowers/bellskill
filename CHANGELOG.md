@@ -8,6 +8,7 @@ commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/styl
 ## 2026-08
 
 ### Added
+- Chalk corpus article grounding the pattern-balance formula in retrievable text ([#285](https://github.com/djbowers/bellskill/pull/285))
 - Chalk RAG pipeline: hybrid retrieval over coaching knowledge and training history, with an eval harness ([#277](https://github.com/djbowers/bellskill/pull/277))
 - Next/previous set navigation mid-workout ([#268](https://github.com/djbowers/bellskill/pull/268))
 - Confirmation before a workout finishes at its goal ([#273](https://github.com/djbowers/bellskill/pull/273))
@@ -64,6 +65,7 @@ commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/styl
 - Regenerate removed and the recommender's two modes collapsed into one ([#241](https://github.com/djbowers/bellskill/pull/241))
 
 ### Infrastructure
+- Chalk RAG faithfulness eval baseline recorded — 4.92/5, safety 100% ([#284](https://github.com/djbowers/bellskill/pull/284))
 - Merges to main gated on six required checks — unit tests, lint, a new tsc typecheck job, e2e, and always-run Supabase guards — documented in the dev guidelines ([#280](https://github.com/djbowers/bellskill/pull/280), [#282](https://github.com/djbowers/bellskill/pull/282))
 - Claude auto-review on every non-draft PR, plus an @claude mention workflow for follow-ups ([#274](https://github.com/djbowers/bellskill/pull/274))
 - Full changelog history backfilled and a weekly changelog-update skill added ([#269](https://github.com/djbowers/bellskill/pull/269))
