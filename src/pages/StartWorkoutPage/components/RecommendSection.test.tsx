@@ -1,7 +1,7 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 
 import { EntitlementContext, EntitlementContextValue } from '~/contexts';
@@ -75,14 +75,12 @@ function renderSection({
 }
 
 const recommendSessionButton = () =>
-  screen.getByRole('button', { name: /recommend my next session/i });
+  screen.getByRole('button', { name: /ask chalk for my next session/i });
 
 const switchToProgram = (user: ReturnType<typeof userEvent.setup>) =>
   user.click(screen.getByRole('tab', { name: /^program$/i }));
 
-const respondWithProgram = (
-  recommendation: ExampleProgramRecommendation,
-) =>
+const respondWithProgram = (recommendation: ExampleProgramRecommendation) =>
   server.use(
     http.post(PROGRAM_URL, () =>
       HttpResponse.json({ id: 'rec-1', recommendation }),
@@ -103,7 +101,7 @@ describe('RecommendSection — session scope', () => {
     await userEvent.click(recommendSessionButton());
 
     expect(
-      await screen.findByText(/AI session recommendations/i),
+      await screen.findByText(/chalk's session picks/i),
     ).toBeInTheDocument();
     expect(calls).toBe(0);
   });
@@ -122,7 +120,7 @@ describe('RecommendSection — session scope', () => {
     renderSection({ onAcceptSession });
     await userEvent.click(recommendSessionButton());
 
-    expect(await screen.findByText('Your AI session')).toBeInTheDocument();
+    expect(await screen.findByText("Chalk's session")).toBeInTheDocument();
     expect(screen.getByText('Two-Hand Swing')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /^accept$/i }));
@@ -130,7 +128,9 @@ describe('RecommendSection — session scope', () => {
     expect(onAcceptSession).toHaveBeenCalledTimes(1);
     expect(onAcceptSession.mock.calls[0][0].blocks).toHaveLength(2);
     // Card is dismissed; the entry button returns.
-    expect(await screen.findByText(/recommend my next session/i)).toBeVisible();
+    expect(
+      await screen.findByText(/ask chalk for my next session/i),
+    ).toBeVisible();
   });
 
   test('shows a friendly message when the user has no movements (422)', async () => {
@@ -163,7 +163,7 @@ describe('RecommendSection — session scope', () => {
     renderSection();
     await userEvent.click(recommendSessionButton());
 
-    expect(await screen.findByText('Your AI session')).toBeInTheDocument();
+    expect(await screen.findByText("Chalk's session")).toBeInTheDocument();
     expect(requestBody).toHaveProperty('client_today');
     expect(requestBody).not.toHaveProperty('mode');
   });
@@ -191,11 +191,11 @@ describe('RecommendSection — program scope', () => {
 
     await switchToProgram(user);
     await user.click(
-      screen.getByRole('button', { name: /recommend a program/i }),
+      screen.getByRole('button', { name: /ask chalk for a program/i }),
     );
 
     expect(
-      screen.getByRole('heading', { name: 'AI program recommendations' }),
+      screen.getByRole('heading', { name: "Chalk's program picks" }),
     ).toBeInTheDocument();
     expect(calls).toBe(0);
   });
@@ -212,7 +212,7 @@ describe('RecommendSection — program scope', () => {
 
     await switchToProgram(user);
     await user.click(
-      screen.getByRole('button', { name: /recommend a program/i }),
+      screen.getByRole('button', { name: /ask chalk for a program/i }),
     );
     await user.click(await screen.findByRole('button', { name: 'Start now' }));
 
@@ -232,7 +232,7 @@ describe('RecommendSection — program scope', () => {
 
     await switchToProgram(user);
     await user.click(
-      screen.getByRole('button', { name: /recommend a program/i }),
+      screen.getByRole('button', { name: /ask chalk for a program/i }),
     );
     await user.click(
       await screen.findByRole('button', { name: 'Add to queue' }),
@@ -253,7 +253,7 @@ describe('RecommendSection — program scope', () => {
 
     await switchToProgram(user);
     await user.click(
-      screen.getByRole('button', { name: /recommend a program/i }),
+      screen.getByRole('button', { name: /ask chalk for a program/i }),
     );
 
     expect(
@@ -274,14 +274,14 @@ describe('RecommendSection — program scope', () => {
 
     renderSection();
     await user.click(recommendSessionButton());
-    expect(await screen.findByText('Your AI session')).toBeInTheDocument();
+    expect(await screen.findByText("Chalk's session")).toBeInTheDocument();
 
     await switchToProgram(user);
     expect(
-      screen.getByRole('button', { name: /recommend a program/i }),
+      screen.getByRole('button', { name: /ask chalk for a program/i }),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole('tab', { name: /^session$/i }));
-    expect(screen.getByText('Your AI session')).toBeInTheDocument();
+    expect(screen.getByText("Chalk's session")).toBeInTheDocument();
   });
 });

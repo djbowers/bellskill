@@ -125,16 +125,16 @@ export const RecommendProgramSection = ({
         return "You're already running or have queued every program we'd suggest.";
       }
       if (err.code === 'recommendation_failed') {
-        return "Couldn't pick a program right now — try again.";
+        return "Chalk couldn't pick a program right now — try again.";
       }
     }
     return 'Something went wrong — try again.';
   })();
 
   return (
-    <section aria-label="AI program recommendation" className="flex flex-col gap-1">
+    <section aria-label="Chalk" className="flex flex-col gap-1">
       <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Recommended for you
+        Ask Chalk
       </h2>
 
       {recommendation ? (
@@ -177,7 +177,7 @@ export const RecommendProgramSection = ({
           onClick={handleRecommend}
         >
           <SparklesIcon className="mr-1 h-2.5 w-2.5" />
-          Recommend a program
+          Ask Chalk for a program
         </Button>
       )}
 

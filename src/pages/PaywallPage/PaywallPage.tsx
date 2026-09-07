@@ -14,7 +14,7 @@ import { cn } from '~/lib/utils';
 const NOTIFY_INTENT_KEY = 'premium_notify_intent';
 
 const PREMIUM_FEATURES = [
-  'AI session recommendations tuned to your training',
+  'Chalk picks your next session from your training',
   'Weekly Tetris programming — coming soon',
 ];
 
