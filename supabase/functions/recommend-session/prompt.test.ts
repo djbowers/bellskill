@@ -11,16 +11,28 @@ const baseInputs = (
   recent_history: [],
   candidates: [
     {
-      user_movement_id: 'tgu',
+      movement_id: 'tgu',
       name: 'Turkish Get-Up',
-      is_big_6: true,
       pattern_credits: ['get_up', 'push', 'rotation'],
+      bodyweight: false,
+      supports_doubles: false,
+      unilateral_lower: false,
     },
     {
-      user_movement_id: 'custom',
+      movement_id: 'mystery',
       name: 'Mystery Move',
-      is_big_6: false,
       pattern_credits: null,
+      bodyweight: false,
+      supports_doubles: false,
+      unilateral_lower: false,
+    },
+    {
+      movement_id: 'push-up',
+      name: 'Push-Up',
+      pattern_credits: ['push'],
+      bodyweight: true,
+      supports_doubles: false,
+      unilateral_lower: false,
     },
   ],
   pattern_debt: null,
@@ -66,17 +78,22 @@ const modalityDebt = (): RecommenderInputs['modality_debt'] => ({
 });
 
 describe('prompt — pattern annotations and balance targets', () => {
-  test('candidates carry pays annotations; unlinked ones stay bare', () => {
+  test('candidates carry pays annotations; uncredited ones stay bare', () => {
     const prompt = buildUserPrompt(baseInputs());
+    expect(prompt).toContain('Catalog movements (choose only from these):');
     expect(prompt).toContain(
-      '- Turkish Get-Up (Big 6) · pays: get_up, push, rotation [user_movement_id: tgu]',
+      '- Turkish Get-Up · pays: get_up, push, rotation [movement_id: tgu]',
     );
-    expect(prompt).toContain('- Mystery Move [user_movement_id: custom]');
+    expect(prompt).toContain('- Mystery Move [movement_id: mystery]');
+    expect(prompt).toContain(
+      '- Push-Up · pays: push · bodyweight [movement_id: push-up]',
+    );
   });
 
   test('system prompt makes every session a circuit with varying rungs only', () => {
     const system = buildSystemPrompt();
     expect(system).toContain('Every session is a circuit');
+    expect(system).toContain('single-rung block like [5] is always fine');
     expect(system).toContain('Never repeat a rep');
     expect(system).not.toContain('Straight Sets');
   });

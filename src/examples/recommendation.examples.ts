@@ -18,14 +18,14 @@ export class ExampleRecommendation implements Recommendation {
     confidence = 'medium',
     blocks = [
       {
-        user_movement_id: 'example-swing',
+        movement_id: 'example-swing',
         movement_name: 'Two-Hand Swing',
         weight_kg: 24,
         rep_scheme: [10],
         notes: 'Sharp hip snap, stop if form degrades.',
       },
       {
-        user_movement_id: 'example-getup',
+        movement_id: 'example-getup',
         movement_name: 'Turkish Get-Up',
         weight_kg: 16,
         rep_scheme: [1],

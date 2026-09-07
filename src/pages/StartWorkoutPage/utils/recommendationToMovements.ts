@@ -8,6 +8,7 @@ import {
   type MovementWeightModeFields,
   movementMatchesWeightMode,
   recommendationGoal,
+  recommendedWeight,
 } from '~/utils';
 
 /** Catalog entry the mapper reads: weight-mode fields plus the leg axis. */
@@ -78,13 +79,25 @@ export const recommendationToMovements = (
 ): MovementOptions[] =>
   recommendation.blocks.map((block) => {
     const fields = catalog?.get(block.movement_name);
+    const weightOneValue = recommendedWeight(block.weight_kg);
+    if (weightOneValue === null) {
+      return {
+        movementName: block.movement_name,
+        repScheme: block.rep_scheme,
+        unilateral: Boolean(fields?.unilateralLower),
+        weightOneUnit: null,
+        weightOneValue: null,
+        weightTwoUnit: null,
+        weightTwoValue: null,
+      };
+    }
     return {
       movementName: block.movement_name,
       repScheme: block.rep_scheme,
       unilateral: Boolean(fields?.unilateralLower),
       weightOneUnit: 'kilograms' as const,
-      weightOneValue: block.weight_kg,
-      ...inferSecondWeight(fields, block.weight_kg, block.bells),
+      weightOneValue,
+      ...inferSecondWeight(fields, weightOneValue, block.bells),
     };
   });
 

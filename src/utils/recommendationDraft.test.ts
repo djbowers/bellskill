@@ -54,6 +54,16 @@ describe('recommendationToDraft', () => {
     ]);
   });
 
+  test('a weight of 0 is a bodyweight movement', () => {
+    const draft = recommendationToDraft(
+      recommendation({
+        blocks: [{ movement_name: 'Push-Up', weight_kg: 0, rep_scheme: [10] }],
+      }),
+    );
+    expect(draft.movements[0].weightOneValue).toBeNull();
+    expect(validateWorkout(draft).errors).toEqual([]);
+  });
+
   test('a format other than Circuit still maps onto a circuit', () => {
     const draft = recommendationToDraft(
       recommendation({ format: 'Straight Sets' }),

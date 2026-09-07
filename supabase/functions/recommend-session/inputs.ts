@@ -4,10 +4,8 @@
 // authenticated user_id — except pattern debt, which goes through the caller's
 // JWT client because pattern_debt_movements is SECURITY INVOKER and filters on
 // auth.uid(). unlocked_weights comes from the user's declared equipment (PROD-78).
-
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { gatherEquipment } from '../_shared/equipmentInput.ts';
 import {
   daysBetweenCalendarDays,
   parseLocalDateString,
@@ -19,6 +17,7 @@ import {
   computePatternBalance,
   selectBalanceTargets,
 } from '../../../src/utils/patternDebt.ts';
+import { gatherEquipment } from '../_shared/equipmentInput.ts';
 import type {
   CandidateMovement,
   ModalityDebtInput,
@@ -29,6 +28,35 @@ import type {
 
 const HISTORY_LIMIT = 5;
 const LB_TO_KG = 0.453592;
+const BODYWEIGHT_EQUIPMENT = 'Bodyweight';
+
+/** The catalog columns a candidate is built from (`movements` table). */
+export interface CatalogRow {
+  id: string;
+  Movement: string;
+  pattern_credits: string[] | null;
+  'Primary Equipment': string | null;
+  '# Primary Items': number | null;
+  unilateral_lower: boolean | null;
+}
+
+/** Catalog rows → the candidate set, in a stable name order for the prompt. */
+export function toCandidates(rows: CatalogRow[]): CandidateMovement[] {
+  return rows
+    .slice()
+    .sort((a, b) => a.Movement.localeCompare(b.Movement))
+    .map((row) => {
+      const credited = attributeMovement(row.pattern_credits, row.Movement);
+      return {
+        movement_id: row.id,
+        name: row.Movement,
+        pattern_credits: credited.length > 0 ? credited : null,
+        bodyweight: row['Primary Equipment'] === BODYWEIGHT_EQUIPMENT,
+        supports_doubles: row['# Primary Items'] === 2,
+        unilateral_lower: Boolean(row.unilateral_lower),
+      };
+    });
+}
 
 function toKg(value: number | null, unit: string | null): number | null {
   if (value == null) return null;
@@ -72,8 +100,11 @@ async function gatherBalances(
         total_reps: Number(row.total_reps),
         total_volume_kg: Number(row.total_volume_kg),
         baseline_volume_kg:
-          row.baseline_volume_kg == null ? null : Number(row.baseline_volume_kg),
-        hardest_rpe: (row.hardest_rpe ?? null) as MovementAggregate['hardest_rpe'],
+          row.baseline_volume_kg == null
+            ? null
+            : Number(row.baseline_volume_kg),
+        hardest_rpe: (row.hardest_rpe ??
+          null) as MovementAggregate['hardest_rpe'],
         total_unloaded_reps: Number(row.total_unloaded_reps ?? 0),
         baseline_unloaded_reps:
           row.baseline_unloaded_reps == null
@@ -154,55 +185,16 @@ export async function gatherInputs(
   }
   const clientToday = parsedClientToday ?? new Date();
 
-  // Candidate movements: the user's own library, with catalog pattern credits
-  // joined for the prompt annotations and balance-mode coverage validation.
-  const { data: userMovements, error: umErr } = await admin
-    .from('user_movements')
-    .select('id, canonical_name, is_big_6, functional_movement_id')
-    .eq('user_id', userId);
-  if (umErr) throw umErr;
-
-  const catalogIds = [
-    ...new Set(
-      (userMovements ?? [])
-        .map((m) => m.functional_movement_id)
-        .filter((id): id is string => id != null),
-    ),
-  ];
-  const creditsByCatalogId = new Map<string, string[]>();
-  const doublesByCatalogId = new Map<string, boolean>();
-  const unilateralByCatalogId = new Map<string, boolean>();
-  if (catalogIds.length > 0) {
-    const { data: catalogRows, error: catErr } = await admin
-      .from('movements')
-      .select('id, pattern_credits, "# Primary Items", unilateral_lower')
-      .in('id', catalogIds);
-    if (catErr) throw catErr;
-    for (const row of catalogRows ?? []) {
-      creditsByCatalogId.set(row.id, row.pattern_credits);
-      doublesByCatalogId.set(row.id, row['# Primary Items'] === 2);
-      unilateralByCatalogId.set(row.id, Boolean(row.unilateral_lower));
-    }
-  }
-
-  const candidates: CandidateMovement[] = (userMovements ?? []).map((m) => {
-    // attributeMovement applies the shared unlinked-movement policy (get-up
-    // name fallback) and filters credits to the known coarse patterns.
-    const credited = attributeMovement(
-      creditsByCatalogId.get(m.functional_movement_id ?? '') ?? null,
-      m.canonical_name,
-    );
-    return {
-      user_movement_id: m.id,
-      name: m.canonical_name,
-      is_big_6: Boolean(m.is_big_6),
-      pattern_credits: credited.length > 0 ? credited : null,
-      supports_doubles:
-        doublesByCatalogId.get(m.functional_movement_id ?? '') ?? null,
-      unilateral_lower:
-        unilateralByCatalogId.get(m.functional_movement_id ?? '') ?? null,
-    };
-  });
+  // Candidate movements: the whole catalog, kettlebell and bodyweight. Custom
+  // (unlinked) library movements are deliberately excluded (PROD-85).
+  const { data: catalogRows, error: catErr } = await admin
+    .from('movements')
+    .select(
+      'id, Movement, pattern_credits, "Primary Equipment", "# Primary Items", unilateral_lower',
+    )
+    .order('Movement');
+  if (catErr) throw catErr;
+  const candidates = toCandidates(catalogRows ?? []);
 
   // Persistent training goal.
   const { data: profile, error: profErr } = await admin
@@ -226,7 +218,9 @@ export async function gatherInputs(
   if (logIds.length > 0) {
     const { data: moves, error: mvErr } = await admin
       .from('movement_logs')
-      .select('workout_log_id, movement_name, rep_scheme, weight_one_value, weight_one_unit')
+      .select(
+        'workout_log_id, movement_name, rep_scheme, weight_one_value, weight_one_unit',
+      )
       .in('workout_log_id', logIds);
     if (mvErr) throw mvErr;
 
@@ -261,7 +255,7 @@ export async function gatherInputs(
   const equipment = await gatherEquipment(admin, userId);
 
   // Deterministic must-cover targets. Degrades to [] (no hard constraint)
-  // when debt is unavailable or nothing red is coverable from the library.
+  // when debt is unavailable or nothing red is coverable from the catalog.
   const balance_targets = pattern_debt
     ? selectBalanceTargets(
         pattern_debt.patterns.map((p) => ({

@@ -10,24 +10,29 @@ const inputs: RecommenderInputs = {
   recent_history: [],
   candidates: [
     {
-      user_movement_id: 'swing',
+      movement_id: 'swing',
       name: 'Swing',
-      is_big_6: true,
       pattern_credits: ['hinge'],
+      bodyweight: false,
+      supports_doubles: false,
+      unilateral_lower: false,
     },
     {
-      user_movement_id: 'press',
+      movement_id: 'press',
       name: 'Press',
-      is_big_6: true,
       pattern_credits: ['push'],
+      bodyweight: false,
+      supports_doubles: true,
+      unilateral_lower: false,
     },
   ],
   pattern_debt: null,
+  modality_debt: null,
   unlocked_weights: {},
 };
 
 const block = (over: Partial<Recommendation['blocks'][number]> = {}) => ({
-  user_movement_id: 'swing',
+  movement_id: 'swing',
   movement_name: 'Swing',
   weight_kg: 24,
   rep_scheme: [10],
@@ -51,7 +56,7 @@ const unequalRungs = recommendation({
   blocks: [
     block({ rep_scheme: [1, 2, 3, 4] }),
     block({
-      user_movement_id: 'press',
+      movement_id: 'press',
       movement_name: 'Press',
       rep_scheme: [5, 4, 3],
     }),

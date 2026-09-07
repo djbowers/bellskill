@@ -32,11 +32,14 @@ export const recommendationGoal = (
   workoutGoalUnits: 'minutes',
 });
 
+/** The recommender writes 0 for a bodyweight movement; the app uses null. */
+export const recommendedWeight = (weightKg: number): number | null =>
+  weightKg === 0 ? null : weightKg;
+
 /**
  * Adapts an LLM recommendation into the shared draft shape. The recommender has
  * no timers and prescribes one weight in kg per movement, which becomes weight
- * one. `weight_kg` is a required number in the schema, so a recommended movement
- * is never bodyweight (see the spec's out-of-scope note).
+ * one; 0 is a bodyweight movement.
  */
 export const recommendationToDraft = (
   recommendation: RecommendationLike,
@@ -47,6 +50,6 @@ export const recommendationToDraft = (
   movements: recommendation.blocks.map((block) => ({
     movementName: block.movement_name,
     repScheme: block.rep_scheme,
-    weightOneValue: block.weight_kg,
+    weightOneValue: recommendedWeight(block.weight_kg),
   })),
 });

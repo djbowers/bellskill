@@ -22,11 +22,13 @@ export function buildSystemPrompt(hasTargets = false): string {
   return [
     'You are an expert kettlebell programming coach. You know the Big 6 (swing,',
     'clean, press, snatch, squat, get-up) and common protocols (Simple & Sinister,',
-    'Rite of Passage). You design a single, focused next training session.',
+    'Rite of Passage), and you use bodyweight work where it serves the lifter.',
+    'You design a single, focused next training session.',
     '',
     'Rules:',
-    "- Choose movements ONLY from the candidate list. Use each block's exact",
-    '  user_movement_id from that list — never invent an id or a movement.',
+    "- Choose movements ONLY from the catalog list. Copy each block's",
+    '  movement_id exactly as printed in brackets on that line — never invent',
+    '  an id or a movement.',
     '- Size the session to the time the lifter has and how they say they feel',
     '  today. When they are tired, sore, or short on time, scale volume down.',
     '- Prescribe weights in kilograms (whole or half kg).',
@@ -35,9 +37,11 @@ export function buildSystemPrompt(hasTargets = false): string {
     '  rung, like [1, 2, 3], [10, 8, 6] or [1, 2, 3, 2, 1]. Never repeat a rep',
     '  count on consecutive rungs — 3×5 is written [5], and the rounds come from',
     '  the clock, not from repeated rungs.',
-    '- Set each block\'s "bells" to how many kettlebells are held at once: 1, or 2',
-    '  only for movements marked "double-bell". weight_kg is the weight of ONE',
-    '  bell, so a double at 24kg means two 24kg bells, not 12kg each.',
+    '- Set each block\'s "bells" to how many kettlebells are held at once.',
+    '  Movements marked "double-bell" are done with 2; movements marked',
+    '  "bodyweight" take no bell, so write weight_kg 0 and bells 0; every other',
+    '  movement is done with 1. weight_kg is the weight of ONE bell, so a double',
+    '  at 24kg means two 24kg bells, not 12kg each.',
     '- Movements marked "one leg at a time" run every rung twice, once per leg,',
     '  so they cost double the time and volume of the reps you write. Count that',
     '  when sizing the session, and avoid stacking several of them back to back.',
@@ -69,7 +73,8 @@ export function buildSystemPrompt(hasTargets = false): string {
     '  [5, 5, 5].',
     '- No rep scheme is empty, no rep count repeats on consecutive rungs, and',
     '  every rep is a whole number from 1 to 100.',
-    '- Every weight is a positive number of kilograms, no heavier than 100.',
+    '- Every kettlebell weight is a positive number of kilograms, no heavier than',
+    '  100; a bodyweight movement is exactly 0.',
     '- duration_minutes is greater than zero.',
   ].join('\n');
 }
@@ -78,13 +83,15 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
   const candidateLines = inputs.candidates
     .map(
       (c) =>
-        `- ${c.name}${c.is_big_6 ? ' (Big 6)' : ''}${
+        `- ${c.name}${
           c.pattern_credits?.length
             ? ` · pays: ${c.pattern_credits.join(', ')}`
             : ''
-        }${c.supports_doubles ? ' · double-bell' : ''}${
+        }${c.bodyweight ? ' · bodyweight' : ''}${
+          c.supports_doubles ? ' · double-bell' : ''
+        }${
           c.unilateral_lower ? ' · one leg at a time' : ''
-        } [user_movement_id: ${c.user_movement_id}]`,
+        } [movement_id: ${c.movement_id}]`,
     )
     .join('\n');
 
@@ -156,7 +163,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
     ...targetSection,
     ...equipmentSection,
     '',
-    'Candidate movements (choose only from these):',
+    'Catalog movements (choose only from these):',
     candidateLines,
     '',
     'Recommend their next session now.',
@@ -169,7 +176,7 @@ export function buildCorrectionPrompt(reasons: string[]): string {
     'Your previous response was rejected for these reasons:',
     ...reasons.map((r) => `- ${r}`),
     '',
-    'Produce a corrected recommendation that uses only candidate user_movement_ids,',
+    'Produce a corrected recommendation that uses only catalog movement_ids,',
     'positive integer reps and weights, the same number of rungs in every ladder',
     '(single-rung blocks are exempt), no rep count repeated on consecutive rungs,',
     'and only weights the lifter owns — an adjustable bell keeps one setting for',

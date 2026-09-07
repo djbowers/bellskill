@@ -18,6 +18,13 @@ export const handlers = [
   http.get(`${VITE_SUPABASE_URL}/rest/v1/user_movements`, () =>
     HttpResponse.json([]),
   ),
+  http.post(
+    `${VITE_SUPABASE_URL}/rest/v1/user_movements`,
+    async ({ request }) => {
+      const row = (await request.json()) as Record<string, unknown>;
+      return HttpResponse.json([{ id: 'um-mock', ...row }], { status: 201 });
+    },
+  ),
   http.post(`${VITE_SUPABASE_URL}/rest/v1/analytics_events`, () =>
     HttpResponse.json([]),
   ),
