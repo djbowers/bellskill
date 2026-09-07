@@ -60,11 +60,11 @@ describe('getSetProgress', () => {
     });
   });
 
-  test('reads the round length off the last movement when ladders are unequal', () => {
-    const movements = [movement([5, 5, 5]), movement([10])];
+  test('a round runs to the longest ladder; a single rung repeats each rung', () => {
+    const movements = [movement([5, 4, 3]), movement([10])];
     expect(getSetProgress(args({ movements, workoutGoal: 3 }))).toEqual({
       completedSets: 0,
-      totalSets: 6,
+      totalSets: 18,
     });
   });
 

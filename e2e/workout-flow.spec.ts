@@ -366,10 +366,9 @@ test.describe('full workout flow', () => {
     await expect(startWorkoutButton).toBeVisible({ timeout: 10_000 });
 
     await page.getByRole('tab', { name: 'Straight Sets' }).click();
-    await expect(page.getByRole('tab', { name: 'Straight Sets' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    await expect(
+      page.getByRole('tab', { name: 'Straight Sets' }),
+    ).toHaveAttribute('aria-selected', 'true');
 
     // Straight sets prescribes its work in the rep schemes, so there is no goal
     // to pick.
@@ -461,18 +460,20 @@ test.describe('full workout flow', () => {
     await page.getByLabel('Movement Input').nth(1).fill('Goblet Squat');
     await page.getByLabel('Movement Input').last().blur();
 
-    // Give the second movement a longer ladder than the first.
+    // Make both movements ladders of different lengths: 2 rungs vs 3.
+    await page.getByRole('button', { name: 'Add rung' }).nth(0).click();
+    await page.getByRole('button', { name: 'Add rung' }).nth(1).click();
     await page.getByRole('button', { name: 'Add rung' }).nth(1).click();
 
     await expect(
-      page.getByText(/Rep schemes differ across movements/i),
+      page.getByText(/Ladders differ in length across movements/i),
     ).toBeVisible();
     await expect(startWorkoutButton).toBeDisabled();
 
     await page.getByRole('button', { name: 'Switch to Straight Sets' }).click();
 
     await expect(
-      page.getByText(/Rep schemes differ across movements/i),
+      page.getByText(/Ladders differ in length across movements/i),
     ).toBeHidden();
     await expect(startWorkoutButton).toBeEnabled();
     await startWorkoutButton.click();
@@ -488,7 +489,10 @@ test.describe('full workout flow', () => {
 
     await confirmGoalReached(page);
     await expect(page).toHaveURL(/\/history\/\d+$/, { timeout: 10_000 });
-    const workoutLogId = parseInt(page.url().match(/\/history\/(\d+)$/)![1], 10);
+    const workoutLogId = parseInt(
+      page.url().match(/\/history\/(\d+)$/)![1],
+      10,
+    );
 
     const workoutLog = await queryWorkoutLog(
       workoutLogId,
@@ -540,7 +544,10 @@ test.describe('full workout flow', () => {
 
     await confirmGoalReached(page);
     await expect(page).toHaveURL(/\/history\/\d+$/, { timeout: 10_000 });
-    const workoutLogId = parseInt(page.url().match(/\/history\/(\d+)$/)![1], 10);
+    const workoutLogId = parseInt(
+      page.url().match(/\/history\/(\d+)$/)![1],
+      10,
+    );
     sharedBellWorkoutLogId = workoutLogId;
 
     const workoutLog = await queryWorkoutLog(

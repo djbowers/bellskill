@@ -93,6 +93,7 @@ describe('prompt — pattern annotations and balance targets', () => {
   test('system prompt makes every session a circuit with varying rungs only', () => {
     const system = buildSystemPrompt();
     expect(system).toContain('Every session is a circuit');
+    expect(system).toContain('single-rung block like [5] is always fine');
     expect(system).toContain('Never repeat a rep');
     expect(system).not.toContain('Straight Sets');
   });

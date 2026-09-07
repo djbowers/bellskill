@@ -70,7 +70,7 @@ corrective-retry pipeline, then scored three ways:
   retry hides first-attempt failures, so the Anthropic fetch is wrapped to
   count attempts and keep the rejection reasons), `generation_errors`.
 - **deterministic checks** — `format_circuit`, `ids_in_catalog`,
-  `no_consecutive_repeats`, `equal_rungs`, `covers_targets`,
+  `no_consecutive_repeats`, `equal_ladders`, `covers_targets`,
   `equipment_loadable`, `bodyweight_consistent`, `no_debt_word`, plus the item's
   `within_duration` / `within_blocks` / `bodyweight_only` bounds. Reported as `deterministic_pass_rate` and a
   `failures_by_check` histogram.

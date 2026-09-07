@@ -178,7 +178,9 @@ const runChecks = (
   expect: GoldenItem['expect'],
 ): Record<string, boolean> => {
   const byId = new Map(inputs.candidates.map((c) => [c.movement_id, c]));
-  const rungCounts = new Set(rec.blocks.map((b) => b.rep_scheme.length));
+  const ladderLengths = new Set(
+    rec.blocks.map((b) => b.rep_scheme.length).filter((n) => n > 1),
+  );
   const covered = new Set(
     rec.blocks.flatMap((b) => byId.get(b.movement_id)?.pattern_credits ?? []),
   );
@@ -195,7 +197,7 @@ const runChecks = (
     no_consecutive_repeats: rec.blocks.every(
       (b) => !consecutiveRepeat(b.rep_scheme),
     ),
-    equal_rungs: rungCounts.size <= 1,
+    equal_ladders: ladderLengths.size <= 1,
     covers_targets: targets.every((t) => covered.has(t as never)),
     equipment_loadable:
       !equipment ||

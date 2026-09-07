@@ -121,7 +121,16 @@ describe('validateRecommendation — shared runnability rules', () => {
       ]),
     );
     expect(reasons).toHaveLength(1);
-    expect(reasons[0]).toContain('Rep schemes differ across movements');
+    expect(reasons[0]).toContain('Ladders differ in length across movements');
+  });
+
+  test('a single-rung block alongside equal ladders passes', () => {
+    const r = rec([
+      { rep_scheme: [1, 2, 3] },
+      { rep_scheme: [2, 3, 4] },
+      { rep_scheme: [5] },
+    ]);
+    expect(() => validateRecommendation(r, idsOf(r))).not.toThrow();
   });
 
   test('any format other than Circuit is rejected', () => {

@@ -466,7 +466,7 @@
       "expect": {
         "max_duration_minutes": 40,
         "max_blocks": 4,
-        "notes": "A clean-and-press ladder day in the Rite of Passage mould: press rungs that climb (e.g. [1, 2, 3]) at 24 kg. A swing or snatch block is optional; because the session is a circuit it takes the same number of rungs as the presses (e.g. [10, 15, 20]), which is fine. The rationale references the pressing goal and the medium day."
+        "notes": "A clean-and-press ladder day in the Rite of Passage mould: press rungs that climb (e.g. [1, 2, 3]) at 24 kg. A swing or snatch block is optional and can be a single rung like [10] that repeats each rung of the circuit, or a ladder of the same length as the presses. The rationale references the pressing goal and the medium day."
       }
     },
     {

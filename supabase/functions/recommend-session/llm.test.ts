@@ -118,7 +118,7 @@ describe('generateRecommendation — corrective retry', () => {
     const correction = sentBodies[1].messages.at(-1);
     expect(correction?.role).toBe('user');
     expect(correction?.content).toContain(
-      'Rep schemes differ across movements',
+      'Ladders differ in length across movements',
     );
     // Rung equality is a whole-session property, so it is not pinned to a block.
     expect(correction?.content).toContain('the session —');
