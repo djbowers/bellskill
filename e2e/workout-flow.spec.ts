@@ -479,11 +479,11 @@ test.describe('full workout flow', () => {
     await startWorkoutButton.click();
     await expect(page).toHaveURL(/\/active$/);
 
-    // Straight sets runs each movement's own ladder — 1 rung then 2 — so the
+    // Straight sets runs each movement's own ladder — 2 rungs then 3 — so the
     // session advances rung by rung rather than in one step.
     const continueButton = page.getByRole('button', { name: 'Continue' });
     await expect(continueButton).toBeVisible();
-    for (let rung = 0; rung < 3 && !/\/history\//.test(page.url()); rung++) {
+    for (let rung = 0; rung < 5 && !/\/history\//.test(page.url()); rung++) {
       await continueButton.click();
     }
 
