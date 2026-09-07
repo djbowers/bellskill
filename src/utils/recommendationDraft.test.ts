@@ -1,5 +1,8 @@
 import type { RecommendationLike } from './recommendationDraft';
-import { recommendationGoal, recommendationToDraft } from './recommendationDraft';
+import {
+  recommendationGoal,
+  recommendationToDraft,
+} from './recommendationDraft';
 import { validateWorkout } from './validateWorkout';
 
 const recommendation = (
@@ -49,6 +52,16 @@ describe('recommendationToDraft', () => {
     expect(validateWorkout(draft).errors.map((e) => e.code)).toEqual([
       'unequal_rungs',
     ]);
+  });
+
+  test('a weight of 0 is a bodyweight movement', () => {
+    const draft = recommendationToDraft(
+      recommendation({
+        blocks: [{ movement_name: 'Push-Up', weight_kg: 0, rep_scheme: [10] }],
+      }),
+    );
+    expect(draft.movements[0].weightOneValue).toBeNull();
+    expect(validateWorkout(draft).errors).toEqual([]);
   });
 
   test('a format other than Circuit still maps onto a circuit', () => {

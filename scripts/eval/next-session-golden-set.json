@@ -1,5 +1,5 @@
 {
-  "_readme": "Golden set for the Chalk next-session eval (PROD-85). Each item is a RecommenderInputs snapshot minus `candidates` — the runner fills those from scripts/data/movements.csv (Kettlebell rows) through the same toCandidates() the edge function uses. `expect` holds the deterministic bounds the runner asserts (max_duration_minutes, max_blocks, must_cover) plus `notes`, the coach's-eye description the LLM judge grades against. Categories: baseline (no signal at all), readiness (scales volume to how the lifter feels and how long they have), balance-target (must train the named overdue patterns), equipment (only prescribes loadable weights), goal (recognisable protocol flavour), history (adapts to what was just done or how long it has been), house-voice (never says 'debt').",
+  "_readme": "Golden set for the Chalk next-session eval (PROD-85). Each item is a RecommenderInputs snapshot minus `candidates` — the runner fills those from every row of scripts/data/movements.csv (kettlebell and bodyweight) through the same toCandidates() the edge function uses. `expect` holds the deterministic bounds the runner asserts (max_duration_minutes, max_blocks, must_cover) plus `notes`, the coach's-eye description the LLM judge grades against. Categories: baseline (no signal at all), readiness (scales volume to how the lifter feels and how long they have), balance-target (must train the named overdue patterns), equipment (only prescribes loadable weights), goal (recognisable protocol flavour), history (adapts to what was just done or how long it has been), house-voice (never says 'debt').",
   "items": [
     {
       "id": "baseline-blank",
@@ -668,6 +668,49 @@
         "max_blocks": 6,
         "must_cover": ["carry"],
         "notes": "Includes a loaded carry and explains that carries are overdue, in plain coaching language: 'due', 'overdue', 'needs attention' — the word 'debt' never appears in the rationale or notes."
+      }
+    },
+    {
+      "id": "equipment-none-travel",
+      "category": "equipment",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": "Stay strong while travelling",
+        "readiness": "Fine, but in a hotel room with no kettlebells at all this week",
+        "days_since_last_workout": 3,
+        "recent_history": [
+          {
+            "completed_at": "2026-09-04T17:00:00.000Z",
+            "goal": "25 minutes",
+            "rpe": "ideal",
+            "movements": [
+              {
+                "name": "Kettlebell Swing",
+                "rep_scheme": [15],
+                "weight_kg": 24
+              },
+              {
+                "name": "Goblet Squat",
+                "rep_scheme": [8],
+                "weight_kg": 24
+              },
+              {
+                "name": "One-Arm Kettlebell Military Press",
+                "rep_scheme": [5],
+                "weight_kg": 20
+              }
+            ]
+          }
+        ],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {}
+      },
+      "expect": {
+        "max_duration_minutes": 30,
+        "max_blocks": 6,
+        "bodyweight_only": true,
+        "notes": "No bells are available, so every block is a bodyweight movement (push-ups, squats, lunges, planks, glute bridges and the like) with weight_kg 0 and bells 0, still covering a push, a squat or hinge, and some core work. The rationale names the travel constraint."
       }
     }
   ]

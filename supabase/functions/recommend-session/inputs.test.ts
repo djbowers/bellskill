@@ -4,6 +4,7 @@ const row = (over: Partial<CatalogRow> = {}): CatalogRow => ({
   id: 'id-swing',
   Movement: 'Kettlebell Swing',
   pattern_credits: ['hinge'],
+  'Primary Equipment': 'Kettlebell',
   '# Primary Items': 1,
   unilateral_lower: false,
   ...over,
@@ -16,10 +17,18 @@ describe('toCandidates — catalog rows become the candidate set', () => {
         movement_id: 'id-swing',
         name: 'Kettlebell Swing',
         pattern_credits: ['hinge'],
+        bodyweight: false,
         supports_doubles: false,
         unilateral_lower: false,
       },
     ]);
+  });
+
+  test('a Bodyweight row is a bodyweight candidate', () => {
+    const [candidate] = toCandidates([
+      row({ Movement: 'Push-Up', 'Primary Equipment': 'Bodyweight' }),
+    ]);
+    expect(candidate.bodyweight).toBe(true);
   });
 
   test('two primary items means a double-bell movement', () => {

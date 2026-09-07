@@ -89,6 +89,8 @@ interface GoldenItem {
     max_duration_minutes?: number;
     max_blocks?: number;
     must_cover?: string[];
+    /** Every block must be a bodyweight movement (no bells available). */
+    bodyweight_only?: boolean;
     notes: string;
   };
 }
@@ -104,7 +106,7 @@ const catalogId = (name: string) => {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 };
 
-/** The Kettlebell rows of the catalog CSV, shaped like the `movements` table. */
+/** Every row of the catalog CSV, shaped like the `movements` table. */
 const loadCatalog = (): CandidateMovement[] => {
   const rows = parseCsv(
     readFileSync(resolve(HERE, '..', 'data', 'movements.csv'), 'utf8'),
@@ -112,15 +114,14 @@ const loadCatalog = (): CandidateMovement[] => {
   const [header, ...records] = rows;
   const col = (record: string[], name: string) => record[header.indexOf(name)];
   return toCandidates(
-    records
-      .filter((r) => col(r, 'Primary Equipment') === 'Kettlebell')
-      .map((r) => ({
-        id: catalogId(col(r, 'Movement')),
-        Movement: col(r, 'Movement'),
-        pattern_credits: parseCredits(col(r, 'Pattern Credits')),
-        '# Primary Items': Number(col(r, '# Primary Items')),
-        unilateral_lower: parseUnilateral(col(r, 'Unilateral Lower')),
-      })),
+    records.map((r) => ({
+      id: catalogId(col(r, 'Movement')),
+      Movement: col(r, 'Movement'),
+      'Primary Equipment': col(r, 'Primary Equipment'),
+      pattern_credits: parseCredits(col(r, 'Pattern Credits')),
+      '# Primary Items': Number(col(r, '# Primary Items')),
+      unilateral_lower: parseUnilateral(col(r, 'Unilateral Lower')),
+    })),
   );
 };
 
@@ -200,12 +201,19 @@ const runChecks = (
       !equipment ||
       validateSessionWeights(
         equipment,
-        rec.blocks.map((b) => ({
-          weight_kg: b.weight_kg,
-          bells: b.bells ?? 1,
-        })),
+        rec.blocks
+          .filter((b) => b.weight_kg > 0)
+          .map((b) => ({ weight_kg: b.weight_kg, bells: b.bells ?? 1 })),
         rec.adjustable_settings_kg ?? [],
       ).length === 0,
+    bodyweight_consistent: rec.blocks.every((b) =>
+      byId.get(b.movement_id)?.bodyweight
+        ? b.weight_kg === 0 && b.bells === 0
+        : b.weight_kg > 0 && (b.bells ?? 1) >= 1,
+    ),
+    bodyweight_only:
+      !expect.bodyweight_only ||
+      rec.blocks.every((b) => byId.get(b.movement_id)?.bodyweight),
     no_debt_word: !DEBT_WORD.test(prose),
     within_duration:
       expect.max_duration_minutes === undefined ||
@@ -317,7 +325,7 @@ const describeInputs = (inputs: RecommenderInputs, rec: Recommendation) => {
       .filter((c) => chosen.has(c.movement_id))
       .map(
         (c) =>
-          `- ${c.name}${c.pattern_credits ? ` · pays: ${c.pattern_credits.join(', ')}` : ''}${c.supports_doubles ? ' · double-bell' : ''}${c.unilateral_lower ? ' · one leg at a time' : ''}`,
+          `- ${c.name}${c.pattern_credits ? ` · pays: ${c.pattern_credits.join(', ')}` : ''}${c.bodyweight ? ' · bodyweight' : ''}${c.supports_doubles ? ' · double-bell' : ''}${c.unilateral_lower ? ' · one leg at a time' : ''}`,
       ),
   ].join('\n');
 };

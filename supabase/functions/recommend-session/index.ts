@@ -5,12 +5,11 @@
 // Mirrors create-checkout-session's auth + service-role pattern. The service role
 // is the SOLE writer of session_recommendations; every attempt (success or error)
 // is logged there for analytics + prompt iteration (PROD-88).
-
 import { createClient } from '@supabase/supabase-js';
 
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { gatherInputs } from './inputs.ts';
-import { generateRecommendation, LLMError } from './llm.ts';
+import { LLMError, generateRecommendation } from './llm.ts';
 import { ValidationError } from './validate.ts';
 
 function json(body: unknown, status: number): Response {

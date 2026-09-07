@@ -14,6 +14,7 @@ const baseInputs: RecommenderInputs = {
       movement_id: 'm-1',
       name: 'Kettlebell Swing',
       pattern_credits: ['hinge'],
+      bodyweight: false,
       supports_doubles: false,
       unilateral_lower: false,
     },

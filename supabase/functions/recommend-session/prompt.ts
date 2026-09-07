@@ -22,7 +22,8 @@ export function buildSystemPrompt(hasTargets = false): string {
   return [
     'You are an expert kettlebell programming coach. You know the Big 6 (swing,',
     'clean, press, snatch, squat, get-up) and common protocols (Simple & Sinister,',
-    'Rite of Passage). You design a single, focused next training session.',
+    'Rite of Passage), and you use bodyweight work where it serves the lifter.',
+    'You design a single, focused next training session.',
     '',
     'Rules:',
     "- Choose movements ONLY from the catalog list. Copy each block's",
@@ -43,9 +44,10 @@ export function buildSystemPrompt(hasTargets = false): string {
     '  session uses, one entry per bell; leave it empty when the lifter has no',
     '  adjustable bell or no equipment is listed.',
     '- Set each block\'s "bells" to how many kettlebells are held at once.',
-    '  Movements marked "double-bell" are done with 2; every other movement is',
-    '  done with 1. weight_kg is the weight of ONE bell, so a double at 24kg',
-    '  means two 24kg bells, not 12kg each.',
+    '  Movements marked "double-bell" are done with 2; movements marked',
+    '  "bodyweight" take no bell, so write weight_kg 0 and bells 0; every other',
+    '  movement is done with 1. weight_kg is the weight of ONE bell, so a double',
+    '  at 24kg means two 24kg bells, not 12kg each.',
     '- Movements marked "one leg at a time" run every rung twice, once per leg,',
     '  so they cost double the time and volume of the reps you write. Count that',
     '  when sizing the session, and avoid stacking several of them back to back.',
@@ -76,7 +78,8 @@ export function buildSystemPrompt(hasTargets = false): string {
     '  mid-round.',
     '- No rep scheme is empty, no rep count repeats on consecutive rungs, and',
     '  every rep is a whole number from 1 to 100.',
-    '- Every weight is a positive number of kilograms, no heavier than 100.',
+    '- Every kettlebell weight is a positive number of kilograms, no heavier than',
+    '  100; a bodyweight movement is exactly 0.',
     '- duration_minutes is greater than zero.',
   ].join('\n');
 }
@@ -89,7 +92,9 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
           c.pattern_credits?.length
             ? ` · pays: ${c.pattern_credits.join(', ')}`
             : ''
-        }${c.supports_doubles ? ' · double-bell' : ''}${
+        }${c.bodyweight ? ' · bodyweight' : ''}${
+          c.supports_doubles ? ' · double-bell' : ''
+        }${
           c.unilateral_lower ? ' · one leg at a time' : ''
         } [movement_id: ${c.movement_id}]`,
     )

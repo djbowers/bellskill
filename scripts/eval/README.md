@@ -60,8 +60,8 @@ use `--only <category>` / `--limit N` for partial runs.
 Chalk's next-session recommender (`recommend-session`, PROD-85), run
 **in-process**: the golden set `next-session-golden-set.json` holds ~12
 `RecommenderInputs` snapshots (goal, readiness, history, balance targets,
-equipment) and the runner fills `candidates` from `scripts/data/movements.csv`
-through the same `toCandidates()` the edge function uses — no Supabase stack,
+equipment) and the runner fills `candidates` from every row of `scripts/data/movements.csv`
+(kettlebell and bodyweight) through the same `toCandidates()` the edge function uses — no Supabase stack,
 just `ANTHROPIC_API_KEY`. Each item is generated `--samples` times (default 2)
 through the real prompt → `claude-haiku-4-5` structured output → validation →
 corrective-retry pipeline, then scored three ways:
@@ -71,8 +71,8 @@ corrective-retry pipeline, then scored three ways:
   count attempts and keep the rejection reasons), `generation_errors`.
 - **deterministic checks** — `format_circuit`, `ids_in_catalog`,
   `no_consecutive_repeats`, `equal_rungs`, `covers_targets`,
-  `equipment_loadable`, `no_debt_word`, plus the item's `within_duration` /
-  `within_blocks` bounds. Reported as `deterministic_pass_rate` and a
+  `equipment_loadable`, `bodyweight_consistent`, `no_debt_word`, plus the item's
+  `within_duration` / `within_blocks` / `bodyweight_only` bounds. Reported as `deterministic_pass_rate` and a
   `failures_by_check` histogram.
 - **LLM judge** (`claude-haiku-4-5`, structured outputs) — `fit`,
   `rationale_grounding`, `specificity` 1–5, `names_targets`, and quoted

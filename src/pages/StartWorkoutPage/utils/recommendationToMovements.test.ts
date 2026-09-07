@@ -161,6 +161,17 @@ describe('recommendationToWorkoutOptions', () => {
     expect(getWeightTabValue(options.movements[0])).toBe('double');
   });
 
+  test('a weight of 0 opens the builder as a bodyweight movement', () => {
+    const rec = recommendation([['Push-Up', 0]]);
+    rec.blocks[0].bells = 0;
+    const [movement] = recommendationToMovements(rec, catalog);
+
+    expect(movement.weightOneValue).toBeNull();
+    expect(movement.weightOneUnit).toBeNull();
+    expect(movement.weightTwoValue).toBeNull();
+    expect(getWeightTabValue(movement)).toBe('none');
+  });
+
   test('the recommendation loads as a circuit with its duration as the goal', () => {
     const options = recommendationToWorkoutOptions(
       recommendation([[DOUBLE_KB_FRONT_SQUAT, 24]]),

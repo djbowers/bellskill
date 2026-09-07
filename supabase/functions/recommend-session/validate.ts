@@ -29,6 +29,9 @@ export interface CoverageRequirement {
 /** Catalog answer to "is this a two-bell movement?". */
 export type DoublesById = Map<string, boolean>;
 
+/** Catalog answer to "does this movement take no bell?". */
+export type BodyweightById = Map<string, boolean>;
+
 export class ValidationError extends Error {
   reasons: string[];
   constructor(reasons: string[]) {
@@ -58,6 +61,7 @@ export function validateRecommendation(
   coverage?: CoverageRequirement,
   equipment?: EquipmentSummary | null,
   doublesById?: DoublesById,
+  bodyweightById?: BodyweightById,
 ): void {
   const reasons: string[] = [];
 
@@ -105,7 +109,17 @@ export function validateRecommendation(
     // Bell count is an LLM-contract check, not runnability: the shared verifier
     // has no concept of how many bells a block uses.
     const bells = block.bells ?? 1;
-    if (!Number.isInteger(bells) || bells < 1 || bells > 2) {
+    if (bodyweightById?.get(block.movement_id) === true) {
+      if (bells !== 0 || block.weight_kg !== 0) {
+        reasons.push(
+          `${describeBlock(rec, i)} is a bodyweight movement — write weight_kg 0 and bells 0`,
+        );
+      }
+    } else if (block.weight_kg === 0) {
+      reasons.push(
+        `${describeBlock(rec, i)} takes a kettlebell — prescribe a positive weight_kg`,
+      );
+    } else if (!Number.isInteger(bells) || bells < 1 || bells > 2) {
       reasons.push(
         `${describeBlock(rec, i)} claims ${bells} bells — use 1 or 2`,
       );
@@ -140,14 +154,14 @@ export function validateRecommendation(
 
   // Equipment: only checked when the lifter has recorded some. Weights must be
   // loadable *without re-plating mid-session* — see validateSessionWeights.
+  // Bodyweight blocks load nothing.
   if (equipment) {
     reasons.push(
       ...validateSessionWeights(
         equipment,
-        rec.blocks.map((b) => ({
-          weight_kg: b.weight_kg,
-          bells: b.bells ?? 1,
-        })),
+        rec.blocks
+          .filter((b) => b.weight_kg > 0)
+          .map((b) => ({ weight_kg: b.weight_kg, bells: b.bells ?? 1 })),
         rec.adjustable_settings_kg ?? [],
       ),
     );

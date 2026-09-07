@@ -14,6 +14,7 @@ const baseInputs = (
       movement_id: 'tgu',
       name: 'Turkish Get-Up',
       pattern_credits: ['get_up', 'push', 'rotation'],
+      bodyweight: false,
       supports_doubles: false,
       unilateral_lower: false,
     },
@@ -21,6 +22,15 @@ const baseInputs = (
       movement_id: 'mystery',
       name: 'Mystery Move',
       pattern_credits: null,
+      bodyweight: false,
+      supports_doubles: false,
+      unilateral_lower: false,
+    },
+    {
+      movement_id: 'push-up',
+      name: 'Push-Up',
+      pattern_credits: ['push'],
+      bodyweight: true,
       supports_doubles: false,
       unilateral_lower: false,
     },
@@ -75,6 +85,9 @@ describe('prompt — pattern annotations and balance targets', () => {
       '- Turkish Get-Up · pays: get_up, push, rotation [movement_id: tgu]',
     );
     expect(prompt).toContain('- Mystery Move [movement_id: mystery]');
+    expect(prompt).toContain(
+      '- Push-Up · pays: push · bodyweight [movement_id: push-up]',
+    );
   });
 
   test('system prompt makes every session a circuit with varying rungs only', () => {

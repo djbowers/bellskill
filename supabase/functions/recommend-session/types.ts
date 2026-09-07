@@ -4,7 +4,6 @@
 // into session_recommendations.inputs. unlocked_weights carries the weights the
 // user can actually load, derived from their declared equipment (PROD-78); it
 // stays `{}` for users who have recorded none.
-
 import type { EquipmentSummary } from '../../../src/utils/equipment.ts';
 import type {
   Modality,
@@ -18,8 +17,9 @@ import type {
 } from '../../../src/utils/patternDebt.ts';
 
 /**
- * One kettlebell movement from the catalog — the candidate set the LLM may
- * choose from. Custom (unlinked) library movements are never candidates.
+ * One movement from the catalog, kettlebell or bodyweight — the candidate set
+ * the LLM may choose from. Custom (unlinked) library movements are never
+ * candidates.
  */
 export interface CandidateMovement {
   /** `movements.id` in the catalog. */
@@ -27,6 +27,8 @@ export interface CandidateMovement {
   name: string;
   /** Coarse patterns this movement pays credit toward; null when it credits none. */
   pattern_credits: Pattern[] | null;
+  /** Takes no bell: prescribed with weight_kg 0 and bells 0. */
+  bodyweight: boolean;
   supports_doubles: boolean;
   unilateral_lower: boolean;
 }
@@ -117,13 +119,14 @@ export interface RecommendationBlock {
   /** The catalog `movements.id` the block was chosen from. */
   movement_id: string;
   movement_name: string;
+  /** Weight of ONE bell; 0 for a bodyweight movement. */
   weight_kg: number;
   rep_scheme: number[];
   notes: string;
   /**
-   * Kettlebells held at once for this block: 1, or 2 for genuine double-bell
-   * work. Optional here only so recommendations persisted before this field
-   * existed still parse; the schema requires it for new output.
+   * Kettlebells held at once for this block: 1, 2 for genuine double-bell
+   * work, or 0 for bodyweight. Optional here only so recommendations persisted
+   * before this field existed still parse; the schema requires it for new output.
    */
   bells?: number;
 }

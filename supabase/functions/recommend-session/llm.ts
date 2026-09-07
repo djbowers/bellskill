@@ -8,7 +8,6 @@
 // We call the Anthropic Messages API over raw fetch rather than @anthropic-ai/sdk:
 // the SDK's esm.sh type graph fails to bootstrap in the Supabase edge runtime, and
 // a single structured-outputs call needs no SDK surface.
-
 import {
   buildCorrectionPrompt,
   buildSystemPrompt,
@@ -51,9 +50,7 @@ export async function generateRecommendation(
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
   if (!apiKey) throw new LLMError('ANTHROPIC_API_KEY is not configured');
 
-  const candidateIds = new Set(
-    inputs.candidates.map((c) => c.movement_id),
-  );
+  const candidateIds = new Set(inputs.candidates.map((c) => c.movement_id));
   const coverage = {
     targets: inputs.balance_targets,
     creditsById: new Map(
@@ -65,6 +62,9 @@ export async function generateRecommendation(
   const doublesById = new Map(
     inputs.candidates.map((c) => [c.movement_id, c.supports_doubles]),
   );
+  const bodyweightById = new Map(
+    inputs.candidates.map((c) => [c.movement_id, c.bodyweight]),
+  );
   const system = buildSystemPrompt(inputs.balance_targets.length > 0);
   const messages: Message[] = [
     { role: 'user', content: buildUserPrompt(inputs) },
@@ -74,7 +74,14 @@ export async function generateRecommendation(
   for (let attempt = 0; attempt < 2; attempt++) {
     const rec = await callModel(apiKey, system, messages);
     try {
-      validateRecommendation(rec, candidateIds, coverage, equipment, doublesById);
+      validateRecommendation(
+        rec,
+        candidateIds,
+        coverage,
+        equipment,
+        doublesById,
+        bodyweightById,
+      );
       return rec;
     } catch (err) {
       if (!(err instanceof ValidationError) || attempt === 1) throw err;

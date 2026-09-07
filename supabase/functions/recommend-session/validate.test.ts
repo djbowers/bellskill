@@ -340,6 +340,70 @@ describe('validateRecommendation — bell count', () => {
     }
   });
 
+  test('a bodyweight movement must carry weight 0 and bells 0', () => {
+    const bodyweight = new Map([['push-up', true]]);
+    const sound = rec([{ movement_id: 'push-up', weight_kg: 0, bells: 0 }]);
+    expect(() =>
+      validateRecommendation(
+        sound,
+        idsOf(sound),
+        undefined,
+        null,
+        undefined,
+        bodyweight,
+      ),
+    ).not.toThrow();
+
+    const loaded = rec([{ movement_id: 'push-up', weight_kg: 16, bells: 1 }]);
+    try {
+      validateRecommendation(
+        loaded,
+        idsOf(loaded),
+        undefined,
+        null,
+        undefined,
+        bodyweight,
+      );
+      throw new Error('expected ValidationError');
+    } catch (err) {
+      expect((err as ValidationError).reasons[0]).toContain(
+        'is a bodyweight movement — write weight_kg 0 and bells 0',
+      );
+    }
+  });
+
+  test('a kettlebell movement with weight 0 is rejected', () => {
+    const r = rec([{ movement_name: 'Swing', weight_kg: 0, bells: 1 }]);
+    try {
+      validateRecommendation(r, idsOf(r));
+      throw new Error('expected ValidationError');
+    } catch (err) {
+      expect((err as ValidationError).reasons).toEqual([
+        'block 1 (Swing) takes a kettlebell — prescribe a positive weight_kg',
+      ]);
+    }
+  });
+
+  test('a bodyweight block is ignored by the equipment check', () => {
+    const r = {
+      ...rec([
+        { movement_id: 'push-up', weight_kg: 0, bells: 0 },
+        { weight_kg: 16 },
+      ]),
+      adjustable_settings_kg: [],
+    };
+    expect(() =>
+      validateRecommendation(
+        r,
+        idsOf(r),
+        undefined,
+        pairOf16,
+        undefined,
+        new Map([['push-up', true]]),
+      ),
+    ).not.toThrow();
+  });
+
   test('rejects a double at a weight the lifter owns only one of', () => {
     const r = {
       ...rec([{ weight_kg: 24, bells: 2 }]),

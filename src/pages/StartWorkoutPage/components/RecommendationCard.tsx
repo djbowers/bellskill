@@ -49,7 +49,8 @@ export const RecommendationCard = ({
                   {block.movement_name}
                 </span>
                 <span className="whitespace-nowrap text-xs text-muted-foreground">
-                  {block.weight_kg} kg · {block.rep_scheme.join(' / ')}
+                  {block.weight_kg > 0 ? `${block.weight_kg} kg` : 'bodyweight'}{' '}
+                  · {block.rep_scheme.join(' / ')}
                 </span>
               </div>
               {block.notes && (

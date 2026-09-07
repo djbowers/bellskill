@@ -4,10 +4,8 @@
 // authenticated user_id — except pattern debt, which goes through the caller's
 // JWT client because pattern_debt_movements is SECURITY INVOKER and filters on
 // auth.uid(). unlocked_weights comes from the user's declared equipment (PROD-78).
-
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { gatherEquipment } from '../_shared/equipmentInput.ts';
 import {
   daysBetweenCalendarDays,
   parseLocalDateString,
@@ -19,6 +17,7 @@ import {
   computePatternBalance,
   selectBalanceTargets,
 } from '../../../src/utils/patternDebt.ts';
+import { gatherEquipment } from '../_shared/equipmentInput.ts';
 import type {
   CandidateMovement,
   ModalityDebtInput,
@@ -29,13 +28,14 @@ import type {
 
 const HISTORY_LIMIT = 5;
 const LB_TO_KG = 0.453592;
-const CANDIDATE_EQUIPMENT = 'Kettlebell';
+const BODYWEIGHT_EQUIPMENT = 'Bodyweight';
 
 /** The catalog columns a candidate is built from (`movements` table). */
 export interface CatalogRow {
   id: string;
   Movement: string;
   pattern_credits: string[] | null;
+  'Primary Equipment': string | null;
   '# Primary Items': number | null;
   unilateral_lower: boolean | null;
 }
@@ -51,6 +51,7 @@ export function toCandidates(rows: CatalogRow[]): CandidateMovement[] {
         movement_id: row.id,
         name: row.Movement,
         pattern_credits: credited.length > 0 ? credited : null,
+        bodyweight: row['Primary Equipment'] === BODYWEIGHT_EQUIPMENT,
         supports_doubles: row['# Primary Items'] === 2,
         unilateral_lower: Boolean(row.unilateral_lower),
       };
@@ -99,8 +100,11 @@ async function gatherBalances(
         total_reps: Number(row.total_reps),
         total_volume_kg: Number(row.total_volume_kg),
         baseline_volume_kg:
-          row.baseline_volume_kg == null ? null : Number(row.baseline_volume_kg),
-        hardest_rpe: (row.hardest_rpe ?? null) as MovementAggregate['hardest_rpe'],
+          row.baseline_volume_kg == null
+            ? null
+            : Number(row.baseline_volume_kg),
+        hardest_rpe: (row.hardest_rpe ??
+          null) as MovementAggregate['hardest_rpe'],
         total_unloaded_reps: Number(row.total_unloaded_reps ?? 0),
         baseline_unloaded_reps:
           row.baseline_unloaded_reps == null
@@ -181,12 +185,13 @@ export async function gatherInputs(
   }
   const clientToday = parsedClientToday ?? new Date();
 
-  // Candidate movements: every kettlebell movement in the catalog. Custom
+  // Candidate movements: the whole catalog, kettlebell and bodyweight. Custom
   // (unlinked) library movements are deliberately excluded (PROD-85).
   const { data: catalogRows, error: catErr } = await admin
     .from('movements')
-    .select('id, Movement, pattern_credits, "# Primary Items", unilateral_lower')
-    .eq('Primary Equipment', CANDIDATE_EQUIPMENT)
+    .select(
+      'id, Movement, pattern_credits, "Primary Equipment", "# Primary Items", unilateral_lower',
+    )
     .order('Movement');
   if (catErr) throw catErr;
   const candidates = toCandidates(catalogRows ?? []);
@@ -213,7 +218,9 @@ export async function gatherInputs(
   if (logIds.length > 0) {
     const { data: moves, error: mvErr } = await admin
       .from('movement_logs')
-      .select('workout_log_id, movement_name, rep_scheme, weight_one_value, weight_one_unit')
+      .select(
+        'workout_log_id, movement_name, rep_scheme, weight_one_value, weight_one_unit',
+      )
       .in('workout_log_id', logIds);
     if (mvErr) throw mvErr;
 

@@ -13,6 +13,7 @@ const inputs: RecommenderInputs = {
       movement_id: 'swing',
       name: 'Swing',
       pattern_credits: ['hinge'],
+      bodyweight: false,
       supports_doubles: false,
       unilateral_lower: false,
     },
@@ -20,6 +21,7 @@ const inputs: RecommenderInputs = {
       movement_id: 'press',
       name: 'Press',
       pattern_credits: ['push'],
+      bodyweight: false,
       supports_doubles: true,
       unilateral_lower: false,
     },
@@ -38,7 +40,9 @@ const block = (over: Partial<Recommendation['blocks'][number]> = {}) => ({
   ...over,
 });
 
-const recommendation = (over: Partial<Recommendation> = {}): Recommendation => ({
+const recommendation = (
+  over: Partial<Recommendation> = {},
+): Recommendation => ({
   rationale: 'test',
   duration_minutes: 20,
   format: 'Circuit',
@@ -51,7 +55,11 @@ const recommendation = (over: Partial<Recommendation> = {}): Recommendation => (
 const unequalRungs = recommendation({
   blocks: [
     block({ rep_scheme: [1, 2, 3, 4] }),
-    block({ movement_id: 'press', movement_name: 'Press', rep_scheme: [5, 4, 3] }),
+    block({
+      movement_id: 'press',
+      movement_name: 'Press',
+      rep_scheme: [5, 4, 3],
+    }),
   ],
 });
 
@@ -62,7 +70,10 @@ const jsonResponse = (rec: Recommendation) =>
   );
 
 /** Bodies of every Anthropic request made during a call, in order. */
-let sentBodies: Array<{ system: string; messages: Array<{ role: string; content: string }> }>;
+let sentBodies: Array<{
+  system: string;
+  messages: Array<{ role: string; content: string }>;
+}>;
 
 const stubModel = (responses: Recommendation[]) => {
   const queue = [...responses];
@@ -106,7 +117,9 @@ describe('generateRecommendation — corrective retry', () => {
 
     const correction = sentBodies[1].messages.at(-1);
     expect(correction?.role).toBe('user');
-    expect(correction?.content).toContain('Rep schemes differ across movements');
+    expect(correction?.content).toContain(
+      'Rep schemes differ across movements',
+    );
     // Rung equality is a whole-session property, so it is not pinned to a block.
     expect(correction?.content).toContain('the session —');
   });
@@ -132,7 +145,9 @@ describe('generateRecommendation — corrective retry', () => {
     vi.stubGlobal('Deno', { env: { get: () => undefined } });
     stubModel([]);
 
-    await expect(generateRecommendation(inputs)).rejects.toBeInstanceOf(LLMError);
+    await expect(generateRecommendation(inputs)).rejects.toBeInstanceOf(
+      LLMError,
+    );
     expect(sentBodies).toHaveLength(0);
   });
 });
