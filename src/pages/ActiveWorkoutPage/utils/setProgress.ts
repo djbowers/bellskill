@@ -35,10 +35,9 @@ export const getSetProgress = ({
 }: SetProgressArgs): SetProgress | null => {
   if (workoutMode !== 'circuit' || movements.length === 0) return null;
 
-  // The last movement's ladder is the one that ends the round: every movement
-  // shares a single rung pointer, and `isLastRung` is read off the movement the
-  // pointer lands on last.
-  const rungsPerRound = movements[movements.length - 1].repScheme.length;
+  // Every movement shares a single rung pointer, and a round runs to the end of
+  // the longest ladder; single-rung movements repeat along the way.
+  const rungsPerRound = Math.max(...movements.map((m) => m.repScheme.length));
   const setsPerRound = movements.length * rungsPerRound;
 
   const totalSets = workoutGoal * setsPerRound;
