@@ -44,6 +44,7 @@ commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/styl
 - Branded in-shell loading state while program gates resolve ([#201](https://github.com/djbowers/bellskill/pull/201))
 - AI recommendations switched from Sonnet to Haiku ([#224](https://github.com/djbowers/bellskill/pull/224))
 - Larger hand indicator in complex mode ([#265](https://github.com/djbowers/bellskill/pull/265))
+- Chalk: corpus article grounding pattern-balance explanations in retrieved text ([#285](https://github.com/djbowers/bellskill/pull/285))
 
 ### Fixed
 - Chalk embedding worker: dedicated token for embed-text auth, and smaller batches with retry under the hosted compute limit ([#279](https://github.com/djbowers/bellskill/pull/279), [#281](https://github.com/djbowers/bellskill/pull/281))
@@ -73,6 +74,7 @@ commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/styl
 - Production db push accepts out-of-order migrations; migration version collisions resolved ([#262](https://github.com/djbowers/bellskill/pull/262), [#263](https://github.com/djbowers/bellskill/pull/263))
 - Legacy `pattern_debt_window` RPC dropped; `bottomNav` flag retired ([#230](https://github.com/djbowers/bellskill/pull/230), [#237](https://github.com/djbowers/bellskill/pull/237))
 - Program user flows and test coverage documented ([#202](https://github.com/djbowers/bellskill/pull/202))
+- Chalk faithfulness eval baseline recorded — 4.92/5, safety 100% ([#284](https://github.com/djbowers/bellskill/pull/284))
 
 ## 2026-07
 
