@@ -2,14 +2,13 @@
 //
 // Kept separate from transport (llm.ts) so prompt quality can be iterated in
 // PROD-88 without touching the API plumbing.
-
-import type { RecommenderInputs } from './types.ts';
 import { formatEquipmentSection } from '../_shared/equipmentInput.ts';
 import {
   formatModalityLine,
   formatOverallModalityBalance,
 } from '../_shared/modalityPrompt.ts';
 import { formatPatternLine } from '../_shared/patternDebtPrompt.ts';
+import type { RecommenderInputs } from './types.ts';
 
 export function buildSystemPrompt(hasTargets = false): string {
   const targetRules = hasTargets
@@ -26,31 +25,36 @@ export function buildSystemPrompt(hasTargets = false): string {
     'Rite of Passage). You design a single, focused next training session.',
     '',
     'Rules:',
-    "- Choose movements ONLY from the catalog list. Use each block's exact",
-    '  movement_id from that list — never invent an id or a movement.',
+    "- Choose movements ONLY from the catalog list. Copy each block's",
+    '  movement_id exactly as printed in brackets on that line — never invent',
+    '  an id or a movement.',
     '- Size the session to the time the lifter has and how they say they feel',
     '  today. When they are tired, sore, or short on time, scale volume down.',
-    '- Prescribe weights in kilograms (whole or half kg).',
+    '- Prescribe weights in kilograms (whole or half kg). Start from the weights',
+    '  in their recent history: hold, or move one bell size (about 4 kg) up or',
+    '  down, and say why. Do not drop far below a load they handled well.',
     '- rep_scheme is the ladder for ONE round of the circuit: one positive integer',
     '  per rung. Use more than one rung only when the reps change from rung to',
     '  rung, like [1, 2, 3], [10, 8, 6] or [1, 2, 3, 2, 1]. Never repeat a rep',
     '  count on consecutive rungs — 3×5 is written [5], and the rounds come from',
-    '  the clock, not from repeated rungs.',
+    '  the clock, not from repeated rungs. Work done per side is still one rung:',
+    '  one get-up each side is [1] with "each side" in the notes, never [1, 1].',
     '- adjustable_settings_kg lists the setting of each adjustable bell the',
     '  session uses, one entry per bell; leave it empty when the lifter has no',
     '  adjustable bell or no equipment is listed.',
-    '- Set each block\'s "bells" to how many kettlebells are held at once: 1, or 2',
-    '  only for movements marked "double-bell". weight_kg is the weight of ONE',
-    '  bell, so a double at 24kg means two 24kg bells, not 12kg each.',
+    '- Set each block\'s "bells" to how many kettlebells are held at once.',
+    '  Movements marked "double-bell" are done with 2; every other movement is',
+    '  done with 1. weight_kg is the weight of ONE bell, so a double at 24kg',
+    '  means two 24kg bells, not 12kg each.',
     '- Movements marked "one leg at a time" run every rung twice, once per leg,',
     '  so they cost double the time and volume of the reps you write. Count that',
     '  when sizing the session, and avoid stacking several of them back to back.',
     '- When a pattern-balance section is provided, prefer movements that train',
-    '  the red- and yellow-band (highest-debt) patterns, and say so in the',
+    '  the red- and yellow-band (highest-score) patterns, and say so in the',
     '  rationale when it drives your selection. Readiness, recent RPE, and the',
     "  lifter's goal still take precedence when they conflict.",
-    "- Patterns marked \"new\" have no training history yet — treat them as",
-    '  neutral, not overdue; do not count them toward pattern debt.',
+    '- Patterns marked "new" have no training history yet — treat them as',
+    '  neutral, not overdue; do not count them as under-trained.',
     '- A movement-mix section, when provided, is a second and WEAKER signal: it',
     '  describes how they have been moving (grind = slow strength, ballistic =',
     '  explosive, cardio = sustained effort, mobility = range of motion) rather',
@@ -60,9 +64,10 @@ export function buildSystemPrompt(hasTargets = false): string {
     '  too.',
     ...targetRules,
     '- Give a short, concrete rationale a thoughtful coach would give — tie it to',
-    '  their goal, recent history, and readiness. Avoid generic filler. Never use',
-    '  the word "debt" — say a pattern or a kind of work is due, overdue, or',
-    '  needs attention.',
+    '  their goal, recent history, and readiness, and only to facts you were',
+    '  given: never invent weeks, phases, or sessions that are not listed. Avoid',
+    '  generic filler. Never use the word "debt" anywhere in the rationale or',
+    '  notes — say a pattern or a kind of work is due, overdue, or needs attention.',
     '',
     'Runnability (these are checked, and a violation is rejected):',
     '- Every session is a circuit: the lifter rotates through the blocks one rung',
@@ -107,7 +112,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
   const patternDebtSection = inputs.pattern_debt
     ? [
         '',
-        `Pattern balance (higher debt = more under-trained; overall: ${inputs.pattern_debt.overall_balance}):`,
+        `Pattern balance (higher score = more under-trained; overall: ${inputs.pattern_debt.overall_balance}):`,
         ...inputs.pattern_debt.patterns
           .slice()
           .sort((a, b) => {

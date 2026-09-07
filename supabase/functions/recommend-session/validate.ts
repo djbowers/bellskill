@@ -11,7 +11,6 @@
 //   - The LLM contract ("did the model follow instructions?") stays local:
 //     circuit format, catalog-id membership, no rep count repeated on
 //     consecutive rungs, bell count, and target-pattern coverage.
-
 import {
   type EquipmentSummary,
   validateSessionWeights,
@@ -65,12 +64,16 @@ export function validateRecommendation(
   // Runnability: reps, weights, rung equality, empty blocks, zero duration.
   const { errors, warnings } = validateWorkout(recommendationToDraft(rec));
   for (const issue of errors) {
-    reasons.push(`${describeBlock(rec, issue.movementIndex)} — ${issue.message}`);
+    reasons.push(
+      `${describeBlock(rec, issue.movementIndex)} — ${issue.message}`,
+    );
   }
   if (warnings.length > 0) {
     console.warn(
       'recommend-session: runnability warnings',
-      warnings.map((w) => `${describeBlock(rec, w.movementIndex)} — ${w.message}`),
+      warnings.map(
+        (w) => `${describeBlock(rec, w.movementIndex)} — ${w.message}`,
+      ),
     );
   }
 
@@ -103,10 +106,16 @@ export function validateRecommendation(
     // has no concept of how many bells a block uses.
     const bells = block.bells ?? 1;
     if (!Number.isInteger(bells) || bells < 1 || bells > 2) {
-      reasons.push(`${describeBlock(rec, i)} claims ${bells} bells — use 1 or 2`);
+      reasons.push(
+        `${describeBlock(rec, i)} claims ${bells} bells — use 1 or 2`,
+      );
     } else if (bells === 2 && doublesById?.get(block.movement_id) === false) {
       reasons.push(
         `${describeBlock(rec, i)} is not a double-bell movement — prescribe it with 1 bell`,
+      );
+    } else if (bells === 1 && doublesById?.get(block.movement_id) === true) {
+      reasons.push(
+        `${describeBlock(rec, i)} is a double-bell movement — prescribe it with 2 bells`,
       );
     }
   }
@@ -116,8 +125,7 @@ export function validateRecommendation(
   if (coverage && coverage.targets.length > 0) {
     const covered = new Set<string>();
     for (const block of rec.blocks) {
-      for (const credit of coverage.creditsById.get(block.movement_id) ??
-        []) {
+      for (const credit of coverage.creditsById.get(block.movement_id) ?? []) {
         covered.add(credit);
       }
     }
@@ -136,7 +144,10 @@ export function validateRecommendation(
     reasons.push(
       ...validateSessionWeights(
         equipment,
-        rec.blocks.map((b) => ({ weight_kg: b.weight_kg, bells: b.bells ?? 1 })),
+        rec.blocks.map((b) => ({
+          weight_kg: b.weight_kg,
+          bells: b.bells ?? 1,
+        })),
         rec.adjustable_settings_kg ?? [],
       ),
     );
