@@ -1,5 +1,6 @@
 // Shared pattern-debt line formatting for the recommend-session and
-// recommend-program prompts. Kept provider-agnostic (no cross-import of
+// recommend-program prompts. Says "score", never "debt": the models echo the
+// prompt's vocabulary, and the house voice bans that word. Kept provider-agnostic (no cross-import of
 // either function's PatternDebtEntry) since the two functions' scoring types
 // live in separate modules.
 
@@ -30,11 +31,11 @@ export function formatPatternLine(p: PatternDebtLineEntry): string {
       p.baseline_volume_kg && p.baseline_volume_kg > 0
         ? `volume ${Math.round((p.recent_volume_kg / p.baseline_volume_kg) * 100)}% of baseline`
         : `recent volume ${p.recent_volume_kg}kg (no baseline)`;
-    return `- ${p.pattern}: debt ${p.debt_score} (${p.band}) · ${lastTrained} · ${volume}`;
+    return `- ${p.pattern}: score ${p.debt_score} (${p.band}) · ${lastTrained} · ${volume}`;
   }
   const lastTrained =
     p.days_since_last_trained !== null
       ? `, last trained ${p.days_since_last_trained}d ago`
       : ', not trained recently';
-  return `- ${p.pattern}: debt ${p.debt_score} (${p.band})${lastTrained}`;
+  return `- ${p.pattern}: score ${p.debt_score} (${p.band})${lastTrained}`;
 }

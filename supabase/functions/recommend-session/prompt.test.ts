@@ -114,7 +114,32 @@ describe('prompt — pattern annotations and balance targets', () => {
   });
 
   test('system prompt bans the word "debt" in rationale copy', () => {
-    expect(buildSystemPrompt()).toContain('Never use');
+    expect(buildSystemPrompt()).toContain('Never use the word "debt"');
+  });
+
+  test('the pattern-balance section itself never says "debt"', () => {
+    const prompt = buildUserPrompt(
+      baseInputs({
+        pattern_debt: {
+          overall_balance: 'push-heavy',
+          patterns: [
+            {
+              pattern: 'hinge',
+              days_since_last_trained: 19,
+              recent_volume_kg: 0,
+              baseline_volume_kg: 4800,
+              debt_score: 88,
+              band: 'red',
+              hardest_rpe: null,
+              is_new: false,
+            },
+          ],
+        },
+      }),
+    );
+    const section = prompt.slice(prompt.indexOf('Pattern balance'));
+    expect(section).toContain('- hinge: score 88 (red)');
+    expect(section).not.toMatch(/debt/i);
   });
 });
 

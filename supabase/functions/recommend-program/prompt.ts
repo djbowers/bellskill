@@ -125,7 +125,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
     'Queued programs (already chosen, do not re-pick):',
     queuedLines,
     '',
-    `Movement-pattern balance (overall: ${inputs.pattern_debt.overall_balance}; higher debt = more undertrained):`,
+    `Movement-pattern balance (overall: ${inputs.pattern_debt.overall_balance}; higher score = more undertrained):`,
     debtLines,
     ...modalitySection,
     '',
