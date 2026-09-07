@@ -25,7 +25,7 @@ export const RecommendationCard = ({
   return (
     <Card>
       <Section
-        title="Your AI session"
+        title="Chalk's session"
         actions={
           <span className="text-xs capitalize text-muted-foreground">
             {confidence} confidence
@@ -41,7 +41,7 @@ export const RecommendationCard = ({
         <ul className="flex flex-col gap-1">
           {blocks.map((block, i) => (
             <li
-              key={`${block.user_movement_id}-${i}`}
+              key={`${block.movement_id}-${i}`}
               className="rounded-md bg-muted/50 p-1.5"
             >
               <div className="flex items-baseline justify-between gap-1">

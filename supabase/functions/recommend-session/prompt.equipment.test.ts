@@ -10,9 +10,16 @@ const baseInputs: RecommenderInputs = {
   days_since_last_workout: 2,
   recent_history: [],
   candidates: [
-    { user_movement_id: 'm-1', name: 'Kettlebell Swing', is_big_6: true },
+    {
+      movement_id: 'm-1',
+      name: 'Kettlebell Swing',
+      pattern_credits: ['hinge'],
+      supports_doubles: false,
+      unilateral_lower: false,
+    },
   ],
   pattern_debt: null,
+  modality_debt: null,
   unlocked_weights: {},
 };
 

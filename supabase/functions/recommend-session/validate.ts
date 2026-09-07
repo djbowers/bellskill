@@ -9,7 +9,8 @@
 //     shared verifier, so the builder enforces the same rules (PROD-240). Its
 //     errors become retry reasons; its warnings are logged, never retried on.
 //   - The LLM contract ("did the model follow instructions?") stays local:
-//     candidate-id membership and target-pattern coverage.
+//     circuit format, catalog-id membership, no rep count repeated on
+//     consecutive rungs, bell count, and target-pattern coverage.
 
 import {
   type EquipmentSummary,
@@ -26,8 +27,8 @@ export interface CoverageRequirement {
   creditsById: Map<string, readonly string[] | null>;
 }
 
-/** Catalog answer to "is this a two-bell movement?", null when unlinked. */
-export type DoublesById = Map<string, boolean | null>;
+/** Catalog answer to "is this a two-bell movement?". */
+export type DoublesById = Map<string, boolean>;
 
 export class ValidationError extends Error {
   reasons: string[];
@@ -43,6 +44,14 @@ const describeBlock = (rec: Recommendation, index?: number) =>
   index === undefined
     ? 'the session'
     : `block ${index + 1} (${rec.blocks[index]?.movement_name ?? 'unnamed'})`;
+
+/** The first rep count that repeats on consecutive rungs, or null. */
+const consecutiveRepeat = (repScheme: number[]): number | null => {
+  for (let i = 1; i < repScheme.length; i++) {
+    if (repScheme[i] === repScheme[i - 1]) return repScheme[i];
+  }
+  return null;
+};
 
 export function validateRecommendation(
   rec: Recommendation,
@@ -65,11 +74,28 @@ export function validateRecommendation(
     );
   }
 
-  // LLM contract: every block must name a movement from the candidate list.
+  // LLM contract: the schema pins the format, but a stale or hand-built
+  // recommendation could still carry another one.
+  if (rec.format !== 'Circuit') {
+    reasons.push(
+      `the session declares format "${rec.format}" — every session is a "Circuit"`,
+    );
+  }
+
+  // LLM contract: every block must name a movement from the catalog list.
   for (const [i, block] of rec.blocks.entries()) {
-    if (!candidateIds.has(block.user_movement_id)) {
+    if (!candidateIds.has(block.movement_id)) {
       reasons.push(
-        `${describeBlock(rec, i)} uses user_movement_id "${block.user_movement_id}", which is not in the candidate list`,
+        `${describeBlock(rec, i)} uses movement_id "${block.movement_id}", which is not in the catalog list`,
+      );
+    }
+
+    // Rungs exist to vary the reps; rounds come from the clock. [5, 5, 5] is
+    // not a runnability problem, so the shared verifier allows it.
+    const repeated = consecutiveRepeat(block.rep_scheme);
+    if (repeated !== null) {
+      reasons.push(
+        `${describeBlock(rec, i)} repeats ${repeated} reps on consecutive rungs — write a single rung [${repeated}] or vary the reps`,
       );
     }
 
@@ -78,12 +104,7 @@ export function validateRecommendation(
     const bells = block.bells ?? 1;
     if (!Number.isInteger(bells) || bells < 1 || bells > 2) {
       reasons.push(`${describeBlock(rec, i)} claims ${bells} bells — use 1 or 2`);
-    } else if (
-      bells === 2 &&
-      doublesById?.get(block.user_movement_id) === false
-    ) {
-      // Only when the catalog positively says it is a one-bell movement; an
-      // unlinked movement (null) stays the lifter's call.
+    } else if (bells === 2 && doublesById?.get(block.movement_id) === false) {
       reasons.push(
         `${describeBlock(rec, i)} is not a double-bell movement — prescribe it with 1 bell`,
       );
@@ -95,7 +116,7 @@ export function validateRecommendation(
   if (coverage && coverage.targets.length > 0) {
     const covered = new Set<string>();
     for (const block of rec.blocks) {
-      for (const credit of coverage.creditsById.get(block.user_movement_id) ??
+      for (const credit of coverage.creditsById.get(block.movement_id) ??
         []) {
         covered.add(credit);
       }

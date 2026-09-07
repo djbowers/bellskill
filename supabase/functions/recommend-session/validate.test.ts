@@ -8,20 +8,20 @@ const rec = (blocks: Array<Partial<Recommendation['blocks'][number]>>): Recommen
   format: 'Circuit',
   confidence: 'high',
   blocks: blocks.map((b, i) => ({
-    user_movement_id: `um-${i}`,
+    movement_id: `m-${i}`,
     movement_name: `Movement ${i}`,
     weight_kg: 16,
-    rep_scheme: [5, 5, 5],
+    rep_scheme: [5],
     notes: '',
     ...b,
   })),
 });
 
-const idsOf = (r: Recommendation) => new Set(r.blocks.map((b) => b.user_movement_id));
+const idsOf = (r: Recommendation) => new Set(r.blocks.map((b) => b.movement_id));
 
 describe('validateRecommendation — coverage invariant', () => {
   test('passes when block credits cover every target', () => {
-    const r = rec([{ user_movement_id: 'tgu' }, { user_movement_id: 'swing' }]);
+    const r = rec([{ movement_id: 'tgu' }, { movement_id: 'swing' }]);
     expect(() =>
       validateRecommendation(r, idsOf(r), {
         targets: ['get_up', 'push', 'hinge'],
@@ -34,7 +34,7 @@ describe('validateRecommendation — coverage invariant', () => {
   });
 
   test('fails with a per-pattern reason for each uncovered target', () => {
-    const r = rec([{ user_movement_id: 'swing' }]);
+    const r = rec([{ movement_id: 'swing' }]);
     try {
       validateRecommendation(r, idsOf(r), {
         targets: ['hinge', 'carry', 'pull'],
@@ -51,7 +51,7 @@ describe('validateRecommendation — coverage invariant', () => {
   });
 
   test('empty targets is a no-op (default mode / degraded balance mode)', () => {
-    const r = rec([{ user_movement_id: 'swing' }]);
+    const r = rec([{ movement_id: 'swing' }]);
     expect(() =>
       validateRecommendation(r, idsOf(r), {
         targets: [],
@@ -61,7 +61,7 @@ describe('validateRecommendation — coverage invariant', () => {
   });
 
   test('null credits on a chosen block cover nothing', () => {
-    const r = rec([{ user_movement_id: 'custom' }]);
+    const r = rec([{ movement_id: 'custom' }]);
     expect(() =>
       validateRecommendation(r, idsOf(r), {
         targets: ['squat'],
@@ -71,7 +71,7 @@ describe('validateRecommendation — coverage invariant', () => {
   });
 
   test('id and runnability checks still run alongside coverage', () => {
-    const r = rec([{ user_movement_id: 'rogue', weight_kg: -1 }]);
+    const r = rec([{ movement_id: 'rogue', weight_kg: -1 }]);
     try {
       validateRecommendation(r, new Set(['known']), {
         targets: ['squat'],
@@ -80,7 +80,7 @@ describe('validateRecommendation — coverage invariant', () => {
       throw new Error('expected ValidationError');
     } catch (err) {
       const reasons = (err as ValidationError).reasons;
-      expect(reasons.some((x) => x.includes('not in the candidate list'))).toBe(true);
+      expect(reasons.some((x) => x.includes('not in the catalog list'))).toBe(true);
       expect(reasons.some((x) => x.includes('non-positive weight'))).toBe(true);
       expect(reasons.some((x) => x.includes('"squat"'))).toBe(true);
     }
@@ -112,20 +112,20 @@ describe('validateRecommendation — shared runnability rules', () => {
     const reasons = reasonsFor(
       rec([
         { rep_scheme: [1, 2, 3, 4] },
-        { rep_scheme: [5, 5, 5] },
-        { rep_scheme: [5, 5, 5] },
+        { rep_scheme: [5, 4, 3] },
+        { rep_scheme: [5, 4, 3] },
       ]),
     );
     expect(reasons).toHaveLength(1);
     expect(reasons[0]).toContain('Rep schemes differ across movements');
   });
 
-  test('the same rungs declared as Straight Sets pass', () => {
-    const r: Recommendation = {
-      ...rec([{ rep_scheme: [1, 2, 3, 4] }, { rep_scheme: [5, 5, 5] }]),
+  test('any format other than Circuit is rejected', () => {
+    const r = {
+      ...rec([{ rep_scheme: [1, 2, 3, 4] }, { rep_scheme: [5, 4, 3] }]),
       format: 'Straight Sets',
-    };
-    expect(() => validateRecommendation(r, idsOf(r))).not.toThrow();
+    } as unknown as Recommendation;
+    expect(reasonsFor(r).join(' ')).toContain('every session is a "Circuit"');
   });
 
   test('a zero duration is rejected', () => {
@@ -160,6 +160,34 @@ describe('validateRecommendation — shared runnability rules', () => {
   test('an implausible weight is a warning, not a retry', () => {
     expect(() => pass(rec([{ weight_kg: 150 }]))).not.toThrow();
   });
+});
+
+describe('validateRecommendation — rungs vary the reps', () => {
+  const reasonsFor = (r: Recommendation): string[] => {
+    try {
+      validateRecommendation(r, idsOf(r));
+    } catch (err) {
+      return (err as ValidationError).reasons;
+    }
+    throw new Error('expected ValidationError');
+  };
+
+  test('a rep count repeated on consecutive rungs is rejected with a fix', () => {
+    const reasons = reasonsFor(
+      rec([{ movement_name: 'Swing', rep_scheme: [5, 5, 5] }]),
+    );
+    expect(reasons).toEqual([
+      'block 1 (Swing) repeats 5 reps on consecutive rungs — write a single rung [5] or vary the reps',
+    ]);
+  });
+
+  test.each([[[5]], [[1, 2, 3]], [[10, 8, 6]], [[1, 2, 3, 2, 1]]])(
+    'a scheme of %j passes',
+    (scheme: number[]) => {
+      const r = rec([{ rep_scheme: scheme }]);
+      expect(() => validateRecommendation(r, idsOf(r))).not.toThrow();
+    },
+  );
 });
 
 describe('validateRecommendation — equipment', () => {
@@ -268,7 +296,7 @@ describe('validateRecommendation — bell count', () => {
   });
 
   test('rejects a double on a movement the catalog says is single-bell', () => {
-    const r = rec([{ user_movement_id: 'goblet', bells: 2 }]);
+    const r = rec([{ movement_id: 'goblet', bells: 2 }]);
     try {
       validateRecommendation(
         r,
@@ -283,19 +311,6 @@ describe('validateRecommendation — bell count', () => {
         'not a double-bell movement',
       );
     }
-  });
-
-  test('allows a double when the catalog does not know the movement', () => {
-    const r = rec([{ user_movement_id: 'custom', bells: 2 }]);
-    expect(() =>
-      validateRecommendation(
-        r,
-        idsOf(r),
-        undefined,
-        null,
-        new Map([['custom', null]]),
-      ),
-    ).not.toThrow();
   });
 
   test('rejects a double at a weight the lifter owns only one of', () => {

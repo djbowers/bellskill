@@ -52,18 +52,18 @@ export async function generateRecommendation(
   if (!apiKey) throw new LLMError('ANTHROPIC_API_KEY is not configured');
 
   const candidateIds = new Set(
-    inputs.candidates.map((c) => c.user_movement_id),
+    inputs.candidates.map((c) => c.movement_id),
   );
   const coverage = {
     targets: inputs.balance_targets,
     creditsById: new Map(
-      inputs.candidates.map((c) => [c.user_movement_id, c.pattern_credits]),
+      inputs.candidates.map((c) => [c.movement_id, c.pattern_credits]),
     ),
   };
   const equipment =
     'description' in inputs.unlocked_weights ? inputs.unlocked_weights : null;
   const doublesById = new Map(
-    inputs.candidates.map((c) => [c.user_movement_id, c.supports_doubles]),
+    inputs.candidates.map((c) => [c.movement_id, c.supports_doubles]),
   );
   const system = buildSystemPrompt(inputs.balance_targets.length > 0);
   const messages: Message[] = [

@@ -26,12 +26,19 @@ export function buildSystemPrompt(hasTargets = false): string {
     'Rite of Passage). You design a single, focused next training session.',
     '',
     'Rules:',
-    "- Choose movements ONLY from the candidate list. Use each block's exact",
-    '  user_movement_id from that list — never invent an id or a movement.',
+    "- Choose movements ONLY from the catalog list. Use each block's exact",
+    '  movement_id from that list — never invent an id or a movement.',
     '- Size the session to the time the lifter has and how they say they feel',
     '  today. When they are tired, sore, or short on time, scale volume down.',
-    '- Prescribe weights in kilograms (whole or half kg) and rep schemes as a list',
-    '  of positive integers (one entry per rung/set).',
+    '- Prescribe weights in kilograms (whole or half kg).',
+    '- rep_scheme is the ladder for ONE round of the circuit: one positive integer',
+    '  per rung. Use more than one rung only when the reps change from rung to',
+    '  rung, like [1, 2, 3], [10, 8, 6] or [1, 2, 3, 2, 1]. Never repeat a rep',
+    '  count on consecutive rungs — 3×5 is written [5], and the rounds come from',
+    '  the clock, not from repeated rungs.',
+    '- adjustable_settings_kg lists the setting of each adjustable bell the',
+    '  session uses, one entry per bell; leave it empty when the lifter has no',
+    '  adjustable bell or no equipment is listed.',
     '- Set each block\'s "bells" to how many kettlebells are held at once: 1, or 2',
     '  only for movements marked "double-bell". weight_kg is the weight of ONE',
     '  bell, so a double at 24kg means two 24kg bells, not 12kg each.',
@@ -58,16 +65,12 @@ export function buildSystemPrompt(hasTargets = false): string {
     '  needs attention.',
     '',
     'Runnability (these are checked, and a violation is rejected):',
-    '- Every movement needs the SAME number of rungs, unless you declare the format',
-    '  "Straight Sets". Every other format rotates through the movements one rung at',
-    '  a time, so a shorter ladder runs out mid-round. Either match the rung counts',
-    '  across every block or declare "Straight Sets".',
-    '- In "Straight Sets", each entry in a block\'s rep_scheme is one SET of that',
-    '  movement, and all of its sets are done back-to-back before the next movement',
-    '  starts — the lifter never returns to a finished movement. Write 3×5 as',
-    '  [5, 5, 5]. The session ends when the last movement\'s last set is done, so',
-    '  duration_minutes is an estimate there, not the stopping rule.',
-    '- No rep scheme is empty, and every rep is a whole number from 1 to 100.',
+    '- Every session is a circuit: the lifter rotates through the blocks one rung',
+    '  at a time, repeating rounds until duration_minutes is up. Every block',
+    '  therefore needs the SAME number of rungs, or a shorter ladder runs out',
+    '  mid-round.',
+    '- No rep scheme is empty, no rep count repeats on consecutive rungs, and',
+    '  every rep is a whole number from 1 to 100.',
     '- Every weight is a positive number of kilograms, no heavier than 100.',
     '- duration_minutes is greater than zero.',
   ].join('\n');
@@ -77,13 +80,13 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
   const candidateLines = inputs.candidates
     .map(
       (c) =>
-        `- ${c.name}${c.is_big_6 ? ' (Big 6)' : ''}${
+        `- ${c.name}${
           c.pattern_credits?.length
             ? ` · pays: ${c.pattern_credits.join(', ')}`
             : ''
         }${c.supports_doubles ? ' · double-bell' : ''}${
           c.unilateral_lower ? ' · one leg at a time' : ''
-        } [user_movement_id: ${c.user_movement_id}]`,
+        } [movement_id: ${c.movement_id}]`,
     )
     .join('\n');
 
@@ -155,7 +158,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
     ...targetSection,
     ...equipmentSection,
     '',
-    'Candidate movements (choose only from these):',
+    'Catalog movements (choose only from these):',
     candidateLines,
     '',
     'Recommend their next session now.',
@@ -168,9 +171,9 @@ export function buildCorrectionPrompt(reasons: string[]): string {
     'Your previous response was rejected for these reasons:',
     ...reasons.map((r) => `- ${r}`),
     '',
-    'Produce a corrected recommendation that uses only candidate user_movement_ids,',
-    'positive integer reps and weights, rung counts that match across every block',
-    'unless the format is "Straight Sets", and only weights the lifter owns — an',
-    'adjustable bell keeps one setting for the whole session.',
+    'Produce a corrected recommendation that uses only catalog movement_ids,',
+    'positive integer reps and weights, the same number of rungs in every block,',
+    'no rep count repeated on consecutive rungs, and only weights the lifter',
+    'owns — an adjustable bell keeps one setting for the whole session.',
   ].join('\n');
 }

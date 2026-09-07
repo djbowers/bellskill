@@ -9,18 +9,31 @@ const inputs: RecommenderInputs = {
   days_since_last_workout: null,
   recent_history: [],
   candidates: [
-    { user_movement_id: 'swing', name: 'Swing', is_big_6: true, pattern_credits: ['hinge'] },
-    { user_movement_id: 'press', name: 'Press', is_big_6: true, pattern_credits: ['push'] },
+    {
+      movement_id: 'swing',
+      name: 'Swing',
+      pattern_credits: ['hinge'],
+      supports_doubles: false,
+      unilateral_lower: false,
+    },
+    {
+      movement_id: 'press',
+      name: 'Press',
+      pattern_credits: ['push'],
+      supports_doubles: true,
+      unilateral_lower: false,
+    },
   ],
   pattern_debt: null,
+  modality_debt: null,
   unlocked_weights: {},
 };
 
 const block = (over: Partial<Recommendation['blocks'][number]> = {}) => ({
-  user_movement_id: 'swing',
+  movement_id: 'swing',
   movement_name: 'Swing',
   weight_kg: 24,
-  rep_scheme: [5, 5, 5],
+  rep_scheme: [10],
   notes: '',
   ...over,
 });
@@ -38,7 +51,7 @@ const recommendation = (over: Partial<Recommendation> = {}): Recommendation => (
 const unequalRungs = recommendation({
   blocks: [
     block({ rep_scheme: [1, 2, 3, 4] }),
-    block({ user_movement_id: 'press', movement_name: 'Press', rep_scheme: [5, 5, 5] }),
+    block({ movement_id: 'press', movement_name: 'Press', rep_scheme: [5, 4, 3] }),
   ],
 });
 
@@ -112,7 +125,7 @@ describe('generateRecommendation — corrective retry', () => {
     await generateRecommendation(inputs);
 
     expect(sentBodies[0].system).toContain('Runnability');
-    expect(sentBodies[0].system).toContain('Straight Sets');
+    expect(sentBodies[0].system).toContain('Every session is a circuit');
   });
 
   test('a missing API key fails before any request', async () => {

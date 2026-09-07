@@ -76,11 +76,11 @@ describe('RecommendProgramSection', () => {
     renderSection({ entitlement: freeEntitlement });
 
     await user.click(
-      screen.getByRole('button', { name: /recommend a program/i }),
+      screen.getByRole('button', { name: /ask chalk for a program/i }),
     );
 
     expect(
-      screen.getByRole('heading', { name: 'AI program recommendations' }),
+      screen.getByRole('heading', { name: "Chalk's program picks" }),
     ).toBeInTheDocument();
   });
 
@@ -95,7 +95,7 @@ describe('RecommendProgramSection', () => {
     const { onQueue, onEnrollNow } = renderSection();
 
     await user.click(
-      screen.getByRole('button', { name: /recommend a program/i }),
+      screen.getByRole('button', { name: /ask chalk for a program/i }),
     );
 
     expect(
@@ -119,7 +119,7 @@ describe('RecommendProgramSection', () => {
     const { onQueue, onEnrollNow } = renderSection();
 
     await user.click(
-      screen.getByRole('button', { name: /recommend a program/i }),
+      screen.getByRole('button', { name: /ask chalk for a program/i }),
     );
     await user.click(await screen.findByRole('button', { name: 'Start now' }));
 
@@ -138,7 +138,7 @@ describe('RecommendProgramSection', () => {
     const { onQueue, onEnrollNow } = renderSection({ slotsFull: true });
 
     await user.click(
-      screen.getByRole('button', { name: /recommend a program/i }),
+      screen.getByRole('button', { name: /ask chalk for a program/i }),
     );
     await user.click(
       await screen.findByRole('button', { name: 'Add to queue' }),
@@ -158,7 +158,7 @@ describe('RecommendProgramSection', () => {
     renderSection();
 
     await user.click(
-      screen.getByRole('button', { name: /recommend a program/i }),
+      screen.getByRole('button', { name: /ask chalk for a program/i }),
     );
 
     expect(
