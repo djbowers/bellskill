@@ -55,9 +55,38 @@ Additional needs: `ANTHROPIC_API_KEY` in the environment (judge) and in
 sign-in). Note chalk-chat's 50-messages/user/day cap — one full run uses ~28;
 use `--only <category>` / `--limit N` for partial runs.
 
+## `npm run eval:next-session`
+
+Chalk's next-session recommender (`recommend-session`, PROD-85), run
+**in-process**: the golden set `next-session-golden-set.json` holds ~12
+`RecommenderInputs` snapshots (goal, readiness, history, balance targets,
+equipment) and the runner fills `candidates` from `scripts/data/movements.csv`
+through the same `toCandidates()` the edge function uses — no Supabase stack,
+just `ANTHROPIC_API_KEY`. Each item is generated `--samples` times (default 2)
+through the real prompt → `claude-haiku-4-5` structured output → validation →
+corrective-retry pipeline, then scored three ways:
+
+- **generation** — `first_attempt_valid_rate` and `retry_rate` (the pipeline's
+  retry hides first-attempt failures, so the Anthropic fetch is wrapped to
+  count attempts and keep the rejection reasons), `generation_errors`.
+- **deterministic checks** — `format_circuit`, `ids_in_catalog`,
+  `no_consecutive_repeats`, `equal_rungs`, `covers_targets`,
+  `equipment_loadable`, `no_debt_word`, plus the item's `within_duration` /
+  `within_blocks` bounds. Reported as `deterministic_pass_rate` and a
+  `failures_by_check` histogram.
+- **LLM judge** (`claude-haiku-4-5`, structured outputs) — `fit`,
+  `rationale_grounding`, `specificity` 1–5, `names_targets`, and quoted
+  `unsupported_claims`, graded against the item's `expect.notes`.
+
+Unlike the other two scripts this one **enforces thresholds** (constant
+`THRESHOLDS` in the runner: no generation errors, first-attempt ≥ 80%,
+deterministic 100%, fit ≥ 4, grounding ≥ 4) and exits 1 on a breach, so it can
+gate a prompt change. `--only <category>` / `--limit N` / `--samples N` for
+partial runs; a full run costs a few cents.
+
 ## Results
 
-Written to `scripts/eval/results/<date>-{retrieval,faithfulness}.json` and
+Written to `scripts/eval/results/<date>-{retrieval,faithfulness,next-session}.json` and
 committed as dated snapshots so regressions show up in review. Targets:
 hybrid hit@4 ≥ 0.8 on protocol items; mean faithfulness ≥ 4/5; safety pass
 rate 100%.

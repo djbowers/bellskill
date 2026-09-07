@@ -1,0 +1,1792 @@
+{
+  "run_at": "2026-09-07T19:43:03.299Z",
+  "thresholds": {
+    "generation_errors": 0,
+    "first_attempt_valid_rate": 0.8,
+    "deterministic_pass_rate": 1,
+    "mean_fit": 4,
+    "mean_rationale_grounding": 4
+  },
+  "summary": {
+    "items": 12,
+    "samples": 24,
+    "generation_errors": 0,
+    "first_attempt_valid_rate": 0.9166666666666666,
+    "retry_rate": 0.08333333333333333,
+    "deterministic_pass_rate": 1,
+    "failures_by_check": {},
+    "retry_reasons": {
+      "repeats 1 reps on consecutive rungs — write a single rung [1] or vary the reps": 1,
+      "Rep schemes differ across movements. Circuit mode runs one rung at a time, so every movement needs the same number.": 1
+    },
+    "mean_fit": 4.208333333333333,
+    "mean_rationale_grounding": 4.375,
+    "mean_specificity": 4.333333333333333,
+    "names_targets_rate": 1,
+    "mean_latency_ms": 12041,
+    "total_generation_cost_usd": 0.26989500000000005,
+    "total_judge_cost_usd": 0.049963,
+    "by_category": {
+      "baseline": {
+        "n": 2,
+        "errors": 0,
+        "deterministic_pass_rate": 1,
+        "mean_fit": 4.5,
+        "mean_rationale_grounding": 4.5
+      },
+      "readiness": {
+        "n": 4,
+        "errors": 0,
+        "deterministic_pass_rate": 1,
+        "mean_fit": 3.25,
+        "mean_rationale_grounding": 3.25
+      },
+      "balance-target": {
+        "n": 2,
+        "errors": 0,
+        "deterministic_pass_rate": 1,
+        "mean_fit": 5,
+        "mean_rationale_grounding": 5
+      },
+      "equipment": {
+        "n": 6,
+        "errors": 0,
+        "deterministic_pass_rate": 1,
+        "mean_fit": 4.666666666666667,
+        "mean_rationale_grounding": 4.666666666666667
+      },
+      "goal": {
+        "n": 4,
+        "errors": 0,
+        "deterministic_pass_rate": 1,
+        "mean_fit": 3.25,
+        "mean_rationale_grounding": 3.75
+      },
+      "history": {
+        "n": 4,
+        "errors": 0,
+        "deterministic_pass_rate": 1,
+        "mean_fit": 4.5,
+        "mean_rationale_grounding": 5
+      },
+      "house-voice": {
+        "n": 2,
+        "errors": 0,
+        "deterministic_pass_rate": 1,
+        "mean_fit": 5,
+        "mean_rationale_grounding": 5
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "baseline-blank",
+      "category": "baseline",
+      "sample": 1,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "With no recent workouts, training goal, or readiness data provided, I'm prescribing a balanced foundational session that covers the Big 6 patterns and builds general work capacity. This 20-minute circuit uses moderate weights and moderate volume to establish a baseline without overloading a lifter returning to training. The session emphasizes hinge, push, and squat patterns with a simple rep ladder structure.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "low",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "30a3e11f-b338-71e3-2492-89a9fd78ac59",
+            "movement_name": "Kettlebell Swing",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              10
+            ],
+            "notes": "Hinge foundation; steady pace for 20 minutes."
+          },
+          {
+            "movement_id": "56406371-3243-c34c-b60f-e84d41777b18",
+            "movement_name": "Kettlebell Clean and Press",
+            "weight_kg": 12,
+            "bells": 1,
+            "rep_scheme": [
+              5
+            ],
+            "notes": "Push and hinge combined; moderate load to learn movement quality."
+          },
+          {
+            "movement_id": "14223bb1-6bcb-13fe-2968-7012ebe78de8",
+            "movement_name": "Kettlebell Front Rack Squat",
+            "weight_kg": 12,
+            "bells": 1,
+            "rep_scheme": [
+              8
+            ],
+            "notes": "Squat pattern with moderate volume."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 4,
+        "rationale_grounding": 4,
+        "specificity": 3,
+        "names_targets": true,
+        "unsupported_claims": [
+          "returning to training"
+        ],
+        "notes": "Sensible foundational circuit covering hinge, push, and squat with moderate weights; rationale appropriately admits uncertainty but invents a return-to-training narrative not supported by inputs."
+      },
+      "latency_ms": 9909,
+      "generation_cost_usd": 0.009829,
+      "judge_cost_usd": 0.001811
+    },
+    {
+      "id": "baseline-blank",
+      "category": "baseline",
+      "sample": 2,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "No training history, goal, or readiness information provided. Starting with a foundational circuit that covers the primary movement patterns (hinge, push, pull, squat) using moderate intensity and volume. This balanced approach allows the lifter to establish baseline capability across key kettlebell patterns. The 20-minute window is suitable for a first-time assessment, keeping loads conservative to allow focus on movement quality.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "low",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "30a3e11f-b338-71e3-2492-89a9fd78ac59",
+            "movement_name": "Kettlebell Swing",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              8
+            ],
+            "notes": "Establishes hinge pattern; 16 kg is a standard starting weight for single-bell swings."
+          },
+          {
+            "movement_id": "56406371-3243-c34c-b60f-e84d41777b18",
+            "movement_name": "Kettlebell Clean and Press",
+            "weight_kg": 12,
+            "bells": 1,
+            "rep_scheme": [
+              5
+            ],
+            "notes": "Links hinge and push in one movement; lighter load allows practice of the coordination required."
+          },
+          {
+            "movement_id": "dcb2d1bb-5e68-d4b7-bb80-b82a87a81ab8",
+            "movement_name": "One-Arm Kettlebell Row",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              6
+            ],
+            "notes": "Unilateral pull to balance the pressing work and establish pulling strength baseline."
+          },
+          {
+            "movement_id": "14223bb1-6bcb-13fe-2968-7012ebe78de8",
+            "movement_name": "Kettlebell Front Rack Squat",
+            "weight_kg": 12,
+            "bells": 1,
+            "rep_scheme": [
+              8
+            ],
+            "notes": "Introduces squat pattern from the front rack; moderate load for movement quality assessment."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 5,
+        "specificity": 4,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Chalk admits the baseline setting, chooses a balanced circuit of four fundamental patterns (hinge, push, pull, squat) with conservative weights and rep counts, and explains each choice without inventing history or readiness cues."
+      },
+      "latency_ms": 12774,
+      "generation_cost_usd": 0.010479,
+      "judge_cost_usd": 0.001982
+    },
+    {
+      "id": "readiness-tired-short",
+      "category": "readiness",
+      "sample": 1,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "Lifter is tired and sore one day after a hard 30-minute session that included swings, goblet squats, and presses. With only 15 minutes available, this is an active recovery day—light, brief, and restorative. Chosen movements are low-intensity carries and mobility work to promote blood flow without adding systemic fatigue. The Kettlebell Halo addresses rotation and shoulder mobility while pressing the nervous system lightly; Kettlebell Farmer's Carry demands minimal technical focus while building work capacity. Both are gentle enough for a fatigued body and complement the upper-body and hinge work from yesterday.",
+        "duration_minutes": 15,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "90fb8404-3a47-0193-8fcc-a179258e4deb",
+            "movement_name": "Kettlebell Halo",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              5
+            ],
+            "notes": "Light weight, 5 reps per side (10 total movements). Mobility and shoulder stability without load stress."
+          },
+          {
+            "movement_id": "281db0a2-5d59-a9c0-1c74-2c9a9cc1b03f",
+            "movement_name": "Kettlebell Farmer's Carry",
+            "weight_kg": 20,
+            "bells": 2,
+            "rep_scheme": [
+              20
+            ],
+            "notes": "20 meters at easy pace. Low-intensity carry work to promote recovery and maintain grip endurance."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 4,
+        "rationale_grounding": 5,
+        "specificity": 4,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Session respects fatigue and time constraint with appropriate volume and intensity scaling, though the structure and rep scheme lack explicit detail about rounds or rest intervals needed to stay within 15 minutes."
+      },
+      "latency_ms": 10325,
+      "generation_cost_usd": 0.00995,
+      "judge_cost_usd": 0.001801
+    },
+    {
+      "id": "readiness-tired-short",
+      "category": "readiness",
+      "sample": 2,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "You're tired and sore after a hard 30-minute session yesterday, and you have only 15 minutes today. This is a maintenance day: keep movement quality high and volume low. I'm pairing a light hinge pattern (one-arm swings to grease the groove without ballistic fatigue) with a simple press (military press at 20 kg—the same weight you just pressed yesterday, held steady) and a squat (goblet squat, also 24 kg, matching yesterday). All three movements were in your last session, so the weights and rep ranges are familiar. The short, 3-rung circuit will fit 15 minutes comfortably without overloading your recovery, and the pressing and squatting volumes are drastically reduced compared to yesterday.",
+        "duration_minutes": 15,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "62c20b49-ee49-b738-91f4-9e233f85c3ae",
+            "movement_name": "One-Arm Kettlebell Swing",
+            "weight_kg": 20,
+            "bells": 1,
+            "rep_scheme": [
+              8
+            ],
+            "notes": "Light touch to maintain hinge pattern. 8 reps each arm, alternating per swing to minimize fatigue."
+          },
+          {
+            "movement_id": "7d4c4c67-85dc-86a7-5f27-99acb4a3f9d5",
+            "movement_name": "One-Arm Kettlebell Military Press",
+            "weight_kg": 20,
+            "bells": 1,
+            "rep_scheme": [
+              3
+            ],
+            "notes": "3 reps each arm. Identical weight to yesterday; focus on control and stability rather than volume."
+          },
+          {
+            "movement_id": "013f7476-e5a5-d5ce-f025-72d699145fe2",
+            "movement_name": "Goblet Squat",
+            "weight_kg": 24,
+            "bells": 1,
+            "rep_scheme": [
+              5
+            ],
+            "notes": "5 reps. Same load as yesterday; reduce volume by half to respect soreness and short timeframe."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 4,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [
+          "the pressing and squatting volumes are drastically reduced compared to yesterday"
+        ],
+        "notes": "Session is well-calibrated to fatigue and time, though the claim about \"drastically reduced\" pressing volume is overstated (3 reps vs. 5 reps is modest, not drastic)."
+      },
+      "latency_ms": 13053,
+      "generation_cost_usd": 0.01054,
+      "judge_cost_usd": 0.002078
+    },
+    {
+      "id": "readiness-fresh-long",
+      "category": "readiness",
+      "sample": 1,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "You're fresh, rested, and have a full hour—perfect conditions to build strength with heavier loads and more volume. Three days of recovery since your last session is ideal. Your recent work with one-arm swings (24kg) and get-ups (16kg) shows solid single-bell competence. I'm moving you to double-bell work to challenge total-body strength across multiple patterns: hinge, push, and squat. The double clean and press combines two premium strength movements in one block; the double front squat builds leg and core strength; and double rows anchor the pulling pattern. All three fit neatly into a 60-minute circuit with enough rest between rounds to maintain quality.",
+        "duration_minutes": 60,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "6bb422bb-1969-e055-dcac-e50ba12f7c50",
+            "movement_name": "Double Kettlebell Clean and Press",
+            "weight_kg": 20,
+            "bells": 2,
+            "rep_scheme": [
+              3,
+              4,
+              5
+            ],
+            "notes": "Start 20kg per bell to build control under load. Hinge pattern + vertical press strength."
+          },
+          {
+            "movement_id": "8dbfe550-1b83-d28a-c660-b4432c31bdaf",
+            "movement_name": "Double Kettlebell Front Squat",
+            "weight_kg": 20,
+            "bells": 2,
+            "rep_scheme": [
+              3,
+              4,
+              5
+            ],
+            "notes": "Match weight to the clean and press for continuity. Squat strength and core demand."
+          },
+          {
+            "movement_id": "61af2fff-4242-a90c-0043-9a59862b8aed",
+            "movement_name": "Double Kettlebell Row",
+            "weight_kg": 20,
+            "bells": 2,
+            "rep_scheme": [
+              3,
+              4,
+              5
+            ],
+            "notes": "Pull and back stability complement the pressing work. Brace hard in the top position."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 2,
+        "rationale_grounding": 2,
+        "specificity": 2,
+        "names_targets": true,
+        "unsupported_claims": [
+          "Your recent work with one-arm swings (24kg) and get-ups (16kg) shows solid single-bell competence",
+          "I'm moving you to double-bell work to challenge total-body strength across multiple patterns: hinge, push, and squat"
+        ],
+        "notes": "Session ignores the lifter's recent work at 24 kg by dropping to 20 kg per bell (40 kg total vs. 24 kg single), contradicts the goal of using fresh state for working weights, and invents a hinge pattern in the clean-and-press that the lifter has not trained."
+      },
+      "latency_ms": 6791,
+      "generation_cost_usd": 0.010368,
+      "judge_cost_usd": 0.002397
+    },
+    {
+      "id": "readiness-fresh-long",
+      "category": "readiness",
+      "sample": 2,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "You're fresh and rested after three days with a full hour available—ideal conditions for a strength-focused circuit that builds on your recent work. Your last session paired swings and get-ups; today we'll layer in complementary double-bell movements to drive overall strength across hinge, push, and pull patterns. Starting the circuit with Double Kettlebell Snatch (hinge power), moving to Double Kettlebell Military Press (pressing strength), then Double Kettlebell Row (pulling strength) creates a balanced, demanding 60-minute block that matches your readiness and goal. Hold the 16kg bells for snatch and press—they're in your comfortable range—and use them for rows as well to maintain intensity and consistency through the session.",
+        "duration_minutes": 60,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "7d8c27df-90a2-f94b-31e4-da0b4ddbbf55",
+            "movement_name": "Double Kettlebell Snatch",
+            "weight_kg": 16,
+            "bells": 2,
+            "rep_scheme": [
+              5,
+              7,
+              9
+            ],
+            "notes": "Two reps per side, double-bell. Driving hinge power and explosive strength."
+          },
+          {
+            "movement_id": "bbd78472-0e90-370b-ed2e-23978bb26e5c",
+            "movement_name": "Double Kettlebell Military Press",
+            "weight_kg": 16,
+            "bells": 2,
+            "rep_scheme": [
+              5,
+              7,
+              9
+            ],
+            "notes": "Strict overhead pressing, two bells. Builds lockout and shoulder stability."
+          },
+          {
+            "movement_id": "61af2fff-4242-a90c-0043-9a59862b8aed",
+            "movement_name": "Double Kettlebell Row",
+            "weight_kg": 16,
+            "bells": 2,
+            "rep_scheme": [
+              5,
+              7,
+              9
+            ],
+            "notes": "Horizontal pull to balance the pressing work and reinforce back strength."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 2,
+        "rationale_grounding": 2,
+        "specificity": 3,
+        "names_targets": true,
+        "unsupported_claims": [
+          "\"ideal conditions for a strength-focused circuit\"—the inputs say fresh and rested with a full hour, but do not characterize this as ideal for circuit work",
+          "\"Hold the 16kg bells for snatch and press—they're in your comfortable range\"—the lifter's recent work was 24kg swings and 16kg get-ups; calling 16kg a comfortable pressing range is an inference not directly supported",
+          "\"matching your readiness and goal\"—readiness and availability are stated, but the session structure itself (3-movement circuit at 16kg for 60 min) is not explicitly aligned to what fresh+full hour demands"
+        ],
+        "notes": "The session uses 16kg across all movements when recent work included 24kg swings; a good session here should work near recent weights (24kg or 20-24kg range) across 30-50 minutes with fuller intensity, not drop to half that load for a full hour circuit."
+      },
+      "latency_ms": 6961,
+      "generation_cost_usd": 0.010393,
+      "judge_cost_usd": 0.002795
+    },
+    {
+      "id": "balance-hinge-squat",
+      "category": "balance-target",
+      "sample": 1,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "You're feeling strong after 2 days and ready to build balanced movement. Hinge and squat are both severely under-trained (red zone, 19 and 16 days respectively), so this session prioritizes both target patterns. You've been push-heavy lately, so we're tilting work toward the gaps while maintaining pull and rotation with lighter volumes. A 20-minute circuit with four blocks keeps the density high and manages fatigue well for good readiness.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "30a3e11f-b338-71e3-2492-89a9fd78ac59",
+            "movement_name": "Kettlebell Swing",
+            "weight_kg": 24,
+            "bells": 1,
+            "rep_scheme": [
+              6,
+              5,
+              4
+            ],
+            "notes": "Opens the hinge pattern strongly. Staying at 24kg from your recent row work; this is ballistic and conditions the posterior chain."
+          },
+          {
+            "movement_id": "8dbfe550-1b83-d28a-c660-b4432c31bdaf",
+            "movement_name": "Double Kettlebell Front Squat",
+            "weight_kg": 16,
+            "bells": 2,
+            "rep_scheme": [
+              6,
+              5,
+              4
+            ],
+            "notes": "Addresses squat under-training directly. Two 16kg bells = 32kg total load, moderate and sustainable. Front rack position reinforces upright posture."
+          },
+          {
+            "movement_id": "65f0d3be-deff-863e-7497-f5a0fd989713",
+            "movement_name": "Alternating Kettlebell Row",
+            "weight_kg": 20,
+            "bells": 2,
+            "rep_scheme": [
+              6,
+              5,
+              4
+            ],
+            "notes": "Maintains pull strength without overloading. One 20kg bell per hand, alternating reps. Balanced antagonist to pressing work."
+          },
+          {
+            "movement_id": "52c1c80f-d2ad-55be-246f-a16732163539",
+            "movement_name": "Kettlebell Overhead Windmill",
+            "weight_kg": 12,
+            "bells": 1,
+            "rep_scheme": [
+              3,
+              2,
+              1
+            ],
+            "notes": "Light rotation work per side (one each side = [1] normally, but windmill demands control so lower reps fit the session). Maintains core and rotation without fatigue."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 5,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Chalk prescribed exactly what was needed: both hinge and squat trained after 19 and 16 days of absence, pressing avoided, pull and rotation kept light, and every claim grounded in the lifter's readiness and pattern scores."
+      },
+      "latency_ms": 15025,
+      "generation_cost_usd": 0.011164,
+      "judge_cost_usd": 0.002384
+    },
+    {
+      "id": "balance-hinge-squat",
+      "category": "balance-target",
+      "sample": 2,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "Lifter feels good with 2 days' rest. Pattern balance shows hinge and squat are significantly under-trained (red scores: 88 and 81); both are target patterns and must be addressed. Recent work has been push-heavy. A balanced 20-minute circuit will address the acute needs—hinge and squat—while maintaining pull work (trained 2d ago, 113% of baseline) to round out the session. Holding weights steady at recent levels since lifter is performing well.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "30a3e11f-b338-71e3-2492-89a9fd78ac59",
+            "movement_name": "Kettlebell Swing",
+            "weight_kg": 24,
+            "bells": 1,
+            "rep_scheme": [
+              8,
+              6,
+              5
+            ],
+            "notes": "Explosive hinge work to address heavy under-training in the pattern; recent row work at 24kg provides safe anchor for swing."
+          },
+          {
+            "movement_id": "8dbfe550-1b83-d28a-c660-b4432c31bdaf",
+            "movement_name": "Double Kettlebell Front Squat",
+            "weight_kg": 16,
+            "bells": 2,
+            "rep_scheme": [
+              8,
+              6,
+              5
+            ],
+            "notes": "Addresses squat red band (81 score, 16d ago). Holds recent double press weight at 16kg per bell."
+          },
+          {
+            "movement_id": "dcb2d1bb-5e68-d4b7-bb80-b82a87a81ab8",
+            "movement_name": "One-Arm Kettlebell Row",
+            "weight_kg": 24,
+            "bells": 1,
+            "rep_scheme": [
+              8,
+              6,
+              5
+            ],
+            "notes": "Maintains pull work performed 2d ago; 24kg matches recent row volume."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 5,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Rationale correctly names hinge and squat as target patterns overdue for training, grounds all claims in the lifter's history and pattern balance scores, and prescribes appropriate movements with weight tied to recent work."
+      },
+      "latency_ms": 12157,
+      "generation_cost_usd": 0.010629,
+      "judge_cost_usd": 0.002189
+    },
+    {
+      "id": "equipment-single-16",
+      "category": "equipment",
+      "sample": 1,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "You're ready to work with your 16 kg bell and build foundational strength. With no recent session history, this is a clean start—I've chosen a balanced three-movement circuit that trains push, pull, and hinge patterns, the core of single-bell strength work. The rep scheme climbs slightly to create a manageable strength stimulus in about 20 minutes. All blocks use 1 bell as required by your equipment.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "56406371-3243-c34c-b60f-e84d41777b18",
+            "movement_name": "Kettlebell Clean and Press",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              3,
+              5,
+              7
+            ],
+            "notes": "Explosive clean, solid overhead lockout. Build strength in push."
+          },
+          {
+            "movement_id": "dcb2d1bb-5e68-d4b7-bb80-b82a87a81ab8",
+            "movement_name": "One-Arm Kettlebell Row",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              3,
+              5,
+              7
+            ],
+            "notes": "Heavy row for back strength. Each side counts as one rep per rung."
+          },
+          {
+            "movement_id": "30a3e11f-b338-71e3-2492-89a9fd78ac59",
+            "movement_name": "Kettlebell Swing",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              8,
+              10,
+              12
+            ],
+            "notes": "Ballistic hinge work to build power and conditioning. Drives breath."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 4,
+        "rationale_grounding": 5,
+        "specificity": 4,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Solid single-bell session respecting the 16 kg constraint and lifter's goal; the climbing rep scheme and three-pattern balance are sensible, though goblet squats or get-ups could have been included as alternative single-bell movements."
+      },
+      "latency_ms": 10655,
+      "generation_cost_usd": 0.01009,
+      "judge_cost_usd": 0.00191
+    },
+    {
+      "id": "equipment-single-16",
+      "category": "equipment",
+      "sample": 2,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "Beginner with one 16 kg bell, normal readiness, and a stated goal of strength. No recent training history to reference. A foundational circuit emphasizing clean and press movements builds core strength patterns and establishes a baseline. Three blocks rotated for 20 minutes allows ample work without overreaching. The weight stays at 16 kg since it's the only tool available and appropriate for introductory single-bell work.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "cb9fc9b8-8a89-bf77-6e5e-d1f80336a28b",
+            "movement_name": "One-Arm Kettlebell Clean",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              3
+            ],
+            "notes": "Build pull-from-floor control and explosion; 3 reps each side per round."
+          },
+          {
+            "movement_id": "7d4c4c67-85dc-86a7-5f27-99acb4a3f9d5",
+            "movement_name": "One-Arm Kettlebell Military Press",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              3
+            ],
+            "notes": "Press overhead from clean; 3 reps each side per round. Builds pressing strength."
+          },
+          {
+            "movement_id": "30a3e11f-b338-71e3-2492-89a9fd78ac59",
+            "movement_name": "Kettlebell Swing",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              8
+            ],
+            "notes": "Explosive hinge work; 8 reps per round. Active recovery between pressing."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 4,
+        "rationale_grounding": 3,
+        "specificity": 3,
+        "names_targets": true,
+        "unsupported_claims": [
+          "Beginner with one 16 kg bell"
+        ],
+        "notes": "The session respects the single 16 kg constraint and goal, but invents 'beginner' status without evidence and lacks concrete reasoning for why this specific circuit structure suits a lifter with no training history to inform progression."
+      },
+      "latency_ms": 10948,
+      "generation_cost_usd": 0.010145,
+      "judge_cost_usd": 0.001939
+    },
+    {
+      "id": "equipment-pair-24",
+      "category": "equipment",
+      "sample": 1,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "You just completed double-bell cleans and front squats at 24 kg with good form two days ago. Today you feel strong, so we'll build on that foundation with a short, focused circuit that pairs the front squat (which you've proven) with double-bell press and a pull pattern. The press at 24 kg stays in the strength zone, while a moderate rep ladder of 3–5–3 maintains intensity over 25 minutes without accumulating excess fatigue. This keeps you moving heavy weight and reinforces the double-bell pressing strength that complements your squat work.",
+        "duration_minutes": 25,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "8dbfe550-1b83-d28a-c660-b4432c31bdaf",
+            "movement_name": "Double Kettlebell Front Squat",
+            "weight_kg": 24,
+            "bells": 2,
+            "rep_scheme": [
+              3,
+              5,
+              3
+            ],
+            "notes": "Solid ground from your recent session; hold the 24 kg weight and use the moderate ladder to build volume while staying strong."
+          },
+          {
+            "movement_id": "bbd78472-0e90-370b-ed2e-23978bb26e5c",
+            "movement_name": "Double Kettlebell Military Press",
+            "weight_kg": 24,
+            "bells": 2,
+            "rep_scheme": [
+              3,
+              5,
+              3
+            ],
+            "notes": "Double-bell pressing strength work at the same weight; same ladder to maintain circuit structure and push the upper body."
+          },
+          {
+            "movement_id": "61af2fff-4242-a90c-0043-9a59862b8aed",
+            "movement_name": "Double Kettlebell Row",
+            "weight_kg": 24,
+            "bells": 2,
+            "rep_scheme": [
+              3,
+              5,
+              3
+            ],
+            "notes": "Horizontal pull to balance the pressing blocks and reinforce back strength in the double-bell position."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 5,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Session respects the equipment constraint (only doubles at 24 kg), matches the lifter's goal and readiness, uses recent success as a foundation, and builds balanced upper-body strength with appropriate structure."
+      },
+      "latency_ms": 12187,
+      "generation_cost_usd": 0.010413,
+      "judge_cost_usd": 0.001968
+    },
+    {
+      "id": "equipment-pair-24",
+      "category": "equipment",
+      "sample": 2,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "You've just completed a strong double-bell front squat and clean session at 24 kg with 5 reps each. You're feeling good and two days is adequate recovery. To build on this double-bell strength focus, I'm programming a circuit that complements the squat and clean pattern: double kettlebell military press to reinforce pressing strength, double kettlebell swing to maintain explosive hinge power, and double kettlebell high pull to bridge hinge and pull. All three movements pair naturally in a circuit. Staying at 24 kg keeps tension high on fresh legs and allows you to focus on solid rep quality across a 25-minute session.",
+        "duration_minutes": 25,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "bbd78472-0e90-370b-ed2e-23978bb26e5c",
+            "movement_name": "Double Kettlebell Military Press",
+            "weight_kg": 24,
+            "bells": 2,
+            "rep_scheme": [
+              5
+            ],
+            "notes": "Strict overhead press; no leg drive. Anchor the double-bell strength goal."
+          },
+          {
+            "movement_id": "29efcbe0-2824-429c-604c-44bd72b0fd1f",
+            "movement_name": "Double Kettlebell Swing",
+            "weight_kg": 24,
+            "bells": 2,
+            "rep_scheme": [
+              10
+            ],
+            "notes": "Explosive hinge work, maintains power and prepares the pull."
+          },
+          {
+            "movement_id": "e2aee943-5115-95f7-e21e-f57407e235fb",
+            "movement_name": "Double Kettlebell High Pull",
+            "weight_kg": 24,
+            "bells": 2,
+            "rep_scheme": [
+              8
+            ],
+            "notes": "Pulls the hinge chain and completes the circuit pattern."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 5,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Session respects all constraints: uses pair of 24s for all double-bell work, omits the 32 entirely, matches the lifter's goal and readiness, and structures a coherent circuit that builds on recent squat and clean work."
+      },
+      "latency_ms": 11466,
+      "generation_cost_usd": 0.010298,
+      "judge_cost_usd": 0.001982
+    },
+    {
+      "id": "equipment-adjustable",
+      "category": "equipment",
+      "sample": 1,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "You're feeling good after 2 days off with no logged history—this is a fresh start. Your goal is strength. A focused session alternating between upper-body pressing (critical for strength gains) and lower-body hinge work (foundation for power and stability) will build your capacity efficiently. The 16kg fixed bell is your current load; I'm holding it there to establish a baseline with good technique before scaling up. Three blocks, three rungs: you'll complete full rounds in about 20 minutes.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [
+          16
+        ],
+        "blocks": [
+          {
+            "movement_id": "00920276-7327-4d02-16fd-400decf46964",
+            "movement_name": "Kettlebell Bench Press",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              3,
+              2,
+              1
+            ],
+            "notes": "Pressing strength builder. Three rungs descending; lie on a bench or sturdy surface."
+          },
+          {
+            "movement_id": "30a3e11f-b338-71e3-2492-89a9fd78ac59",
+            "movement_name": "Kettlebell Swing",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              5,
+              4,
+              3
+            ],
+            "notes": "Explosive hinge, ballistic drive. Matches rung count of press block to keep circuit even."
+          },
+          {
+            "movement_id": "7d4c4c67-85dc-86a7-5f27-99acb4a3f9d5",
+            "movement_name": "One-Arm Kettlebell Military Press",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              2,
+              1,
+              3
+            ],
+            "notes": "Single-arm pressing adds anti-rotation demand. Three rungs match the other blocks; complete all reps per side before moving to next rung."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 5,
+        "specificity": 4,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Session respects the equipment constraint (one adjustable setting at 16 kg), matches the lifter's strength goal and good readiness, uses a time-efficient circuit format, and requires no invented history or feelings."
+      },
+      "latency_ms": 11908,
+      "generation_cost_usd": 0.010488,
+      "judge_cost_usd": 0.001922
+    },
+    {
+      "id": "equipment-adjustable",
+      "category": "equipment",
+      "sample": 2,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "Lifter is fresh (good), well-rested (2 days), and ready for strength work. No prior sessions logged, so all patterns are neutral; prioritizing a foundational strength circuit using single-bell work within equipment constraints. A moderate-duration session mixing hinge and push patterns at accessible loading will build confidence and conditioning.",
+        "duration_minutes": 30,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [
+          20
+        ],
+        "blocks": [
+          {
+            "movement_id": "30a3e11f-b338-71e3-2492-89a9fd78ac59",
+            "movement_name": "Kettlebell Swing",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              8
+            ],
+            "notes": "Hinge-dominant power base; 16 kg fixed bell, steady opener."
+          },
+          {
+            "movement_id": "56406371-3243-c34c-b60f-e84d41777b18",
+            "movement_name": "Kettlebell Clean and Press",
+            "weight_kg": 20,
+            "bells": 1,
+            "rep_scheme": [
+              6
+            ],
+            "notes": "Adjustable bell at 20 kg; builds clean strength and pressing power with grind movement."
+          },
+          {
+            "movement_id": "315ab3d8-b0c8-4a62-c820-7f7a253711f1",
+            "movement_name": "Kettlebell Goblet Single-Leg Romanian Deadlift",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              4
+            ],
+            "notes": "4 reps per leg (8 total per round); builds unilateral hinge strength; 16 kg fixed bell."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 5,
+        "specificity": 4,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Session respects the two-weight rule (16 kg fixed, 20 kg adjustable), matches the lifter's strength goal and readiness, and uses three complementary patterns with clear progression logic."
+      },
+      "latency_ms": 10649,
+      "generation_cost_usd": 0.010238,
+      "judge_cost_usd": 0.001863
+    },
+    {
+      "id": "goal-sns",
+      "category": "goal",
+      "sample": 1,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "You're making solid progress on Simple & Sinister, reaching 10 swings at 24 kg two days running with good recovery. You feel strong today, so we'll step the swing weight to 28 kg—a sensible 4 kg bump toward the 32 kg standard—and keep the get-up at 24 kg to build volume safely at a slightly heavier load. A 20-minute circuit of both movements lets you accumulate swing reps at the new weight while practicing the get-up form under good conditions. This paces you directly toward the Simple standard without overextending after just one rest day.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "62c20b49-ee49-b738-91f4-9e233f85c3ae",
+            "movement_name": "One-Arm Kettlebell Swing",
+            "weight_kg": 28,
+            "bells": 1,
+            "rep_scheme": [
+              10
+            ],
+            "notes": "10 swings per side, total 20 reps per round. Stepping from 24 kg to 28 kg to build toward the 32 kg Simple standard."
+          },
+          {
+            "movement_id": "3403b6d7-0b7f-58d6-ea11-e1d157e0ae12",
+            "movement_name": "Kettlebell Turkish Get-Up",
+            "weight_kg": 24,
+            "bells": 1,
+            "rep_scheme": [
+              1
+            ],
+            "notes": "1 get-up each side per round. Hold at 24 kg to accumulate volume and refine movement quality under slightly elevated swing load."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 5,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Chalk prescribes a sensible progression from 24 kg to 28 kg swings with 24 kg get-ups, maintains the Simple & Sinister template, respects the lifter's good readiness, and anchors the weight jump to the stated 32 kg standard."
+      },
+      "latency_ms": 11294,
+      "generation_cost_usd": 0.010108,
+      "judge_cost_usd": 0.002016
+    },
+    {
+      "id": "goal-sns",
+      "category": "goal",
+      "sample": 2,
+      "attempts": 2,
+      "first_attempt_valid": false,
+      "retry_reasons": [
+        "block 2 (Kettlebell Turkish Get-Up) repeats 1 reps on consecutive rungs — write a single rung [1] or vary the reps"
+      ],
+      "recommendation": {
+        "rationale": "You're feeling good after two recent sessions at 24 kg and are one day recovered, making today ideal for progression toward Simple & Sinister. Moving to 28 kg—halfway to the 32 kg standard—builds strength while staying manageable. A circuit pairing one-arm swings and get-ups directly addresses your goal. The swing volume ramps progressively to build capacity toward 100 reps, while the get-up reinforces the full-body tension and positional strength required for the standard. This structure mirrors Simple & Sinister's philosophy: focus, consistency, and steady load advancement.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "62c20b49-ee49-b738-91f4-9e233f85c3ae",
+            "movement_name": "One-Arm Kettlebell Swing",
+            "weight_kg": 28,
+            "bells": 1,
+            "rep_scheme": [
+              10,
+              15,
+              20,
+              15,
+              10
+            ],
+            "notes": "Alternate arms each set. Progress from 24 kg to 28 kg to build strength toward the 32 kg standard."
+          },
+          {
+            "movement_id": "3403b6d7-0b7f-58d6-ea11-e1d157e0ae12",
+            "movement_name": "Kettlebell Turkish Get-Up",
+            "weight_kg": 28,
+            "bells": 1,
+            "rep_scheme": [
+              2,
+              3,
+              2,
+              3,
+              2
+            ],
+            "notes": "Reps alternate between sides (2 per side = 4 total, then 3 per side = 6 total). Same 28 kg load as swings to build pressing strength and movement quality."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 4,
+        "rationale_grounding": 5,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Session respects the lifter's readiness and goal with appropriate 28 kg progression, but could signal more explicitly that 28 kg is a deliberate intermediate step before attempting 32 kg, and the get-up rep scheme (2–3–2–3–2 per side) is somewhat unconventional for Simple & Sinister practice."
+      },
+      "latency_ms": 15091,
+      "generation_cost_usd": 0.020812999999999998,
+      "judge_cost_usd": 0.002106
+    },
+    {
+      "id": "goal-rop",
+      "category": "goal",
+      "sample": 1,
+      "attempts": 2,
+      "first_attempt_valid": false,
+      "retry_reasons": [
+        "the session — Rep schemes differ across movements. Circuit mode runs one rung at a time, so every movement needs the same number."
+      ],
+      "recommendation": {
+        "rationale": "You're progressing toward the 32 kg press in Rite of Passage. You handled 24 kg clean-and-press cleanly at ideal RPE two days ago, so today is a medium day—perfect for stepping up load slightly to build strength toward your goal. Moving one bell size (4 kg) from 24 kg to 28 kg matches your readiness and keeps volume manageable. A simple three-rung circuit of clean, press, and swing maintains the press-focused pattern you've been building while the swing provides active recovery between pressing work.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "cb9fc9b8-8a89-bf77-6e5e-d1f80336a28b",
+            "movement_name": "One-Arm Kettlebell Clean",
+            "weight_kg": 28,
+            "bells": 1,
+            "rep_scheme": [
+              1,
+              2,
+              3
+            ],
+            "notes": "One rep each side per rung; climbing load toward press goal."
+          },
+          {
+            "movement_id": "7d4c4c67-85dc-86a7-5f27-99acb4a3f9d5",
+            "movement_name": "One-Arm Kettlebell Military Press",
+            "weight_kg": 28,
+            "bells": 1,
+            "rep_scheme": [
+              1,
+              2,
+              3
+            ],
+            "notes": "One rep each side per rung; step up to 28 kg to drive progress toward 32 kg goal."
+          },
+          {
+            "movement_id": "62c20b49-ee49-b738-91f4-9e233f85c3ae",
+            "movement_name": "One-Arm Kettlebell Swing",
+            "weight_kg": 24,
+            "bells": 1,
+            "rep_scheme": [
+              5,
+              8,
+              10
+            ],
+            "notes": "One-arm, each side per rung; provide hinge work and pace between pressing efforts."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 2,
+        "rationale_grounding": 2,
+        "specificity": 4,
+        "names_targets": true,
+        "unsupported_claims": [
+          "stepping up load slightly to build strength toward your goal",
+          "Moving one bell size (4 kg) from 24 kg to 28 kg matches your readiness"
+        ],
+        "notes": "The session jumps to 28 kg without following the prescribed ladder progression (24 kg rungs), and the rationale invents a load-matching principle not supported by the inputs or Rite of Passage methodology."
+      },
+      "latency_ms": 24330,
+      "generation_cost_usd": 0.021360999999999998,
+      "judge_cost_usd": 0.00229
+    },
+    {
+      "id": "goal-rop",
+      "category": "goal",
+      "sample": 2,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "You're ready to push toward the 32 kg press. Two days rest is solid recovery. Your last two sessions at 24 kg went well—yesterday hit RPE hard with 5 rounds of the 1/2/3 ladder, and two days prior was ideal. Time to step up: move to 28 kg on the press to build strength closer to your goal, while keeping the clean at 24 kg to stay sharp without overloading the catch. A short, focused 20-minute circuit builds intensity without burning you out on a medium day. One-arm work demands precision and recruits stability—exactly what transfers to the heavier press.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "cb9fc9b8-8a89-bf77-6e5e-d1f80336a28b",
+            "movement_name": "One-Arm Kettlebell Clean",
+            "weight_kg": 24,
+            "bells": 1,
+            "rep_scheme": [
+              1,
+              2,
+              3
+            ],
+            "notes": "Each side. Ladder of 1, 2, 3 cleans per side establishes the bell at shoulder before press."
+          },
+          {
+            "movement_id": "7d4c4c67-85dc-86a7-5f27-99acb4a3f9d5",
+            "movement_name": "One-Arm Kettlebell Military Press",
+            "weight_kg": 28,
+            "bells": 1,
+            "rep_scheme": [
+              1,
+              2,
+              3
+            ],
+            "notes": "Each side. Up 4 kg from 24 kg to drive strength gain toward 32 kg goal. Strict overhead press, no leg drive."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 2,
+        "rationale_grounding": 3,
+        "specificity": 4,
+        "names_targets": true,
+        "unsupported_claims": [
+          "move to 28 kg on the press to build strength closer to your goal",
+          "Your last two sessions at 24 kg went well—yesterday hit RPE hard with 5 rounds of the 1/2/3 ladder"
+        ],
+        "notes": "Session jumps weight without the prescribed ladder structure (no swing/snatch block) and mischaracterizes the recent RPE hard session as 'going well,' but otherwise respects the goal and medium-day readiness."
+      },
+      "latency_ms": 11063,
+      "generation_cost_usd": 0.010187,
+      "judge_cost_usd": 0.002219
+    },
+    {
+      "id": "history-layoff",
+      "category": "history",
+      "sample": 1,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "After 21 days away, a gentle re-entry is needed. You're rusty and will benefit from shorter duration and lower volume to rebuild confidence and groove patterns. Keep the load moderate—drop 4kg from your last swing weight to 28kg for safety, and use 20kg doubles for the squat to reduce systemic fatigue. A three-movement circuit mixing hinge, squat, and pull will reestablish movement quality without overwhelming the CNS.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "30a3e11f-b338-71e3-2492-89a9fd78ac59",
+            "movement_name": "Kettlebell Swing",
+            "weight_kg": 28,
+            "bells": 1,
+            "rep_scheme": [
+              10
+            ],
+            "notes": "Restore the swing pattern with controlled reps. Start conservative at 28kg."
+          },
+          {
+            "movement_id": "8dbfe550-1b83-d28a-c660-b4432c31bdaf",
+            "movement_name": "Double Kettlebell Front Squat",
+            "weight_kg": 20,
+            "bells": 2,
+            "rep_scheme": [
+              5
+            ],
+            "notes": "Build legs gently. Drop 4kg per bell to allow recovery and movement quality focus."
+          },
+          {
+            "movement_id": "dcb2d1bb-5e68-d4b7-bb80-b82a87a81ab8",
+            "movement_name": "One-Arm Kettlebell Row",
+            "weight_kg": 24,
+            "bells": 1,
+            "rep_scheme": [
+              5
+            ],
+            "notes": "Balanced pull per side; restores upper back and posterior chain awareness."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 4,
+        "rationale_grounding": 5,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Conservative re-entry is sound, load reductions are appropriate, and the circuit format is well-justified; the 20-minute duration and movement selection align with the inputs, though the row at 24 kg introduces a new movement untested in recent history."
+      },
+      "latency_ms": 10745,
+      "generation_cost_usd": 0.010074,
+      "judge_cost_usd": 0.001944
+    },
+    {
+      "id": "history-layoff",
+      "category": "history",
+      "sample": 2,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "After 21 days away, \"a bit rusty\" calls for a modest re-entry circuit at lower volume and intensity than the recent 30-minute hard session. You handled 32kg swings and 24kg double squats and snatches well; stepping back to 28kg for swings and 20kg doubles gives you room to find your groove again without asking too much. Three movements in a short ladder keeps the session tight and manageable: Swing to reestablish the hip hinge pattern, Double Front Squat to rebuild leg strength safely, and single-arm Snatch to work explosive power at a lighter load. All three were in your recent session, so they're fresh patterns, not novel. Thirty minutes is a gentle return; you'll get 6–8 solid rounds depending on pace.",
+        "duration_minutes": 30,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "30a3e11f-b338-71e3-2492-89a9fd78ac59",
+            "movement_name": "Kettlebell Swing",
+            "weight_kg": 28,
+            "bells": 1,
+            "rep_scheme": [
+              15
+            ],
+            "notes": "Reduce from 32kg to ease back in; focus on rhythm and hip snap."
+          },
+          {
+            "movement_id": "8dbfe550-1b83-d28a-c660-b4432c31bdaf",
+            "movement_name": "Double Kettlebell Front Squat",
+            "weight_kg": 20,
+            "bells": 2,
+            "rep_scheme": [
+              5
+            ],
+            "notes": "Drop from 24kg to 20kg per bell to rebuild squat pattern after time off."
+          },
+          {
+            "movement_id": "6731d4b3-e4e8-af14-0cfe-853bdd1c8149",
+            "movement_name": "One-Arm Kettlebell Snatch",
+            "weight_kg": 20,
+            "bells": 1,
+            "rep_scheme": [
+              8
+            ],
+            "notes": "Reduce from 24kg to 20kg; 8 total reps (4 each side), lighter touch on explosive work."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 4,
+        "rationale_grounding": 5,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Conservative re-entry respects the layoff and reduces load/volume appropriately; snatches at 20kg are still ballistic work, which slightly deviates from the ideal of avoiding high-skill ballistics, though the reduction in weight and reps mitigates risk well."
+      },
+      "latency_ms": 13147,
+      "generation_cost_usd": 0.010544,
+      "judge_cost_usd": 0.00207
+    },
+    {
+      "id": "history-heavy-press-yesterday",
+      "category": "history",
+      "sample": 1,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "Your shoulders are tired after max-effort double presses yesterday, so we're shifting focus away from pressing today while keeping intensity high. A strength circuit using hinge and pull patterns will maintain your goal without aggravating shoulder fatigue. We'll use lower rep counts and solid weights to preserve strength quality. The session is short (20 minutes) to respect recovery; one day between hard sessions is tight, so volume is scaled down.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "29efcbe0-2824-429c-604c-44bd72b0fd1f",
+            "movement_name": "Double Kettlebell Swing",
+            "weight_kg": 20,
+            "bells": 2,
+            "rep_scheme": [
+              5
+            ],
+            "notes": "Explosive hinge work, conservative weight to spare shoulders. 5 reps per round."
+          },
+          {
+            "movement_id": "61af2fff-4242-a90c-0043-9a59862b8aed",
+            "movement_name": "Double Kettlebell Row",
+            "weight_kg": 20,
+            "bells": 2,
+            "rep_scheme": [
+              5
+            ],
+            "notes": "Pull pattern complements swing. 5 reps per round, strict tension."
+          },
+          {
+            "movement_id": "1a72eec1-5dc4-72a3-5226-de17069f5ce7",
+            "movement_name": "Double Kettlebell Romanian Deadlift",
+            "weight_kg": 20,
+            "bells": 2,
+            "rep_scheme": [
+              5
+            ],
+            "notes": "Posterior chain strength with hinge focus. 5 reps per round."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 5,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Chalk correctly identified tired shoulders from yesterday's max-effort pressing, prescribed hinge and pull patterns to avoid aggravation while maintaining strength work, and scaled volume and duration appropriately for one-day recovery."
+      },
+      "latency_ms": 10443,
+      "generation_cost_usd": 0.01001,
+      "judge_cost_usd": 0.001874
+    },
+    {
+      "id": "history-heavy-press-yesterday",
+      "category": "history",
+      "sample": 2,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "Shoulders are tired after max-effort double press work yesterday, so we need to respect recovery while maintaining strength focus. A lower-volume, pull-heavy session will give pressing muscles a chance to stabilize without heavy loading. Single-arm rows and light double hinge work preserve the strength theme while avoiding overhead demand. 20 minutes of circuit work keeps intensity high without excessive volume.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "dcb2d1bb-5e68-d4b7-bb80-b82a87a81ab8",
+            "movement_name": "One-Arm Kettlebell Row",
+            "weight_kg": 28,
+            "bells": 1,
+            "rep_scheme": [
+              3,
+              2,
+              1
+            ],
+            "notes": "Each side per rung; pulling focus spares shoulders; match recent press weight to drive strength."
+          },
+          {
+            "movement_id": "29efcbe0-2824-429c-604c-44bd72b0fd1f",
+            "movement_name": "Double Kettlebell Swing",
+            "weight_kg": 20,
+            "bells": 2,
+            "rep_scheme": [
+              3,
+              2,
+              1
+            ],
+            "notes": "Hold at 20 kg per bell (light double press weight reduced by ~4 kg) to build hip drive without shoulder load; one round only."
+          },
+          {
+            "movement_id": "1a72eec1-5dc4-72a3-5226-de17069f5ce7",
+            "movement_name": "Double Kettlebell Romanian Deadlift",
+            "weight_kg": 24,
+            "bells": 2,
+            "rep_scheme": [
+              3,
+              2,
+              1
+            ],
+            "notes": "Match yesterday's press bell weight; isometric core and posterior chain work without overhead demand."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 5,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Chalk correctly identified tired shoulders from yesterday's max-effort press, prescribed appropriate hinge and pull work while respecting overhead recovery, grounded all weight choices in recent session history, and provided a concrete rationale tied to this lifter's immediate state."
+      },
+      "latency_ms": 11230,
+      "generation_cost_usd": 0.01014,
+      "judge_cost_usd": 0.001955
+    },
+    {
+      "id": "house-voice-carry",
+      "category": "house-voice",
+      "sample": 1,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "Lifter is feeling good with 2 days recovery. The carry pattern is critically under-trained (score 92, red, not trained in 24 days) and is a required target. Rotation is also elevated (score 55, yellow, 50% of baseline). Hinge and squat are well-trained recently, so we'll keep them light. A short circuit mixing carry, rotation, and a hinge anchor will address the imbalance while respecting the excellent recent work. Using single kettlebells keeps the load manageable and lets carry movements take priority. Total volume is sized to fit a focused 16-minute session in good shape without overloading a hinge-heavy pattern.",
+        "duration_minutes": 16,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "281db0a2-5d59-a9c0-1c74-2c9a9cc1b03f",
+            "movement_name": "Kettlebell Farmer's Carry",
+            "weight_kg": 24,
+            "bells": 2,
+            "rep_scheme": [
+              30
+            ],
+            "notes": "Hold for 30 seconds per round. Addresses carry pattern (24 days overdue) with a neutral load. Moving from recent 24kg goblet squat weight."
+          },
+          {
+            "movement_id": "d108113d-f22a-1386-bf14-3d201a712756",
+            "movement_name": "Kettlebell Windmill",
+            "weight_kg": 12,
+            "bells": 1,
+            "rep_scheme": [
+              3
+            ],
+            "notes": "3 reps each side. Targets rotation (yellow pattern, 50% of baseline). Light load maintains control and high-quality reps in a technical movement."
+          },
+          {
+            "movement_id": "30a3e11f-b338-71e3-2492-89a9fd78ac59",
+            "movement_name": "Kettlebell Swing",
+            "weight_kg": 20,
+            "bells": 1,
+            "rep_scheme": [
+              8
+            ],
+            "notes": "Hinge anchor, slightly lighter than recent 24kg to allow rotation and carry work to integrate. Finishes each round efficiently."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 5,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Chalk correctly identified carry as critically overdue (score 92, 24 days), named it plainly as 'overdue' in the movement notes, prioritized it in the circuit, and built a balanced session addressing rotation (yellow) while respecting recent hinge and squat work."
+      },
+      "latency_ms": 13723,
+      "generation_cost_usd": 0.010842,
+      "judge_cost_usd": 0.00225
+    },
+    {
+      "id": "house-voice-carry",
+      "category": "house-voice",
+      "sample": 2,
+      "attempts": 1,
+      "first_attempt_valid": true,
+      "recommendation": {
+        "rationale": "Carry is critically under-trained (score 92, red, 24 days ago at 0% of baseline) and is the target pattern, so this session prioritizes it. You're feeling good and have recovered well (2 days since last work), so we can handle a balanced circuit with fresh movements. Rotation is also elevated (score 55, yellow, 50% of baseline) and will get attention via the get-up. Recent swings and squats are current, so we'll hold hinge and squat volumes modest. The circuit mixes carry, rotation, and push work in a flowing 20-minute format that complements your balanced strength goal.",
+        "duration_minutes": 20,
+        "format": "Circuit",
+        "confidence": "high",
+        "adjustable_settings_kg": [],
+        "blocks": [
+          {
+            "movement_id": "281db0a2-5d59-a9c0-1c74-2c9a9cc1b03f",
+            "movement_name": "Kettlebell Farmer's Carry",
+            "weight_kg": 24,
+            "bells": 2,
+            "rep_scheme": [
+              10
+            ],
+            "notes": "Heavy carry hold for time; walk steadily for 10 meters or until grip fatigues within each round. Addresses carry pattern deficit directly."
+          },
+          {
+            "movement_id": "3403b6d7-0b7f-58d6-ea11-e1d157e0ae12",
+            "movement_name": "Kettlebell Turkish Get-Up",
+            "weight_kg": 16,
+            "bells": 1,
+            "rep_scheme": [
+              1
+            ],
+            "notes": "One rep per side (2 total per round). Builds rotation, push stability, and proprioception; 16 kg is accessible for smooth, deliberate work after carry fatigue."
+          },
+          {
+            "movement_id": "30a3e11f-b338-71e3-2492-89a9fd78ac59",
+            "movement_name": "Kettlebell Swing",
+            "weight_kg": 24,
+            "bells": 1,
+            "rep_scheme": [
+              10
+            ],
+            "notes": "Hold recent load to maintain hinge fitness without excess volume. Swing between carries and get-ups."
+          }
+        ]
+      },
+      "checks": {
+        "format_circuit": true,
+        "ids_in_catalog": true,
+        "no_consecutive_repeats": true,
+        "equal_rungs": true,
+        "covers_targets": true,
+        "equipment_loadable": true,
+        "no_debt_word": true,
+        "within_duration": true,
+        "within_blocks": true
+      },
+      "verdict": {
+        "fit": 5,
+        "rationale_grounding": 5,
+        "specificity": 5,
+        "names_targets": true,
+        "unsupported_claims": [],
+        "notes": "Chalk correctly identified carry as critically overdue (score 92, red, 24d), named it as the target pattern, and built a balanced circuit that prioritizes the loaded carry while respecting recent hinge and squat work and addressing secondary yellow pattern (rotation)."
+      },
+      "latency_ms": 13108,
+      "generation_cost_usd": 0.010792,
+      "judge_cost_usd": 0.002218
+    }
+  ]
+}

@@ -1,0 +1,674 @@
+{
+  "_readme": "Golden set for the Chalk next-session eval (PROD-85). Each item is a RecommenderInputs snapshot minus `candidates` — the runner fills those from scripts/data/movements.csv (Kettlebell rows) through the same toCandidates() the edge function uses. `expect` holds the deterministic bounds the runner asserts (max_duration_minutes, max_blocks, must_cover) plus `notes`, the coach's-eye description the LLM judge grades against. Categories: baseline (no signal at all), readiness (scales volume to how the lifter feels and how long they have), balance-target (must train the named overdue patterns), equipment (only prescribes loadable weights), goal (recognisable protocol flavour), history (adapts to what was just done or how long it has been), house-voice (never says 'debt').",
+  "items": [
+    {
+      "id": "baseline-blank",
+      "category": "baseline",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": null,
+        "readiness": null,
+        "days_since_last_workout": null,
+        "recent_history": [],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {}
+      },
+      "expect": {
+        "max_duration_minutes": 45,
+        "max_blocks": 6,
+        "notes": "With nothing known, a sensible general session: a few fundamental kettlebell movements (a hinge, a squat or press, something for the core or get-up), moderate weights (12–24 kg), and a rationale that admits it is a starting point rather than inventing history."
+      }
+    },
+    {
+      "id": "readiness-tired-short",
+      "category": "readiness",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": "General strength and conditioning",
+        "readiness": "Tired and sore from yesterday, only have 15 minutes",
+        "days_since_last_workout": 1,
+        "recent_history": [
+          {
+            "completed_at": "2026-09-06T18:10:00.000Z",
+            "goal": "30 minutes",
+            "rpe": "hard",
+            "movements": [
+              {
+                "name": "Kettlebell Swing",
+                "rep_scheme": [20],
+                "weight_kg": 24
+              },
+              {
+                "name": "Goblet Squat",
+                "rep_scheme": [10],
+                "weight_kg": 24
+              },
+              {
+                "name": "One-Arm Kettlebell Military Press",
+                "rep_scheme": [5],
+                "weight_kg": 20
+              }
+            ]
+          }
+        ],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {}
+      },
+      "expect": {
+        "max_duration_minutes": 15,
+        "max_blocks": 4,
+        "notes": "Fits inside 15 minutes and scales volume and load down from yesterday's hard 30-minute session: lighter bells or lower reps, few blocks, and a rationale that names the fatigue and the time limit as the reason."
+      }
+    },
+    {
+      "id": "readiness-fresh-long",
+      "category": "readiness",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": "Build overall strength",
+        "readiness": "Fresh and rested, have a full hour",
+        "days_since_last_workout": 3,
+        "recent_history": [
+          {
+            "completed_at": "2026-09-04T17:00:00.000Z",
+            "goal": "25 minutes",
+            "rpe": "ideal",
+            "movements": [
+              {
+                "name": "One-Arm Kettlebell Swing",
+                "rep_scheme": [10],
+                "weight_kg": 24
+              },
+              {
+                "name": "Turkish Get-Up",
+                "rep_scheme": [1],
+                "weight_kg": 16
+              }
+            ]
+          }
+        ],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {}
+      },
+      "expect": {
+        "max_duration_minutes": 60,
+        "max_blocks": 6,
+        "notes": "Uses the fresh state and the hour: a fuller session (30–50 minutes, 3–5 blocks) at working weights around the recent 24 kg — one bell size either way is fine — without dropping to a token 10-minute effort or to weights far below what the lifter just handled."
+      }
+    },
+    {
+      "id": "balance-hinge-squat",
+      "category": "balance-target",
+      "inputs": {
+        "balance_targets": ["hinge", "squat"],
+        "training_goal": "Balanced strength",
+        "readiness": "Good",
+        "days_since_last_workout": 2,
+        "recent_history": [
+          {
+            "completed_at": "2026-09-05T17:00:00.000Z",
+            "goal": "20 minutes",
+            "rpe": "ideal",
+            "movements": [
+              {
+                "name": "One-Arm Kettlebell Military Press",
+                "rep_scheme": [5],
+                "weight_kg": 20
+              },
+              {
+                "name": "Kettlebell Row",
+                "rep_scheme": [8],
+                "weight_kg": 24
+              }
+            ]
+          },
+          {
+            "completed_at": "2026-09-03T17:00:00.000Z",
+            "goal": "20 minutes",
+            "rpe": "ideal",
+            "movements": [
+              {
+                "name": "Double Kettlebell Military Press",
+                "rep_scheme": [5],
+                "weight_kg": 16
+              },
+              {
+                "name": "Turkish Get-Up",
+                "rep_scheme": [1],
+                "weight_kg": 16
+              }
+            ]
+          }
+        ],
+        "pattern_debt": {
+          "overall_balance": "push-heavy",
+          "patterns": [
+            {
+              "pattern": "hinge",
+              "days_since_last_trained": 19,
+              "recent_volume_kg": 0,
+              "baseline_volume_kg": 4800,
+              "debt_score": 88,
+              "band": "red",
+              "hardest_rpe": null,
+              "is_new": false
+            },
+            {
+              "pattern": "squat",
+              "days_since_last_trained": 16,
+              "recent_volume_kg": 0,
+              "baseline_volume_kg": 2400,
+              "debt_score": 81,
+              "band": "red",
+              "hardest_rpe": null,
+              "is_new": false
+            },
+            {
+              "pattern": "push",
+              "days_since_last_trained": 2,
+              "recent_volume_kg": 1800,
+              "baseline_volume_kg": 1500,
+              "debt_score": 8,
+              "band": "green",
+              "hardest_rpe": "ideal",
+              "is_new": false
+            },
+            {
+              "pattern": "pull",
+              "days_since_last_trained": 2,
+              "recent_volume_kg": 900,
+              "baseline_volume_kg": 800,
+              "debt_score": 10,
+              "band": "green",
+              "hardest_rpe": "ideal",
+              "is_new": false
+            },
+            {
+              "pattern": "carry",
+              "days_since_last_trained": null,
+              "recent_volume_kg": 0,
+              "baseline_volume_kg": null,
+              "debt_score": 0,
+              "band": "green",
+              "hardest_rpe": null,
+              "is_new": true
+            },
+            {
+              "pattern": "rotation",
+              "days_since_last_trained": 4,
+              "recent_volume_kg": 200,
+              "baseline_volume_kg": 200,
+              "debt_score": 20,
+              "band": "green",
+              "hardest_rpe": null,
+              "is_new": false
+            },
+            {
+              "pattern": "core",
+              "days_since_last_trained": 4,
+              "recent_volume_kg": 200,
+              "baseline_volume_kg": 200,
+              "debt_score": 20,
+              "band": "green",
+              "hardest_rpe": null,
+              "is_new": false
+            },
+            {
+              "pattern": "get_up",
+              "days_since_last_trained": 4,
+              "recent_volume_kg": 128,
+              "baseline_volume_kg": 128,
+              "debt_score": 22,
+              "band": "green",
+              "hardest_rpe": "ideal",
+              "is_new": false
+            }
+          ]
+        },
+        "modality_debt": null,
+        "unlocked_weights": {}
+      },
+      "expect": {
+        "max_duration_minutes": 40,
+        "max_blocks": 6,
+        "must_cover": ["hinge", "squat"],
+        "notes": "Trains both the hinge and the squat (swings, deadlifts, cleans, goblet or front squats) and says so in the rationale, describing them as due or overdue after two weeks of pressing and rowing. Pressing is optional and light. Never uses the word debt."
+      }
+    },
+    {
+      "id": "equipment-single-16",
+      "category": "equipment",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": "Get stronger with one bell",
+        "readiness": "Normal",
+        "days_since_last_workout": 2,
+        "recent_history": [],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {
+          "fixed_weights": [
+            {
+              "weight_kg": 16,
+              "count": 1,
+              "doubles": false
+            }
+          ],
+          "adjustable_bells": [],
+          "adjustable_bell_count": 0,
+          "description": "16 kg"
+        }
+      },
+      "expect": {
+        "max_duration_minutes": 40,
+        "max_blocks": 6,
+        "notes": "Every block is 16 kg with one bell — no doubles, no other weights. The session still makes sense with a single moderate bell (swings, goblet squats, presses, get-ups, carries)."
+      }
+    },
+    {
+      "id": "equipment-pair-24",
+      "category": "equipment",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": "Double-bell strength",
+        "readiness": "Good",
+        "days_since_last_workout": 2,
+        "recent_history": [
+          {
+            "completed_at": "2026-09-05T17:00:00.000Z",
+            "goal": "25 minutes",
+            "rpe": "ideal",
+            "movements": [
+              {
+                "name": "Double Kettlebell Front Squat",
+                "rep_scheme": [5],
+                "weight_kg": 24
+              },
+              {
+                "name": "Double Kettlebell Clean",
+                "rep_scheme": [5],
+                "weight_kg": 24
+              }
+            ]
+          }
+        ],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {
+          "fixed_weights": [
+            {
+              "weight_kg": 24,
+              "count": 2,
+              "doubles": true
+            },
+            {
+              "weight_kg": 32,
+              "count": 1,
+              "doubles": false
+            }
+          ],
+          "adjustable_bells": [],
+          "adjustable_bell_count": 0,
+          "description": "24 kg (pair), 32 kg"
+        }
+      },
+      "expect": {
+        "max_duration_minutes": 40,
+        "max_blocks": 6,
+        "notes": "Uses the pair of 24s for double-bell work (bells: 2 at 24 kg) and, if it uses the 32, only with one bell. Never prescribes doubles at 32."
+      }
+    },
+    {
+      "id": "equipment-adjustable",
+      "category": "equipment",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": "Strength",
+        "readiness": "Good",
+        "days_since_last_workout": 2,
+        "recent_history": [],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {
+          "fixed_weights": [
+            {
+              "weight_kg": 16,
+              "count": 1,
+              "doubles": false
+            }
+          ],
+          "adjustable_bells": [
+            {
+              "count": 1,
+              "settings_kg": [12, 16, 20, 24, 28, 32]
+            }
+          ],
+          "adjustable_bell_count": 1,
+          "description": "16 kg, adjustable 12–32 kg (4 kg steps)"
+        }
+      },
+      "expect": {
+        "max_duration_minutes": 40,
+        "max_blocks": 6,
+        "notes": "Uses at most two distinct weights — 16 kg and one adjustable setting declared in adjustable_settings_kg — because the adjustable bell holds one setting for the whole session."
+      }
+    },
+    {
+      "id": "goal-sns",
+      "category": "goal",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": "Simple & Sinister — reach the Simple standard (100 one-arm swings at 32 kg, 10 get-ups at 32 kg)",
+        "readiness": "Good",
+        "days_since_last_workout": 1,
+        "recent_history": [
+          {
+            "completed_at": "2026-09-06T07:00:00.000Z",
+            "goal": "20 minutes",
+            "rpe": "ideal",
+            "movements": [
+              {
+                "name": "One-Arm Kettlebell Swing",
+                "rep_scheme": [10],
+                "weight_kg": 24
+              },
+              {
+                "name": "Turkish Get-Up",
+                "rep_scheme": [1],
+                "weight_kg": 24
+              }
+            ]
+          },
+          {
+            "completed_at": "2026-09-05T07:00:00.000Z",
+            "goal": "20 minutes",
+            "rpe": "ideal",
+            "movements": [
+              {
+                "name": "One-Arm Kettlebell Swing",
+                "rep_scheme": [10],
+                "weight_kg": 24
+              },
+              {
+                "name": "Turkish Get-Up",
+                "rep_scheme": [1],
+                "weight_kg": 24
+              }
+            ]
+          }
+        ],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {}
+      },
+      "expect": {
+        "max_duration_minutes": 35,
+        "max_blocks": 3,
+        "notes": "Recognisably Simple & Sinister: one-arm swings and get-ups, weights at the recent 24 kg or one bell size up (28 kg) — never a jump straight to 32 — and a rationale that ties the session to the Simple standard."
+      }
+    },
+    {
+      "id": "goal-rop",
+      "category": "goal",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": "Rite of Passage — press the 32 kg",
+        "readiness": "Good, medium day",
+        "days_since_last_workout": 2,
+        "recent_history": [
+          {
+            "completed_at": "2026-09-05T17:00:00.000Z",
+            "goal": "5 rounds",
+            "rpe": "hard",
+            "movements": [
+              {
+                "name": "One-Arm Kettlebell Clean",
+                "rep_scheme": [1, 2, 3],
+                "weight_kg": 24
+              },
+              {
+                "name": "One-Arm Kettlebell Military Press",
+                "rep_scheme": [1, 2, 3],
+                "weight_kg": 24
+              }
+            ]
+          },
+          {
+            "completed_at": "2026-09-03T17:00:00.000Z",
+            "goal": "5 rounds",
+            "rpe": "ideal",
+            "movements": [
+              {
+                "name": "One-Arm Kettlebell Clean",
+                "rep_scheme": [1, 2, 3],
+                "weight_kg": 24
+              },
+              {
+                "name": "One-Arm Kettlebell Military Press",
+                "rep_scheme": [1, 2, 3],
+                "weight_kg": 24
+              },
+              {
+                "name": "One-Arm Kettlebell Swing",
+                "rep_scheme": [10],
+                "weight_kg": 24
+              }
+            ]
+          }
+        ],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {}
+      },
+      "expect": {
+        "max_duration_minutes": 40,
+        "max_blocks": 4,
+        "notes": "A clean-and-press ladder day in the Rite of Passage mould: press rungs that climb (e.g. [1, 2, 3]) at 24 kg. A swing or snatch block is optional; because the session is a circuit it takes the same number of rungs as the presses (e.g. [10, 15, 20]), which is fine. The rationale references the pressing goal and the medium day."
+      }
+    },
+    {
+      "id": "history-layoff",
+      "category": "history",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": "Get back into it",
+        "readiness": "A bit rusty",
+        "days_since_last_workout": 21,
+        "recent_history": [
+          {
+            "completed_at": "2026-08-17T17:00:00.000Z",
+            "goal": "30 minutes",
+            "rpe": "hard",
+            "movements": [
+              {
+                "name": "Kettlebell Swing",
+                "rep_scheme": [20],
+                "weight_kg": 32
+              },
+              {
+                "name": "Double Kettlebell Front Squat",
+                "rep_scheme": [5],
+                "weight_kg": 24
+              },
+              {
+                "name": "One-Arm Kettlebell Snatch",
+                "rep_scheme": [10],
+                "weight_kg": 24
+              }
+            ]
+          }
+        ],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {}
+      },
+      "expect": {
+        "max_duration_minutes": 30,
+        "max_blocks": 4,
+        "notes": "A conservative re-entry after three weeks off: lighter than the last session's 32 kg swings, lower volume, no high-skill ballistic like snatches at full load, and a rationale that names the layoff."
+      }
+    },
+    {
+      "id": "history-heavy-press-yesterday",
+      "category": "history",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": "Strength",
+        "readiness": "Shoulders are tired",
+        "days_since_last_workout": 1,
+        "recent_history": [
+          {
+            "completed_at": "2026-09-06T17:00:00.000Z",
+            "goal": "5 rounds",
+            "rpe": "maxEffort",
+            "movements": [
+              {
+                "name": "Double Kettlebell Military Press",
+                "rep_scheme": [1, 2, 3, 4, 5],
+                "weight_kg": 24
+              },
+              {
+                "name": "One-Arm Kettlebell Military Press",
+                "rep_scheme": [5],
+                "weight_kg": 28
+              }
+            ]
+          }
+        ],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {}
+      },
+      "expect": {
+        "max_duration_minutes": 35,
+        "max_blocks": 5,
+        "notes": "Stays off heavy overhead pressing the day after a max-effort press session: hinge, squat, carry or get-up work instead, and a rationale that points to yesterday's pressing and the tired shoulders."
+      }
+    },
+    {
+      "id": "house-voice-carry",
+      "category": "house-voice",
+      "inputs": {
+        "balance_targets": ["carry"],
+        "training_goal": "Balanced strength",
+        "readiness": "Good",
+        "days_since_last_workout": 2,
+        "recent_history": [
+          {
+            "completed_at": "2026-09-05T17:00:00.000Z",
+            "goal": "20 minutes",
+            "rpe": "ideal",
+            "movements": [
+              {
+                "name": "Kettlebell Swing",
+                "rep_scheme": [15],
+                "weight_kg": 24
+              },
+              {
+                "name": "Goblet Squat",
+                "rep_scheme": [8],
+                "weight_kg": 24
+              }
+            ]
+          }
+        ],
+        "pattern_debt": {
+          "overall_balance": "hinge-heavy",
+          "patterns": [
+            {
+              "pattern": "hinge",
+              "days_since_last_trained": 2,
+              "recent_volume_kg": 3600,
+              "baseline_volume_kg": 3000,
+              "debt_score": 5,
+              "band": "green",
+              "hardest_rpe": "ideal",
+              "is_new": false
+            },
+            {
+              "pattern": "squat",
+              "days_since_last_trained": 2,
+              "recent_volume_kg": 1900,
+              "baseline_volume_kg": 1800,
+              "debt_score": 8,
+              "band": "green",
+              "hardest_rpe": "ideal",
+              "is_new": false
+            },
+            {
+              "pattern": "push",
+              "days_since_last_trained": 5,
+              "recent_volume_kg": 900,
+              "baseline_volume_kg": 900,
+              "debt_score": 25,
+              "band": "green",
+              "hardest_rpe": null,
+              "is_new": false
+            },
+            {
+              "pattern": "pull",
+              "days_since_last_trained": 5,
+              "recent_volume_kg": 700,
+              "baseline_volume_kg": 700,
+              "debt_score": 25,
+              "band": "green",
+              "hardest_rpe": null,
+              "is_new": false
+            },
+            {
+              "pattern": "carry",
+              "days_since_last_trained": 24,
+              "recent_volume_kg": 0,
+              "baseline_volume_kg": 1200,
+              "debt_score": 92,
+              "band": "red",
+              "hardest_rpe": null,
+              "is_new": false
+            },
+            {
+              "pattern": "rotation",
+              "days_since_last_trained": 9,
+              "recent_volume_kg": 100,
+              "baseline_volume_kg": 200,
+              "debt_score": 55,
+              "band": "yellow",
+              "hardest_rpe": null,
+              "is_new": false
+            },
+            {
+              "pattern": "core",
+              "days_since_last_trained": 6,
+              "recent_volume_kg": 300,
+              "baseline_volume_kg": 300,
+              "debt_score": 30,
+              "band": "green",
+              "hardest_rpe": null,
+              "is_new": false
+            },
+            {
+              "pattern": "get_up",
+              "days_since_last_trained": 6,
+              "recent_volume_kg": 96,
+              "baseline_volume_kg": 96,
+              "debt_score": 30,
+              "band": "green",
+              "hardest_rpe": null,
+              "is_new": false
+            }
+          ]
+        },
+        "modality_debt": null,
+        "unlocked_weights": {}
+      },
+      "expect": {
+        "max_duration_minutes": 40,
+        "max_blocks": 6,
+        "must_cover": ["carry"],
+        "notes": "Includes a loaded carry and explains that carries are overdue, in plain coaching language: 'due', 'overdue', 'needs attention' — the word 'debt' never appears in the rationale or notes."
+      }
+    }
+  ]
+}
