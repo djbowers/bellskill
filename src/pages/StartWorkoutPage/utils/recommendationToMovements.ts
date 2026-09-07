@@ -5,7 +5,6 @@ import type {
   WorkoutOptions,
 } from '~/types';
 import {
-  FORMAT_WORKOUT_MODES,
   type MovementWeightModeFields,
   movementMatchesWeightMode,
   recommendationGoal,
@@ -91,15 +90,14 @@ export const recommendationToMovements = (
 
 /**
  * Maps a recommendation onto a full set of workout options ready to load into
- * the builder. Duration becomes a time goal — except in straight sets, where the
- * rep schemes already prescribe the work; timers and shared weights default off
- * for the user to add if they want.
+ * the builder: a circuit with the duration as its time goal. Timers and shared
+ * weights default off for the user to add if they want.
  */
 export const recommendationToWorkoutOptions = (
   recommendation: Recommendation,
   catalog?: RecommendationCatalog,
 ): Omit<WorkoutOptions, 'startedAt'> => ({
-  workoutMode: FORMAT_WORKOUT_MODES[recommendation.format] ?? 'circuit',
+  workoutMode: 'circuit',
   sharedBell: false,
   intervalTimer: 0,
   movements: recommendationToMovements(recommendation, catalog),

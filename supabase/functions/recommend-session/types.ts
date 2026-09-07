@@ -4,7 +4,6 @@
 // into session_recommendations.inputs. unlocked_weights carries the weights the
 // user can actually load, derived from their declared equipment (PROD-78); it
 // stays `{}` for users who have recorded none.
-
 import type { EquipmentSummary } from '../../../src/utils/equipment.ts';
 import type {
   Modality,
@@ -136,7 +135,8 @@ export interface RecommendationBlock {
 export interface Recommendation {
   rationale: string;
   duration_minutes: number;
-  format: 'EMOM' | 'AMRAP' | 'Circuit' | 'Ladder' | 'Straight Sets';
+  /** Always a circuit: the lifter rotates through the blocks one rung at a time. */
+  format: 'Circuit';
   confidence: 'high' | 'medium' | 'low';
   blocks: RecommendationBlock[];
   /**
@@ -158,10 +158,7 @@ export const RECOMMENDATION_SCHEMA = {
   properties: {
     rationale: { type: 'string' },
     duration_minutes: { type: 'integer' },
-    format: {
-      type: 'string',
-      enum: ['EMOM', 'AMRAP', 'Circuit', 'Ladder', 'Straight Sets'],
-    },
+    format: { type: 'string', enum: ['Circuit'] },
     confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
     adjustable_settings_kg: { type: 'array', items: { type: 'number' } },
     blocks: {

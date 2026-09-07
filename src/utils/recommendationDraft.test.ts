@@ -1,5 +1,8 @@
 import type { RecommendationLike } from './recommendationDraft';
-import { formatToWorkoutMode, recommendationToDraft } from './recommendationDraft';
+import {
+  recommendationGoal,
+  recommendationToDraft,
+} from './recommendationDraft';
 import { validateWorkout } from './validateWorkout';
 
 const recommendation = (
@@ -8,41 +11,30 @@ const recommendation = (
   duration_minutes: 20,
   format: 'Circuit',
   blocks: [
-    { movement_name: 'Swing', weight_kg: 24, rep_scheme: [10, 10, 10] },
-    { movement_name: 'Goblet Squat', weight_kg: 16, rep_scheme: [5, 5, 5] },
+    { movement_name: 'Swing', weight_kg: 24, rep_scheme: [10] },
+    { movement_name: 'Goblet Squat', weight_kg: 16, rep_scheme: [5] },
   ],
   ...over,
 });
 
-describe('formatToWorkoutMode', () => {
-  test.each([
-    ['Straight Sets', 'straightSets'],
-    ['Circuit', 'circuit'],
-    ['EMOM', 'circuit'],
-    ['AMRAP', 'circuit'],
-    ['Ladder', 'circuit'],
-  ])('maps %s onto %s', (format, mode) => {
-    expect(formatToWorkoutMode(format)).toBe(mode);
-  });
-
-  test('an unknown format falls back to circuit', () => {
-    expect(formatToWorkoutMode('Tabata')).toBe('circuit');
+describe('recommendationGoal', () => {
+  test('a circuit runs on the clock', () => {
+    expect(recommendationGoal(recommendation())).toEqual({
+      workoutGoal: 20,
+      workoutGoalUnits: 'minutes',
+    });
   });
 });
 
 describe('recommendationToDraft', () => {
-  test('maps duration, blocks, and weights onto the draft shape', () => {
+  test('maps duration, blocks, and weights onto a circuit draft', () => {
     expect(recommendationToDraft(recommendation())).toEqual({
       workoutMode: 'circuit',
       workoutGoal: 20,
       intervalTimer: 0,
       movements: [
-        { movementName: 'Swing', repScheme: [10, 10, 10], weightOneValue: 24 },
-        {
-          movementName: 'Goblet Squat',
-          repScheme: [5, 5, 5],
-          weightOneValue: 16,
-        },
+        { movementName: 'Swing', repScheme: [10], weightOneValue: 24 },
+        { movementName: 'Goblet Squat', repScheme: [5], weightOneValue: 16 },
       ],
     });
   });
@@ -52,8 +44,8 @@ describe('recommendationToDraft', () => {
       recommendation({
         blocks: [
           { movement_name: 'A', weight_kg: 16, rep_scheme: [1, 2, 3, 4] },
-          { movement_name: 'B', weight_kg: 16, rep_scheme: [5, 5, 5] },
-          { movement_name: 'C', weight_kg: 16, rep_scheme: [5, 5, 5] },
+          { movement_name: 'B', weight_kg: 16, rep_scheme: [5, 4, 3] },
+          { movement_name: 'C', weight_kg: 16, rep_scheme: [5, 4, 3] },
         ],
       }),
     );
@@ -62,16 +54,10 @@ describe('recommendationToDraft', () => {
     ]);
   });
 
-  test('the same blocks declared as Straight Sets are runnable', () => {
+  test('a format other than Circuit still maps onto a circuit', () => {
     const draft = recommendationToDraft(
-      recommendation({
-        format: 'Straight Sets',
-        blocks: [
-          { movement_name: 'A', weight_kg: 16, rep_scheme: [1, 2, 3, 4] },
-          { movement_name: 'B', weight_kg: 16, rep_scheme: [5, 5, 5] },
-        ],
-      }),
+      recommendation({ format: 'Straight Sets' }),
     );
-    expect(validateWorkout(draft).errors).toEqual([]);
+    expect(draft.workoutMode).toBe('circuit');
   });
 });
