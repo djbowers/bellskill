@@ -35,10 +35,10 @@ export const RecommendationPreviewDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>AI session recommendations</DialogTitle>
+          <DialogTitle>Chalk&apos;s session picks</DialogTitle>
           <DialogDescription>
-            Premium reads your history, goal, and how you feel today, then
-            programs a session like this. Tap Accept and start lifting.
+            Premium lets Chalk read your history, goal, and how you feel today,
+            then program a session like this. Tap Accept and start lifting.
           </DialogDescription>
         </DialogHeader>
 
