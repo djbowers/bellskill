@@ -11,13 +11,19 @@ matching month's release notes in `~/Code/bellskill.com/src/content/release/`.
 ## 1. Find new merges
 
 1. `git fetch origin main` and work from `origin/main`.
-2. Read the top month section of `CHANGELOG.md` and note the highest PR number linked
+2. Check for an already-open changelog PR before doing anything else:
+   `gh-axi pr list --head 'claude/changelog-*' --state open --json number,url,title`.
+   If one exists, that PR — not a new one — owns the current gap: stop here and report its
+   URL instead of creating a new branch. (Its being unmerged is *why* the high-water mark
+   below hasn't advanced; recomputing from `main` would just re-derive the same diff and
+   open a duplicate.) Only proceed past this step if none is open.
+3. Read the top month section of `CHANGELOG.md` and note the highest PR number linked
    anywhere in it — that is the high-water mark (state lives in the changelog itself;
    there is no separate state file).
-3. List candidate commits: `git log origin/main --format='%ad %s' --date=short` and keep
+4. List candidate commits: `git log origin/main --format='%ad %s' --date=short` and keep
    those whose `(#NNN)` suffix exceeds the high-water mark, plus any non-PR commits newer
    than the newest date already recorded.
-4. **If there is nothing new, stop here.** Print "changelog up to date" and exit without
+5. **If there is nothing new, stop here.** Print "changelog up to date" and exit without
    creating branches or PRs.
 
 ## 2. Update CHANGELOG.md (bellskill repo)
@@ -34,8 +40,10 @@ matching month's release notes in `~/Code/bellskill.com/src/content/release/`.
 
 ## 3. Update release notes (bellskill.com repo)
 
-- Work in `~/Code/bellskill.com`; `git fetch` and branch from `origin/main`:
-  `claude/release-notes-YYYY-MM-DD`.
+- Work in `~/Code/bellskill.com`; check for an already-open release-notes PR first —
+  `gh-axi pr list --repo djbowers/bellskill.com --head 'claude/release-notes-*' --state open --json number,url,title`
+  — and if one exists, report its URL instead of opening another. Otherwise `git fetch`
+  and branch from `origin/main`: `claude/release-notes-YYYY-MM-DD`.
 - Update or create `src/content/release/YYYY-MM.md` for the current month from the same
   set of merges, **user-facing only**: features and fixes a user would notice. Skip
   chores, CI, migrations, refactors, flags that shipped nothing visible.
