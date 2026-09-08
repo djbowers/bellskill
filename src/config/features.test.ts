@@ -5,6 +5,7 @@ const ALL_ON = {
   modalityBalance: true,
   premium: true,
   programs: true,
+  skillTree: true,
   spotify: true,
   weeklyBalance: true,
 };

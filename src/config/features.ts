@@ -5,6 +5,7 @@ export type FeatureName =
   | 'modalityBalance'
   | 'premium'
   | 'programs'
+  | 'skillTree'
   | 'spotify'
   | 'weeklyBalance';
 
@@ -24,6 +25,7 @@ const baseFeatures: Features = {
   modalityBalance: import.meta.env.VITE_FEATURE_MODALITY_BALANCE === 'true',
   premium: import.meta.env.VITE_FEATURE_PREMIUM === 'true',
   programs: import.meta.env.VITE_FEATURE_PROGRAMS === 'true',
+  skillTree: import.meta.env.VITE_FEATURE_SKILL_TREE === 'true',
   spotify: import.meta.env.VITE_FEATURE_SPOTIFY === 'true',
   weeklyBalance: import.meta.env.VITE_FEATURE_WEEKLY_BALANCE === 'true',
 };
@@ -94,6 +96,7 @@ export const getFeatures = (session?: Session | null): Features => {
       modalityBalance: true,
       premium: true,
       programs: true,
+      skillTree: true,
       spotify: true,
       weeklyBalance: true,
     };

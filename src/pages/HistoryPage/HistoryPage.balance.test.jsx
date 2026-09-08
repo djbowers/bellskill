@@ -26,6 +26,7 @@ const allOff = {
   modalityBalance: false,
   premium: false,
   programs: false,
+  skillTree: false,
   weeklyBalance: false,
 };
 

@@ -12,6 +12,7 @@ const flagsOff: Features = {
   modalityBalance: false,
   premium: false,
   programs: false,
+  skillTree: false,
   spotify: false,
   weeklyBalance: false,
 };
@@ -34,6 +35,12 @@ describe('createRoutes catch-all', () => {
 
   it('renders the not-found page for a feature-gated route whose flag is off', () => {
     renderAt('/programs', { ...flagsOff, programs: false });
+
+    expect(screen.getByText('Page not found')).toBeInTheDocument();
+  });
+
+  it('renders the not-found page for /skill-tree while the flag is off', () => {
+    renderAt('/skill-tree');
 
     expect(screen.getByText('Page not found')).toBeInTheDocument();
   });

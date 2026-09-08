@@ -7,6 +7,7 @@ const allOff: Features = {
   modalityBalance: false,
   premium: false,
   programs: false,
+  skillTree: false,
   spotify: false,
   weeklyBalance: false,
 };
@@ -34,6 +35,11 @@ describe('getNavItems', () => {
       'ai',
       'history',
     ]);
+    expect(keys({ ...allOff, skillTree: true })).toEqual([
+      'home',
+      'skillTree',
+      'history',
+    ]);
   });
 
   test('keeps sidebar display order with every flag on', () => {
@@ -42,11 +48,13 @@ describe('getNavItems', () => {
       programs: true,
       explore: true,
       premium: true,
+      skillTree: true,
       weeklyBalance: true,
     };
     expect(keys(allOn)).toEqual([
       'home',
       'programs',
+      'skillTree',
       'explore',
       'ai',
       'history',

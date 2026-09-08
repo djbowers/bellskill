@@ -31,6 +31,7 @@ const BASE_FEATURES = {
   modalityBalance: false,
   premium: false,
   programs: true,
+  skillTree: false,
   weeklyBalance: false,
 };
 
