@@ -324,8 +324,13 @@ export const ActiveWorkoutPage = ({
         : secondaryWeightValue;
 
   const currentMovementRungs = currentMovement.repScheme.length;
-  const isLastRung = currentMovementRungIndex === currentMovementRungs - 1;
   const isStraightSets = workoutMode === 'straightSets';
+  // Circuit and complex share one rung pointer across movements, so a round is
+  // as long as the longest ladder; a single-rung movement repeats every rung.
+  const maxMovementRungs = isStraightSets
+    ? currentMovementRungs
+    : Math.max(...movements.map((m) => m.repScheme.length));
+  const isLastRung = currentMovementRungIndex === maxMovementRungs - 1;
   const currentRound = completedRounds + 1;
   // A unilateral-leg movement mirrors on the working leg, so it runs each rung
   // twice whatever the bells are doing — including two-hand and double-bell.
@@ -367,11 +372,6 @@ export const ActiveWorkoutPage = ({
         workoutGoal,
         workoutMode,
       });
-
-  // Complex mode: round completes when the longest movement's final rung is done
-  const maxMovementRungs = isComplex
-    ? Math.max(...movements.map((m) => m.repScheme.length))
-    : currentMovementRungs;
 
   // Single-arm complex (PROD-245): every movement is a one-hand single bell
   // (weightTwoValue === 0), so each interval fire alternates hands the way a
@@ -1031,7 +1031,10 @@ export const ActiveWorkoutPage = ({
             restRemaining={isRestActive}
             rightWeightUnit={rightWeightUnit}
             rightWeightValue={rightWeightValue}
-            rungIndex={currentMovementRungIndex}
+            rungIndex={Math.min(
+              currentMovementRungIndex,
+              currentMovementRungs - 1,
+            )}
             movementIndex={currentMovementIndex}
             totalMovements={movements.length}
             totalRungs={isStraightSets ? currentMovementRungs : undefined}

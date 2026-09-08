@@ -1,7 +1,7 @@
 import { composeStories } from '@storybook/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 
 import {
@@ -103,8 +103,7 @@ const enterBuildMode = async () =>
     await screen.findByRole('button', { name: /build a workout/i }),
   );
 
-const selectMode = (name) =>
-  userEvent.click(screen.getByRole('tab', { name }));
+const selectMode = (name) => userEvent.click(screen.getByRole('tab', { name }));
 
 const sharedBellToggle = () =>
   screen.getByRole('button', { name: /^Shared Bell,/ });
@@ -128,9 +127,7 @@ describe('start workout page', () => {
   });
 
   test('shows a back link to home in build mode', () => {
-    expect(
-      screen.getByRole('button', { name: /^home$/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^home$/i })).toBeInTheDocument();
   });
 
   test('renders the Movements header with count', () => {
@@ -181,9 +178,7 @@ describe('start workout page', () => {
     });
 
     test('hides the goal picker — the rep scheme is the prescription', async () => {
-      expect(
-        screen.getByRole('heading', { name: 'Goal' }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Goal' })).toBeInTheDocument();
 
       await selectStraightSets();
 
@@ -730,7 +725,9 @@ describe('Notes', () => {
   test('clicking Notes toggle on shows the notes section', async () => {
     await userEvent.click(screen.getByRole('button', { name: 'Notes, off' }));
 
-    expect(screen.getByRole('heading', { name: 'Pre-workout notes' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Pre-workout notes' }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Notes, on' }),
     ).toBeInTheDocument();
@@ -765,7 +762,9 @@ describe('Notes', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Notes, off' }));
     await userEvent.click(screen.getByLabelText('Movement Input'));
 
-    expect(screen.getByRole('heading', { name: 'Pre-workout notes' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Pre-workout notes' }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Notes, on' }),
     ).toBeInTheDocument();
@@ -948,7 +947,9 @@ describe('Complex Mode', () => {
 
     // Complex takes the movement's own Load away and states the shared bell.
     await selectMode('Complex');
-    expect(screen.getByText(`Shared bell · ${ownWeight} kg`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`Shared bell · ${ownWeight} kg`),
+    ).toBeInTheDocument();
 
     await userEvent.click(screen.getByLabelText('+ kg'));
     expect(screen.getByText(/^Shared bell · /).textContent).not.toBe(
@@ -1019,19 +1020,21 @@ describe('Straight Sets', () => {
       'Swing',
     );
 
-    // Give the second movement an extra rung.
+    // Make both movements ladders of different lengths: 2 rungs vs 3.
     const addRungButtons = screen.getAllByRole('button', { name: 'Add rung' });
+    await userEvent.click(addRungButtons[0]);
+    await userEvent.click(addRungButtons[1]);
     await userEvent.click(addRungButtons[1]);
 
     expect(
-      screen.getByText(/Rep schemes differ across movements/i),
+      screen.getByText(/Ladders differ in length across movements/i),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Start/i })).toBeDisabled();
 
     await selectMode('Straight Sets');
 
     expect(
-      screen.queryByText(/Rep schemes differ across movements/i),
+      screen.queryByText(/Ladders differ in length across movements/i),
     ).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
   });
@@ -1043,8 +1046,21 @@ describe('workout issues', () => {
     await enterBuildMode();
   });
 
-  /** Two movements with 1 and 2 rungs, which circuit mode can't run. */
+  /** Two ladders of 2 and 3 rungs, which circuit mode can't run. */
   const buildUnequalRungs = async () => {
+    await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
+    await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
+    await userEvent.type(
+      screen.getAllByLabelText('Movement Input')[1],
+      'Swing',
+    );
+    const addRungButtons = screen.getAllByRole('button', { name: 'Add rung' });
+    await userEvent.click(addRungButtons[0]);
+    await userEvent.click(addRungButtons[1]);
+    await userEvent.click(addRungButtons[1]);
+  };
+
+  test('a single-rung movement beside a ladder is runnable', async () => {
     await userEvent.type(screen.getByLabelText('Movement Input'), 'Clean');
     await userEvent.click(screen.getByRole('button', { name: '+ Movement' }));
     await userEvent.type(
@@ -1054,7 +1070,12 @@ describe('workout issues', () => {
     await userEvent.click(
       screen.getAllByRole('button', { name: 'Add rung' })[1],
     );
-  };
+
+    expect(
+      screen.queryByText(/Ladders differ in length/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
+  });
 
   test('Switch to Straight Sets clears the error and enables Start', async () => {
     await buildUnequalRungs();
@@ -1065,22 +1086,24 @@ describe('workout issues', () => {
     );
 
     expect(
-      screen.queryByText(/Rep schemes differ across movements/i),
+      screen.queryByText(/Ladders differ in length across movements/i),
     ).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
   });
 
-  test('Pad to 2 rungs clears the error by repeating the last rung', async () => {
+  test('Pad to 3 rungs clears the error by repeating the last rung', async () => {
     await buildUnequalRungs();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Pad to 2 rungs' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Pad to 3 rungs' }),
+    );
 
     expect(
-      screen.queryByText(/Rep schemes differ across movements/i),
+      screen.queryByText(/Ladders differ in length across movements/i),
     ).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
-    // Both movements now run two rungs; the short one repeated its last value.
-    expect(screen.getAllByLabelText(/Rung \d/)).toHaveLength(4);
+    // Both movements now run three rungs; the short one repeated its last value.
+    expect(screen.getAllByLabelText(/Rung \d/)).toHaveLength(6);
   });
 
   test('an unnamed movement blocks Start and flags its own card', async () => {
@@ -1094,7 +1117,6 @@ describe('workout issues', () => {
     ).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Start/i })).toBeEnabled();
   });
-
 });
 
 // The builder is the only backstop for workouts it didn't build: repeat-workout,
@@ -1139,7 +1161,11 @@ describe('workout issues from a loaded workout', () => {
     await loadWorkout({
       intervalTimer: 60,
       movements: [
-        { ...DEFAULT_MOVEMENT_OPTIONS, movementName: 'Plank', timedRungs: true },
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'Plank',
+          timedRungs: true,
+        },
       ],
     });
 
@@ -1151,14 +1177,26 @@ describe('workout issues from a loaded workout', () => {
     await loadWorkout({
       workoutMode: 'circuit',
       movements: [
-        { ...DEFAULT_MOVEMENT_OPTIONS, movementName: 'A', repScheme: [1, 2, 3, 4] },
-        { ...DEFAULT_MOVEMENT_OPTIONS, movementName: 'B', repScheme: [5, 5, 5] },
-        { ...DEFAULT_MOVEMENT_OPTIONS, movementName: 'C', repScheme: [5, 5, 5] },
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'A',
+          repScheme: [1, 2, 3, 4],
+        },
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'B',
+          repScheme: [5, 4, 3],
+        },
+        {
+          ...DEFAULT_MOVEMENT_OPTIONS,
+          movementName: 'C',
+          repScheme: [5, 4, 3],
+        },
       ],
     });
 
     expect(
-      screen.getByText(/Rep schemes differ across movements/i),
+      screen.getByText(/Ladders differ in length across movements/i),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Start/i })).toBeDisabled();
 

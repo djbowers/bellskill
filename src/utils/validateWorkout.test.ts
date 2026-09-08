@@ -79,15 +79,16 @@ describe('validateWorkout — unequal_rungs', () => {
 
   test('the same movements in straight sets produce no errors', () => {
     expect(
-      validateWorkout(draft({ workoutMode: 'straightSets', movements: unequal }))
-        .errors,
+      validateWorkout(
+        draft({ workoutMode: 'straightSets', movements: unequal }),
+      ).errors,
     ).toEqual([]);
   });
 
   test('complex also walks one rung at a time, so it enforces the rule', () => {
-    expect(codes(draft({ workoutMode: 'complex', movements: unequal }))).toContain(
-      'unequal_rungs',
-    );
+    expect(
+      codes(draft({ workoutMode: 'complex', movements: unequal })),
+    ).toContain('unequal_rungs');
   });
 
   test('equal rungs pass in every mode', () => {
@@ -97,6 +98,33 @@ describe('validateWorkout — unequal_rungs', () => {
         'unequal_rungs',
       );
     }
+  });
+
+  test('a single-rung movement repeats, so it never conflicts with a ladder', () => {
+    const mixed = [
+      movement({ repScheme: [1, 2, 3] }),
+      movement({ repScheme: [2, 3, 4] }),
+      movement({ repScheme: [5] }),
+    ];
+    for (const workoutMode of ['circuit', 'complex'] as const) {
+      expect(codes(draft({ workoutMode, movements: mixed }))).not.toContain(
+        'unequal_rungs',
+      );
+    }
+  });
+
+  test('two ladders of different length still conflict, single rungs aside', () => {
+    expect(
+      codes(
+        draft({
+          movements: [
+            movement({ repScheme: [5] }),
+            movement({ repScheme: [1, 2, 3] }),
+            movement({ repScheme: [1, 2] }),
+          ],
+        }),
+      ),
+    ).toContain('unequal_rungs');
   });
 
   test('a single movement can never be unequal', () => {
@@ -117,7 +145,7 @@ describe('validateWorkout — unequal_rungs', () => {
     const { errors } = validateWorkout(
       draft({
         movements: [
-          movement({ repScheme: [5] }),
+          movement({ repScheme: [5, 4] }),
           movement({ repScheme: [1, 2, 3, 4, 5, 6] }),
         ],
       }),
@@ -139,27 +167,24 @@ describe('validateWorkout — empty_rep_scheme', () => {
   });
 
   test('passes on a one-rung movement', () => {
-    expect(codes(draft({ movements: [movement({ repScheme: [1] })] }))).not.toContain(
-      'empty_rep_scheme',
-    );
+    expect(
+      codes(draft({ movements: [movement({ repScheme: [1] })] })),
+    ).not.toContain('empty_rep_scheme');
   });
 
   test('an empty rep scheme does not also report invalid_reps', () => {
-    expect(codes(draft({ movements: [movement({ repScheme: [] })] }))).not.toContain(
-      'invalid_reps',
-    );
+    expect(
+      codes(draft({ movements: [movement({ repScheme: [] })] })),
+    ).not.toContain('invalid_reps');
   });
 });
 
 describe('validateWorkout — invalid_reps', () => {
-  test.each([[-1], [2.5], [101]])(
-    'errors on a rung of %p',
-    (rung: number) => {
-      expect(
-        codes(draft({ movements: [movement({ repScheme: [5, rung] })] })),
-      ).toContain('invalid_reps');
-    },
-  );
+  test.each([[-1], [2.5], [101]])('errors on a rung of %p', (rung: number) => {
+    expect(
+      codes(draft({ movements: [movement({ repScheme: [5, rung] })] })),
+    ).toContain('invalid_reps');
+  });
 
   test('passes on the boundary values 1 and 100', () => {
     expect(
@@ -215,7 +240,9 @@ describe('validateWorkout — invalid_reps', () => {
 describe('validateWorkout — non_positive_weight', () => {
   test('null is bodyweight, which is valid', () => {
     expect(
-      validateWorkout(draft({ movements: [movement({ weightOneValue: null })] })),
+      validateWorkout(
+        draft({ movements: [movement({ weightOneValue: null })] }),
+      ),
     ).toEqual({ errors: [], warnings: [] });
   });
 
@@ -234,9 +261,9 @@ describe('validateWorkout — non_positive_weight', () => {
   });
 
   test.each([0, -16])('errors on a weight of %p', (weightOneValue) => {
-    expect(codes(draft({ movements: [movement({ weightOneValue })] }))).toContain(
-      'non_positive_weight',
-    );
+    expect(
+      codes(draft({ movements: [movement({ weightOneValue })] })),
+    ).toContain('non_positive_weight');
   });
 
   test('passes on a positive weight', () => {
@@ -287,7 +314,10 @@ describe('validateWorkout — interval_with_timed_rungs (warning)', () => {
   test('timed rungs alone are fine', () => {
     expect(
       warningCodes(
-        draft({ intervalTimer: 0, movements: [movement({ timedRungs: true })] }),
+        draft({
+          intervalTimer: 0,
+          movements: [movement({ timedRungs: true })],
+        }),
       ),
     ).toEqual([]);
   });
@@ -299,8 +329,9 @@ describe('validateWorkout — interval_with_timed_rungs (warning)', () => {
 
 describe('validateWorkout — max rungs', () => {
   test('a 0 rung is a valid ladder step, not an invalid rep count', () => {
-    expect(codes(draft({ movements: [movement({ repScheme: [1, 2, 3, 0] })] })))
-      .toEqual([]);
+    expect(
+      codes(draft({ movements: [movement({ repScheme: [1, 2, 3, 0] })] })),
+    ).toEqual([]);
   });
 
   test('a negative rung is still rejected', () => {
@@ -323,7 +354,9 @@ describe('validateWorkout — max rungs', () => {
 
   test('a max rung alone is fine', () => {
     expect(
-      codes(draft({ intervalTimer: 0, movements: [movement({ repScheme: [0] })] })),
+      codes(
+        draft({ intervalTimer: 0, movements: [movement({ repScheme: [0] })] }),
+      ),
     ).toEqual([]);
   });
 });

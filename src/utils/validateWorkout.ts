@@ -9,7 +9,6 @@
 // Kept pure and dependency-free (relative `.ts` imports, nothing from
 // ~/components, ~/pages, ~/api or ~/contexts) so the Deno edge runtime can import
 // it the way it already imports patternDebt.ts.
-
 import type { WorkoutMode } from '../types/workout-mode.type.ts';
 import { hasMaxRung } from './maxRung.ts';
 
@@ -117,17 +116,19 @@ export const validateWorkout = (draft: WorkoutDraft): WorkoutValidation => {
     });
   }
 
+  // A single-rung movement repeats that rung on every rung of the round, so
+  // only ladders (two or more rungs) have to agree on a length.
   const rungCounts = movements.map((movement) => movement.repScheme.length);
+  const ladderCounts = rungCounts.filter((count) => count > 1);
   if (
     requiresEqualRungs(workoutMode) &&
-    movements.length > 1 &&
-    rungCounts.some((count) => count !== rungCounts[0])
+    ladderCounts.some((count) => count !== ladderCounts[0])
   ) {
     const targetRungs = Math.max(...rungCounts);
     errors.push({
       code: 'unequal_rungs',
       severity: 'error',
-      message: `Rep schemes differ across movements. ${RUNG_POINTER_MODE_LABELS[workoutMode]} mode runs one rung at a time, so every movement needs the same number.`,
+      message: `Ladders differ in length across movements. ${RUNG_POINTER_MODE_LABELS[workoutMode]} mode runs one rung at a time, so every ladder needs the same number of rungs — or a single rung, which repeats every rung.`,
       suggestions: [
         { kind: 'switchMode', mode: 'straightSets' },
         { kind: 'padRungs', targetRungs },
@@ -149,7 +150,8 @@ export const validateWorkout = (draft: WorkoutDraft): WorkoutValidation => {
       errors.push({
         code: 'empty_rep_scheme',
         severity: 'error',
-        message: 'This movement has an empty rep scheme — add at least one rung.',
+        message:
+          'This movement has an empty rep scheme — add at least one rung.',
         movementIndex,
       });
     } else {

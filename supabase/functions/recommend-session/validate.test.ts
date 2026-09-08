@@ -117,7 +117,7 @@ describe('validateRecommendation — shared runnability rules', () => {
       ]),
     );
     expect(reasons).toHaveLength(1);
-    expect(reasons[0]).toContain('Rep schemes differ across movements');
+    expect(reasons[0]).toContain('Ladders differ in length across movements');
   });
 
   test('the same rungs declared as Straight Sets pass', () => {
