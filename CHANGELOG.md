@@ -47,6 +47,7 @@ commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/styl
 - Larger hand indicator in complex mode ([#265](https://github.com/djbowers/bellskill/pull/265))
 
 ### Fixed
+- Chalk faithfulness judge uses structured outputs, fixing parse errors on quoted claim snippets ([#286](https://github.com/djbowers/bellskill/pull/286))
 - Chalk embedding worker: dedicated token for embed-text auth, and smaller batches with retry under the hosted compute limit ([#279](https://github.com/djbowers/bellskill/pull/279), [#281](https://github.com/djbowers/bellskill/pull/281))
 - Interval program goals counted in rounds instead of minutes, so backgrounding the app no longer ends a session short ([#267](https://github.com/djbowers/bellskill/pull/267))
 - Deload and test-day weight offsets preserved when a session edit is applied forward ([#270](https://github.com/djbowers/bellskill/pull/270))
