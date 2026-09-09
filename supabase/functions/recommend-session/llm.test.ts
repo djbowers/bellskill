@@ -9,8 +9,18 @@ const inputs: RecommenderInputs = {
   days_since_last_workout: null,
   recent_history: [],
   candidates: [
-    { user_movement_id: 'swing', name: 'Swing', is_big_6: true, pattern_credits: ['hinge'] },
-    { user_movement_id: 'press', name: 'Press', is_big_6: true, pattern_credits: ['push'] },
+    {
+      user_movement_id: 'swing',
+      name: 'Swing',
+      is_big_6: true,
+      pattern_credits: ['hinge'],
+    },
+    {
+      user_movement_id: 'press',
+      name: 'Press',
+      is_big_6: true,
+      pattern_credits: ['push'],
+    },
   ],
   pattern_debt: null,
   unlocked_weights: {},
@@ -20,12 +30,14 @@ const block = (over: Partial<Recommendation['blocks'][number]> = {}) => ({
   user_movement_id: 'swing',
   movement_name: 'Swing',
   weight_kg: 24,
-  rep_scheme: [5, 5, 5],
+  rep_scheme: [10],
   notes: '',
   ...over,
 });
 
-const recommendation = (over: Partial<Recommendation> = {}): Recommendation => ({
+const recommendation = (
+  over: Partial<Recommendation> = {},
+): Recommendation => ({
   rationale: 'test',
   duration_minutes: 20,
   format: 'Circuit',
@@ -38,7 +50,11 @@ const recommendation = (over: Partial<Recommendation> = {}): Recommendation => (
 const unequalRungs = recommendation({
   blocks: [
     block({ rep_scheme: [1, 2, 3, 4] }),
-    block({ user_movement_id: 'press', movement_name: 'Press', rep_scheme: [5, 5, 5] }),
+    block({
+      user_movement_id: 'press',
+      movement_name: 'Press',
+      rep_scheme: [5, 4, 3],
+    }),
   ],
 });
 
@@ -49,7 +65,10 @@ const jsonResponse = (rec: Recommendation) =>
   );
 
 /** Bodies of every Anthropic request made during a call, in order. */
-let sentBodies: Array<{ system: string; messages: Array<{ role: string; content: string }> }>;
+let sentBodies: Array<{
+  system: string;
+  messages: Array<{ role: string; content: string }>;
+}>;
 
 const stubModel = (responses: Recommendation[]) => {
   const queue = [...responses];
@@ -93,7 +112,9 @@ describe('generateRecommendation — corrective retry', () => {
 
     const correction = sentBodies[1].messages.at(-1);
     expect(correction?.role).toBe('user');
-    expect(correction?.content).toContain('Ladders differ in length across movements');
+    expect(correction?.content).toContain(
+      'Ladders differ in length across movements',
+    );
     // Rung equality is a whole-session property, so it is not pinned to a block.
     expect(correction?.content).toContain('the session —');
   });
@@ -112,14 +133,16 @@ describe('generateRecommendation — corrective retry', () => {
     await generateRecommendation(inputs);
 
     expect(sentBodies[0].system).toContain('Runnability');
-    expect(sentBodies[0].system).toContain('Straight Sets');
+    expect(sentBodies[0].system).toContain('Every session is a circuit');
   });
 
   test('a missing API key fails before any request', async () => {
     vi.stubGlobal('Deno', { env: { get: () => undefined } });
     stubModel([]);
 
-    await expect(generateRecommendation(inputs)).rejects.toBeInstanceOf(LLMError);
+    await expect(generateRecommendation(inputs)).rejects.toBeInstanceOf(
+      LLMError,
+    );
     expect(sentBodies).toHaveLength(0);
   });
 });

@@ -3,12 +3,8 @@
 // wire shape (snake_case), so the response is consumed without remapping; the
 // app-facing conversion to MovementOptions lives in recommendationToMovements.
 
-export type RecommendationFormat =
-  | 'EMOM'
-  | 'AMRAP'
-  | 'Circuit'
-  | 'Ladder'
-  | 'Straight Sets';
+/** Every recommended session is a circuit; the app maps it onto circuit mode. */
+export type RecommendationFormat = 'Circuit';
 
 export type RecommendationConfidence = 'high' | 'medium' | 'low';
 

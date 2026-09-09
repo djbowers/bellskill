@@ -2,7 +2,9 @@ import { summarizeEquipment } from '../../../src/utils/equipment.ts';
 import type { Recommendation } from './types.ts';
 import { ValidationError, validateRecommendation } from './validate.ts';
 
-const rec = (blocks: Array<Partial<Recommendation['blocks'][number]>>): Recommendation => ({
+const rec = (
+  blocks: Array<Partial<Recommendation['blocks'][number]>>,
+): Recommendation => ({
   rationale: 'test',
   duration_minutes: 20,
   format: 'Circuit',
@@ -11,13 +13,14 @@ const rec = (blocks: Array<Partial<Recommendation['blocks'][number]>>): Recommen
     user_movement_id: `um-${i}`,
     movement_name: `Movement ${i}`,
     weight_kg: 16,
-    rep_scheme: [5, 5, 5],
+    rep_scheme: [5],
     notes: '',
     ...b,
   })),
 });
 
-const idsOf = (r: Recommendation) => new Set(r.blocks.map((b) => b.user_movement_id));
+const idsOf = (r: Recommendation) =>
+  new Set(r.blocks.map((b) => b.user_movement_id));
 
 describe('validateRecommendation — coverage invariant', () => {
   test('passes when block credits cover every target', () => {
@@ -80,7 +83,9 @@ describe('validateRecommendation — coverage invariant', () => {
       throw new Error('expected ValidationError');
     } catch (err) {
       const reasons = (err as ValidationError).reasons;
-      expect(reasons.some((x) => x.includes('not in the candidate list'))).toBe(true);
+      expect(reasons.some((x) => x.includes('not in the candidate list'))).toBe(
+        true,
+      );
       expect(reasons.some((x) => x.includes('non-positive weight'))).toBe(true);
       expect(reasons.some((x) => x.includes('"squat"'))).toBe(true);
     }
@@ -92,8 +97,7 @@ describe('validateRecommendation — coverage invariant', () => {
 // reach `reasons` with enough context for the model to act on, and that its
 // warnings never trigger a retry.
 describe('validateRecommendation — shared runnability rules', () => {
-  const pass = (r: Recommendation) =>
-    validateRecommendation(r, idsOf(r));
+  const pass = (r: Recommendation) => validateRecommendation(r, idsOf(r));
 
   const reasonsFor = (r: Recommendation): string[] => {
     try {
@@ -112,20 +116,29 @@ describe('validateRecommendation — shared runnability rules', () => {
     const reasons = reasonsFor(
       rec([
         { rep_scheme: [1, 2, 3, 4] },
-        { rep_scheme: [5, 5, 5] },
-        { rep_scheme: [5, 5, 5] },
+        { rep_scheme: [5, 4, 3] },
+        { rep_scheme: [5, 4, 3] },
       ]),
     );
     expect(reasons).toHaveLength(1);
     expect(reasons[0]).toContain('Ladders differ in length across movements');
   });
 
-  test('the same rungs declared as Straight Sets pass', () => {
-    const r: Recommendation = {
-      ...rec([{ rep_scheme: [1, 2, 3, 4] }, { rep_scheme: [5, 5, 5] }]),
-      format: 'Straight Sets',
-    };
+  test('a single-rung block alongside equal ladders passes', () => {
+    const r = rec([
+      { rep_scheme: [1, 2, 3] },
+      { rep_scheme: [2, 3, 4] },
+      { rep_scheme: [5] },
+    ]);
     expect(() => validateRecommendation(r, idsOf(r))).not.toThrow();
+  });
+
+  test('any format other than Circuit is rejected', () => {
+    const r = {
+      ...rec([{ rep_scheme: [1, 2, 3, 4] }, { rep_scheme: [5, 4, 3] }]),
+      format: 'Straight Sets',
+    } as unknown as Recommendation;
+    expect(reasonsFor(r).join(' ')).toContain('every session is a "Circuit"');
   });
 
   test('a zero duration is rejected', () => {
@@ -134,7 +147,9 @@ describe('validateRecommendation — shared runnability rules', () => {
   });
 
   test('reasons name the offending block', () => {
-    const reasons = reasonsFor(rec([{}, { rep_scheme: [], movement_name: 'Snatch' }]));
+    const reasons = reasonsFor(
+      rec([{}, { rep_scheme: [], movement_name: 'Snatch' }]),
+    );
     expect(reasons.some((x) => x.includes('block 2 (Snatch)'))).toBe(true);
   });
 
@@ -160,6 +175,34 @@ describe('validateRecommendation — shared runnability rules', () => {
   test('an implausible weight is a warning, not a retry', () => {
     expect(() => pass(rec([{ weight_kg: 150 }]))).not.toThrow();
   });
+});
+
+describe('validateRecommendation — rungs vary the reps', () => {
+  const reasonsFor = (r: Recommendation): string[] => {
+    try {
+      validateRecommendation(r, idsOf(r));
+    } catch (err) {
+      return (err as ValidationError).reasons;
+    }
+    throw new Error('expected ValidationError');
+  };
+
+  test('a rep count repeated on consecutive rungs is rejected with a fix', () => {
+    const reasons = reasonsFor(
+      rec([{ movement_name: 'Swing', rep_scheme: [5, 5, 5] }]),
+    );
+    expect(reasons).toEqual([
+      'block 1 (Swing) repeats 5 reps on consecutive rungs — write a single rung [5] or vary the reps',
+    ]);
+  });
+
+  test.each([[[5]], [[1, 2, 3]], [[10, 8, 6]], [[1, 2, 3, 2, 1]]])(
+    'a scheme of %j passes',
+    (scheme: number[]) => {
+      const r = rec([{ rep_scheme: scheme }]);
+      expect(() => validateRecommendation(r, idsOf(r))).not.toThrow();
+    },
+  );
 });
 
 describe('validateRecommendation — equipment', () => {
@@ -192,7 +235,10 @@ describe('validateRecommendation — equipment', () => {
   });
 
   test('accepts a session that keeps the adjustable bell at one setting', () => {
-    const r = { ...rec([{ weight_kg: 16 }, { weight_kg: 28 }]), adjustable_settings_kg: [28] };
+    const r = {
+      ...rec([{ weight_kg: 16 }, { weight_kg: 28 }]),
+      adjustable_settings_kg: [28],
+    };
     expect(() =>
       validateRecommendation(r, idsOf(r), undefined, owned),
     ).not.toThrow();
@@ -299,7 +345,10 @@ describe('validateRecommendation — bell count', () => {
   });
 
   test('rejects a double at a weight the lifter owns only one of', () => {
-    const r = { ...rec([{ weight_kg: 24, bells: 2 }]), adjustable_settings_kg: [] };
+    const r = {
+      ...rec([{ weight_kg: 24, bells: 2 }]),
+      adjustable_settings_kg: [],
+    };
     try {
       validateRecommendation(r, idsOf(r), undefined, pairOf16);
       throw new Error('expected ValidationError');
@@ -311,7 +360,10 @@ describe('validateRecommendation — bell count', () => {
   });
 
   test('accepts a double at a weight the lifter owns a pair of', () => {
-    const r = { ...rec([{ weight_kg: 16, bells: 2 }]), adjustable_settings_kg: [] };
+    const r = {
+      ...rec([{ weight_kg: 16, bells: 2 }]),
+      adjustable_settings_kg: [],
+    };
     expect(() =>
       validateRecommendation(r, idsOf(r), undefined, pairOf16),
     ).not.toThrow();

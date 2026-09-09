@@ -1,7 +1,9 @@
 import { buildSystemPrompt, buildUserPrompt } from './prompt.ts';
 import type { RecommenderInputs } from './types.ts';
 
-const baseInputs = (over: Partial<RecommenderInputs> = {}): RecommenderInputs => ({
+const baseInputs = (
+  over: Partial<RecommenderInputs> = {},
+): RecommenderInputs => ({
   balance_targets: [],
   training_goal: null,
   readiness: null,
@@ -70,6 +72,13 @@ describe('prompt — pattern annotations and balance targets', () => {
       '- Turkish Get-Up (Big 6) · pays: get_up, push, rotation [user_movement_id: tgu]',
     );
     expect(prompt).toContain('- Mystery Move [user_movement_id: custom]');
+  });
+
+  test('system prompt makes every session a circuit with varying rungs only', () => {
+    const system = buildSystemPrompt();
+    expect(system).toContain('Every session is a circuit');
+    expect(system).toContain('Never repeat a rep');
+    expect(system).not.toContain('Straight Sets');
   });
 
   test('balance targets render a mandatory section; absent when empty', () => {

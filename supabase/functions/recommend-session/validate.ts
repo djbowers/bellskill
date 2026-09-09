@@ -9,8 +9,8 @@
 //     shared verifier, so the builder enforces the same rules (PROD-240). Its
 //     errors become retry reasons; its warnings are logged, never retried on.
 //   - The LLM contract ("did the model follow instructions?") stays local:
-//     candidate-id membership and target-pattern coverage.
-
+//     circuit format, candidate-id membership, no rep count repeated on
+//     consecutive rungs, bell count, and target-pattern coverage.
 import {
   type EquipmentSummary,
   validateSessionWeights,
@@ -44,6 +44,14 @@ const describeBlock = (rec: Recommendation, index?: number) =>
     ? 'the session'
     : `block ${index + 1} (${rec.blocks[index]?.movement_name ?? 'unnamed'})`;
 
+/** The first rep count that repeats on consecutive rungs, or null. */
+const consecutiveRepeat = (repScheme: number[]): number | null => {
+  for (let i = 1; i < repScheme.length; i++) {
+    if (repScheme[i] === repScheme[i - 1]) return repScheme[i];
+  }
+  return null;
+};
+
 export function validateRecommendation(
   rec: Recommendation,
   candidateIds: Set<string>,
@@ -56,12 +64,24 @@ export function validateRecommendation(
   // Runnability: reps, weights, rung equality, empty blocks, zero duration.
   const { errors, warnings } = validateWorkout(recommendationToDraft(rec));
   for (const issue of errors) {
-    reasons.push(`${describeBlock(rec, issue.movementIndex)} — ${issue.message}`);
+    reasons.push(
+      `${describeBlock(rec, issue.movementIndex)} — ${issue.message}`,
+    );
   }
   if (warnings.length > 0) {
     console.warn(
       'recommend-session: runnability warnings',
-      warnings.map((w) => `${describeBlock(rec, w.movementIndex)} — ${w.message}`),
+      warnings.map(
+        (w) => `${describeBlock(rec, w.movementIndex)} — ${w.message}`,
+      ),
+    );
+  }
+
+  // LLM contract: the schema pins the format, but a stale or hand-built
+  // recommendation could still carry another one.
+  if (rec.format !== 'Circuit') {
+    reasons.push(
+      `the session declares format "${rec.format}" — every session is a "Circuit"`,
     );
   }
 
@@ -73,11 +93,22 @@ export function validateRecommendation(
       );
     }
 
+    // Rungs exist to vary the reps; rounds come from the clock. [5, 5, 5] is
+    // not a runnability problem, so the shared verifier allows it.
+    const repeated = consecutiveRepeat(block.rep_scheme);
+    if (repeated !== null) {
+      reasons.push(
+        `${describeBlock(rec, i)} repeats ${repeated} reps on consecutive rungs — write a single rung [${repeated}] or vary the reps`,
+      );
+    }
+
     // Bell count is an LLM-contract check, not runnability: the shared verifier
     // has no concept of how many bells a block uses.
     const bells = block.bells ?? 1;
     if (!Number.isInteger(bells) || bells < 1 || bells > 2) {
-      reasons.push(`${describeBlock(rec, i)} claims ${bells} bells — use 1 or 2`);
+      reasons.push(
+        `${describeBlock(rec, i)} claims ${bells} bells — use 1 or 2`,
+      );
     } else if (
       bells === 2 &&
       doublesById?.get(block.user_movement_id) === false
@@ -115,7 +146,10 @@ export function validateRecommendation(
     reasons.push(
       ...validateSessionWeights(
         equipment,
-        rec.blocks.map((b) => ({ weight_kg: b.weight_kg, bells: b.bells ?? 1 })),
+        rec.blocks.map((b) => ({
+          weight_kg: b.weight_kg,
+          bells: b.bells ?? 1,
+        })),
         rec.adjustable_settings_kg ?? [],
       ),
     );
