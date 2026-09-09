@@ -743,6 +743,38 @@ export type Database = {
           },
         ]
       }
+      skill_node_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          node_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          node_id: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          node_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_node_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_activation"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       spotify_connections: {
         Row: {
           access_token: string | null

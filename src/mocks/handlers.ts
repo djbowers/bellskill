@@ -56,6 +56,10 @@ export const handlers = [
   http.post(`${VITE_SUPABASE_URL}/functions/v1/spotify-player`, () =>
     HttpResponse.json({ connected: false }),
   ),
+  // Skill tree defaults to no progress; the page suite overrides this.
+  http.get(`${VITE_SUPABASE_URL}/rest/v1/skill_node_progress`, () =>
+    HttpResponse.json([]),
+  ),
   // Chalk defaults to an empty conversation. `onUnhandledRequest: 'error'`
   // means any suite that renders ChalkPage needs these present.
   http.get(`${VITE_SUPABASE_URL}/rest/v1/chalk_threads`, () =>
