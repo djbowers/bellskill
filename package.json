@@ -23,6 +23,7 @@
     "chalk:ingest": "node scripts/ingest-chalk-knowledge.mjs",
     "eval:retrieval": "node scripts/eval/run-retrieval-eval.mjs",
     "eval:faithfulness": "node scripts/eval/run-faithfulness-eval.mjs",
+    "eval:next-session": "vite-node scripts/eval/run-next-session-eval.ts",
     "movements:check": "node scripts/ingest-movements.mjs",
     "movements:emit-sql": "node scripts/ingest-movements.mjs --emit-sql",
     "prettier": "prettier --write .",
