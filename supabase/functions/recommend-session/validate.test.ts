@@ -10,7 +10,7 @@ const rec = (
   format: 'Circuit',
   confidence: 'high',
   blocks: blocks.map((b, i) => ({
-    user_movement_id: `um-${i}`,
+    movement_id: `m-${i}`,
     movement_name: `Movement ${i}`,
     weight_kg: 16,
     rep_scheme: [5],
@@ -20,11 +20,11 @@ const rec = (
 });
 
 const idsOf = (r: Recommendation) =>
-  new Set(r.blocks.map((b) => b.user_movement_id));
+  new Set(r.blocks.map((b) => b.movement_id));
 
 describe('validateRecommendation — coverage invariant', () => {
   test('passes when block credits cover every target', () => {
-    const r = rec([{ user_movement_id: 'tgu' }, { user_movement_id: 'swing' }]);
+    const r = rec([{ movement_id: 'tgu' }, { movement_id: 'swing' }]);
     expect(() =>
       validateRecommendation(r, idsOf(r), {
         targets: ['get_up', 'push', 'hinge'],
@@ -37,7 +37,7 @@ describe('validateRecommendation — coverage invariant', () => {
   });
 
   test('fails with a per-pattern reason for each uncovered target', () => {
-    const r = rec([{ user_movement_id: 'swing' }]);
+    const r = rec([{ movement_id: 'swing' }]);
     try {
       validateRecommendation(r, idsOf(r), {
         targets: ['hinge', 'carry', 'pull'],
@@ -54,7 +54,7 @@ describe('validateRecommendation — coverage invariant', () => {
   });
 
   test('empty targets is a no-op (default mode / degraded balance mode)', () => {
-    const r = rec([{ user_movement_id: 'swing' }]);
+    const r = rec([{ movement_id: 'swing' }]);
     expect(() =>
       validateRecommendation(r, idsOf(r), {
         targets: [],
@@ -64,7 +64,7 @@ describe('validateRecommendation — coverage invariant', () => {
   });
 
   test('null credits on a chosen block cover nothing', () => {
-    const r = rec([{ user_movement_id: 'custom' }]);
+    const r = rec([{ movement_id: 'custom' }]);
     expect(() =>
       validateRecommendation(r, idsOf(r), {
         targets: ['squat'],
@@ -74,7 +74,7 @@ describe('validateRecommendation — coverage invariant', () => {
   });
 
   test('id and runnability checks still run alongside coverage', () => {
-    const r = rec([{ user_movement_id: 'rogue', weight_kg: -1 }]);
+    const r = rec([{ movement_id: 'rogue', weight_kg: -1 }]);
     try {
       validateRecommendation(r, new Set(['known']), {
         targets: ['squat'],
@@ -83,7 +83,7 @@ describe('validateRecommendation — coverage invariant', () => {
       throw new Error('expected ValidationError');
     } catch (err) {
       const reasons = (err as ValidationError).reasons;
-      expect(reasons.some((x) => x.includes('not in the candidate list'))).toBe(
+      expect(reasons.some((x) => x.includes('not in the catalog list'))).toBe(
         true,
       );
       expect(reasons.some((x) => x.includes('non-positive weight'))).toBe(true);
@@ -314,7 +314,7 @@ describe('validateRecommendation — bell count', () => {
   });
 
   test('rejects a double on a movement the catalog says is single-bell', () => {
-    const r = rec([{ user_movement_id: 'goblet', bells: 2 }]);
+    const r = rec([{ movement_id: 'goblet', bells: 2 }]);
     try {
       validateRecommendation(
         r,
@@ -331,15 +331,84 @@ describe('validateRecommendation — bell count', () => {
     }
   });
 
-  test('allows a double when the catalog does not know the movement', () => {
-    const r = rec([{ user_movement_id: 'custom', bells: 2 }]);
-    expect(() =>
+  test('rejects a single bell on a movement the catalog says is double-bell', () => {
+    const r = rec([{ movement_id: 'dbl-front-squat', bells: 1 }]);
+    try {
       validateRecommendation(
         r,
         idsOf(r),
         undefined,
         null,
-        new Map([['custom', null]]),
+        new Map([['dbl-front-squat', true]]),
+      );
+      throw new Error('expected ValidationError');
+    } catch (err) {
+      expect((err as ValidationError).reasons[0]).toContain(
+        'is a double-bell movement — prescribe it with 2 bells',
+      );
+    }
+  });
+
+  test('a bodyweight movement must carry weight 0 and bells 0', () => {
+    const bodyweight = new Map([['push-up', true]]);
+    const sound = rec([{ movement_id: 'push-up', weight_kg: 0, bells: 0 }]);
+    expect(() =>
+      validateRecommendation(
+        sound,
+        idsOf(sound),
+        undefined,
+        null,
+        undefined,
+        bodyweight,
+      ),
+    ).not.toThrow();
+
+    const loaded = rec([{ movement_id: 'push-up', weight_kg: 16, bells: 1 }]);
+    try {
+      validateRecommendation(
+        loaded,
+        idsOf(loaded),
+        undefined,
+        null,
+        undefined,
+        bodyweight,
+      );
+      throw new Error('expected ValidationError');
+    } catch (err) {
+      expect((err as ValidationError).reasons[0]).toContain(
+        'is a bodyweight movement — write weight_kg 0 and bells 0',
+      );
+    }
+  });
+
+  test('a kettlebell movement with weight 0 is rejected', () => {
+    const r = rec([{ movement_name: 'Swing', weight_kg: 0, bells: 1 }]);
+    try {
+      validateRecommendation(r, idsOf(r));
+      throw new Error('expected ValidationError');
+    } catch (err) {
+      expect((err as ValidationError).reasons).toEqual([
+        'block 1 (Swing) takes a kettlebell — prescribe a positive weight_kg',
+      ]);
+    }
+  });
+
+  test('a bodyweight block is ignored by the equipment check', () => {
+    const r = {
+      ...rec([
+        { movement_id: 'push-up', weight_kg: 0, bells: 0 },
+        { weight_kg: 16 },
+      ]),
+      adjustable_settings_kg: [],
+    };
+    expect(() =>
+      validateRecommendation(
+        r,
+        idsOf(r),
+        undefined,
+        pairOf16,
+        undefined,
+        new Map([['push-up', true]]),
       ),
     ).not.toThrow();
   });

@@ -1,10 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { MemoryRouter } from 'react-router-dom';
 
-import { EntitlementContext, EntitlementContextValue } from '~/contexts';
+import {
+  EntitlementContext,
+  EntitlementContextValue,
+  SessionProvider,
+} from '~/contexts';
 import { VITE_SUPABASE_URL } from '~/env';
 import {
   ExampleProgramRecommendation,
@@ -17,6 +21,7 @@ import { RecommendSection, RecommendSectionProps } from './RecommendSection';
 
 const SESSION_URL = `${VITE_SUPABASE_URL}/functions/v1/recommend-session`;
 const PROGRAM_URL = `${VITE_SUPABASE_URL}/functions/v1/recommend-program`;
+const USER_MOVEMENTS_URL = `${VITE_SUPABASE_URL}/rest/v1/user_movements`;
 
 const base: EntitlementContextValue = {
   isPremium: false,
@@ -39,6 +44,10 @@ const easyStrength = {
   title: 'Easy Strength',
 } as Program;
 
+const session = { user: { id: 'user-1' } } as unknown as React.ContextType<
+  typeof SessionProvider
+>;
+
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -58,15 +67,17 @@ function renderSection({
     <QueryClientProvider client={makeQueryClient()}>
       <MemoryRouter>
         <EntitlementContext.Provider value={entitlement}>
-          <RecommendSection
-            onAcceptSession={onAcceptSession}
-            showPrograms
-            programs={[easyStrength]}
-            slotsFull={false}
-            onEnrollNow={onEnrollNow}
-            onQueue={onQueue}
-            {...props}
-          />
+          <SessionProvider.Provider value={session}>
+            <RecommendSection
+              onAcceptSession={onAcceptSession}
+              showPrograms
+              programs={[easyStrength]}
+              slotsFull={false}
+              onEnrollNow={onEnrollNow}
+              onQueue={onQueue}
+              {...props}
+            />
+          </SessionProvider.Provider>
         </EntitlementContext.Provider>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -133,7 +144,46 @@ describe('RecommendSection — session scope', () => {
     ).toBeVisible();
   });
 
-  test('shows a friendly message when the user has no movements (422)', async () => {
+  test('Accept adds every recommended catalog movement to the library', async () => {
+    const created: Array<Record<string, unknown>> = [];
+    server.use(
+      http.post(SESSION_URL, () =>
+        HttpResponse.json(
+          { id: 'rec-1', recommendation: new ExampleRecommendation() },
+          { status: 200 },
+        ),
+      ),
+      http.post(USER_MOVEMENTS_URL, async ({ request }) => {
+        const row = (await request.json()) as Record<string, unknown>;
+        created.push(row);
+        return HttpResponse.json([{ id: `um-${created.length}`, ...row }], {
+          status: 201,
+        });
+      }),
+    );
+
+    renderSection();
+    await userEvent.click(recommendSessionButton());
+    await userEvent.click(
+      await screen.findByRole('button', { name: /^accept$/i }),
+    );
+
+    await waitFor(() => expect(created).toHaveLength(2));
+    expect(created).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          canonical_name: 'Two-Hand Swing',
+          functional_movement_id: 'example-swing',
+        }),
+        expect.objectContaining({
+          canonical_name: 'Turkish Get-Up',
+          functional_movement_id: 'example-getup',
+        }),
+      ]),
+    );
+  });
+
+  test('shows a friendly message when the catalog is empty (422)', async () => {
     server.use(
       http.post(SESSION_URL, () =>
         HttpResponse.json({ error: 'no_movements' }, { status: 422 }),
@@ -144,7 +194,7 @@ describe('RecommendSection — session scope', () => {
     await userEvent.click(recommendSessionButton());
 
     expect(
-      await screen.findByText(/add a few movements to your library first/i),
+      await screen.findByText(/couldn't find any catalog movements/i),
     ).toBeInTheDocument();
   });
 

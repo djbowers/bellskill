@@ -9,7 +9,7 @@
 //     shared verifier, so the builder enforces the same rules (PROD-240). Its
 //     errors become retry reasons; its warnings are logged, never retried on.
 //   - The LLM contract ("did the model follow instructions?") stays local:
-//     circuit format, candidate-id membership, no rep count repeated on
+//     circuit format, catalog-id membership, no rep count repeated on
 //     consecutive rungs, bell count, and target-pattern coverage.
 import {
   type EquipmentSummary,
@@ -26,8 +26,11 @@ export interface CoverageRequirement {
   creditsById: Map<string, readonly string[] | null>;
 }
 
-/** Catalog answer to "is this a two-bell movement?", null when unlinked. */
-export type DoublesById = Map<string, boolean | null>;
+/** Catalog answer to "is this a two-bell movement?". */
+export type DoublesById = Map<string, boolean>;
+
+/** Catalog answer to "does this movement take no bell?". */
+export type BodyweightById = Map<string, boolean>;
 
 export class ValidationError extends Error {
   reasons: string[];
@@ -58,6 +61,7 @@ export function validateRecommendation(
   coverage?: CoverageRequirement,
   equipment?: EquipmentSummary | null,
   doublesById?: DoublesById,
+  bodyweightById?: BodyweightById,
 ): void {
   const reasons: string[] = [];
 
@@ -85,11 +89,11 @@ export function validateRecommendation(
     );
   }
 
-  // LLM contract: every block must name a movement from the candidate list.
+  // LLM contract: every block must name a movement from the catalog list.
   for (const [i, block] of rec.blocks.entries()) {
-    if (!candidateIds.has(block.user_movement_id)) {
+    if (!candidateIds.has(block.movement_id)) {
       reasons.push(
-        `${describeBlock(rec, i)} uses user_movement_id "${block.user_movement_id}", which is not in the candidate list`,
+        `${describeBlock(rec, i)} uses movement_id "${block.movement_id}", which is not in the catalog list`,
       );
     }
 
@@ -105,18 +109,27 @@ export function validateRecommendation(
     // Bell count is an LLM-contract check, not runnability: the shared verifier
     // has no concept of how many bells a block uses.
     const bells = block.bells ?? 1;
-    if (!Number.isInteger(bells) || bells < 1 || bells > 2) {
+    if (bodyweightById?.get(block.movement_id) === true) {
+      if (bells !== 0 || block.weight_kg !== 0) {
+        reasons.push(
+          `${describeBlock(rec, i)} is a bodyweight movement — write weight_kg 0 and bells 0`,
+        );
+      }
+    } else if (block.weight_kg === 0) {
+      reasons.push(
+        `${describeBlock(rec, i)} takes a kettlebell — prescribe a positive weight_kg`,
+      );
+    } else if (!Number.isInteger(bells) || bells < 1 || bells > 2) {
       reasons.push(
         `${describeBlock(rec, i)} claims ${bells} bells — use 1 or 2`,
       );
-    } else if (
-      bells === 2 &&
-      doublesById?.get(block.user_movement_id) === false
-    ) {
-      // Only when the catalog positively says it is a one-bell movement; an
-      // unlinked movement (null) stays the lifter's call.
+    } else if (bells === 2 && doublesById?.get(block.movement_id) === false) {
       reasons.push(
         `${describeBlock(rec, i)} is not a double-bell movement — prescribe it with 1 bell`,
+      );
+    } else if (bells === 1 && doublesById?.get(block.movement_id) === true) {
+      reasons.push(
+        `${describeBlock(rec, i)} is a double-bell movement — prescribe it with 2 bells`,
       );
     }
   }
@@ -126,8 +139,7 @@ export function validateRecommendation(
   if (coverage && coverage.targets.length > 0) {
     const covered = new Set<string>();
     for (const block of rec.blocks) {
-      for (const credit of coverage.creditsById.get(block.user_movement_id) ??
-        []) {
+      for (const credit of coverage.creditsById.get(block.movement_id) ?? []) {
         covered.add(credit);
       }
     }
@@ -142,14 +154,14 @@ export function validateRecommendation(
 
   // Equipment: only checked when the lifter has recorded some. Weights must be
   // loadable *without re-plating mid-session* — see validateSessionWeights.
+  // Bodyweight blocks load nothing.
   if (equipment) {
     reasons.push(
       ...validateSessionWeights(
         equipment,
-        rec.blocks.map((b) => ({
-          weight_kg: b.weight_kg,
-          bells: b.bells ?? 1,
-        })),
+        rec.blocks
+          .filter((b) => b.weight_kg > 0)
+          .map((b) => ({ weight_kg: b.weight_kg, bells: b.bells ?? 1 })),
         rec.adjustable_settings_kg ?? [],
       ),
     );
