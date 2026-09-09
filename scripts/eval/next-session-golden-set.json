@@ -1,5 +1,5 @@
 {
-  "_readme": "Golden set for the Chalk next-session eval (PROD-85). Each item is a RecommenderInputs snapshot minus `candidates` — the runner fills those from every row of scripts/data/movements.csv (kettlebell and bodyweight) through the same toCandidates() the edge function uses. `expect` holds the deterministic bounds the runner asserts (max_duration_minutes, max_blocks, must_cover) plus `notes`, the coach's-eye description the LLM judge grades against. Categories: baseline (no signal at all), readiness (scales volume to how the lifter feels and how long they have), balance-target (must train the named overdue patterns), equipment (only prescribes loadable weights), goal (recognisable protocol flavour), history (adapts to what was just done or how long it has been), house-voice (never says 'debt').",
+  "_readme": "Golden set for the Chalk next-session eval (PROD-85). Each item is a RecommenderInputs snapshot minus `candidates` — the runner fills those from every row of scripts/data/movements.csv (kettlebell and bodyweight) through the same toCandidates() the edge function uses. `expect` holds the deterministic bounds the runner asserts (max_duration_minutes, max_blocks, must_cover) plus `notes`, the coach's-eye description the LLM judge grades against. Categories: baseline (no signal at all), readiness (scales volume to how the lifter feels and how long they have), balance-target (must train the named overdue patterns), equipment (only prescribes loadable weights), goal (recognisable protocol flavour), history (adapts to what was just done or how long it has been), house-voice (never says 'debt'), skill-tree (stays inside the lifter's self-assessed skill frontier and practises the nodes they are working on — `skill_tree` is the same SkillTreeSummary the edge function persists, and the runner trims candidates with it exactly as the edge function does).",
   "items": [
     {
       "id": "baseline-blank",
@@ -12,7 +12,8 @@
         "recent_history": [],
         "pattern_debt": null,
         "modality_debt": null,
-        "unlocked_weights": {}
+        "unlocked_weights": {},
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 45,
@@ -36,17 +37,23 @@
             "movements": [
               {
                 "name": "Kettlebell Swing",
-                "rep_scheme": [20],
+                "rep_scheme": [
+                  20
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "Goblet Squat",
-                "rep_scheme": [10],
+                "rep_scheme": [
+                  10
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "One-Arm Kettlebell Military Press",
-                "rep_scheme": [5],
+                "rep_scheme": [
+                  5
+                ],
                 "weight_kg": 20
               }
             ]
@@ -54,7 +61,8 @@
         ],
         "pattern_debt": null,
         "modality_debt": null,
-        "unlocked_weights": {}
+        "unlocked_weights": {},
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 15,
@@ -78,12 +86,16 @@
             "movements": [
               {
                 "name": "One-Arm Kettlebell Swing",
-                "rep_scheme": [10],
+                "rep_scheme": [
+                  10
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "Turkish Get-Up",
-                "rep_scheme": [1],
+                "rep_scheme": [
+                  1
+                ],
                 "weight_kg": 16
               }
             ]
@@ -91,7 +103,8 @@
         ],
         "pattern_debt": null,
         "modality_debt": null,
-        "unlocked_weights": {}
+        "unlocked_weights": {},
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 60,
@@ -103,7 +116,10 @@
       "id": "balance-hinge-squat",
       "category": "balance-target",
       "inputs": {
-        "balance_targets": ["hinge", "squat"],
+        "balance_targets": [
+          "hinge",
+          "squat"
+        ],
         "training_goal": "Balanced strength",
         "readiness": "Good",
         "days_since_last_workout": 2,
@@ -115,12 +131,16 @@
             "movements": [
               {
                 "name": "One-Arm Kettlebell Military Press",
-                "rep_scheme": [5],
+                "rep_scheme": [
+                  5
+                ],
                 "weight_kg": 20
               },
               {
                 "name": "Kettlebell Row",
-                "rep_scheme": [8],
+                "rep_scheme": [
+                  8
+                ],
                 "weight_kg": 24
               }
             ]
@@ -132,12 +152,16 @@
             "movements": [
               {
                 "name": "Double Kettlebell Military Press",
-                "rep_scheme": [5],
+                "rep_scheme": [
+                  5
+                ],
                 "weight_kg": 16
               },
               {
                 "name": "Turkish Get-Up",
-                "rep_scheme": [1],
+                "rep_scheme": [
+                  1
+                ],
                 "weight_kg": 16
               }
             ]
@@ -229,12 +253,16 @@
           ]
         },
         "modality_debt": null,
-        "unlocked_weights": {}
+        "unlocked_weights": {},
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 40,
         "max_blocks": 6,
-        "must_cover": ["hinge", "squat"],
+        "must_cover": [
+          "hinge",
+          "squat"
+        ],
         "notes": "Trains both the hinge and the squat (swings, deadlifts, cleans, goblet or front squats) and says so in the rationale, describing them as due or overdue after two weeks of pressing and rowing. Pressing is optional and light. Never uses the word debt."
       }
     },
@@ -260,7 +288,8 @@
           "adjustable_bells": [],
           "adjustable_bell_count": 0,
           "description": "16 kg"
-        }
+        },
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 40,
@@ -284,12 +313,16 @@
             "movements": [
               {
                 "name": "Double Kettlebell Front Squat",
-                "rep_scheme": [5],
+                "rep_scheme": [
+                  5
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "Double Kettlebell Clean",
-                "rep_scheme": [5],
+                "rep_scheme": [
+                  5
+                ],
                 "weight_kg": 24
               }
             ]
@@ -313,7 +346,8 @@
           "adjustable_bells": [],
           "adjustable_bell_count": 0,
           "description": "24 kg (pair), 32 kg"
-        }
+        },
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 40,
@@ -343,12 +377,20 @@
           "adjustable_bells": [
             {
               "count": 1,
-              "settings_kg": [12, 16, 20, 24, 28, 32]
+              "settings_kg": [
+                12,
+                16,
+                20,
+                24,
+                28,
+                32
+              ]
             }
           ],
           "adjustable_bell_count": 1,
           "description": "16 kg, adjustable 12–32 kg (4 kg steps)"
-        }
+        },
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 40,
@@ -372,12 +414,16 @@
             "movements": [
               {
                 "name": "One-Arm Kettlebell Swing",
-                "rep_scheme": [10],
+                "rep_scheme": [
+                  10
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "Turkish Get-Up",
-                "rep_scheme": [1],
+                "rep_scheme": [
+                  1
+                ],
                 "weight_kg": 24
               }
             ]
@@ -389,12 +435,16 @@
             "movements": [
               {
                 "name": "One-Arm Kettlebell Swing",
-                "rep_scheme": [10],
+                "rep_scheme": [
+                  10
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "Turkish Get-Up",
-                "rep_scheme": [1],
+                "rep_scheme": [
+                  1
+                ],
                 "weight_kg": 24
               }
             ]
@@ -402,7 +452,8 @@
         ],
         "pattern_debt": null,
         "modality_debt": null,
-        "unlocked_weights": {}
+        "unlocked_weights": {},
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 35,
@@ -426,12 +477,20 @@
             "movements": [
               {
                 "name": "One-Arm Kettlebell Clean",
-                "rep_scheme": [1, 2, 3],
+                "rep_scheme": [
+                  1,
+                  2,
+                  3
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "One-Arm Kettlebell Military Press",
-                "rep_scheme": [1, 2, 3],
+                "rep_scheme": [
+                  1,
+                  2,
+                  3
+                ],
                 "weight_kg": 24
               }
             ]
@@ -443,17 +502,27 @@
             "movements": [
               {
                 "name": "One-Arm Kettlebell Clean",
-                "rep_scheme": [1, 2, 3],
+                "rep_scheme": [
+                  1,
+                  2,
+                  3
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "One-Arm Kettlebell Military Press",
-                "rep_scheme": [1, 2, 3],
+                "rep_scheme": [
+                  1,
+                  2,
+                  3
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "One-Arm Kettlebell Swing",
-                "rep_scheme": [10],
+                "rep_scheme": [
+                  10
+                ],
                 "weight_kg": 24
               }
             ]
@@ -461,7 +530,8 @@
         ],
         "pattern_debt": null,
         "modality_debt": null,
-        "unlocked_weights": {}
+        "unlocked_weights": {},
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 40,
@@ -485,17 +555,23 @@
             "movements": [
               {
                 "name": "Kettlebell Swing",
-                "rep_scheme": [20],
+                "rep_scheme": [
+                  20
+                ],
                 "weight_kg": 32
               },
               {
                 "name": "Double Kettlebell Front Squat",
-                "rep_scheme": [5],
+                "rep_scheme": [
+                  5
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "One-Arm Kettlebell Snatch",
-                "rep_scheme": [10],
+                "rep_scheme": [
+                  10
+                ],
                 "weight_kg": 24
               }
             ]
@@ -503,7 +579,8 @@
         ],
         "pattern_debt": null,
         "modality_debt": null,
-        "unlocked_weights": {}
+        "unlocked_weights": {},
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 30,
@@ -527,12 +604,20 @@
             "movements": [
               {
                 "name": "Double Kettlebell Military Press",
-                "rep_scheme": [1, 2, 3, 4, 5],
+                "rep_scheme": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "One-Arm Kettlebell Military Press",
-                "rep_scheme": [5],
+                "rep_scheme": [
+                  5
+                ],
                 "weight_kg": 28
               }
             ]
@@ -540,7 +625,8 @@
         ],
         "pattern_debt": null,
         "modality_debt": null,
-        "unlocked_weights": {}
+        "unlocked_weights": {},
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 35,
@@ -552,7 +638,9 @@
       "id": "house-voice-carry",
       "category": "house-voice",
       "inputs": {
-        "balance_targets": ["carry"],
+        "balance_targets": [
+          "carry"
+        ],
         "training_goal": "Balanced strength",
         "readiness": "Good",
         "days_since_last_workout": 2,
@@ -564,12 +652,16 @@
             "movements": [
               {
                 "name": "Kettlebell Swing",
-                "rep_scheme": [15],
+                "rep_scheme": [
+                  15
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "Goblet Squat",
-                "rep_scheme": [8],
+                "rep_scheme": [
+                  8
+                ],
                 "weight_kg": 24
               }
             ]
@@ -661,12 +753,15 @@
           ]
         },
         "modality_debt": null,
-        "unlocked_weights": {}
+        "unlocked_weights": {},
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 40,
         "max_blocks": 6,
-        "must_cover": ["carry"],
+        "must_cover": [
+          "carry"
+        ],
         "notes": "Includes a loaded carry and explains that carries are overdue, in plain coaching language: 'due', 'overdue', 'needs attention' — the word 'debt' never appears in the rationale or notes."
       }
     },
@@ -686,17 +781,23 @@
             "movements": [
               {
                 "name": "Kettlebell Swing",
-                "rep_scheme": [15],
+                "rep_scheme": [
+                  15
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "Goblet Squat",
-                "rep_scheme": [8],
+                "rep_scheme": [
+                  8
+                ],
                 "weight_kg": 24
               },
               {
                 "name": "One-Arm Kettlebell Military Press",
-                "rep_scheme": [5],
+                "rep_scheme": [
+                  5
+                ],
                 "weight_kg": 20
               }
             ]
@@ -704,13 +805,264 @@
         ],
         "pattern_debt": null,
         "modality_debt": null,
-        "unlocked_weights": {}
+        "unlocked_weights": {},
+        "skill_tree": null
       },
       "expect": {
         "max_duration_minutes": 30,
         "max_blocks": 6,
         "bodyweight_only": true,
         "notes": "No bells are available, so every block is a bodyweight movement (push-ups, squats, lunges, planks, glute bridges and the like) with weight_kg 0 and bells 0, still covering a push, a squat or hinge, and some core work. The rationale names the travel constraint."
+      }
+    },
+    {
+      "id": "skill-tree-beginner",
+      "category": "skill-tree",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": "Learn the kettlebell basics",
+        "readiness": "Fresh, have 30 minutes",
+        "days_since_last_workout": null,
+        "recent_history": [],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {},
+        "skill_tree": {
+          "passed": [
+            "L1-N1",
+            "L1-N2",
+            "L1-N3"
+          ],
+          "practicing": [
+            "L2-N2"
+          ],
+          "ready": [
+            "L1-N4",
+            "L1-N5",
+            "L1-N6",
+            "L2-M1",
+            "L2-N1",
+            "L3-M1",
+            "L4-M1",
+            "L5-M1",
+            "L6-M1",
+            "L7-M1"
+          ],
+          "levels": [
+            {
+              "level": 1,
+              "title": "Foundation",
+              "passed": 3,
+              "total": 6
+            },
+            {
+              "level": 2,
+              "title": "First load",
+              "passed": 0,
+              "total": 4
+            },
+            {
+              "level": 3,
+              "title": "Unilateral intro",
+              "passed": 0,
+              "total": 3
+            },
+            {
+              "level": 4,
+              "title": "Press & pull",
+              "passed": 0,
+              "total": 5
+            },
+            {
+              "level": 5,
+              "title": "Ground work",
+              "passed": 0,
+              "total": 5
+            },
+            {
+              "level": 6,
+              "title": "Full Turkish getup & bilateral hinge",
+              "passed": 0,
+              "total": 4
+            },
+            {
+              "level": 7,
+              "title": "Double kettlebell entry",
+              "passed": 0,
+              "total": 4
+            },
+            {
+              "level": 8,
+              "title": "Power & strength",
+              "passed": 0,
+              "total": 4
+            },
+            {
+              "level": 9,
+              "title": "Elite",
+              "passed": 0,
+              "total": 2
+            }
+          ]
+        }
+      },
+      "expect": {
+        "max_duration_minutes": 35,
+        "max_blocks": 5,
+        "must_not_prescribe": [
+          "snatch",
+          "get-up",
+          "double kettlebell swing",
+          "double kettlebell clean",
+          "double kettlebell front squat",
+          "double kettlebell military press",
+          "double kettlebell push"
+        ],
+        "notes": "A beginner who has passed breathing, the hinge and the goblet squat and is practising the two-hand swing. The swing is the centrepiece, supported by movements they have passed or are ready to start (goblet squat, deadlift, deadbug, a carry) at light weights (8–16 kg). Nothing beyond their frontier — no one-arm swing, clean, press, snatch, get-up or double-bell work — and the rationale names the two-hand swing as what they are working on."
+      }
+    },
+    {
+      "id": "skill-tree-intermediate",
+      "category": "skill-tree",
+      "inputs": {
+        "balance_targets": [],
+        "training_goal": "Own the double clean",
+        "readiness": "Good, have 40 minutes",
+        "days_since_last_workout": 2,
+        "recent_history": [
+          {
+            "completed_at": "2026-09-07T17:30:00.000Z",
+            "goal": "30 minutes",
+            "rpe": "ideal",
+            "movements": [
+              {
+                "name": "Double Kettlebell Swing",
+                "rep_scheme": [
+                  10
+                ],
+                "weight_kg": 16
+              },
+              {
+                "name": "Kettlebell Clean and Press",
+                "rep_scheme": [
+                  3
+                ],
+                "weight_kg": 24
+              },
+              {
+                "name": "Goblet Squat",
+                "rep_scheme": [
+                  8
+                ],
+                "weight_kg": 24
+              }
+            ]
+          }
+        ],
+        "pattern_debt": null,
+        "modality_debt": null,
+        "unlocked_weights": {},
+        "skill_tree": {
+          "passed": [
+            "L1-N1",
+            "L1-N2",
+            "L1-N3",
+            "L1-N4",
+            "L1-N5",
+            "L1-N6",
+            "L2-M1",
+            "L2-N1",
+            "L2-N2",
+            "L2-N3",
+            "L3-M1",
+            "L3-N1",
+            "L3-N2",
+            "L4-M1",
+            "L4-N1",
+            "L4-N2",
+            "L4-N3",
+            "L4-N4",
+            "L5-M1",
+            "L5-N1",
+            "L5-N2",
+            "L5-N3",
+            "L5-N4",
+            "L6-N3"
+          ],
+          "practicing": [
+            "L7-N1"
+          ],
+          "ready": [
+            "L6-M1",
+            "L7-M1",
+            "L8-M1"
+          ],
+          "levels": [
+            {
+              "level": 1,
+              "title": "Foundation",
+              "passed": 6,
+              "total": 6
+            },
+            {
+              "level": 2,
+              "title": "First load",
+              "passed": 4,
+              "total": 4
+            },
+            {
+              "level": 3,
+              "title": "Unilateral intro",
+              "passed": 3,
+              "total": 3
+            },
+            {
+              "level": 4,
+              "title": "Press & pull",
+              "passed": 5,
+              "total": 5
+            },
+            {
+              "level": 5,
+              "title": "Ground work",
+              "passed": 5,
+              "total": 5
+            },
+            {
+              "level": 6,
+              "title": "Full Turkish getup & bilateral hinge",
+              "passed": 1,
+              "total": 4
+            },
+            {
+              "level": 7,
+              "title": "Double kettlebell entry",
+              "passed": 0,
+              "total": 4
+            },
+            {
+              "level": 8,
+              "title": "Power & strength",
+              "passed": 0,
+              "total": 4
+            },
+            {
+              "level": 9,
+              "title": "Elite",
+              "passed": 0,
+              "total": 2
+            }
+          ]
+        }
+      },
+      "expect": {
+        "max_duration_minutes": 45,
+        "max_blocks": 5,
+        "must_not_prescribe": [
+          "snatch",
+          "jerk"
+        ],
+        "notes": "An intermediate lifter with Levels 1–5 and the double swing passed, practising the double clean. The double clean is the centrepiece at a moderate pair (16–20 kg), supported by passed Level 4–5 work (single clean, press, push press, front rack squat, get-up progressions). No snatch, jerk, loaded get-up, double front squat or double press — none of those are within reach yet — and the rationale names the double clean as the skill being built."
       }
     }
   ]

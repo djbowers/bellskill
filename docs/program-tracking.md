@@ -224,6 +224,11 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   stored, so it needs no editorial backfill — but a `movementName` that does not
   match the catalog silently contributes nothing. See
   `docs/modality-debt-scoring-model.md`.
+- **Skill-node profile (derived):** `program_skill_node_movements()` is the
+  sibling aggregation over the catalog's `skill_node_id`; `assessSkillReach`
+  (`src/utils/skillTreeProgress.ts`) turns it into the `within_reach` /
+  `stretch` verdict `recommend-program` shows and validates. Same exact-name
+  caveat. See `docs/skill-tree.md`.
 - **`timedRungs` (timed movements, PROD-200):** a movement with
   `timedRungs: true` reinterprets each `repScheme` entry as **seconds**, not
   reps — `ActiveWorkoutPage` runs a per-rung countdown that auto-fires

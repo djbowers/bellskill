@@ -26,6 +26,7 @@
     "eval:next-session": "vite-node scripts/eval/run-next-session-eval.ts",
     "movements:check": "node scripts/ingest-movements.mjs",
     "movements:emit-sql": "node scripts/ingest-movements.mjs --emit-sql",
+    "movements:emit-skill-node-sql": "node scripts/ingest-movements.mjs --emit-skill-node-sql",
     "prettier": "prettier --write .",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",

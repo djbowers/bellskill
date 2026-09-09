@@ -1,8 +1,9 @@
 # Skill Tree PoC (PROD-249)
 
 A nine-level map of kettlebell competence with self-assessed benchmarks. Built
-as an owner-dogfood proof of concept; the design question it answers is whether
-seeing the map changes how you train, not whether the tree can drive programs.
+as an owner-dogfood proof of concept to learn whether seeing the map changes how
+you train. Since then the tree also feeds both Chalk recommenders as a
+deterministic ceiling (see "Recommender integration" below).
 
 - **Node map:** `src/config/skillTree.ts` — static, typed, 37 nodes across 9
   levels transcribed from the vault spec (`bellskill_full_skill_tree_spec_v2.md`).
@@ -16,10 +17,12 @@ seeing the map changes how you train, not whether the tree can drive programs.
   an absent row means not started. Owner-only RLS, same shape as
   `user_equipment`. Hooks: `useSkillNodeProgress`, `useSetSkillNodeStatus`
   (upsert on `user_id,node_id`), `useResetSkillNode` (delete).
-- **Derivation:** `src/pages/SkillTreePage/utils/deriveNodeStates.ts` (pure).
-  `complete` and `active` come from the row; otherwise `available` when every
-  prereq is complete, else `locked`. `active` wins over `locked`, so a node you
-  chose to practice early still shows as practicing with the advisory line.
+- **Derivation:** `src/utils/skillTreeProgress.ts` (pure, relative imports only
+  so the edge functions and the eval runner can share it; the page util
+  re-exports it). `complete` and `active` come from the row; otherwise
+  `available` when every prereq is complete, else `locked`. `active` wins over
+  `locked`, so a node you chose to practice early still shows as practicing
+  with the advisory line.
 - **Advisory gates only.** Locked nodes stay tappable. The dialog lists which
   prerequisites are incomplete and never disables Start practicing.
 - **Flag:** build-time `skillTree` in `src/config/features.ts`, off by default
@@ -27,6 +30,41 @@ seeing the map changes how you train, not whether the tree can drive programs.
   or via `VITE_FEATURE_SKILL_TREE=true` in a gitignored `.env.local`. Deploy
   previews force it on. Route `/skill-tree`; nav item lands in the bottom bar's
   promoted slot only when Chalk and Movements are off, otherwise in More.
+
+## Recommender integration
+
+Both `recommend-session` and `recommend-program` read the lifter's rows through
+`_shared/skillTreeInput.ts` and reason over a `SkillTreeSummary`
+(`summarizeSkillTree`: passed / practicing / ready node ids plus per-level
+counts), persisted verbatim in the recommendation's `inputs` JSONB.
+
+- **No rows, no effect.** `summarizeSkillTree` returns `null` for a lifter with
+  no progress on the map, and both functions then omit the section and apply no
+  ceiling. That is what gates the server side: the build-time `skillTree` flag
+  only hides the UI, and nobody has rows until they use it.
+- **Reach.** A node is within reach when it is passed, practicing, or ready
+  (every direct prereq passed), or is a transitive prerequisite of a passed or
+  practicing node (practicing the clean implies the swings). `active` rows with
+  missing prereqs count as in reach, matching the page.
+- **Catalog mapping.** `movements.skill_node_id` (CSV column `Skill Node`, see
+  `docs/movement-catalog.md`) names the hardest node a movement requires; null
+  means never gated. Roughly half the catalog (rows, floor presses, push-ups,
+  core) has no node by construction.
+- **Session ceiling.** `applySkillCeiling` in `recommend-session/inputs.ts`
+  drops out-of-reach candidates before balance targets are chosen, so the model
+  never sees them and the existing catalog-membership validation rejects
+  anything else. Catalog lines carry `· practises: <node> (passed|practising|ready)`
+  and the system prompt prefers practising nodes, then ready ones, ranked below
+  readiness and goal and above pattern balance.
+- **Program reach.** `program_skill_node_movements()` aggregates each program's
+  prescribed movements by node (same exact-name join as the modality profile);
+  `assessSkillReach` gives every candidate a `within_reach` or `stretch`
+  verdict, and `recommend-program/validate.ts` rejects a stretch pick whenever
+  any candidate is within reach, so the rule never empties the set.
+- **Vocabulary.** Prompts say passed / practising / ready / "not yet in reach";
+  never "locked", never "debt".
+- **Eval.** `npm run eval:next-session` has a `skill-tree` category with the
+  `skill_ceiling` and `must_not_prescribe` checks.
 
 ## Out of scope for the PoC
 

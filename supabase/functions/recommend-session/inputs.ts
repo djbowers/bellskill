@@ -17,7 +17,12 @@ import {
   computePatternBalance,
   selectBalanceTargets,
 } from '../../../src/utils/patternDebt.ts';
+import {
+  type SkillTreeSummary,
+  isWithinReach,
+} from '../../../src/utils/skillTreeProgress.ts';
 import { gatherEquipment } from '../_shared/equipmentInput.ts';
+import { gatherSkillTree } from '../_shared/skillTreeInput.ts';
 import type {
   CandidateMovement,
   ModalityDebtInput,
@@ -38,6 +43,7 @@ export interface CatalogRow {
   'Primary Equipment': string | null;
   '# Primary Items': number | null;
   unilateral_lower: boolean | null;
+  skill_node_id: string | null;
 }
 
 /** Catalog rows → the candidate set, in a stable name order for the prompt. */
@@ -54,8 +60,23 @@ export function toCandidates(rows: CatalogRow[]): CandidateMovement[] {
         bodyweight: row['Primary Equipment'] === BODYWEIGHT_EQUIPMENT,
         supports_doubles: row['# Primary Items'] === 2,
         unilateral_lower: Boolean(row.unilateral_lower),
+        skill_node_id: row.skill_node_id ?? null,
       };
     });
+}
+
+/**
+ * The deterministic skill ceiling: drop every candidate whose node the lifter
+ * cannot yet reach. The model cannot pick what it cannot see, and the catalog
+ * membership check in validate.ts rejects anything else. Identity without a
+ * summary, and unmapped movements always survive.
+ */
+export function applySkillCeiling(
+  candidates: CandidateMovement[],
+  summary: SkillTreeSummary | null,
+): CandidateMovement[] {
+  if (!summary) return candidates;
+  return candidates.filter((c) => isWithinReach(summary, c.skill_node_id));
 }
 
 function toKg(value: number | null, unit: string | null): number | null {
@@ -185,16 +206,21 @@ export async function gatherInputs(
   }
   const clientToday = parsedClientToday ?? new Date();
 
-  // Candidate movements: the whole catalog, kettlebell and bodyweight. Custom
-  // (unlinked) library movements are deliberately excluded (PROD-85).
+  // Candidate movements: the whole catalog, kettlebell and bodyweight, minus
+  // anything beyond the lifter's skill-tree frontier. Custom (unlinked) library
+  // movements are deliberately excluded (PROD-85).
   const { data: catalogRows, error: catErr } = await admin
     .from('movements')
     .select(
-      'id, Movement, pattern_credits, "Primary Equipment", "# Primary Items", unilateral_lower',
+      'id, Movement, pattern_credits, "Primary Equipment", "# Primary Items", unilateral_lower, skill_node_id',
     )
     .order('Movement');
   if (catErr) throw catErr;
-  const candidates = toCandidates(catalogRows ?? []);
+  const skill_tree = await gatherSkillTree(admin, userId);
+  const candidates = applySkillCeiling(
+    toCandidates(catalogRows ?? []),
+    skill_tree,
+  );
 
   // Persistent training goal.
   const { data: profile, error: profErr } = await admin
@@ -278,5 +304,6 @@ export async function gatherInputs(
     pattern_debt,
     modality_debt,
     unlocked_weights: equipment ?? {},
+    skill_tree,
   };
 }
