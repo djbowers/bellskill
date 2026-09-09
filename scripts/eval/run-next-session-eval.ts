@@ -12,7 +12,8 @@
 //     Anthropic fetch is wrapped to count attempts.)
 //   - deterministic checks: circuit format, catalog ids, no rep count repeated
 //     on consecutive rungs, equal rungs, target coverage, equipment
-//     loadability, the house ban on the word "debt", and the item's bounds.
+//     loadability, the skill-tree ceiling, the house ban on the word "debt",
+//     and the item's bounds (including movements it must not prescribe).
 //   - an LLM judge (claude-haiku-4-5, structured outputs) for what code can't
 //     check: does the session fit the lifter, is the rationale grounded in the
 //     inputs, is it specific rather than filler.
@@ -32,8 +33,16 @@ import {
   type EquipmentSummary,
   validateSessionWeights,
 } from '../../src/utils/equipment.ts';
+import { isWithinReach } from '../../src/utils/skillTreeProgress.ts';
 import { formatPatternLine } from '../../supabase/functions/_shared/patternDebtPrompt.ts';
-import { toCandidates } from '../../supabase/functions/recommend-session/inputs.ts';
+import {
+  formatSkillNodeAnnotation,
+  formatSkillTreeSection,
+} from '../../supabase/functions/_shared/skillTreeInput.ts';
+import {
+  applySkillCeiling,
+  toCandidates,
+} from '../../supabase/functions/recommend-session/inputs.ts';
 import { generateRecommendation } from '../../supabase/functions/recommend-session/llm.ts';
 import type {
   CandidateMovement,
@@ -44,6 +53,7 @@ import { ValidationError } from '../../supabase/functions/recommend-session/vali
 import {
   parseCredits,
   parseCsv,
+  parseSkillNode,
   parseUnilateral,
 } from '../ingest-movements.mjs';
 
@@ -91,6 +101,8 @@ interface GoldenItem {
     must_cover?: string[];
     /** Every block must be a bodyweight movement (no bells available). */
     bodyweight_only?: boolean;
+    /** Case-insensitive substrings no chosen catalog movement name may contain. */
+    must_not_prescribe?: string[];
     notes: string;
   };
 }
@@ -121,6 +133,7 @@ const loadCatalog = (): CandidateMovement[] => {
       pattern_credits: parseCredits(col(r, 'Pattern Credits')),
       '# Primary Items': Number(col(r, '# Primary Items')),
       unilateral_lower: parseUnilateral(col(r, 'Unilateral Lower')),
+      skill_node_id: parseSkillNode(col(r, 'Skill Node')),
     })),
   );
 };
@@ -216,6 +229,17 @@ const runChecks = (
     bodyweight_only:
       !expect.bodyweight_only ||
       rec.blocks.every((b) => byId.get(b.movement_id)?.bodyweight),
+    skill_ceiling: rec.blocks.every((b) =>
+      isWithinReach(inputs.skill_tree, byId.get(b.movement_id)?.skill_node_id),
+    ),
+    must_not_prescribe: (expect.must_not_prescribe ?? []).every(
+      (needle) =>
+        !rec.blocks.some((b) =>
+          (byId.get(b.movement_id)?.name ?? b.movement_name)
+            .toLowerCase()
+            .includes(needle.toLowerCase()),
+        ),
+    ),
     no_debt_word: !DEBT_WORD.test(prose),
     within_duration:
       expect.max_duration_minutes === undefined ||
@@ -305,6 +329,7 @@ const describeInputs = (inputs: RecommenderInputs, rec: Recommendation) => {
   const debt = inputs.pattern_debt
     ? inputs.pattern_debt.patterns.map(formatPatternLine)
     : ['- (not available)'];
+  const skillTree = formatSkillTreeSection(inputs.skill_tree);
   return [
     `Training goal: ${inputs.training_goal ?? '(none)'}`,
     `How they feel today: ${inputs.readiness ?? '(not provided)'}`,
@@ -322,12 +347,15 @@ const describeInputs = (inputs: RecommenderInputs, rec: Recommendation) => {
     'Pattern balance (higher = more under-trained):',
     ...debt,
     '',
+    ...(skillTree
+      ? [skillTree, '']
+      : ['Skill tree: (the lifter has no progress on the map)', '']),
     'Catalog entries for the chosen movements:',
     ...inputs.candidates
       .filter((c) => chosen.has(c.movement_id))
       .map(
         (c) =>
-          `- ${c.name}${c.pattern_credits ? ` · pays: ${c.pattern_credits.join(', ')}` : ''}${c.bodyweight ? ' · bodyweight' : ''}${c.supports_doubles ? ' · double-bell' : ''}${c.unilateral_lower ? ' · one leg at a time' : ''}`,
+          `- ${c.name}${c.pattern_credits ? ` · pays: ${c.pattern_credits.join(', ')}` : ''}${c.bodyweight ? ' · bodyweight' : ''}${c.supports_doubles ? ' · double-bell' : ''}${c.unilateral_lower ? ' · one leg at a time' : ''}${formatSkillNodeAnnotation(inputs.skill_tree, c.skill_node_id)}`,
       ),
   ].join('\n');
 };
@@ -415,7 +443,12 @@ const main = async () => {
 
   const results: SampleResult[] = [];
   for (const item of items) {
-    const inputs: RecommenderInputs = { ...item.inputs, candidates };
+    // The same ceiling the edge function applies, so the model never sees a
+    // movement beyond the fixture's frontier.
+    const inputs: RecommenderInputs = {
+      ...item.inputs,
+      candidates: applySkillCeiling(candidates, item.inputs.skill_tree),
+    };
     for (let sample = 1; sample <= samples; sample++) {
       process.stdout.write(`${item.id} #${sample} … `);
       attempts = [];

@@ -15,6 +15,7 @@ import type {
   Pattern,
   PatternRpe,
 } from '../../../src/utils/patternDebt.ts';
+import type { SkillTreeSummary } from '../../../src/utils/skillTreeProgress.ts';
 
 /**
  * One movement from the catalog, kettlebell or bodyweight — the candidate set
@@ -31,6 +32,8 @@ export interface CandidateMovement {
   bodyweight: boolean;
   supports_doubles: boolean;
   unilateral_lower: boolean;
+  /** Skill-tree node this movement practises; null means it is never gated. */
+  skill_node_id: string | null;
 }
 
 /** A compact summary of one past workout, for history context. */
@@ -112,6 +115,12 @@ export interface RecommenderInputs {
   modality_debt: ModalityDebtInput | null;
   /** `{}` when the user has recorded no equipment — the prompt then omits the section. */
   unlocked_weights: EquipmentSummary | Record<string, never>;
+  /**
+   * The lifter's position on the skill tree. Null when they have no progress
+   * rows or the fetch failed: no prompt section and no ceiling. When present,
+   * `candidates` has already been trimmed to the nodes within their reach.
+   */
+  skill_tree: SkillTreeSummary | null;
 }
 
 /** One block of the recommended session. Maps onto the app's MovementOptions. */

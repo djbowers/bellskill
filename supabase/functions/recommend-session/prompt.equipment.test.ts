@@ -17,11 +17,13 @@ const baseInputs: RecommenderInputs = {
       bodyweight: false,
       supports_doubles: false,
       unilateral_lower: false,
+      skill_node_id: null,
     },
   ],
   pattern_debt: null,
   modality_debt: null,
   unlocked_weights: {},
+  skill_tree: null,
 };
 
 describe('recommend-session prompt equipment section', () => {
