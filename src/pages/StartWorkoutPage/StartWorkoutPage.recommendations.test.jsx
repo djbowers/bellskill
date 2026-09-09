@@ -4,7 +4,6 @@ import { HttpResponse, http } from 'msw';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
-import { CURATED_WORKOUTS } from '~/constants';
 import {
   DEFAULT_WORKOUT_OPTIONS,
   EntitlementContext,
@@ -17,9 +16,8 @@ import { server } from '~/mocks/server';
 import { StartWorkoutPage } from './StartWorkoutPage';
 
 // The launchpad shell (PROD-171) is the master gate: with it on the page opens
-// in browse mode, and content is routed by population — curated for new users,
-// repeat-previous for returning. The content sub-flags are on too so the
-// recommender surface mounts for a returning user.
+// in browse mode. The content sub-flags are on too so the recommender surface
+// mounts for a returning user.
 const { mockUseFeatureFlags } = vi.hoisted(() => ({
   mockUseFeatureFlags: vi.fn(),
 }));
@@ -109,29 +107,23 @@ describe('StartWorkoutPage recommendations', () => {
   describe('new user (no history)', () => {
     beforeEach(returnZeroWorkoutLogs);
 
-    test('shows the curated workouts, no recent repeats, and no builder yet', async () => {
+    test('lands on the hub with no curated content and no builder yet', async () => {
       renderPage();
 
       expect(
-        await screen.findByRole('button', { name: 'Two-Hand Swing' }),
+        await screen.findByRole('button', { name: /build a workout/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: 'Overhead Press' }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: 'Goblet Squat' }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('heading', { name: 'Your recommended first workout' }),
-      ).toBeInTheDocument();
-      // Builder is collapsed until a card or "Build a workout" is tapped.
+        screen.queryByRole('heading', { name: 'Your recommended first workout' }),
+      ).not.toBeInTheDocument();
+      // Builder is collapsed until "Build a workout" is tapped.
       expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
       expect(
         screen.queryByRole('button', { name: /start workout/i }),
       ).not.toBeInTheDocument();
     });
 
-    test('"Build a workout" reveals an empty builder and hides recommendations', async () => {
+    test('"Build a workout" reveals an empty builder', async () => {
       renderPage();
 
       await userEvent.click(
@@ -141,61 +133,14 @@ describe('StartWorkoutPage recommendations', () => {
       );
 
       expect(screen.getByLabelText('Movement Input')).toHaveValue('');
-      expect(
-        screen.queryByRole('button', { name: 'Two-Hand Swing' }),
-      ).not.toBeInTheDocument();
-    });
-
-    test('tapping a curated workout fills the builder for editing without starting', async () => {
-      const { updateWorkoutOptions } = renderPage();
-
-      await userEvent.click(
-        await screen.findByRole('button', { name: 'Two-Hand Swing' }),
-      );
-
-      // Lands in the builder, prefilled with the catalog movement — not /active.
-      expect(screen.getByLabelText('Movement Input')).toHaveValue(
-        'Kettlebell Swing',
-      );
-      expect(updateWorkoutOptions).not.toHaveBeenCalled();
-      expect(screen.queryByText('active workout page')).not.toBeInTheDocument();
-
-      // The user can then start the (optionally edited) workout.
-      await userEvent.click(
-        screen.getByRole('button', { name: /start workout/i }),
-      );
-
-      expect(updateWorkoutOptions).toHaveBeenCalledTimes(1);
-      expect(updateWorkoutOptions).toHaveBeenCalledWith({
-        ...CURATED_WORKOUTS[0].workoutOptions,
-        startedAt,
-      });
-      expect(screen.getByText('active workout page')).toBeInTheDocument();
-    });
-  });
-
-  describe('returning user (has history)', () => {
-    test('shows the build-custom entry, but not curated first-workout content', async () => {
-      renderPage();
-
-      expect(
-        await screen.findByRole('button', { name: /build a workout/i }),
-      ).toBeInTheDocument();
-      // Curated first-workout content is routed to new users only (PROD-171).
-      expect(
-        screen.queryByRole('heading', { name: 'Recommended sessions' }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole('button', { name: 'Two-Hand Swing' }),
-      ).not.toBeInTheDocument();
     });
   });
 
   // Regression: the history "Repeat" action prefills context and navigates here
   // with `editWorkout` nav state; the builder must open directly on that
-  // workout rather than showing the collapsed recommendations.
+  // workout rather than showing the hub.
   describe('repeat from history (editWorkout nav state)', () => {
-    test('opens the prefilled builder directly, not the recommendations', async () => {
+    test('opens the prefilled builder directly, not the hub', async () => {
       const repeated = {
         ...DEFAULT_WORKOUT_OPTIONS,
         movements: [
@@ -234,12 +179,9 @@ describe('StartWorkoutPage recommendations', () => {
         'Clean and Press',
       );
 
-      // ...and the recommendation browse view is not shown.
+      // ...and the browse view is not shown.
       expect(
         screen.queryByRole('button', { name: /build a workout/i }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole('button', { name: 'Two-Hand Swing' }),
       ).not.toBeInTheDocument();
     });
   });

@@ -1,5 +1,4 @@
 export * from './chalk.interface';
-export * from './curated-workout.interface';
 export * from './difficultyLevel.type';
 export * from './equipment.type';
 export * from './ghost-session.interface';

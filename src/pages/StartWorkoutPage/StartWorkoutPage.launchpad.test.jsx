@@ -129,25 +129,9 @@ describe('StartWorkoutPage — hub baseline and content gating', () => {
     });
   });
 
-  describe('content gated by its own flag', () => {
-    test('curatedFirstWorkout on → a new user sees curated first-workout content', async () => {
-      returnZeroWorkoutLogs();
-      setFlags({ curatedFirstWorkout: true });
-      renderPage();
-
-      expect(
-        await screen.findByRole('button', { name: 'Two-Hand Swing' }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('heading', { name: 'Your recommended first workout' }),
-      ).toBeInTheDocument();
-    });
-  });
-
   describe('exposure logging (joinable to the PROD-170 funnel by user_id)', () => {
-    test('logs curated content for a new user with the flag on', async () => {
+    test('logs the hub content for a new user', async () => {
       returnZeroWorkoutLogs();
-      setFlags({ curatedFirstWorkout: true });
       renderPage();
 
       await waitFor(() =>
@@ -157,10 +141,7 @@ describe('StartWorkoutPage — hub baseline and content gating', () => {
             userId: 'user-123',
             properties: expect.objectContaining({
               population: 'new',
-              content: expect.arrayContaining([
-                'curated_first',
-                'build_custom',
-              ]),
+              content: ['build_custom'],
             }),
           }),
         ),

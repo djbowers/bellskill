@@ -7,14 +7,13 @@ is the default home surface for everyone, no longer gated behind the
 recording assignment; seed migration `*_seed_launchpad_shell_flag.sql`).
 
 - **Population routing** (derived from `useWorkoutLogs()` count, tri-state
-  `isFirstWorkout`): new user (0 logs) → curated first-workout content; returning
-  (≥1) → the Phase-2 `recommender` surface.
+  `isFirstWorkout`): returning users (≥1 log) get the Phase-2 `recommender`
+  surface. New users get the bare hub — first-workout guidance is moving to the
+  skill tree.
 - **Content gates:** hub suggestions sit behind their own runtime flags, routed
-  by population — `curated_first_workout` (new users; the PROD-172 activation
-  treatment, enabled at 100% rollout by
-  `*_enable_curated_first_workout.sql`) and `recommender` (returning users).
-  The `repeat_previous` flag row remains for experiment history but no longer
-  drives any UI — the repeat-previous section was removed from the hub.
+  by population — `recommender` (returning users). The `curated_first_workout`
+  and `repeat_previous` flag rows remain for experiment history but no longer
+  drive any UI: both sections were removed from the hub.
   An active program forces the program hero independently
   (separate `programs` release feature).
 - **Exposure logging:** the `launchpad_exposed` analytics event
