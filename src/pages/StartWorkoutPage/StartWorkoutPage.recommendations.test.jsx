@@ -124,10 +124,6 @@ describe('StartWorkoutPage recommendations', () => {
       expect(
         screen.getByRole('heading', { name: 'Your recommended first workout' }),
       ).toBeInTheDocument();
-      expect(
-        screen.queryByText('Pick up where you left off'),
-      ).not.toBeInTheDocument();
-
       // Builder is collapsed until a card or "Build a workout" is tapped.
       expect(screen.queryByLabelText('Movement Input')).not.toBeInTheDocument();
       expect(
@@ -179,47 +175,19 @@ describe('StartWorkoutPage recommendations', () => {
   });
 
   describe('returning user (has history)', () => {
-    test('shows recent repeats and the build-custom entry, but not curated', async () => {
+    test('shows the build-custom entry, but not curated first-workout content', async () => {
       renderPage();
 
       expect(
-        await screen.findByText('Pick up where you left off'),
+        await screen.findByRole('button', { name: /build a workout/i }),
       ).toBeInTheDocument();
-      // Curated first-workout content is routed to new users only — a returning
-      // user's shell is repeat-previous + build custom (PROD-171).
+      // Curated first-workout content is routed to new users only (PROD-171).
       expect(
         screen.queryByRole('heading', { name: 'Recommended sessions' }),
       ).not.toBeInTheDocument();
       expect(
         screen.queryByRole('button', { name: 'Two-Hand Swing' }),
       ).not.toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: /build a workout/i }),
-      ).toBeInTheDocument();
-    });
-
-    test('tapping a recent workout fills the builder, then starts on confirm', async () => {
-      const { updateWorkoutOptions } = renderPage();
-
-      // The most recent logged session in the mock data is a "Pull-Ups" workout.
-      await userEvent.click(
-        await screen.findByRole('button', { name: 'Pull-Ups' }),
-      );
-
-      expect(screen.getByLabelText('Movement Input')).toHaveValue('Pull-Ups');
-      expect(updateWorkoutOptions).not.toHaveBeenCalled();
-
-      await userEvent.click(
-        screen.getByRole('button', { name: /start workout/i }),
-      );
-
-      expect(updateWorkoutOptions).toHaveBeenCalledTimes(1);
-      const prefilled = updateWorkoutOptions.mock.calls[0][0];
-      expect(prefilled.movements).toEqual([
-        expect.objectContaining({ movementName: 'Pull-Ups' }),
-      ]);
-      expect(prefilled.startedAt).toEqual(startedAt);
-      expect(screen.getByText('active workout page')).toBeInTheDocument();
     });
   });
 
@@ -269,9 +237,6 @@ describe('StartWorkoutPage recommendations', () => {
       // ...and the recommendation browse view is not shown.
       expect(
         screen.queryByRole('button', { name: /build a workout/i }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByText('Pick up where you left off'),
       ).not.toBeInTheDocument();
       expect(
         screen.queryByRole('button', { name: 'Two-Hand Swing' }),

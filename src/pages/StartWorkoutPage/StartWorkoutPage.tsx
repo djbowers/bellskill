@@ -24,7 +24,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   AnalyticsEvent,
   MAX_ACTIVE_PROGRAMS,
-  RepeatableWorkout,
   trackEvent,
   useActivePrograms,
   useCompleteProgramSession,
@@ -40,7 +39,7 @@ import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { Textarea } from '~/components/ui/textarea';
-import { CURATED_WORKOUTS_VERSION } from '~/constants';
+import { CURATED_WORKOUTS, CURATED_WORKOUTS_VERSION } from '~/constants';
 import {
   DEFAULT_MOVEMENT_OPTIONS,
   DEFAULT_WORKOUT_OPTIONS,
@@ -98,7 +97,6 @@ import {
   WorkoutModeTabs,
 } from './components';
 import type { SummaryLoad } from './components';
-import { useRecommendedWorkouts } from './hooks';
 import { INCREMENT_VOLUME, getGoalRange } from './utils/goalRange';
 import {
   RecommendationCatalog,
@@ -191,7 +189,6 @@ export const StartWorkoutPage = ({
   const navigate = useNavigate();
   const startWorkout = useStartWorkout();
   const [workoutOptions] = useWorkoutOptions();
-  const { curated, recentRepeats } = useRecommendedWorkouts();
 
   // Program tracking, behind the `programs` flag (query gated so non-program
   // builds fire zero requests). `programGatePending` holds the page in browse
@@ -258,13 +255,10 @@ export const StartWorkoutPage = ({
   const showBrowse = !programSaveMode;
 
   // Hub suggestions stay behind their own flags and are routed by population:
-  // curated first workout for new users, repeat-previous for returning, and the
-  // Phase-2 AI recommender for returning users. The hub shell itself no longer
-  // depends on any of them.
+  // curated first workout for new users, and the Phase-2 AI recommender for
+  // returning users. The hub shell itself no longer depends on either.
   const showCurated =
     experimentFeatures.curatedFirstWorkout && population === 'new';
-  const showRepeat =
-    experimentFeatures.repeatPrevious && population === 'returning';
   const showRecommender =
     experimentFeatures.recommender && population === 'returning';
 
@@ -380,7 +374,6 @@ export const StartWorkoutPage = ({
       if (showBrowse) {
         if (hasActiveProgram) content.push('program');
         if (showCurated) content.push('curated_first');
-        if (showRepeat) content.push('repeat_previous');
         if (showRecommender) content.push('recommender');
         content.push('build_custom');
       } else {
@@ -408,7 +401,6 @@ export const StartWorkoutPage = ({
       hasActiveProgram,
       activePrograms.length,
       showCurated,
-      showRepeat,
       showRecommender,
       shellOn,
     ],
@@ -946,14 +938,6 @@ export const StartWorkoutPage = ({
     setBuilderOverride(true);
   };
 
-  const handleSelectRepeat = (repeat: RepeatableWorkout) => {
-    loadIntoBuilder(repeat.workoutOptions);
-    setStartSource('history_repeat');
-    setStartSourceProps({ workout_log_id: repeat.workoutLogId });
-    setPendingProgramSession(null);
-    setBuilderOverride(true);
-  };
-
   // Accept an AI recommendation: load it into the builder for review/edits, then
   // start via the existing Start button (attributed to the recommender source).
   const handleAcceptRecommendation = (
@@ -1199,12 +1183,9 @@ export const StartWorkoutPage = ({
           )}
 
           <RecommendedWorkoutsSection
-            curated={showCurated ? curated : []}
-            recentRepeats={showRepeat ? recentRepeats : []}
+            curated={showCurated ? CURATED_WORKOUTS : []}
             isFirstWorkout={isFirstWorkout}
-            repeatsDefaultOpen={!primaryProgram}
             onSelectCurated={handleSelectCurated}
-            onSelectRepeat={handleSelectRepeat}
           />
 
           {showRecommender && (

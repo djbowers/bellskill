@@ -124,7 +124,7 @@ describe('StartWorkoutPage — hub baseline and content gating', () => {
       ).not.toBeInTheDocument();
       // No gated discovery content.
       expect(
-        screen.queryByText('Pick up where you left off'),
+        screen.queryByRole('heading', { name: 'Recommended sessions' }),
       ).not.toBeInTheDocument();
     });
   });
@@ -141,23 +141,6 @@ describe('StartWorkoutPage — hub baseline and content gating', () => {
       expect(
         screen.getByRole('heading', { name: 'Your recommended first workout' }),
       ).toBeInTheDocument();
-      // New-user content is curated, not repeat-previous.
-      expect(
-        screen.queryByText('Pick up where you left off'),
-      ).not.toBeInTheDocument();
-    });
-
-    test('repeatPrevious on → a returning user sees repeat-previous content', async () => {
-      setFlags({ repeatPrevious: true });
-      renderPage();
-
-      expect(
-        await screen.findByText('Pick up where you left off'),
-      ).toBeInTheDocument();
-      // Returning-user content is repeat-previous, not curated.
-      expect(
-        screen.queryByRole('heading', { name: 'Recommended sessions' }),
-      ).not.toBeInTheDocument();
     });
   });
 

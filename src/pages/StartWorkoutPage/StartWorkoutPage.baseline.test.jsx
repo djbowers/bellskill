@@ -72,9 +72,6 @@ describe('StartWorkoutPage hub baseline (all discovery flags off)', () => {
 
     // No discovery content with the flags off.
     expect(
-      screen.queryByText('Pick up where you left off'),
-    ).not.toBeInTheDocument();
-    expect(
       screen.queryByText('Your recommended first workout'),
     ).not.toBeInTheDocument();
     // The builder isn't mounted until the user asks for it.
