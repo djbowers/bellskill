@@ -16,10 +16,13 @@ seeing the map changes how you train, not whether the tree can drive programs.
   an absent row means not started. Owner-only RLS, same shape as
   `user_equipment`. Hooks: `useSkillNodeProgress`, `useSetSkillNodeStatus`
   (upsert on `user_id,node_id`), `useResetSkillNode` (delete).
-- **Derivation:** `src/pages/SkillTreePage/utils/deriveNodeStates.ts` (pure).
+- **Derivation:** `src/utils/skillTreeProgress.ts` (pure, relative imports only
+  so edge functions and scripts can share it; the page util re-exports it).
   `complete` and `active` come from the row; otherwise `available` when every
   prereq is complete, else `locked`. `active` wins over `locked`, so a node you
   chose to practice early still shows as practicing with the advisory line.
+  `summarizeSkillTree` / `isWithinReach` turn rows into a serializable summary
+  and a reach test for consumers outside the page.
 - **Advisory gates only.** Locked nodes stay tappable. The dialog lists which
   prerequisites are incomplete and never disables Start practicing.
 - **Flag:** build-time `skillTree` in `src/config/features.ts`, off by default
