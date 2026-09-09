@@ -81,15 +81,15 @@ Double Kettlebell Push Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vert
 Double Kettlebell Push Jerk,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic,FALSE
 One-Arm Kettlebell Jerk,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic,FALSE
 One-Arm Kettlebell Split Jerk,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic,FALSE
-One-Arm Kettlebell Clean and Jerk,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|grind,FALSE
+One-Arm Kettlebell Clean and Jerk,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,hinge|push,ballistic|grind,FALSE
 Double Kettlebell Jerk,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic,FALSE
-Kettlebell Thruster,Kettlebell,1,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|conditioning,FALSE
-Double Kettlebell Thruster,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|conditioning,FALSE
-Kettlebell Clean and Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|grind,FALSE
-Double Kettlebell Clean and Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,push,ballistic|grind,FALSE
+Kettlebell Thruster,Kettlebell,1,Double Arm,Shoulders,Intermediate,Vertical Push,squat|push,ballistic|conditioning,FALSE
+Double Kettlebell Thruster,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,squat|push,ballistic|conditioning,FALSE
+Kettlebell Clean and Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,hinge|push,ballistic|grind,FALSE
+Double Kettlebell Clean and Press,Kettlebell,2,Double Arm,Shoulders,Intermediate,Vertical Push,hinge|push,ballistic|grind,FALSE
 Kettlebell Sots Press,Kettlebell,1,Single Arm,Shoulders,Expert,Vertical Push,push,grind,FALSE
 Kettlebell Bottoms-Up Press,Kettlebell,1,Single Arm,Shoulders,Intermediate,Vertical Push,push,grind,FALSE
-Kettlebell Bent Press,Kettlebell,1,Single Arm,Shoulders,Expert,Vertical Push,push,grind,FALSE
+Kettlebell Bent Press,Kettlebell,1,Single Arm,Shoulders,Expert,Vertical Push,push|rotation,grind,FALSE
 One-Arm Kettlebell Floor Press,Kettlebell,1,Single Arm,Chest,Intermediate,Horizontal Push,push,grind,FALSE
 Extended Range One-Arm Kettlebell Floor Press,Kettlebell,1,Single Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
 Leg-Over Kettlebell Floor Press,Kettlebell,1,Single Arm,Chest,Intermediate,Horizontal Push,push,grind,FALSE
@@ -102,10 +102,10 @@ Plyo Kettlebell Push-Up,Kettlebell,2,Double Arm,Chest,Expert,Horizontal Push,pus
 One-Arm Kettlebell Row,Kettlebell,1,Single Arm,Back,Intermediate,Horizontal Pull,pull,grind,FALSE
 Double Kettlebell Row,Kettlebell,2,Double Arm,Back,Intermediate,Horizontal Pull,pull,grind,FALSE
 Alternating Kettlebell Row,Kettlebell,2,Double Arm,Back,Intermediate,Horizontal Pull,pull,grind,FALSE
-Kettlebell Renegade Row,Kettlebell,2,Double Arm,Back,Expert,Horizontal Pull,pull,grind,FALSE
-Alternating Renegade Row,Kettlebell,2,Double Arm,Back,Expert,Horizontal Pull,pull,grind,FALSE
+Kettlebell Renegade Row,Kettlebell,2,Double Arm,Back,Expert,Horizontal Pull,pull|core,grind,FALSE
+Alternating Renegade Row,Kettlebell,2,Double Arm,Back,Expert,Horizontal Pull,pull|core,grind,FALSE
 Kettlebell Gorilla Row,Kettlebell,2,Double Arm,Back,Intermediate,Horizontal Pull,pull,grind,FALSE
-Kettlebell Suitcase Carry,Kettlebell,1,Single Arm,Forearms,Beginner,Loaded Carry,carry,grind|conditioning,FALSE
+Kettlebell Suitcase Carry,Kettlebell,1,Single Arm,Forearms,Beginner,Loaded Carry,carry|core,grind|conditioning,FALSE
 Kettlebell Farmer's Carry,Kettlebell,2,Double Arm,Forearms,Beginner,Loaded Carry,carry,grind|conditioning,FALSE
 Kettlebell Racked Carry,Kettlebell,1,Single Arm,Shoulders,Intermediate,Loaded Carry,carry,grind|conditioning,FALSE
 Kettlebell Double Rack Carry,Kettlebell,2,Double Arm,Shoulders,Intermediate,Loaded Carry,carry,grind|conditioning,FALSE
@@ -114,7 +114,7 @@ Kettlebell Double Overhead Carry,Kettlebell,2,Double Arm,Shoulders,Expert,Loaded
 Kettlebell Waiter Carry,Kettlebell,1,Single Arm,Shoulders,Intermediate,Loaded Carry,carry,grind|conditioning,FALSE
 Kettlebell Bottoms-Up Carry,Kettlebell,1,Single Arm,Forearms,Intermediate,Loaded Carry,carry,grind|conditioning,FALSE
 Kettlebell Mixed Rack Carry,Kettlebell,2,Double Arm,Forearms,Intermediate,Loaded Carry,carry,grind|conditioning,FALSE
-Kettlebell Suitcase March,Kettlebell,1,Single Arm,Abdominals,Beginner,Loaded Carry,carry,grind|conditioning,FALSE
+Kettlebell Suitcase March,Kettlebell,1,Single Arm,Abdominals,Beginner,Loaded Carry,carry|core,grind|conditioning,FALSE
 Double Kettlebell Farmer March,Kettlebell,2,Double Arm,Forearms,Beginner,Loaded Carry,carry,grind|conditioning,FALSE
 Kettlebell Windmill,Kettlebell,1,Single Arm,Abdominals,Intermediate,Rotational,rotation,grind|mobility,FALSE
 Advanced Kettlebell Windmill,Kettlebell,1,Single Arm,Abdominals,Intermediate,Rotational,rotation,grind|mobility,FALSE
@@ -147,7 +147,7 @@ Clap Push-Up,Bodyweight,1,Double Arm,Chest,Intermediate,Horizontal Push,push,bal
 Archer Push-Up,Bodyweight,1,Double Arm,Chest,Expert,Horizontal Push,push,grind,FALSE
 Pseudo Planche Push-Up,Bodyweight,1,Double Arm,Shoulders,Expert,Horizontal Push,push,grind,FALSE
 Single-Arm Push-Up,Bodyweight,1,Single Arm,Chest,Expert,Horizontal Push,push,grind,FALSE
-Push-Up to Side Plank,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push,grind,FALSE
+Push-Up to Side Plank,Bodyweight,1,Double Arm,Chest,Beginner,Horizontal Push,push|core,grind,FALSE
 Body Triceps Press,Bodyweight,1,Double Arm,Triceps,Beginner,Horizontal Push,push,grind,FALSE
 Bench Dips,Bodyweight,1,Double Arm,Triceps,Beginner,Vertical Push,push,grind,FALSE
 Triceps Dips,Bodyweight,1,Double Arm,Triceps,Beginner,Vertical Push,push,grind,FALSE
@@ -165,10 +165,10 @@ V-Bar Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind,FAL
 Commando Pull-Up,Bodyweight,1,Double Arm,Back,Intermediate,Vertical Pull,pull,grind,FALSE
 Scapular Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind,FALSE
 Negative Pull-Up,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind,FALSE
-L-Sit Pull-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull,grind,FALSE
+L-Sit Pull-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull|core,grind,FALSE
 Archer Pull-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull,grind,FALSE
-Muscle-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull,grind,FALSE
-Gorilla Chin-Up Crunch,Bodyweight,1,Double Arm,Abdominals,Intermediate,Vertical Pull,pull,grind,FALSE
+Muscle-Up,Bodyweight,1,Double Arm,Back,Expert,Vertical Pull,pull|push,grind,FALSE
+Gorilla Chin-Up Crunch,Bodyweight,1,Double Arm,Abdominals,Intermediate,Vertical Pull,pull|core,grind,FALSE
 Band Pull-Down,Bodyweight,1,Double Arm,Back,Beginner,Vertical Pull,pull,grind,FALSE
 Single-Arm Band Pull-Down,Bodyweight,1,Single Arm,Back,Beginner,Vertical Pull,pull,grind,FALSE
 Inverted Row,Bodyweight,1,Double Arm,Back,Beginner,Horizontal Pull,pull,grind,FALSE
@@ -195,7 +195,7 @@ Bodyweight Step-Up,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,
 Duck Walk,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,conditioning,FALSE
 High Knees,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,conditioning,FALSE
 Squat Thrust,Bodyweight,1,No Arms,Quadriceps,Beginner,Knee Dominant,squat,ballistic|conditioning,FALSE
-Burpee,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning,FALSE
+Burpee,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat|push,ballistic|conditioning,FALSE
 Bench Jump,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning,FALSE
 Box Jump,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning,FALSE
 Freehand Jump Squat,Bodyweight,1,No Arms,Quadriceps,Intermediate,Knee Dominant,squat,ballistic|conditioning,FALSE
@@ -221,7 +221,7 @@ Superman,Bodyweight,1,No Arms,Back,Beginner,Hip Extension,hinge,grind,FALSE
 Prone Cobra,Bodyweight,1,No Arms,Back,Beginner,Hip Extension,hinge,grind,FALSE
 Bodyweight Hyperextension,Bodyweight,1,No Arms,Back,Intermediate,Hip Extension,hinge,grind,FALSE
 Reverse Hyperextension,Bodyweight,1,No Arms,Glutes,Intermediate,Hip Extension,hinge,grind,FALSE
-Bird Dog,Bodyweight,1,No Arms,Back,Beginner,Hip Extension,hinge,grind,TRUE
+Bird Dog,Bodyweight,1,No Arms,Back,Beginner,Hip Extension,hinge|core,grind,TRUE
 Natural Glute-Ham Raise,Bodyweight,1,No Arms,Hamstrings,Intermediate,Hip Hinge,hinge,grind,FALSE
 Nordic Curl,Bodyweight,1,No Arms,Hamstrings,Expert,Hip Hinge,hinge,grind,FALSE
 Bodyweight Good Morning,Bodyweight,1,No Arms,Hamstrings,Beginner,Hip Hinge,hinge,grind,FALSE
