@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { App } from './app/App';
+import { applyStoredTheme } from './lib/nav-actions';
 
 // Stale service workers from earlier builds 404 on sw.js; unregister them
 // and clear their caches.
@@ -25,6 +26,8 @@ if ('serviceWorker' in navigator) {
     });
   }
 }
+
+applyStoredTheme();
 
 const rootElement = document.getElementById('root');
 

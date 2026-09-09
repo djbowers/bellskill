@@ -12,8 +12,8 @@ const preview: Preview = {
     backgrounds: {
       default: 'light',
       values: [
-        { name: 'light', value: '#ffffff' },
-        { name: 'dark', value: '#000000' },
+        { name: 'light', value: '#f0ede8' },
+        { name: 'dark', value: '#0f0f0f' },
       ],
     },
     msw: { handlers },

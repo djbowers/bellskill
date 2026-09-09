@@ -17,6 +17,10 @@ import {
 } from '../env';
 import { Signup } from '../pages';
 import { supabase } from '../supabaseClient';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/space-grotesk';
+import '@fontsource-variable/jetbrains-mono';
+
 import '../tailwind.css';
 import { FeatureFlagsGate } from './FeatureFlagsGate';
 import { createRoutes } from './routes';

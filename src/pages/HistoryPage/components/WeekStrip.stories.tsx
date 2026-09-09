@@ -53,7 +53,7 @@ export default {
   args: { weekYear: now.weekYear, weekNumber: now.weekNumber },
   decorators: [
     (Story) => (
-      <div className="max-w-md bg-card p-2">
+      <div className="max-w-md bg-background p-2">
         <Story />
       </div>
     ),

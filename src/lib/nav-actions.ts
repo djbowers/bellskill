@@ -2,18 +2,13 @@ import { supabase } from '~/supabaseClient';
 
 export const handleSignOut = () => supabase.auth.signOut();
 
-export function handleClickLightDarkMode() {
-  if (localStorage.theme === 'dark' || !('theme' in localStorage)) {
-    //add class=dark in html element
-    document.documentElement.classList.add('dark');
-  } else {
-    //remove class=dark in html element
-    document.documentElement.classList.remove('dark');
-  }
+const isDarkStored = () => localStorage.theme === 'dark';
 
-  if (localStorage.theme === 'dark') {
-    localStorage.theme = 'light';
-  } else {
-    localStorage.theme = 'dark';
-  }
+export function applyStoredTheme() {
+  document.documentElement.classList.toggle('dark', isDarkStored());
+}
+
+export function handleClickLightDarkMode() {
+  localStorage.theme = isDarkStored() ? 'light' : 'dark';
+  applyStoredTheme();
 }

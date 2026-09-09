@@ -287,7 +287,7 @@ export const RecommendSection = ({
       {scope === 'program' && (
         <>
           {programRecommendation ? (
-            <div className="flex flex-col gap-2 rounded-lg border bg-card p-2">
+            <div className="flex flex-col gap-2 rounded-lg bg-card p-2">
               <div className="flex items-baseline justify-between gap-1">
                 <h3 className="text-sm font-semibold">
                   {recommendedProgram?.title ?? 'Recommended program'}

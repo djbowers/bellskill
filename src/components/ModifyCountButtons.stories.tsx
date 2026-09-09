@@ -17,7 +17,7 @@ const Weight = ({ initialUnit }: { initialUnit: WeightUnit }) => {
   const range = getWeightRange(unit);
 
   return (
-    <div className="w-full max-w-sm bg-card p-2">
+    <div className="w-full max-w-sm bg-background p-2">
       <ModifyCountButtons
         {...range}
         bellUnit={unit}
@@ -48,7 +48,7 @@ const Plain = ({
   const [value, setValue] = useState(initialValue);
 
   return (
-    <div className="w-full max-w-sm bg-card p-2">
+    <div className="w-full max-w-sm bg-background p-2">
       <ModifyCountButtons
         min={min}
         max={max}

@@ -34,7 +34,7 @@ export const RecommendationCard = ({
       >
         <p className="text-sm text-muted-foreground">{rationale}</p>
 
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="font-mono text-xs text-muted-foreground">
           {duration_minutes} min · {format}
         </p>
 
@@ -48,7 +48,7 @@ export const RecommendationCard = ({
                 <span className="text-sm font-medium">
                   {block.movement_name}
                 </span>
-                <span className="whitespace-nowrap text-xs text-muted-foreground">
+                <span className="whitespace-nowrap font-mono text-xs text-muted-foreground">
                   {block.weight_kg > 0 ? `${block.weight_kg} kg` : 'bodyweight'}{' '}
                   · {block.rep_scheme.join(' / ')}
                 </span>
