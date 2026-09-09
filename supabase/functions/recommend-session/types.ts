@@ -4,7 +4,6 @@
 // into session_recommendations.inputs. unlocked_weights carries the weights the
 // user can actually load, derived from their declared equipment (PROD-78); it
 // stays `{}` for users who have recorded none.
-
 import type { EquipmentSummary } from '../../../src/utils/equipment.ts';
 import type {
   Modality,
@@ -17,23 +16,21 @@ import type {
   PatternRpe,
 } from '../../../src/utils/patternDebt.ts';
 
-/** One movement in the user's library — the candidate set the LLM may choose from. */
+/**
+ * One movement from the catalog, kettlebell or bodyweight — the candidate set
+ * the LLM may choose from. Custom (unlinked) library movements are never
+ * candidates.
+ */
 export interface CandidateMovement {
-  user_movement_id: string;
+  /** `movements.id` in the catalog. */
+  movement_id: string;
   name: string;
-  is_big_6: boolean;
-  /** Coarse patterns this movement pays credit toward; null when unlinked with no fallback. */
+  /** Coarse patterns this movement pays credit toward; null when it credits none. */
   pattern_credits: Pattern[] | null;
-  /**
-   * Whether the catalog says this movement is done with two bells. Null when the
-   * movement is unlinked and we simply do not know — never enforced in that case.
-   */
-  supports_doubles: boolean | null;
-  /**
-   * Whether the catalog says this movement is done one leg at a time. Null when
-   * the movement is unlinked and we simply do not know.
-   */
-  unilateral_lower: boolean | null;
+  /** Takes no bell: prescribed with weight_kg 0 and bells 0. */
+  bodyweight: boolean;
+  supports_doubles: boolean;
+  unilateral_lower: boolean;
 }
 
 /** A compact summary of one past workout, for history context. */
@@ -119,15 +116,17 @@ export interface RecommenderInputs {
 
 /** One block of the recommended session. Maps onto the app's MovementOptions. */
 export interface RecommendationBlock {
-  user_movement_id: string;
+  /** The catalog `movements.id` the block was chosen from. */
+  movement_id: string;
   movement_name: string;
+  /** Weight of ONE bell; 0 for a bodyweight movement. */
   weight_kg: number;
   rep_scheme: number[];
   notes: string;
   /**
-   * Kettlebells held at once for this block: 1, or 2 for genuine double-bell
-   * work. Optional here only so recommendations persisted before this field
-   * existed still parse; the schema requires it for new output.
+   * Kettlebells held at once for this block: 1, 2 for genuine double-bell
+   * work, or 0 for bodyweight. Optional here only so recommendations persisted
+   * before this field existed still parse; the schema requires it for new output.
    */
   bells?: number;
 }
@@ -136,7 +135,8 @@ export interface RecommendationBlock {
 export interface Recommendation {
   rationale: string;
   duration_minutes: number;
-  format: 'EMOM' | 'AMRAP' | 'Circuit' | 'Ladder' | 'Straight Sets';
+  /** Always a circuit: the lifter rotates through the blocks one rung at a time. */
+  format: 'Circuit';
   confidence: 'high' | 'medium' | 'low';
   blocks: RecommendationBlock[];
   /**
@@ -158,10 +158,7 @@ export const RECOMMENDATION_SCHEMA = {
   properties: {
     rationale: { type: 'string' },
     duration_minutes: { type: 'integer' },
-    format: {
-      type: 'string',
-      enum: ['EMOM', 'AMRAP', 'Circuit', 'Ladder', 'Straight Sets'],
-    },
+    format: { type: 'string', enum: ['Circuit'] },
     confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
     adjustable_settings_kg: { type: 'array', items: { type: 'number' } },
     blocks: {
@@ -170,7 +167,7 @@ export const RECOMMENDATION_SCHEMA = {
         type: 'object',
         additionalProperties: false,
         properties: {
-          user_movement_id: { type: 'string' },
+          movement_id: { type: 'string' },
           movement_name: { type: 'string' },
           weight_kg: { type: 'number' },
           bells: { type: 'integer' },
@@ -178,7 +175,7 @@ export const RECOMMENDATION_SCHEMA = {
           notes: { type: 'string' },
         },
         required: [
-          'user_movement_id',
+          'movement_id',
           'movement_name',
           'weight_kg',
           'bells',

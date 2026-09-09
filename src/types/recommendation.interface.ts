@@ -3,22 +3,20 @@
 // wire shape (snake_case), so the response is consumed without remapping; the
 // app-facing conversion to MovementOptions lives in recommendationToMovements.
 
-export type RecommendationFormat =
-  | 'EMOM'
-  | 'AMRAP'
-  | 'Circuit'
-  | 'Ladder'
-  | 'Straight Sets';
+/** Every recommended session is a circuit; the app maps it onto circuit mode. */
+export type RecommendationFormat = 'Circuit';
 
 export type RecommendationConfidence = 'high' | 'medium' | 'low';
 
 export interface RecommendationBlock {
-  user_movement_id: string;
+  /** The catalog `movements.id` the block was chosen from. */
+  movement_id: string;
   movement_name: string;
+  /** Weight of one bell; 0 for a bodyweight movement. */
   weight_kg: number;
   rep_scheme: number[];
   notes: string;
-  /** Bells held at once (1, or 2 for double-bell). Absent on older recommendations. */
+  /** Bells held at once (1, 2 for double-bell, 0 for bodyweight). Absent on older recommendations. */
   bells?: number;
 }
 

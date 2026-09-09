@@ -30,7 +30,7 @@ export const ProgramRecommendationPreviewDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>AI program recommendations</DialogTitle>
+          <DialogTitle>Chalk&apos;s program picks</DialogTitle>
           <DialogDescription>
             Premium reads your training history, movement-pattern balance, and
             current programs, then picks your next program — like this:

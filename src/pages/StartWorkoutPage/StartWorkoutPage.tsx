@@ -938,7 +938,7 @@ export const StartWorkoutPage = ({
     setBuilderOverride(true);
   };
 
-  // Accept an AI recommendation: load it into the builder for review/edits, then
+  // Accept Chalk's recommendation: load it into the builder for review/edits, then
   // start via the existing Start button (attributed to the recommender source).
   const handleAcceptRecommendation = (
     recommendation: Recommendation,

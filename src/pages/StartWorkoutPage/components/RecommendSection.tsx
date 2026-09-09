@@ -9,6 +9,7 @@ import {
   useRecommendProgram,
   useRecommendSession,
 } from '~/api';
+import { useCreateUserMovement } from '~/api/useCreateUserMovement';
 import { ProgramRecommendationPreviewDialog } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
@@ -43,7 +44,7 @@ export interface RecommendSectionProps {
 }
 
 /**
- * The hub's unified AI recommender: one tinted surface that recommends either
+ * The hub's Chalk recommender: one tinted surface that asks Chalk for either
  * the next session or the next program. Premium users fetch and review a
  * recommendation; free users see a preview modal with an upgrade CTA — the
  * functions are never called for them. Results are held per scope so toggling
@@ -65,6 +66,7 @@ export const RecommendSection = ({
 
   const sessionMutation = useRecommendSession();
   const programMutation = useRecommendProgram();
+  const createUserMovement = useCreateUserMovement();
   const [sessionResult, setSessionResult] =
     useState<RecommendSessionResponse | null>(null);
   const [programResult, setProgramResult] =
@@ -142,6 +144,19 @@ export const RecommendSection = ({
     track(AnalyticsEvent.RecommendationAccepted, {
       movement_count: sessionResult.recommendation.blocks.length,
     });
+    // Chalk picks from the catalog, not the library. Logging links a movement
+    // to the catalog through its library row, so make sure one exists before
+    // the session is logged; a failure here costs pattern credit, not the session.
+    void Promise.all(
+      sessionResult.recommendation.blocks.map((block) =>
+        createUserMovement.mutateAsync({
+          canonicalName: block.movement_name,
+          functionalMovementId: block.movement_id,
+        }),
+      ),
+    ).catch((err) => {
+      console.error('could not add recommended movements to the library', err);
+    });
     onAcceptSession(sessionResult.recommendation, sessionResult.id);
     setSessionResult(null);
     sessionMutation.reset();
@@ -187,10 +202,10 @@ export const RecommendSection = ({
     if (err instanceof RecommendSessionError) {
       if (err.code === 'premium_required') return null; // shown via preview
       if (err.code === 'no_movements') {
-        return 'Add a few movements to your library first, then try again.';
+        return "Chalk couldn't find any catalog movements — try again later.";
       }
       if (err.code === 'recommendation_failed') {
-        return "Couldn't build a session right now — try again.";
+        return "Chalk couldn't build a session right now — try again.";
       }
     }
     return 'Something went wrong — try again.';
@@ -205,7 +220,7 @@ export const RecommendSection = ({
         return "You're already running or have queued every program we'd suggest.";
       }
       if (err.code === 'recommendation_failed') {
-        return "Couldn't pick a program right now — try again.";
+        return "Chalk couldn't pick a program right now — try again.";
       }
     }
     return 'Something went wrong — try again.';
@@ -213,13 +228,13 @@ export const RecommendSection = ({
 
   return (
     <section
-      aria-label="AI recommendation"
+      aria-label="Chalk"
       className="flex flex-col gap-1 rounded-md border border-primary/30 bg-primary/5 p-2"
     >
       <div className="flex items-center gap-1">
         <SparklesIcon className="h-2.5 w-2.5 shrink-0 text-primary" />
         <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Recommended for you
+          Ask Chalk
         </h2>
         {showPrograms && (
           <Tabs
@@ -258,7 +273,7 @@ export const RecommendSection = ({
               onClick={handleRecommendSession}
             >
               <SparklesIcon className="mr-1 h-2.5 w-2.5" />
-              Recommend my next session
+              Ask Chalk for my next session
             </Button>
           )}
           {sessionError && (
@@ -311,7 +326,7 @@ export const RecommendSection = ({
               onClick={handleRecommendProgram}
             >
               <SparklesIcon className="mr-1 h-2.5 w-2.5" />
-              Recommend a program
+              Ask Chalk for a program
             </Button>
           )}
           {programError && (

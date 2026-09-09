@@ -69,7 +69,7 @@ const catalog: RecommendationCatalog = new Map<
 ]);
 
 const block = (movementName: string, weightKg: number) => ({
-  user_movement_id: `id-${movementName}`,
+  movement_id: `id-${movementName}`,
   movement_name: movementName,
   weight_kg: weightKg,
   rep_scheme: [5],
@@ -79,7 +79,7 @@ const block = (movementName: string, weightKg: number) => ({
 const recommendation = (movementNames: [string, number][]): Recommendation => ({
   rationale: 'test',
   duration_minutes: 20,
-  format: 'Straight Sets',
+  format: 'Circuit',
   confidence: 'high',
   blocks: movementNames.map(([name, weight]) => block(name, weight)),
 });
@@ -161,58 +161,25 @@ describe('recommendationToWorkoutOptions', () => {
     expect(getWeightTabValue(options.movements[0])).toBe('double');
   });
 
-  test('duration becomes a time goal for the rotating formats', () => {
-    const options = recommendationToWorkoutOptions({
-      ...recommendation([[DOUBLE_KB_FRONT_SQUAT, 24]]),
-      format: 'Circuit',
-    });
+  test('a weight of 0 opens the builder as a bodyweight movement', () => {
+    const rec = recommendation([['Push-Up', 0]]);
+    rec.blocks[0].bells = 0;
+    const [movement] = recommendationToMovements(rec, catalog);
 
+    expect(movement.weightOneValue).toBeNull();
+    expect(movement.weightOneUnit).toBeNull();
+    expect(movement.weightTwoValue).toBeNull();
+    expect(getWeightTabValue(movement)).toBe('none');
+  });
+
+  test('the recommendation loads as a circuit with its duration as the goal', () => {
+    const options = recommendationToWorkoutOptions(
+      recommendation([[DOUBLE_KB_FRONT_SQUAT, 24]]),
+    );
+
+    expect(options.workoutMode).toBe('circuit');
     expect(options.workoutGoal).toBe(20);
     expect(options.workoutGoalUnits).toBe('minutes');
-  });
-
-  // Straight sets stops on its set list, not the clock, so the goal is the
-  // total number of sets across every block.
-  test('a straight-sets recommendation goal is its total set count', () => {
-    const rec = recommendation([
-      [TWO_HAND_SWING, 24],
-      [DOUBLE_KB_FRONT_SQUAT, 24],
-    ]);
-    rec.blocks[0].rep_scheme = [5, 5, 5];
-    rec.blocks[1].rep_scheme = [8, 8];
-
-    const options = recommendationToWorkoutOptions(rec);
-
-    expect(options.workoutGoal).toBe(5);
-    expect(options.workoutGoalUnits).toBe('rounds');
-  });
-
-  test.each([
-    ['Straight Sets', 'straightSets'],
-    ['Circuit', 'circuit'],
-    ['EMOM', 'circuit'],
-    ['AMRAP', 'circuit'],
-    ['Ladder', 'circuit'],
-  ] as const)('a %s recommendation loads as %s', (format, workoutMode) => {
-    const options = recommendationToWorkoutOptions({
-      ...recommendation([[TWO_HAND_SWING, 24]]),
-      format,
-    });
-
-    expect(options.workoutMode).toBe(workoutMode);
-  });
-
-  test('a straight-sets recommendation with unequal rungs is exempt from the equal-rungs rule', () => {
-    const rec = recommendation([
-      [TWO_HAND_SWING, 24],
-      [DOUBLE_KB_FRONT_SQUAT, 24],
-    ]);
-    rec.blocks[0].rep_scheme = [5, 4, 3, 2];
-    rec.blocks[1].rep_scheme = [5, 5, 5];
-
-    const options = recommendationToWorkoutOptions(rec);
-
-    expect(options.workoutMode).toBe('straightSets');
   });
 });
 
@@ -280,7 +247,7 @@ describe('recommendationToMovements — declared bell count', () => {
   ): Recommendation => ({
     rationale: 'test',
     duration_minutes: 20,
-    format: 'Straight Sets',
+    format: 'Circuit',
     confidence: 'high',
     blocks: [
       {
