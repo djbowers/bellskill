@@ -48,7 +48,7 @@ export async function generateRecommendation(
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
   if (!apiKey) throw new LLMError('ANTHROPIC_API_KEY is not configured');
 
-  const system = buildSystemPrompt();
+  const system = buildSystemPrompt(inputs.skill_tree !== null);
   const messages: Message[] = [
     { role: 'user', content: buildUserPrompt(inputs) },
   ];
