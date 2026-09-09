@@ -1,11 +1,7 @@
 import { DateTime } from 'luxon';
 
 import { MovementHistoryEntry } from '~/api';
-
-const KG_PER_POUND = 0.45359237;
-
-const toKg = (value: number, unit: string | null) =>
-  unit === 'pounds' ? value * KG_PER_POUND : value;
+import { toKg } from '~/utils';
 
 export interface MovementStats {
   sessionCount: number;

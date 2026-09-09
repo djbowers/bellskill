@@ -1,11 +1,21 @@
 import { SkillLevel } from '~/config/skillTree';
 import {
+  type CompletionSource,
+  type DerivedLoad,
   type DerivedNode,
+  type LoadEdge,
   type NodeState,
   deriveNodeStates,
 } from '~/utils/skillTreeProgress';
 
-export { type DerivedNode, type NodeState, deriveNodeStates };
+export {
+  type CompletionSource,
+  type DerivedLoad,
+  type DerivedNode,
+  type LoadEdge,
+  type NodeState,
+  deriveNodeStates,
+};
 
 export interface LevelSummary {
   level: SkillLevel;

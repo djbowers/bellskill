@@ -1,3 +1,5 @@
+import { BellKg } from '../utils/bellLadder.ts';
+
 export type SkillLevelNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 export type SkillNodeKind = 'movement' | 'mobility';
@@ -20,6 +22,12 @@ export interface SkillNode {
   /** Free-text prerequisites the spec does not tie to a node. */
   prereqNotes: string[];
   benchmark: string;
+  /**
+   * The bell that passes this node. Absent on nodes no bell can be added to —
+   * breathing, balance, pure mobility. Which movements count toward it lives in
+   * the catalog (`movements.skill_node_id`), not here.
+   */
+  targetKg?: BellKg;
 }
 
 /** Source: Second Brain › Bellskill Product › bellskill_full_skill_tree_spec_v2.md */
@@ -35,6 +43,9 @@ export const SKILL_LEVELS: readonly SkillLevel[] = [
   { level: 9, title: 'Elite', theme: 'The full expression. Double power movements at the highest demand.' },
 ];
 
+// Spec v2 states benchmarks as % bodyweight; the targets below are those
+// percentages at an 80kg reference lifter, snapped to the bell ladder. Nodes the
+// spec gives an absolute weight keep that number.
 const node = (
   id: string,
   level: SkillLevelNumber,
@@ -44,7 +55,18 @@ const node = (
   prereqs: string[],
   prereqNotes: string[],
   benchmark: string,
-): SkillNode => ({ id, level, title, kind, skills, prereqs, prereqNotes, benchmark });
+  targetKg?: BellKg,
+): SkillNode => ({
+  id,
+  level,
+  title,
+  kind,
+  skills,
+  prereqs,
+  prereqNotes,
+  benchmark,
+  ...(targetKg ? { targetKg } : {}),
+});
 
 export const SKILL_NODES: readonly SkillNode[] = [
   // Level 1 — Foundation
@@ -59,7 +81,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   node('L1-N3', 1, 'Goblet squat', 'movement',
     ['Vertical torso squat', 'Knee tracking', 'Heel-grounded depth'],
     [], ['Ankle dorsiflexion (squat to parallel without heels rising)', 'Basic hip flexor length'],
-    'Full depth goblet squat, heels down, chest up, 5 reps at 12kg.'),
+    'Full depth goblet squat, heels down, chest up, 5 reps at 12kg.',
+    12),
   node('L1-N4', 1, 'Deadbug', 'movement',
     ['Lumbar spine imprint', 'Contralateral limb extension', 'Breath coordination'],
     ['L1-N1'], [],
@@ -67,7 +90,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   node('L1-N5', 1, 'Grip & wrist prep', 'movement',
     ['Crush grip vs hook grip', 'Wrist extension mobility', 'Forearm flexibility'],
     [], [],
-    'Carry 16kg for 30 seconds per hand without grip failure; full wrist extension without pain.'),
+    'Carry 16kg for 30 seconds per hand without grip failure; full wrist extension without pain.',
+    16),
   node('L1-N6', 1, 'Single leg balance', 'movement',
     ['Hip abductor engagement', 'Ankle stability', 'Gaze fixation'],
     ['L1-N3'], ['Basic ankle awareness'],
@@ -81,15 +105,18 @@ export const SKILL_NODES: readonly SkillNode[] = [
   node('L2-N1', 2, 'Kettlebell deadlift', 'movement',
     ['Handle grip', 'Lat engagement ("protect your armpits")', 'Bracing under load'],
     [], ['Neutral spine under load', 'Hamstring length'],
-    '10 clean reps at 30% BW, no rounding, full hip extension at top.'),
+    '10 clean reps at 30% BW, no rounding, full hip extension at top.',
+    24),
   node('L2-N2', 2, 'Two-hand swing', 'movement',
     ['Hip drive initiation', 'Float at top', 'Safe backswing', 'Breathing rhythm'],
     ['L1-N2'], [],
-    '20 consecutive reps at 30% BW, consistent form start to finish.'),
+    '20 consecutive reps at 30% BW, consistent form start to finish.',
+    24),
   node('L2-N3', 2, "Farmer's carry", 'movement',
     ['Tall spine under load', 'Packed shoulders', 'Gait control'],
     ['L1-N5'], [],
-    '40 meters per hand at 25% BW without grip failure or lateral lean.'),
+    '40 meters per hand at 25% BW without grip failure or lateral lean.',
+    20),
 
   // Level 3 — Unilateral intro
   node('L3-M1', 3, 'Thoracic rotation & shoulder prep', 'mobility',
@@ -99,11 +126,13 @@ export const SKILL_NODES: readonly SkillNode[] = [
   node('L3-N1', 3, 'Single-hand swing', 'movement',
     ['Anti-rotation bracing', 'Hip drive with single arm', 'Handle transition'],
     ['L2-N2'], [],
-    '15 reps per side at 25% BW, no trunk rotation, clean float at top.'),
+    '15 reps per side at 25% BW, no trunk rotation, clean float at top.',
+    20),
   node('L3-N2', 3, 'Suitcase carry', 'movement',
     ['Resist side-bending', 'Shoulder packed down', 'Level hips'],
     ['L2-N3'], [],
-    '40 meters per hand at 20% BW, no visible hip hike or trunk tilt.'),
+    '40 meters per hand at 20% BW, no visible hip hike or trunk tilt.',
+    16),
 
   // Level 4 — Press & pull
   node('L4-M1', 4, 'Wrist & elbow joint prep', 'mobility',
@@ -113,19 +142,23 @@ export const SKILL_NODES: readonly SkillNode[] = [
   node('L4-N1', 4, 'Clean', 'movement',
     ['Tight arc close to body', 'Elbow drives back not out', 'Soft catch in rack'],
     ['L3-N1', 'L4-M1'], [],
-    '10 reps per side at 25% BW, no forearm bruising, quiet catch.'),
+    '10 reps per side at 25% BW, no forearm bruising, quiet catch.',
+    20),
   node('L4-N2', 4, 'Half-kneeling press', 'movement',
     ['Glute squeeze on down knee', 'Vertical forearm in rack', 'Full lock-out overhead'],
     ['L3-M1'], ['Shoulder CARs'],
-    '5 reps per side at 20% BW, no lateral lean, full overhead lock-out.'),
+    '5 reps per side at 20% BW, no lateral lean, full overhead lock-out.',
+    16),
   node('L4-N3', 4, 'Strict overhead press', 'movement',
     ['Lat engagement at bottom', 'Vertical forearm at start', 'Full lock-out with bicep by ear'],
     ['L4-N2', 'L3-M1'], [],
-    '5 reps per side at 25% BW, strict, full ROM, no lateral lean.'),
+    '5 reps per side at 25% BW, strict, full ROM, no lateral lean.',
+    20),
   node('L4-N4', 4, 'Rack hold & front rack walk', 'movement',
     ['Vertical forearm', 'Elbow down', 'Core braced', 'Relaxed grip in rack'],
     ['L4-N1'], [],
-    '60 second rack hold per side at 25% BW, then 20 meters walking in rack.'),
+    '60 second rack hold per side at 25% BW, then 20 meters walking in rack.',
+    20),
 
   // Level 5 — Ground work
   node('L5-M1', 5, 'Deep hip & thoracic opener', 'mobility',
@@ -139,15 +172,18 @@ export const SKILL_NODES: readonly SkillNode[] = [
   node('L5-N2', 5, 'Deep squat mobility', 'movement',
     ['Hip flexion at end range', 'Ankle dorsiflexion at depth', 'Thoracic upright under load'],
     ['L1-N3', 'L2-M1'], [],
-    '5 reps full depth paused goblet squat at 25% BW, 2-second pause at bottom.'),
+    '5 reps full depth paused goblet squat at 25% BW, 2-second pause at bottom.',
+    20),
   node('L5-N3', 5, 'Windmill (light)', 'movement',
     ['Rotate and hinge to side', 'Press arm stays vertical', 'Gaze on bell overhead'],
     ['L4-N3', 'L3-M1'], [],
-    '5 reps per side at 15% BW overhead, controlled tempo, no balance breaks.'),
+    '5 reps per side at 15% BW overhead, controlled tempo, no balance breaks.',
+    12),
   node('L5-N4', 5, 'Push press', 'movement',
     ['Dip and drive timing', 'Vertical torso in dip', 'Full lock-out at top'],
     ['L4-N3'], [],
-    '5 reps per side at 30% BW, clean timing, full overhead extension.'),
+    '5 reps per side at 30% BW, clean timing, full overhead extension.',
+    24),
 
   // Level 6 — Full Turkish getup & bilateral hinge
   node('L6-M1', 6, 'Shoulder stability & overhead endurance', 'mobility',
@@ -157,15 +193,18 @@ export const SKILL_NODES: readonly SkillNode[] = [
   node('L6-N1', 6, 'Turkish getup with load', 'movement',
     ['All 7 positions under load', 'Gaze discipline', 'Controlled tempo throughout'],
     ['L5-N1', 'L6-M1'], [],
-    '3 smooth reps per side at 25% BW, no position breaks, controlled throughout.'),
+    '3 smooth reps per side at 25% BW, no position breaks, controlled throughout.',
+    20),
   node('L6-N2', 6, 'Windmill with load', 'movement',
     ['Hip shift', 'Lateral hinge', 'Maintaining overhead lock-out through full ROM'],
     ['L5-N3', 'L6-N1'], [],
-    '5 reps per side at 20% BW overhead, controlled, no knee bend.'),
+    '5 reps per side at 20% BW overhead, controlled, no knee bend.',
+    16),
   node('L6-N3', 6, 'Double swing', 'movement',
     ['Synchronized hip drive', 'Double handle grip', 'Managing increased momentum'],
     ['L3-N1'], [],
-    '15 reps at 20% BW per bell, synchronized float, consistent form.'),
+    '15 reps at 20% BW per bell, synchronized float, consistent form.',
+    16),
 
   // Level 7 — Double kettlebell entry
   node('L7-M1', 7, 'Front rack bilateral position', 'mobility',
@@ -175,15 +214,18 @@ export const SKILL_NODES: readonly SkillNode[] = [
   node('L7-N1', 7, 'Double clean', 'movement',
     ['Synchronized arc', 'Simultaneous soft catch', 'Managing rack compression'],
     ['L4-N1', 'L6-N3', 'L7-M1'], [],
-    '10 reps at 20% BW per bell, quiet catch, both bells in rack simultaneously.'),
+    '10 reps at 20% BW per bell, quiet catch, both bells in rack simultaneously.',
+    16),
   node('L7-N2', 7, 'Double front squat', 'movement',
     ['Vertical torso under bilateral load', 'Knee tracking', 'Full depth with rack maintained'],
     ['L7-N1', 'L5-N2'], [],
-    '5 reps at 20% BW per bell, full depth, rack maintained throughout.'),
+    '5 reps at 20% BW per bell, full depth, rack maintained throughout.',
+    16),
   node('L7-N3', 7, 'Double overhead press', 'movement',
     ['Synchronized press', 'Lat engagement bilateral', 'Full double lockout'],
     ['L7-N1', 'L5-N4'], [],
-    '5 strict reps at 20% BW per bell, full bilateral lock-out.'),
+    '5 strict reps at 20% BW per bell, full bilateral lock-out.',
+    16),
 
   // Level 8 — Power & strength
   node('L8-M1', 8, 'Hip flexor & thoracic loading prep', 'mobility',
@@ -193,7 +235,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   node('L8-N1', 8, 'Snatch (single)', 'movement',
     ['High pull to elbow', 'Punch through at top', 'Soft overhead catch', 'Hinge-driven backswing'],
     ['L3-N1', 'L5-N4', 'L6-M1'], [],
-    '10 reps per side at 25% BW, safe catch, no wrist flip, full lock-out.'),
+    '10 reps per side at 25% BW, safe catch, no wrist flip, full lock-out.',
+    20),
   node('L8-N2', 8, 'Long cycle clean & press', 'movement',
     ['Clean-to-press timing', 'Rack recovery between reps', 'Breathing strategy under load'],
     ['L7-N1', 'L7-N3'], [],
@@ -201,7 +244,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   node('L8-N3', 8, 'Long cycle clean & jerk (double)', 'movement',
     ['Dip timing under bilateral load', 'Jerk vs press distinction', 'Rack recovery'],
     ['L8-N2', 'L7-N3'], [],
-    '5 reps at 20% BW per bell, clean jerk timing, full double overhead.'),
+    '5 reps at 20% BW per bell, clean jerk timing, full double overhead.',
+    16),
 
   // Level 9 — Elite
   node('L9-M1', 9, 'Full system reassessment', 'mobility',
@@ -211,7 +255,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   node('L9-N1', 9, 'Double snatch', 'movement',
     ['Synchronized arc', 'Bilateral punch-through', 'Managing double overhead landing'],
     ['L8-N1', 'L6-N3'], [],
-    '5 reps at 20% BW per bell, synchronized, both bells locked out simultaneously.'),
+    '5 reps at 20% BW per bell, synchronized, both bells locked out simultaneously.',
+    16),
 ];
 
 export const SKILL_NODE_BY_ID: ReadonlyMap<string, SkillNode> = new Map(

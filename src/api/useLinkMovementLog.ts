@@ -94,6 +94,11 @@ export const useLinkMovementLog = (workoutLogId: number) => {
       });
       queryClient.invalidateQueries({ queryKey: [QUERIES.WORKOUT_LOGS] });
       queryClient.invalidateQueries({ queryKey: [QUERIES.USER_MOVEMENTS] });
+      // Relinking changes which catalog movement a log belongs to, and with it
+      // which skill tree node its bell counts toward.
+      queryClient.invalidateQueries({
+        queryKey: [QUERIES.SKILL_NODE_LOAD_LOGS],
+      });
     },
   });
 };
