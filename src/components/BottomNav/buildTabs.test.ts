@@ -7,6 +7,7 @@ const allOff: Features = {
   modalityBalance: false,
   premium: false,
   programs: false,
+  skillTree: false,
   spotify: false,
   weeklyBalance: false,
 };
@@ -60,12 +61,25 @@ describe('buildTabs', () => {
     expect(moreKeys(features)).toEqual(['explore']);
   });
 
+  test('promotes Skill tree when it is the only enabled feature', () => {
+    const { tabs } = buildTabs({ ...allOff, skillTree: true });
+    expect(tabs.map((t) => t.key)).toEqual(['home', 'history', 'skillTree']);
+    expect(tabs[2]).toMatchObject({ label: 'Skill tree', to: '/skill-tree' });
+  });
+
+  test('Skill tree degrades into More behind Chalk and Movements', () => {
+    const features = { ...allOff, premium: true, explore: true, skillTree: true };
+    expect(keys(features)).toEqual(['home', 'history', 'ai']);
+    expect(moreKeys(features)).toEqual(['explore', 'skillTree']);
+  });
+
   test('bar never exceeds four link tabs (5th slot is the More sheet)', () => {
     const features = {
       ...allOff,
       programs: true,
       premium: true,
       explore: true,
+      skillTree: true,
     };
     expect(buildTabs(features).tabs.length).toBeLessThanOrEqual(4);
   });

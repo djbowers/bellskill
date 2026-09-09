@@ -18,6 +18,7 @@ const featuresWith = (overrides: Partial<Features> = {}): Features => ({
   modalityBalance: false,
   premium: false,
   programs: false,
+  skillTree: false,
   spotify: false,
   weeklyBalance: false,
   ...overrides,

@@ -2,6 +2,7 @@ import {
   ClockIcon,
   HomeIcon,
   MagnifyingGlassIcon,
+  MapIcon,
   RectangleStackIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
@@ -9,6 +10,7 @@ import {
   ClockIcon as ClockSolidIcon,
   HomeIcon as HomeSolidIcon,
   MagnifyingGlassIcon as MagnifyingGlassSolidIcon,
+  MapIcon as MapSolidIcon,
   RectangleStackIcon as RectangleStackSolidIcon,
   SparklesIcon as SparklesSolidIcon,
 } from '@heroicons/react/24/solid';
@@ -54,6 +56,14 @@ export const NAV_ITEMS: NavItem[] = [
     icon: RectangleStackIcon,
     activeIcon: RectangleStackSolidIcon,
     flag: 'programs',
+  },
+  {
+    key: 'skillTree',
+    label: 'Skill tree',
+    to: '/skill-tree',
+    icon: MapIcon,
+    activeIcon: MapSolidIcon,
+    flag: 'skillTree',
   },
   {
     key: 'explore',

@@ -16,5 +16,6 @@ export * from './ProgramSessionBuilderPage';
 export * from './ProgramsPage';
 export * from './RecommendationsPage';
 export * from './SignupPage';
+export * from './SkillTreePage';
 export * from './SpotifyCallbackPage';
 export * from './StartWorkoutPage';

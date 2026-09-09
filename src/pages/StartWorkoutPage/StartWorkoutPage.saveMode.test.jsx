@@ -27,6 +27,7 @@ const allFlagsOff = {
   modalityBalance: false,
   premium: false,
   programs: false,
+  skillTree: false,
   weeklyBalance: false,
 };
 
