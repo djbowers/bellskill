@@ -15,6 +15,7 @@ export enum QUERIES {
   PROGRAM_PROGRESS = 'programProgress',
   PROGRAMS = 'programs',
   QUEUED_PROGRAMS = 'queuedPrograms',
+  SKILL_NODE_PROGRESS = 'skillNodeProgress',
   SPOTIFY_CONNECTION = 'spotifyConnection',
   SPOTIFY_NOW_PLAYING = 'spotifyNowPlaying',
   USER_EQUIPMENT = 'userEquipment',
