@@ -128,7 +128,9 @@ describe('StartWorkoutHero', () => {
       );
 
       await openSkipConfirm('Dry Fighting Weight');
-      fireEvent.click(screen.getByRole('button', { name: 'Keep this session' }));
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Keep this session' }),
+      );
 
       expect(onSkip).not.toHaveBeenCalled();
       expect(
@@ -154,6 +156,59 @@ describe('StartWorkoutHero', () => {
       );
 
       expect(screen.getByText('Week 3 · Day 2')).toBeInTheDocument();
+    });
+
+    it('shows the finish line when the arc has one, and omits it otherwise', () => {
+      const { rerender } = render(
+        <StartWorkoutHero
+          variant="program"
+          programTitle="Dry Fighting Weight"
+          nextSession={nextSession}
+          progress={progress}
+          arc={{
+            sessionNumber: 8,
+            totalSessions: 14,
+            dayNumber: 12,
+            totalDays: 35,
+            projectedFinish: new Date(2026, 10, 11),
+            sessionsAhead: -2,
+          }}
+          isComplete={false}
+          onStart={vi.fn()}
+          onSkip={vi.fn()}
+          skipping={false}
+        />,
+      );
+
+      // The pace phrase sits in its own no-wrap span, so match the row in two parts.
+      expect(
+        screen.getByText(/Day 12 of 35 · Finishes ~Nov 11 ·/),
+      ).toBeInTheDocument();
+      expect(screen.getByText('2 sessions behind')).toBeInTheDocument();
+
+      // A repeating workout carries an arc with no finish: nothing to show.
+      rerender(
+        <StartWorkoutHero
+          variant="program"
+          programTitle="Dry Fighting Weight"
+          nextSession={nextSession}
+          progress={progress}
+          arc={{
+            sessionNumber: 8,
+            totalSessions: 14,
+            dayNumber: 12,
+            totalDays: null,
+            projectedFinish: null,
+            sessionsAhead: null,
+          }}
+          isComplete={false}
+          onStart={vi.fn()}
+          onSkip={vi.fn()}
+          skipping={false}
+        />,
+      );
+
+      expect(screen.queryByText(/Finishes/)).not.toBeInTheDocument();
     });
 
     it('disables the actions while a skip is in flight', () => {

@@ -6,6 +6,7 @@ import { OverflowMenu } from '~/components/OverflowMenu';
 import { Button } from '~/components/ui/button';
 import { cn } from '~/lib/utils';
 import { WorkoutGoalUnits, WorkoutMode } from '~/types';
+import { ProgramArc, formatFinishDate, programPaceLabel } from '~/utils';
 
 /**
  * The home page's single high-contrast surface. Every other block on the page is
@@ -25,6 +26,8 @@ interface ProgramHeroProps {
   programTitle: string;
   nextSession: NextProgramSession | null;
   progress: ProgramProgress;
+  /** The finish line and pace; omitted (or without a cadence) → no finish row. */
+  arc?: ProgramArc | null;
   isComplete: boolean;
   onStart: () => void;
   onSkip: () => void;
@@ -108,6 +111,7 @@ const ProgramHero = ({
   programTitle,
   nextSession,
   progress,
+  arc,
   isComplete,
   onStart,
   onSkip,
@@ -184,6 +188,15 @@ const ProgramHero = ({
           Week {session.weekNumber} · Day {session.dayNumber}
           {duration && ` · ${duration}`}
         </span>
+        {arc?.projectedFinish && arc.sessionsAhead !== null && (
+          <span className="text-sm tabular-nums text-primary-foreground/80">
+            Day {arc.dayNumber} of {arc.totalDays} · Finishes ~
+            {formatFinishDate(arc.projectedFinish)} ·{' '}
+            <span className="whitespace-nowrap">
+              {programPaceLabel(arc.sessionsAhead)}
+            </span>
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-1">

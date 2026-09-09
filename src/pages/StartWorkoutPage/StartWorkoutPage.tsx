@@ -63,6 +63,7 @@ import {
   WEIGHT_MODE_LABELS,
   applySharedWeights,
   applyWeightMode,
+  deriveProgramArc,
   getWeightModeFromCatalogFields,
   getWeightRange,
   getWeightTabValue,
@@ -1147,6 +1148,7 @@ export const StartWorkoutPage = ({
                 programTitle={primaryProgram.program.title}
                 nextSession={primaryProgram.nextSession}
                 progress={primaryProgram.progress}
+                arc={deriveProgramArc(primaryProgram, new Date())}
                 isComplete={primaryProgram.isComplete}
                 onStart={handleStartProgram}
                 onSkip={handleSkipProgram}

@@ -9,6 +9,7 @@ export * from './formatVolume';
 export * from './movementSearch';
 export * from './movementWeightModeFilter';
 export * from './ordinalSuffixOf';
+export * from './programArc';
 export * from './programCadenceLabel';
 export * from './programModality';
 export * from './patternDebt';
