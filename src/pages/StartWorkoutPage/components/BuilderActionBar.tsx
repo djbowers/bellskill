@@ -39,7 +39,7 @@ export const BuilderActionBar = ({
   return (
     <div
       className={cn(
-        'sticky z-20 -mx-3 -mb-[40px] mt-1 bg-card',
+        'sticky z-20 -mx-3 -mb-[40px] mt-1 bg-background',
         bottomNavVisible ? 'bottom-bottomnav lg:bottom-safe' : 'bottom-safe',
       )}
     >

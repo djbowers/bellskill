@@ -21,7 +21,7 @@ export const BuilderHeaderBar = ({
   onChangeTitle: (title: string) => void;
 }) => {
   return (
-    <div className="safe-area-top sticky top-0 z-20 -mx-3 -mt-3 bg-card">
+    <div className="safe-area-top sticky top-0 z-20 -mx-3 -mt-3 bg-background">
       <div className="flex flex-col gap-0.5 border-b border-border px-3 pb-1 pt-3">
         {showBack && (
           <button

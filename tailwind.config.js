@@ -31,6 +31,11 @@ export default {
       7: '80px',
     },
     extend: {
+      fontFamily: {
+        sans: ['Inter Variable', 'system-ui', 'sans-serif'],
+        display: ['Space Grotesk Variable', 'Inter Variable', 'sans-serif'],
+        mono: ['JetBrains Mono Variable', 'ui-monospace', 'monospace'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -49,6 +54,10 @@ export default {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
+        },
+        cta: {
+          DEFAULT: 'hsl(var(--cta))',
+          foreground: 'hsl(var(--cta-foreground))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',

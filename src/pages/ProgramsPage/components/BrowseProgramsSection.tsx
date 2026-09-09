@@ -32,7 +32,7 @@ export const BrowseProgramsSection = ({
         aria-expanded={open}
         aria-controls="browse-programs-list"
         onClick={() => onOpenChange(!open)}
-        className="flex w-full items-center gap-1.5 rounded-md border bg-card p-2 text-left shadow-sm transition-colors hover:bg-secondary"
+        className="flex w-full items-center gap-1.5 rounded-md bg-card p-2 text-left transition-colors hover:bg-secondary"
       >
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-sm font-semibold leading-none">

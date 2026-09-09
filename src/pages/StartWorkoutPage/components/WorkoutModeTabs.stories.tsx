@@ -9,7 +9,7 @@ const meta = {
   component: WorkoutModeTabs,
   decorators: [
     (Story) => (
-      <div className="max-w-md bg-card p-3">
+      <div className="max-w-md bg-background p-3">
         <Story />
       </div>
     ),

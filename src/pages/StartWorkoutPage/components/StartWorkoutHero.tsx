@@ -53,7 +53,7 @@ const estimatedDuration = (
 const HeroShell = ({ children }: { children: ReactNode }) => (
   <section
     aria-label="Start a workout"
-    className="flex flex-col gap-1.5 rounded-md bg-primary p-3 text-primary-foreground shadow motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-500"
+    className="flex flex-col gap-1.5 rounded-md bg-primary p-3 text-primary-foreground shadow motion-safe:duration-500 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1"
   >
     {children}
   </section>
@@ -76,9 +76,6 @@ const Eyebrow = ({
   </span>
 );
 
-const primaryCta =
-  'bg-primary-foreground text-primary shadow-none hover:bg-primary-foreground/90';
-
 export const StartWorkoutHero = (props: StartWorkoutHeroProps) => {
   if (props.variant === 'quickStart') {
     const { onBuildCustom } = props;
@@ -95,7 +92,7 @@ export const StartWorkoutHero = (props: StartWorkoutHeroProps) => {
         </div>
         <Button
           size="lg"
-          className={cn('mt-0.5 w-full text-base', primaryCta)}
+          className="mt-0.5 w-full text-base shadow-none"
           onClick={onBuildCustom}
         >
           Build a workout
@@ -218,7 +215,7 @@ const ProgramHero = ({
 
       <Button
         size="lg"
-        className={cn('mt-0.5 w-full text-base', primaryCta)}
+        className="mt-0.5 w-full text-base shadow-none"
         onClick={onStart}
         disabled={skipping}
       >

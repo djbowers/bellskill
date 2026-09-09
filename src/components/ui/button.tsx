@@ -12,7 +12,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow hover:bg-primary/90',
+          'bg-cta text-cta-foreground shadow-sm hover:bg-cta/90',
         destructive:
           'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
         outline:
@@ -57,7 +57,7 @@ const Button = ({
   const loadingColor = () => {
     switch (variant) {
       case 'default':
-        return 'fill-primary/80';
+        return 'fill-cta/80';
       case 'destructive':
         return 'fill-destructive/80';
       case 'outline':
@@ -69,7 +69,7 @@ const Button = ({
       case 'link':
         return 'fill-primary/80';
       default:
-        return 'fill-primary-foreground/80';
+        return 'fill-cta-foreground/80';
     }
   };
 
