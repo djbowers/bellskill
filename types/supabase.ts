@@ -1391,6 +1391,14 @@ export type Database = {
           program_id: string
         }[]
       }
+      program_skill_node_movements: {
+        Args: never
+        Returns: {
+          movement_count: number
+          program_id: string
+          skill_node_id: string
+        }[]
+      }
       reorder_program_sessions: {
         Args: { p_ordered_ids: string[]; p_program_id: string }
         Returns: undefined
