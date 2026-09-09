@@ -51,8 +51,17 @@ Rules:
 - **Invariant (CI-enforced by `scripts/ingest-movements.mjs`):** `pattern_credits`
   always contains the coarse mapping of `Movement Pattern #1` (credits ⊇
   coarse(primary)).
-- Multi-credit rows are editorial. Today: the four get-up movements credit
-  `get_up|push|rotation`. Everything else is single-credit.
+- Multi-credit rows are editorial. The bar is the get-up's: a second pattern
+  earns credit only when the movement, as normally trained, demands it at real
+  intensity — not merely because a muscle group fires. Today: the four get-up
+  movements credit `get_up|push|rotation`; offset-load carries (suitcase carry /
+  march) credit `carry|core`; clean-and-press / clean-and-jerk credit
+  `hinge|push`; thrusters and the burpee credit `squat|push`; renegade rows,
+  L-sit pull-up, gorilla chin-up crunch and push-up to side plank credit their
+  primary plus `core`; the bent press credits `push|rotation`; the muscle-up
+  `pull|push`; bird dog `hinge|core`. Everything else is single-credit —
+  bilateral carries, ballistic hinges with an overhead lockout, and unilateral
+  lower-body work deliberately stay single-credit so `core` keeps its signal.
 - Accepted trade: equal full credit slightly flatters multi-pattern-heavy users'
   spread (a TGU-only user reads more balanced than their training is).
 
