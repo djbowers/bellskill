@@ -376,6 +376,7 @@ export type Database = {
           pattern_credits: string[]
           "Primary Equipment": string | null
           "Single or Double Arm": string | null
+          skill_node_id: string | null
           "Target Muscle Group": string | null
           unilateral_lower: boolean
         }
@@ -389,6 +390,7 @@ export type Database = {
           pattern_credits: string[]
           "Primary Equipment"?: string | null
           "Single or Double Arm"?: string | null
+          skill_node_id?: string | null
           "Target Muscle Group"?: string | null
           unilateral_lower?: boolean
         }
@@ -402,6 +404,7 @@ export type Database = {
           pattern_credits?: string[]
           "Primary Equipment"?: string | null
           "Single or Double Arm"?: string | null
+          skill_node_id?: string | null
           "Target Muscle Group"?: string | null
           unilateral_lower?: boolean
         }
