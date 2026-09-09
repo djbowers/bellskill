@@ -5,7 +5,12 @@ import { Button, ButtonProps } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { cn } from '~/lib/utils';
 import { Program } from '~/types';
-import { programCadenceLabel } from '~/utils';
+import {
+  ProgramArc,
+  formatFinishDate,
+  programCadenceLabel,
+  programPaceLabel,
+} from '~/utils';
 
 import {
   MyProgramCardState,
@@ -17,6 +22,8 @@ export interface MyProgramCardProps {
   program: Program;
   isActive: boolean;
   isQueued: boolean;
+  /** Where the enrollee stands when the program is active; omitted otherwise. */
+  arc?: ProgramArc | null;
   /** This card's "Start" is routing (reading prior progress) — hold the CTA. */
   isStarting: boolean;
   pending: {
@@ -98,6 +105,7 @@ export const MyProgramCard = ({
   program,
   isActive,
   isQueued,
+  arc,
   isStarting,
   pending,
   onStart,
@@ -205,9 +213,13 @@ export const MyProgramCard = ({
           >
             {program.title}
           </Link>
-          <p className="truncate text-xs text-muted-foreground">
-            {cadence ?? 'No sessions yet'}
-          </p>
+          {state === 'active' && arc ? (
+            <ProgramArcLines arc={arc} />
+          ) : (
+            <p className="truncate text-xs text-muted-foreground">
+              {cadence ?? 'No sessions yet'}
+            </p>
+          )}
           <ProgramTags tags={program.focusTags} className="mt-0.5" />
         </div>
 
@@ -225,3 +237,28 @@ export const MyProgramCard = ({
     </Card>
   );
 };
+
+/**
+ * The finish line, in place of the cadence on a running program: where you are
+ * in the arc, when it ends at your current pace, and whether that pace matches
+ * the program as written. A repeating workout or a program without a cadence
+ * shows position only.
+ */
+const ProgramArcLines = ({ arc }: { arc: ProgramArc }) => (
+  <div className="flex flex-col text-xs tabular-nums text-muted-foreground">
+    <p className="truncate">
+      Session {arc.sessionNumber} of {arc.totalSessions}
+      {arc.totalDays !== null && ` · Day ${arc.dayNumber} of ${arc.totalDays}`}
+    </p>
+    {arc.projectedFinish !== null && arc.sessionsAhead !== null && (
+      <p className="truncate">
+        Finishes ~{formatFinishDate(arc.projectedFinish)} ·{' '}
+        <span
+          className={cn(arc.sessionsAhead < 0 && 'font-medium text-foreground')}
+        >
+          {programPaceLabel(arc.sessionsAhead)}
+        </span>
+      </p>
+    )}
+  </div>
+);

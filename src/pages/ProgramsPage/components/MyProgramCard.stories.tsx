@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { MemoryRouter } from 'react-router-dom';
 
 import { Program } from '~/types';
+import { ProgramArc } from '~/utils';
 
 import { MyProgramCard } from './MyProgramCard';
 
@@ -24,6 +25,15 @@ const program: Program = {
   focusTags: ['strength', 'hypertrophy', 'conditioning'],
   systemicDemand: 'high',
 };
+
+const arc = (sessionsAhead: number): ProgramArc => ({
+  sessionNumber: 8,
+  totalSessions: 15,
+  dayNumber: 12,
+  totalDays: 35,
+  projectedFinish: new Date(2026, 10, 11),
+  sessionsAhead,
+});
 
 const meta = {
   component: MyProgramCard,
@@ -65,8 +75,32 @@ type Story = StoryObj<typeof meta>;
 /** Has sessions, nothing running — the CTA is the start. */
 export const Ready: Story = {};
 
-/** Running now: the card leads into progress, and offers Cancel in the menu. */
-export const Active: Story = { args: { isActive: true } };
+/** Running now, on pace: the finish line replaces the cadence. */
+export const Active: Story = { args: { isActive: true, arc: arc(0) } };
+
+/** A lost week: the pace line is the one thing on the card that gets louder. */
+export const ActiveBehind: Story = {
+  args: { isActive: true, arc: arc(-2) },
+};
+
+/** Training faster than written. */
+export const ActiveAhead: Story = {
+  args: { isActive: true, arc: arc(3) },
+};
+
+/** A running repeating workout: position only, no finish line. */
+export const ActiveRepeating: Story = {
+  args: {
+    isActive: true,
+    program: { ...program, defaultAutoRepeat: true },
+    arc: {
+      ...arc(0),
+      totalDays: null,
+      projectedFinish: null,
+      sessionsAhead: null,
+    },
+  },
+};
 
 /** Waiting on a slot: it starts from "Up next", so the card offers no start. */
 export const Queued: Story = { args: { isQueued: true } };
@@ -91,6 +125,7 @@ export const AllStates: Story = {
       <MyProgramCard
         {...args}
         isActive
+        arc={arc(-1)}
         program={{ ...program, title: 'Running Program' }}
       />
       <MyProgramCard

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { exampleActiveProgram } from '~/examples';
+import { deriveProgramArc } from '~/utils';
 
 import { StartWorkoutHero } from './StartWorkoutHero';
 
@@ -30,7 +31,13 @@ type Story = StoryObj;
 const midProgram = exampleActiveProgram({ completed: 7, total: 14 });
 const doneProgram = exampleActiveProgram({ completed: 14, total: 14 });
 
-/** A running program's next session — the default hero. */
+// Fixed "today"s against the fixture's 2026-07-01 enrollment, so each story
+// pins one pace state instead of drifting with the calendar.
+const onTrackArc = deriveProgramArc(midProgram, new Date(2026, 6, 18));
+const behindArc = deriveProgramArc(midProgram, new Date(2026, 7, 1));
+const aheadArc = deriveProgramArc(midProgram, new Date(2026, 6, 10));
+
+/** A running program's next session — the default hero, on pace. */
 export const Program: Story = {
   render: () => (
     <StartWorkoutHero
@@ -38,6 +45,43 @@ export const Program: Story = {
       programTitle={midProgram.program.title}
       nextSession={midProgram.nextSession}
       progress={midProgram.progress}
+      arc={onTrackArc}
+      isComplete={false}
+      onStart={() => {}}
+      onSkip={() => {}}
+      skipping={false}
+      onViewProgress={() => {}}
+    />
+  ),
+};
+
+/** A lost week: the finish date has slipped and the pace line says so. */
+export const ProgramBehind: Story = {
+  render: () => (
+    <StartWorkoutHero
+      variant="program"
+      programTitle={midProgram.program.title}
+      nextSession={midProgram.nextSession}
+      progress={midProgram.progress}
+      arc={behindArc}
+      isComplete={false}
+      onStart={() => {}}
+      onSkip={() => {}}
+      skipping={false}
+      onViewProgress={() => {}}
+    />
+  ),
+};
+
+/** Training faster than written: the finish pulls in. */
+export const ProgramAhead: Story = {
+  render: () => (
+    <StartWorkoutHero
+      variant="program"
+      programTitle={midProgram.program.title}
+      nextSession={midProgram.nextSession}
+      progress={midProgram.progress}
+      arc={aheadArc}
       isComplete={false}
       onStart={() => {}}
       onSkip={() => {}}

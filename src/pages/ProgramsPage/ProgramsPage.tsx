@@ -25,6 +25,7 @@ import { Button } from '~/components/ui/button';
 import { isOwner } from '~/config/features';
 import { useSession } from '~/contexts';
 import { Program } from '~/types';
+import { deriveProgramArc } from '~/utils';
 
 import {
   ArchivedProgramCard,
@@ -267,6 +268,11 @@ export const ProgramsPage = () => {
     activeEnrollments.find((p) => p.enrollment.programId === program.id) ??
     null;
 
+  const arcFor = (program: Program) => {
+    const active = enrollmentFor(program);
+    return active ? deriveProgramArc(active, new Date()) : null;
+  };
+
   const pendingDeleteProgram =
     programs.find((p) => p.id === pendingDeleteId) ?? null;
 
@@ -343,6 +349,7 @@ export const ProgramsPage = () => {
           program={program}
           isActive={isActive(program)}
           isQueued={isQueued(program)}
+          arc={arcFor(program)}
           isStarting={pendingEnrollId === program.id}
           pending={{
             enroll: enroll.isPending,
