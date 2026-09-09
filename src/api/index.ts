@@ -48,7 +48,6 @@ export * from './useSetProgramReleased';
 export * from './useSetProgramStage';
 export * from './useUpdateProgramSession';
 export * from './useUpdateProgramSessionsForward';
-export * from './useRecentRepeatableWorkouts';
 export * from './useRecommendProgram';
 export * from './useRecommendSession';
 export * from './useSelectRPE';

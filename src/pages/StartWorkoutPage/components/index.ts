@@ -11,8 +11,6 @@ export * from './MovementCard';
 export * from './MovementsHeader';
 export * from './MovementSummaryChips';
 export * from './ProgramSwitcherTabs';
-export * from './RecommendedWorkoutCard';
-export * from './RecommendedWorkoutsSection';
 export * from './StartProgramCard';
 export * from './StartWorkoutHero';
 export * from './WorkoutAddonToggle';
