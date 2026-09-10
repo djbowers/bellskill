@@ -11,10 +11,13 @@ import {
 
 import { DerivedNode } from '../utils/deriveNodeStates';
 import { NODE_STATE_LABELS } from '../utils/nodeStateStyles';
+import { LoadSection } from './LoadSection';
 
 interface NodeDialogProps {
   derived: DerivedNode | null;
   derivedById: ReadonlyMap<string, DerivedNode>;
+  /** Catalog movements whose logs count toward each node, by node id. */
+  movementsByNodeId: ReadonlyMap<string, string[]>;
   isPending: boolean;
   onClose: () => void;
   onStart: (nodeId: string) => void;
@@ -32,6 +35,7 @@ const formatPassedDate = (iso: string) =>
 export const NodeDialog = ({
   derived,
   derivedById,
+  movementsByNodeId,
   isPending,
   onClose,
   onStart,
@@ -40,7 +44,9 @@ export const NodeDialog = ({
 }: NodeDialogProps) => {
   if (!derived) return null;
 
-  const { node, state, missingPrereqIds, completedAt } = derived;
+  const { node, state, missingPrereqIds, completedAt, completionSource, load } =
+    derived;
+  const countedMovements = movementsByNodeId.get(node.id) ?? [];
   const missingTitles = missingPrereqIds.map(
     (id) => derivedById.get(id)?.node.title ?? id,
   );
@@ -93,6 +99,12 @@ export const NodeDialog = ({
             </Section>
           )}
 
+          {load && (
+            <Section title="Load">
+              <LoadSection load={load} movements={countedMovements} />
+            </Section>
+          )}
+
           <Section title="Benchmark">
             <p>{node.benchmark}</p>
           </Section>
@@ -106,7 +118,12 @@ export const NodeDialog = ({
         </div>
 
         <DialogFooter className="gap-1">
-          {state === 'complete' ? (
+          {completionSource === 'logs' ? (
+            <span className="self-center text-xs text-muted-foreground">
+              Passed from your logs
+              {completedAt ? ` ${formatPassedDate(completedAt)}` : ''}
+            </span>
+          ) : state === 'complete' ? (
             <>
               <span className="self-center text-xs text-muted-foreground">
                 Passed {completedAt ? formatPassedDate(completedAt) : ''}
