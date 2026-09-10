@@ -51,6 +51,11 @@ export const useLogWorkout = () => {
         workoutOptions,
       }),
     onSuccess: (workoutLogId) => {
+      // A heavier bell than last time moves the skill tree's load edge.
+      void queryClient.invalidateQueries({
+        queryKey: [QUERIES.SKILL_NODE_LOAD_LOGS],
+      });
+
       // Chalk history retrieval (PROD-248): embed this workout for semantic
       // search over past sessions. Re-fired after post-notes save.
       embedWorkoutHistory(workoutLogId);
