@@ -6,7 +6,13 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import {
+  type SkillTreeSummary,
+  assessSkillReach,
+  groupProgramSkillNodes,
+} from '../../../src/utils/skillTreeProgress.ts';
 import { gatherEquipment } from '../_shared/equipmentInput.ts';
+import { gatherSkillTree } from '../_shared/skillTreeInput.ts';
 import {
   daysBetweenCalendarDays,
   parseLocalDateString,
@@ -77,6 +83,34 @@ async function gatherModalityProfiles(
     return groupProgramModalityProfiles(rows);
   } catch (err) {
     console.error('recommend-program modality profile fetch failed:', err);
+    return new Map();
+  }
+}
+
+/**
+ * Per-program skill-tree nodes, from the movements each program's sessions
+ * prescribe. Best-effort like the modality profiles, and skipped entirely when
+ * the lifter has no tree to measure against.
+ */
+async function gatherSkillNodeProfiles(
+  userClient: SupabaseClient,
+  skillTree: SkillTreeSummary | null,
+): Promise<Map<string, string[]>> {
+  if (!skillTree) return new Map();
+  try {
+    const { data, error } = await userClient.rpc(
+      'program_skill_node_movements' as never,
+    );
+    if (error) throw error;
+
+    return groupProgramSkillNodes(
+      ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+        program_id: row.program_id as string,
+        skill_node_id: row.skill_node_id as string,
+      })),
+    );
+  } catch (err) {
+    console.error('recommend-program skill node profile fetch failed:', err);
     return new Map();
   }
 }
@@ -199,6 +233,11 @@ export async function gatherInputs(
   }
 
   const modalityProfiles = await gatherModalityProfiles(userClient);
+  const skill_tree = await gatherSkillTree(admin, userId);
+  const skillNodeProfiles = await gatherSkillNodeProfiles(
+    userClient,
+    skill_tree,
+  );
 
   const active_programs: ActiveProgramSummary[] = activeEnrollments.flatMap(
     (e) => {
@@ -237,6 +276,7 @@ export async function gatherInputs(
     systemic_demand: p.systemic_demand,
     session_count: sessionCounts.get(p.id) ?? 0,
     stack_fit: assessStackFit(toStackProgram(p), activeStack),
+    skill_reach: assessSkillReach(skillNodeProfiles.get(p.id) ?? [], skill_tree),
   }));
 
   // Pattern debt: SECURITY INVOKER RPC, so it must run as the caller.
@@ -358,5 +398,6 @@ export async function gatherInputs(
     modality_debt,
     recent_history,
     equipment: await gatherEquipment(admin, userId),
+    skill_tree,
   };
 }

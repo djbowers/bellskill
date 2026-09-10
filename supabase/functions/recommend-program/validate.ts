@@ -5,6 +5,7 @@
 // must be feasible given the user's slots and stack. A failure here drives the
 // single corrective retry in llm.ts.
 
+import { formatNodeTitles } from '../_shared/skillTreeInput.ts';
 import type { ProgramRecommendation, RecommenderInputs } from './types.ts';
 
 export class ValidationError extends Error {
@@ -53,6 +54,17 @@ export function validateRecommendation(
   ) {
     reasons.push(
       'mode "queue" makes no sense with nothing active or queued — use mode "concurrent"',
+    );
+  }
+
+  // Skill ceiling: a stretch pick is only allowed when nothing is within reach,
+  // so the rule can never empty the candidate set.
+  if (
+    candidate?.skill_reach.verdict === 'stretch' &&
+    inputs.candidates.some((c) => c.skill_reach.verdict === 'within_reach')
+  ) {
+    reasons.push(
+      `${candidate.title} stretches beyond the lifter's skill frontier (${formatNodeTitles(candidate.skill_reach.out_of_reach_nodes)}) — pick a candidate whose skills are within reach`,
     );
   }
 

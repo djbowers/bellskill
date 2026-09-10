@@ -11,6 +11,10 @@ import {
   modalityWord,
 } from '../_shared/modalityPrompt.ts';
 import { formatPatternLine } from '../_shared/patternDebtPrompt.ts';
+import {
+  formatNodeTitles,
+  formatSkillTreeSection,
+} from '../_shared/skillTreeInput.ts';
 
 /**
  * Both program axes, disambiguated. `conditioning` and `mobility` are values in
@@ -29,7 +33,28 @@ const formatProgramAxes = (
     .join(', ')}`;
 };
 
-export function buildSystemPrompt(): string {
+/** ` · skills within reach` or the stretch clause; '' when the lifter has no tree. */
+const formatSkillReach = (
+  candidate: Pick<CandidateProgram, 'skill_reach'>,
+  hasSkillTree: boolean,
+): string => {
+  if (!hasSkillTree) return '';
+  const { verdict, out_of_reach_nodes } = candidate.skill_reach;
+  return verdict === 'within_reach'
+    ? ' · skills within reach'
+    : ` · stretches beyond the lifter's frontier (${formatNodeTitles(out_of_reach_nodes)})`;
+};
+
+export function buildSystemPrompt(hasSkillTree = false): string {
+  const skillTreeRules = hasSkillTree
+    ? [
+        '- The skill-tree section is where the lifter stands on the map, and each',
+        "  candidate says whether the skills its sessions practise are within the",
+        "  lifter's reach or stretch beyond their frontier. Prefer a within-reach",
+        '  candidate; a stretch pick is acceptable only when no candidate is within',
+        '  reach, and then the rationale must say which skills it would stretch.',
+      ]
+    : [];
   return [
     'You are an expert kettlebell programming coach. You are choosing exactly',
     'ONE training program from a candidate catalog for a lifter, and deciding',
@@ -55,6 +80,7 @@ export function buildSystemPrompt(): string {
     '  only when slots_available > 0 AND that candidate\'s stack-fit verdict is',
     '  not "conflict". Otherwise use mode "queue".',
     '- If the lifter has no active programs, use mode "concurrent".',
+    ...skillTreeRules,
     '- Give a short, concrete rationale (2-4 sentences) a thoughtful coach would',
     '  give — tie it to their goal, pattern balance, and current programs, and',
     '  explain why now vs queued. Avoid generic filler.',
@@ -77,12 +103,13 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
 
   const debtLines = inputs.pattern_debt.patterns.map(formatPatternLine).join('\n');
 
+  const hasSkillTree = inputs.skill_tree !== null;
   const candidateLines = inputs.candidates
     .map((c) => {
       const fit = c.stack_fit
         ? `stack fit ${c.stack_fit.verdict}${c.stack_fit.reasons.length ? ` (${c.stack_fit.reasons.join(' ')})` : ''}`
         : 'stack fit n/a';
-      return `- ${c.title} [program_id: ${c.program_id}] · ${c.session_count} sessions · demand ${c.systemic_demand ?? 'unrated'} · ${formatProgramAxes(c)} · ${fit}${c.description ? `\n  ${c.description}` : ''}`;
+      return `- ${c.title} [program_id: ${c.program_id}] · ${c.session_count} sessions · demand ${c.systemic_demand ?? 'unrated'} · ${formatProgramAxes(c)} · ${fit}${formatSkillReach(c, hasSkillTree)}${c.description ? `\n  ${c.description}` : ''}`;
     })
     .join('\n');
 
@@ -114,6 +141,9 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
   const equipmentText = formatEquipmentSection(inputs.equipment);
   const equipmentSection = equipmentText ? ['', equipmentText] : [];
 
+  const skillTreeText = formatSkillTreeSection(inputs.skill_tree);
+  const skillTreeSection = skillTreeText ? ['', skillTreeText] : [];
+
   return [
     `Training goal: ${inputs.training_goal ?? '(none provided)'}`,
     `Days since last workout: ${inputs.days_since_last_workout ?? '(unknown)'}`,
@@ -132,6 +162,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
     'Recent workouts (most recent first):',
     historyLines,
     ...equipmentSection,
+    ...skillTreeSection,
     '',
     'Candidate programs (choose exactly one, by program_id):',
     candidateLines,
@@ -147,6 +178,7 @@ export function buildCorrectionPrompt(reasons: string[]): string {
     ...reasons.map((r) => `- ${r}`),
     '',
     'Produce a corrected recommendation that uses a program_id from the',
-    'candidate list and a mode allowed by the rules.',
+    'candidate list, a mode allowed by the rules, and a candidate whose skills',
+    'are within reach when one exists.',
   ].join('\n');
 }
