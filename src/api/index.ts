@@ -70,6 +70,7 @@ export * from './useWorkoutLog';
 export * from './useWorkoutLogs';
 
 export * from './skillNodeProgress';
+export * from './useSkillNodeLoadLogs';
 export * from './useSkillNodeProgress';
 export * from './useSetSkillNodeStatus';
 export * from './useResetSkillNode';
