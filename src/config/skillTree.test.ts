@@ -1,3 +1,9 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+import { parseCsv } from '../../scripts/ingest-movements.mjs';
+import { BELL_LADDER_KG } from '~/utils';
+
 import { SKILL_LEVELS, SKILL_NODES, SKILL_NODE_BY_ID } from './skillTree';
 
 const NODE_ID = /^L([1-9])-(N|M)\d+$/;
@@ -57,5 +63,65 @@ describe('skill tree node map', () => {
       expect(n.skills.length, n.id).toBeGreaterThan(0);
       expect(n.benchmark.trim().length, n.id).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('load-scaled nodes', () => {
+  const rows = parseCsv(
+    readFileSync(resolve(__dirname, '../../scripts/data/movements.csv'), 'utf8'),
+  ) as string[][];
+  const header = rows[0];
+  const nodeColumn = header.indexOf('Skill Node');
+  const equipmentColumn = header.indexOf('Primary Equipment');
+
+  const loaded = SKILL_NODES.filter((n) => n.targetKg !== undefined);
+
+  test('every target is a rung on the bell ladder', () => {
+    for (const n of loaded) {
+      expect(BELL_LADDER_KG, n.id).toContain(n.targetKg);
+    }
+  });
+
+  test('every target has at least one kettlebell movement mapped to it', () => {
+    const kettlebellNodes = new Set(
+      rows
+        .slice(1)
+        .filter((row) => row[equipmentColumn] === 'Kettlebell')
+        .map((row) => row[nodeColumn])
+        .filter(Boolean),
+    );
+
+    for (const n of loaded) {
+      expect(kettlebellNodes, `${n.id} has a target but no movement`).toContain(
+        n.id,
+      );
+    }
+  });
+
+  test('nodes without a target are the ones no bell measures', () => {
+    const unloaded = SKILL_NODES.filter((n) => n.targetKg === undefined).map(
+      (n) => n.id,
+    );
+    expect(unloaded).toEqual([
+      // Bodyweight and awareness work.
+      'L1-N1',
+      'L1-N2',
+      'L1-N4',
+      'L1-N6',
+      // Pure mobility and reassessment checkpoints.
+      'L2-M1',
+      'L3-M1',
+      'L4-M1',
+      'L5-M1',
+      'L6-M1',
+      'L7-M1',
+      'L8-M1',
+      'L9-M1',
+      // Explicitly unloaded in the spec: a shoe balanced on the fist.
+      'L5-N1',
+      // No catalog movement maps here yet; Clean and Press currently maps to
+      // L4-N3, which the mapping PR flags as a judgment call.
+      'L8-N2',
+    ].sort((a, b) => SKILL_NODES.findIndex((n) => n.id === a) - SKILL_NODES.findIndex((n) => n.id === b)));
   });
 });

@@ -5,6 +5,10 @@
 
 import type { EquipmentSummary } from '../../../src/utils/equipment.ts';
 import type {
+  SkillReach,
+  SkillTreeSummary,
+} from '../../../src/utils/skillTreeProgress.ts';
+import type {
   DebtBand,
   Modality,
   OverallBalance,
@@ -86,6 +90,12 @@ export interface CandidateProgram {
   session_count: number;
   /** Precomputed vs the active stack; null when there is nothing to assess. */
   stack_fit: StackFit | null;
+  /**
+   * Whether the skill-tree nodes this program's sessions practise sit inside
+   * the lifter's reach. Always within_reach when the lifter has no tree or the
+   * program prescribes nothing mapped.
+   */
+  skill_reach: SkillReach;
 }
 
 /** A compact summary of one past workout, for history context. */
@@ -114,6 +124,8 @@ export interface RecommenderInputs {
   recent_history: WorkoutSummary[];
   /** Null when the user has recorded no equipment — the prompt then omits the section. */
   equipment: EquipmentSummary | null;
+  /** The lifter's position on the skill tree; null (no section, no reach rule) when they have none. */
+  skill_tree: SkillTreeSummary | null;
 }
 
 /** The validated LLM output. Persisted into program_recommendations.output. */

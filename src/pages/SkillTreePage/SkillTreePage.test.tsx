@@ -16,6 +16,41 @@ vi.mock('~/contexts', async () => {
 });
 
 const PROGRESS_URL = `${VITE_SUPABASE_URL}/rest/v1/skill_node_progress`;
+const MOVEMENTS_URL = `${VITE_SUPABASE_URL}/rest/v1/movements`;
+const MOVEMENT_LOGS_URL = `${VITE_SUPABASE_URL}/rest/v1/movement_logs`;
+
+const SWING = {
+  id: 'catalog-swing',
+  Movement: 'Kettlebell Swing',
+  skill_node_id: 'L2-N2',
+  'Primary Equipment': 'Kettlebell',
+  '# Primary Items': 1,
+  'Single or Double Arm': 'Double Arm',
+};
+
+/** One logged set of the two-hand swing, shaped as the embedded select returns it. */
+const swingLog = (kg: number, startedAt = '2026-08-30T00:00:00Z') => ({
+  weight_one_unit: 'kilograms',
+  weight_one_value: kg,
+  weight_two_unit: null,
+  weight_two_value: null,
+  user_movements: { functional_movement_id: SWING.id },
+  workout_logs: {
+    started_at: startedAt,
+    complex_set: false,
+    shared_bell: false,
+    shared_weight_one_unit: null,
+    shared_weight_one_value: null,
+    shared_weight_two_unit: null,
+    shared_weight_two_value: null,
+  },
+});
+
+const withLogs = (logs: unknown[]) =>
+  server.use(
+    http.get(MOVEMENTS_URL, () => HttpResponse.json([SWING])),
+    http.get(MOVEMENT_LOGS_URL, () => HttpResponse.json(logs)),
+  );
 
 let upsertedBodies: Record<string, unknown>[] = [];
 let deletedQueries: string[] = [];
@@ -127,6 +162,66 @@ describe('skill tree page', () => {
       status: 'complete',
     });
     expect(typeof upsertedBodies[0].completed_at).toBe('string');
+  });
+
+  test('a loaded node shows its edge and the next bell up', async () => {
+    withLogs([swingLog(16)]);
+    renderPage([]);
+
+    await screen.findByText('0 of 6 nodes complete');
+    await waitFor(() =>
+      expect(card('Two-hand swing')).toHaveAccessibleName(/16kg → 20kg/),
+    );
+    expect(card('Two-hand swing')).toHaveAttribute('data-state', 'locked');
+  });
+
+  test('a node with no logged bell yet keeps its state label', async () => {
+    withLogs([]);
+    renderPage([]);
+
+    await screen.findByText('0 of 6 nodes complete');
+    expect(card('Two-hand swing')).toHaveAccessibleName('Two-hand swing, locked');
+  });
+
+  test('reaching the target bell passes the node and unlocks the one above it', async () => {
+    withLogs([swingLog(24)]);
+    renderPage([]);
+
+    // Two-hand swing sits in level 2 and its target is 24kg.
+    await waitFor(() =>
+      expect(card('Two-hand swing')).toHaveAttribute('data-state', 'complete'),
+    );
+    expect(screen.getByText('1 of 4 nodes complete')).toBeInTheDocument();
+    expect(card('Single-hand swing')).toHaveAttribute('data-state', 'available');
+  });
+
+  test('a log-passed node is dated from the logs and offers no undo', async () => {
+    const user = userEvent.setup();
+    withLogs([swingLog(24, '2026-07-04T00:00:00Z'), swingLog(24)]);
+    renderPage([]);
+
+    await waitFor(() =>
+      expect(card('Two-hand swing')).toHaveAttribute('data-state', 'complete'),
+    );
+    await user.click(card('Two-hand swing'));
+
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText(/Passed from your logs/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Heaviest logged: 24kg on Jul/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Counts: Kettlebell Swing/)).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole('button', { name: 'Undo' }),
+    ).not.toBeInTheDocument();
+  });
+
+  test('the tree still renders when the logs fail to load', async () => {
+    server.use(
+      http.get(MOVEMENTS_URL, () => new HttpResponse(null, { status: 500 })),
+    );
+    renderPage([]);
+
+    expect(await screen.findByText('0 of 6 nodes complete')).toBeInTheDocument();
+    expect(card('Two-hand swing')).toHaveAttribute('data-state', 'locked');
   });
 
   test('undo removes the progress row for that node', async () => {

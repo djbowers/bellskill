@@ -1,3 +1,4 @@
+import { summarizeSkillTree } from '../../../src/utils/skillTreeProgress.ts';
 import { buildSystemPrompt, buildUserPrompt } from './prompt.ts';
 import type { RecommenderInputs } from './types.ts';
 
@@ -19,6 +20,7 @@ const baseInputs = (
       systemic_demand: 'low',
       session_count: 20,
       stack_fit: null,
+      skill_reach: { verdict: 'within_reach', out_of_reach_nodes: [] },
     },
     {
       program_id: 'custom',
@@ -29,12 +31,14 @@ const baseInputs = (
       systemic_demand: null,
       session_count: 8,
       stack_fit: null,
+      skill_reach: { verdict: 'within_reach', out_of_reach_nodes: [] },
     },
   ],
   pattern_debt: { overall_balance: 'balanced', patterns: [] },
   modality_debt: null,
   recent_history: [],
   equipment: null,
+  skill_tree: null,
   ...over,
 });
 
@@ -143,5 +147,54 @@ describe('recommend-program prompt — system rules', () => {
     const rules = buildSystemPrompt();
     expect(rules).toMatch(/stack-fit verdict/i);
     expect(rules).toMatch(/neutral, not undertrained/i);
+  });
+});
+
+describe('recommend-program prompt — skill tree', () => {
+  const beginner = summarizeSkillTree([
+    { nodeId: 'L1-N2', status: 'complete', completedAt: '2026-09-01T00:00:00Z' },
+    { nodeId: 'L2-N2', status: 'active', completedAt: null },
+  ]);
+  const withTree = () =>
+    baseInputs({
+      skill_tree: beginner,
+      candidates: [
+        {
+          ...baseInputs().candidates[0],
+          skill_reach: { verdict: 'within_reach', out_of_reach_nodes: [] },
+        },
+        {
+          ...baseInputs().candidates[1],
+          title: 'Armor Building Complex',
+          skill_reach: {
+            verdict: 'stretch',
+            out_of_reach_nodes: ['L7-N1', 'L7-N2'],
+          },
+        },
+      ],
+    });
+
+  test('omits the section and the reach clause without a tree', () => {
+    const prompt = buildUserPrompt(baseInputs());
+    expect(prompt).not.toContain('SKILL TREE');
+    expect(prompt).not.toContain('within reach');
+    expect(buildSystemPrompt()).not.toContain('skill-tree');
+  });
+
+  test('renders the section and each candidate reach verdict', () => {
+    const prompt = buildUserPrompt(withTree());
+    expect(prompt).toContain('SKILL TREE');
+    expect(prompt).toContain('Practising now:\n- Two-hand swing (First load)');
+    expect(prompt).toContain('Simple & Sinister [program_id: ss]');
+    expect(prompt).toMatch(/Simple & Sinister .* · skills within reach/);
+    expect(prompt).toMatch(
+      /Armor Building Complex .* · stretches beyond the lifter's frontier \(Double clean, Double front squat\)/,
+    );
+    expect(prompt).not.toMatch(/debt|locked/i);
+  });
+
+  test('system prompt adds the reach rule only when a tree exists', () => {
+    expect(buildSystemPrompt(true)).toContain('stretch pick is acceptable only');
+    expect(buildSystemPrompt(false)).not.toContain('stretch pick');
   });
 });

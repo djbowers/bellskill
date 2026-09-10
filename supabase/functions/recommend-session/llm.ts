@@ -65,7 +65,10 @@ export async function generateRecommendation(
   const bodyweightById = new Map(
     inputs.candidates.map((c) => [c.movement_id, c.bodyweight]),
   );
-  const system = buildSystemPrompt(inputs.balance_targets.length > 0);
+  const system = buildSystemPrompt(
+    inputs.balance_targets.length > 0,
+    inputs.skill_tree !== null,
+  );
   const messages: Message[] = [
     { role: 'user', content: buildUserPrompt(inputs) },
   ];
