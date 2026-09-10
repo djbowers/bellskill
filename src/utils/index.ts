@@ -18,6 +18,7 @@ export * from './rankMovements';
 export * from './recommendationDraft';
 export * from './resolveAuthSession';
 export * from './resolveMovementWeights';
+export * from './skillNodeLoadEdge';
 export * from './resolveSharedWeights';
 export * from './soundPreference';
 export * from './stackFit';
