@@ -1,3 +1,4 @@
+import { summarizeSkillTree } from '../../../src/utils/skillTreeProgress.ts';
 import { buildSystemPrompt, buildUserPrompt } from './prompt.ts';
 import type { RecommenderInputs } from './types.ts';
 
@@ -17,6 +18,7 @@ const baseInputs = (
       bodyweight: false,
       supports_doubles: false,
       unilateral_lower: false,
+      skill_node_id: null,
     },
     {
       movement_id: 'mystery',
@@ -25,6 +27,7 @@ const baseInputs = (
       bodyweight: false,
       supports_doubles: false,
       unilateral_lower: false,
+      skill_node_id: null,
     },
     {
       movement_id: 'push-up',
@@ -33,11 +36,13 @@ const baseInputs = (
       bodyweight: true,
       supports_doubles: false,
       unilateral_lower: false,
+      skill_node_id: null,
     },
   ],
   pattern_debt: null,
   modality_debt: null,
   unlocked_weights: {},
+  skill_tree: null,
   ...over,
 });
 
@@ -177,5 +182,62 @@ describe('prompt — movement mix', () => {
   test('system prompt ranks the mix below pattern balance, readiness and goal', () => {
     expect(buildSystemPrompt()).toContain('movement-mix section');
     expect(buildSystemPrompt()).toContain('never outranks');
+  });
+});
+
+describe('prompt — skill tree', () => {
+  const beginner = summarizeSkillTree([
+    { nodeId: 'L1-N1', status: 'complete', completedAt: '2026-09-01T00:00:00Z' },
+    { nodeId: 'L1-N2', status: 'complete', completedAt: '2026-09-01T00:00:00Z' },
+    { nodeId: 'L2-N2', status: 'active', completedAt: null },
+  ]);
+  const withTree = () =>
+    baseInputs({
+      skill_tree: beginner,
+      candidates: [
+        {
+          movement_id: 'swing',
+          name: 'Kettlebell Swing',
+          pattern_credits: ['hinge'],
+          bodyweight: false,
+          supports_doubles: false,
+          unilateral_lower: false,
+          skill_node_id: 'L2-N2',
+        },
+        {
+          movement_id: 'row',
+          name: 'One-Arm Row',
+          pattern_credits: ['pull'],
+          bodyweight: false,
+          supports_doubles: false,
+          unilateral_lower: false,
+          skill_node_id: null,
+        },
+      ],
+    });
+
+  test('omits the section and annotations without a tree', () => {
+    const prompt = buildUserPrompt(baseInputs());
+    expect(prompt).not.toContain('SKILL TREE');
+    expect(prompt).not.toContain('practises:');
+  });
+
+  test('renders the section and annotates catalog lines with their node', () => {
+    const prompt = buildUserPrompt(withTree());
+    expect(prompt).toContain('SKILL TREE');
+    expect(prompt).toContain('- Foundation 2/6: Breathing & bracing, Hip hinge pattern');
+    expect(prompt).toContain('Practising now:\n- Two-hand swing (First load)');
+    expect(prompt).toContain(
+      '- Kettlebell Swing · pays: hinge · practises: Two-hand swing (practising) [movement_id: swing]',
+    );
+    expect(prompt).toContain('- One-Arm Row · pays: pull [movement_id: row]');
+    expect(prompt).not.toMatch(/debt|locked/i);
+  });
+
+  test('system prompt adds the skill-tree rule only when a tree exists', () => {
+    expect(buildSystemPrompt(false, true)).toContain('skill-tree section');
+    expect(buildSystemPrompt(false, true)).toContain('outranks pattern balance');
+    expect(buildSystemPrompt(false, false)).not.toContain('skill-tree');
+    expect(buildSystemPrompt()).not.toContain('skill-tree');
   });
 });

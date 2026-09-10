@@ -8,9 +8,28 @@ import {
   formatOverallModalityBalance,
 } from '../_shared/modalityPrompt.ts';
 import { formatPatternLine } from '../_shared/patternDebtPrompt.ts';
+import {
+  formatSkillNodeAnnotation,
+  formatSkillTreeSection,
+} from '../_shared/skillTreeInput.ts';
 import type { RecommenderInputs } from './types.ts';
 
-export function buildSystemPrompt(hasTargets = false): string {
+export function buildSystemPrompt(
+  hasTargets = false,
+  hasSkillTree = false,
+): string {
+  const skillTreeRules = hasSkillTree
+    ? [
+        '- The skill-tree section says which nodes the lifter has passed, is',
+        '  practising, or is ready to start, and each catalog line says which node',
+        '  a movement practises. Prefer movements that practise a node they are',
+        '  practising now, then one they are ready to start: keep the session at',
+        '  the edge of what they can do rather than only repeating passed skills.',
+        '  Name the node in the rationale when it drives a choice. Readiness and',
+        '  their goal still come first, but this outranks pattern balance and the',
+        '  movement mix when they disagree.',
+      ]
+    : [];
   const targetRules = hasTargets
     ? [
         '- The request lists "Target patterns". Your session MUST include, for',
@@ -64,6 +83,7 @@ export function buildSystemPrompt(hasTargets = false): string {
     '  choices in favour of a red or yellow part of the mix. It never outranks',
     '  pattern balance, readiness, or their goal — and "new" means neutral here',
     '  too.',
+    ...skillTreeRules,
     ...targetRules,
     '- Give a short, concrete rationale a thoughtful coach would give — tie it to',
     '  their goal, recent history, and readiness, and only to facts you were',
@@ -98,7 +118,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
           c.supports_doubles ? ' · double-bell' : ''
         }${
           c.unilateral_lower ? ' · one leg at a time' : ''
-        } [movement_id: ${c.movement_id}]`,
+        }${formatSkillNodeAnnotation(inputs.skill_tree, c.skill_node_id)} [movement_id: ${c.movement_id}]`,
     )
     .join('\n');
 
@@ -158,6 +178,9 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
   );
   const equipmentSection = equipmentText ? ['', equipmentText] : [];
 
+  const skillTreeText = formatSkillTreeSection(inputs.skill_tree);
+  const skillTreeSection = skillTreeText ? ['', skillTreeText] : [];
+
   return [
     `Training goal: ${inputs.training_goal ?? '(none provided)'}`,
     `How they feel today: ${inputs.readiness ?? '(not provided)'}`,
@@ -169,6 +192,7 @@ export function buildUserPrompt(inputs: RecommenderInputs): string {
     ...modalitySection,
     ...targetSection,
     ...equipmentSection,
+    ...skillTreeSection,
     '',
     'Catalog movements (choose only from these):',
     candidateLines,

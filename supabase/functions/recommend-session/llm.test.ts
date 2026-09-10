@@ -16,6 +16,7 @@ const inputs: RecommenderInputs = {
       bodyweight: false,
       supports_doubles: false,
       unilateral_lower: false,
+      skill_node_id: null,
     },
     {
       movement_id: 'press',
@@ -24,11 +25,13 @@ const inputs: RecommenderInputs = {
       bodyweight: false,
       supports_doubles: true,
       unilateral_lower: false,
+      skill_node_id: null,
     },
   ],
   pattern_debt: null,
   modality_debt: null,
   unlocked_weights: {},
+  skill_tree: null,
 };
 
 const block = (over: Partial<Recommendation['blocks'][number]> = {}) => ({
