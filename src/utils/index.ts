@@ -20,6 +20,7 @@ export * from './recommendationDraft';
 export * from './resolveAuthSession';
 export * from './resolveMovementWeights';
 export * from './skillNodeLoadEdge';
+export * from './skillTreeProgress';
 export * from './resolveSharedWeights';
 export * from './soundPreference';
 export * from './stackFit';

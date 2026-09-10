@@ -11,6 +11,7 @@ import {
   SKILL_NODE_BY_ID,
   type SkillNode,
 } from '../config/skillTree.ts';
+import { type BellKg, type LoadEdge, nextBell } from './bellLadder.ts';
 
 export type SkillNodeStatus = 'active' | 'complete';
 
@@ -23,45 +24,97 @@ export interface SkillProgressRow {
 
 export type NodeState = 'complete' | 'active' | 'available' | 'locked';
 
+/** Whether a node was passed by hand or by the bells in the lifter's logs. */
+export type CompletionSource = 'manual' | 'logs';
+
+export interface DerivedLoad {
+  edgeKg: BellKg | null;
+  targetKg: BellKg;
+  nextKg: BellKg | null;
+  reachedAt: Date | null;
+}
+
 export interface DerivedNode {
   node: SkillNode;
   state: NodeState;
   missingPrereqIds: string[];
   completedAt: string | null;
+  completionSource: CompletionSource | null;
+  /** null on nodes no bell can be added to. */
+  load: DerivedLoad | null;
 }
+
+const deriveLoad = (
+  node: SkillNode,
+  edges: ReadonlyMap<string, LoadEdge>,
+): DerivedLoad | null => {
+  if (node.targetKg === undefined) return null;
+
+  const edge = edges.get(node.id);
+  const edgeKg = edge?.edgeKg ?? null;
+
+  return {
+    edgeKg,
+    targetKg: node.targetKg,
+    nextKg: edgeKg !== null && edgeKg >= node.targetKg ? null : nextBell(edgeKg),
+    reachedAt: edge?.reachedAt ?? null,
+  };
+};
 
 export const deriveNodeStates = (
   nodes: readonly SkillNode[],
   rows: readonly SkillProgressRow[],
+  edges: ReadonlyMap<string, LoadEdge> = new Map(),
 ): Map<string, DerivedNode> => {
   const knownIds = new Set(nodes.map((n) => n.id));
   const rowById = new Map(
     rows.filter((r) => knownIds.has(r.nodeId)).map((r) => [r.nodeId, r]),
   );
 
+  const loadById = new Map(
+    nodes.map((node) => [node.id, deriveLoad(node, edges)] as const),
+  );
+
+  // A node the logs have already carried to its target bell counts as passed
+  // wherever completion is read, prerequisites included — so an auto-passed
+  // swing unlocks the clean the same way a hand-marked one does.
+  const completionSourceById = new Map<string, CompletionSource | null>(
+    nodes.map((node) => {
+      const load = loadById.get(node.id) ?? null;
+      if (rowById.get(node.id)?.status === 'complete') return [node.id, 'manual'];
+      if (load?.edgeKg != null && load.edgeKg >= load.targetKg)
+        return [node.id, 'logs'];
+      return [node.id, null];
+    }),
+  );
+
   return new Map(
     nodes.map((node) => {
       const row = rowById.get(node.id);
+      const load = loadById.get(node.id) ?? null;
+      const completionSource = completionSourceById.get(node.id) ?? null;
       const missingPrereqIds = node.prereqs.filter(
-        (id) => rowById.get(id)?.status !== 'complete',
+        (id) => completionSourceById.get(id) == null,
       );
-      const state: NodeState =
-        row?.status === 'complete'
-          ? 'complete'
-          : row?.status === 'active'
-            ? 'active'
-            : missingPrereqIds.length === 0
-              ? 'available'
-              : 'locked';
+
+      const state: NodeState = completionSource
+        ? 'complete'
+        : row?.status === 'active'
+          ? 'active'
+          : missingPrereqIds.length === 0
+            ? 'available'
+            : 'locked';
+
+      const completedAt =
+        completionSource === 'manual'
+          ? (row?.completedAt ?? null)
+          : completionSource === 'logs'
+            ? (load?.reachedAt?.toISOString() ?? null)
+            : null;
 
       return [
         node.id,
-        {
-          node,
-          state,
-          missingPrereqIds,
-          completedAt: row?.status === 'complete' ? row.completedAt : null,
-        },
+        { node, state, missingPrereqIds, completedAt, completionSource, load },
       ];
     }),
   );
