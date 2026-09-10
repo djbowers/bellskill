@@ -9,9 +9,9 @@ columns / enum wall were removed). The controlled fields (`Primary Equipment`,
 Postgres enums — so `~/types` defines `Equipment` / `MuscleGroup` /
 `DifficultyLevel` as hand-authored unions, not `Supabase['...']['Enums']`.
 
-- **Source of truth:** `scripts/data/movements.csv` (10 authored columns incl.
-  `Pattern Credits`, `Modality Credits` and `Unilateral Lower`; `id` is
-  generated). `scripts/ingest-movements.mjs` validates every row against the app
+- **Source of truth:** `scripts/data/movements.csv` (11 authored columns incl.
+  `Pattern Credits`, `Modality Credits`, `Unilateral Lower` and `Skill Node`;
+  `id` is generated). `scripts/ingest-movements.mjs` validates every row against the app
   vocabularies + Kettlebell weight-mode reachability
   (`src/utils/movementWeightModeFilter.ts`) and the pattern-debt rules: legal
   `Movement Pattern #1`, well-formed non-empty credits, and credits ⊇
@@ -29,6 +29,15 @@ Postgres enums — so `~/types` defines `Equipment` / `MuscleGroup` /
   `*_add_unilateral_lower_to_movements.sql` (missing rows inserted by name, then
   the TRUE set flagged). Adding rows to the CSV means regenerating that block
   too, not just the reload's VALUES.
+- **`Skill Node` (the skill-tree axis):** the id (`L2-N2`) of the hardest
+  skill-tree node the movement requires, validated against
+  `src/config/skillTree.ts`; blank means the movement practises no node and the
+  recommenders never gate it. Never map to a mobility (`Lx-M1`) node when a
+  movement node is needed to get into the position — M1 nodes have no prereqs,
+  so they give no ceiling. Lands in `movements.skill_node_id` via
+  `*_add_skill_node_id_to_movements.sql`, whose UPDATE block is regenerated with
+  `npm run movements:emit-skill-node-sql`; a newly mapped CSV row needs that
+  block regenerated too. See `docs/skill-tree.md`.
 - **How it loads:** the migration `*_slim_movements_catalog.sql` reloads the
   whole catalog (its INSERT block is regenerated with `npm run movements:emit-sql`),
   so it is reproducible on `supabase db reset` and auto-deploys. There is **no**
