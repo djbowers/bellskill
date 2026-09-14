@@ -5,6 +5,29 @@ request where one exists; early history predates the PR workflow and is summariz
 commits. Sections: **Added** (feat), **Fixed** (fix), **Changed** (refactor/style/perf),
 **Infrastructure** (chore/ci/build/docs/test).
 
+## 2026-09
+
+### Added
+- Skill tree PoC: nine-level benchmark map behind a flag, with per-node progress tracking and a shared node-state helper for the recommender and edge runtime ([#301](https://github.com/djbowers/bellskill/pull/301), [#306](https://github.com/djbowers/bellskill/pull/306), [#299](https://github.com/djbowers/bellskill/pull/299))
+- Skill tree catalog mapping, recommender ceiling, and load edge landed on main ([#319](https://github.com/djbowers/bellskill/pull/319))
+- Finish line and pace shown on active program cards ([#304](https://github.com/djbowers/bellskill/pull/304))
+- Secondary pattern credits added to 16 movement catalog rows, including suitcase carries, clean-and-press, and thrusters ([#302](https://github.com/djbowers/bellskill/pull/302))
+- Chalk recommends from the whole movement catalog instead of just the user's library ([#294](https://github.com/djbowers/bellskill/pull/294))
+- A single rung can repeat beside longer ladders in circuit and complex mode ([#291](https://github.com/djbowers/bellskill/pull/291))
+
+### Fixed
+- Chalk's prompt no longer echoes "debt" and grounds session rationale in given facts ([#295](https://github.com/djbowers/bellskill/pull/295))
+
+### Changed
+- App restyled with the Forge brand palette and type system; dark mode now persists across reloads ([#303](https://github.com/djbowers/bellskill/pull/303))
+- Curated and "pick up where you left off" sections removed from the hub ([#300](https://github.com/djbowers/bellskill/pull/300))
+- Chalk recommends circuits only, with a rule against repeating rungs consecutively ([#293](https://github.com/djbowers/bellskill/pull/293))
+- Hub recommender rebranded as Chalk throughout ([#292](https://github.com/djbowers/bellskill/pull/292))
+
+### Infrastructure
+- Eval suite for Chalk's next-session recommendation, with a committed baseline ([#296](https://github.com/djbowers/bellskill/pull/296))
+- Changelog-update skill checks for an already-open PR before opening a duplicate ([#298](https://github.com/djbowers/bellskill/pull/298))
+
 ## 2026-08
 
 ### Added
