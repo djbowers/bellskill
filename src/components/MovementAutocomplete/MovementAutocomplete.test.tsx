@@ -1,8 +1,8 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { SessionProvider } from '~/contexts';
 import { VITE_SUPABASE_URL } from '~/env';
@@ -360,7 +360,9 @@ describe('MovementAutocomplete', () => {
       http.get(MOVEMENTS_URL, ({ request }) => {
         const url = new URL(request.url);
         if (url.searchParams.get('id')?.startsWith('in.')) {
-          return HttpResponse.json([toMovementsTableRow(twoHandedCatalogMovement)]);
+          return HttpResponse.json([
+            toMovementsTableRow(twoHandedCatalogMovement),
+          ]);
         }
         return HttpResponse.json([]);
       }),
@@ -403,10 +405,68 @@ describe('MovementAutocomplete', () => {
     const swingItem = screen.getByText('Kettlebell Swing').closest('li');
     expect(swingItem).not.toBeNull();
     expect(
-      swingItem && Array.from(swingItem.querySelectorAll('span')).some(
-        (el) => el.textContent === 'Custom',
-      ),
+      swingItem &&
+        Array.from(swingItem.querySelectorAll('span')).some(
+          (el) => el.textContent === 'Custom',
+        ),
     ).toBe(false);
+  });
+
+  test('collapses recent rows linked to one catalog movement into a single option under the catalog name', async () => {
+    const frontSquat = {
+      ...twoHandedCatalogMovement,
+      id: 'mov-front-squat',
+      name: 'Double Kettlebell Front Squat',
+      primary_item_count: 2,
+    };
+    server.use(
+      http.get(MOVEMENTS_URL, ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get('id')?.startsWith('in.')) {
+          return HttpResponse.json([toMovementsTableRow(frontSquat)]);
+        }
+        return HttpResponse.json([]);
+      }),
+      http.get(MOVEMENTS_CATALOG_URL, () => HttpResponse.json([frontSquat])),
+      http.get(USER_MOVEMENTS_URL, () =>
+        HttpResponse.json([
+          {
+            id: 'um-typed',
+            canonical_name: 'Double Kettlebell Front Rack Squat',
+            functional_movement_id: 'mov-front-squat',
+            movement_logs: [{ count: 4 }],
+          },
+          {
+            id: 'um-catalog',
+            canonical_name: 'Double Kettlebell Front Squat',
+            functional_movement_id: 'mov-front-squat',
+            movement_logs: [{ count: 1 }],
+          },
+        ]),
+      ),
+    );
+
+    renderAutocomplete({ value: 'front', weightMode: 'double' });
+
+    const input = screen.getByRole('textbox', { name: 'Movement Input' });
+    await userEvent.click(input);
+
+    await waitFor(() => {
+      expect(screen.getByText('Recent')).toBeInTheDocument();
+    });
+
+    const movementOptions = screen
+      .getAllByRole('option')
+      .filter((option) => !option.textContent?.startsWith('Use '));
+    expect(movementOptions).toHaveLength(1);
+    expect(movementOptions[0]).toHaveTextContent(
+      'Double Kettlebell Front Squat',
+    );
+    expect(
+      screen.queryByText('Double Kettlebell Front Rack Squat'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Catalog')).not.toBeInTheDocument();
+    expect(screen.queryByText('Custom')).not.toBeInTheDocument();
   });
 
   test('selecting a recent movement calls onChange with the name', async () => {
