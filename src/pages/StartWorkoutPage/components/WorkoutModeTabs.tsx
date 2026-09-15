@@ -16,12 +16,12 @@ interface WorkoutModeTabsProps {
   className?: string;
 }
 
-const MODES: WorkoutMode[] = ['circuit', 'straightSets', 'complex'];
+const MODES: WorkoutMode[] = ['circuit', 'complex', 'straightSets'];
 
 const ICONS: Record<WorkoutMode, ComponentType<SVGProps<SVGSVGElement>>> = {
   circuit: ArrowPathIcon,
-  straightSets: QueueListIcon,
   complex: CubeIcon,
+  straightSets: QueueListIcon,
 };
 
 /**
