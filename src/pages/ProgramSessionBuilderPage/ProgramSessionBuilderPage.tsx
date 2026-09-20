@@ -139,7 +139,10 @@ export const ProgramSessionBuilderPage = () => {
       {
         onSuccess: () => {
           setBuilderWeek(null);
-          if (slot.weekNumber > maxWeek) setEmptyWeekCount((c) => c - 1);
+          // Saving into a draft week consumes it; an empty program's forced
+          // week 1 was never a draft.
+          if (builderWeek !== null && slot.weekNumber > maxWeek)
+            setEmptyWeekCount((c) => c - 1);
         },
       },
     );

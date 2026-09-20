@@ -312,6 +312,41 @@ describe('ProgramSessionBuilderPage', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('keeps Add week working after the first session of an empty program', () => {
+    mockUseProgram.mockReturnValue({
+      data: { program: ownedProgram, sessions: [] },
+      isLoading: false,
+      isError: false,
+    });
+    saveMutate.mockImplementation((_input, opts) => opts.onSuccess());
+    const { rerender } = renderAt('/programs/p-1/sessions/new');
+
+    fireEvent.click(screen.getByRole('button', { name: 'stub-save' }));
+    expect(saveMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ weekNumber: 1, dayNumber: 1 }),
+      expect.anything(),
+    );
+
+    mockUseProgram.mockReturnValue({
+      data: { program: ownedProgram, sessions: [session] },
+      isLoading: false,
+      isError: false,
+    });
+    rerender(
+      <MemoryRouter initialEntries={['/programs/p-1/sessions/new']}>
+        <Routes>
+          <Route
+            path="/programs/:id/sessions/new"
+            element={<ProgramSessionBuilderPage />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add week' }));
+    expect(screen.getByText('Week 2')).toBeInTheDocument();
+  });
+
   it('adds an empty week and saves the next session into it', () => {
     renderAt('/programs/p-1/sessions/new');
 

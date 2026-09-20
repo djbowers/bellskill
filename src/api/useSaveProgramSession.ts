@@ -54,8 +54,12 @@ export const useSaveProgramSession = () => {
       await compactProgramSessions(input.programId);
       return mapProgramSessionRow(data);
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAM, variables.programId] });
+    // Settled, not success: the insert is persisted before the compact call,
+    // so a failure in between must still refetch or the next save collides.
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [QUERIES.PROGRAM, variables.programId],
+      });
       queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAMS] });
     },
     onError,

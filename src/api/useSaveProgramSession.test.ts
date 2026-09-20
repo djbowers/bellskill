@@ -1,8 +1,9 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import { QUERIES } from '~/constants';
 import { ToastContext } from '~/contexts';
 import { server } from '~/mocks/server';
 
@@ -36,11 +37,11 @@ const input = {
   workoutOptions: {} as never,
 };
 
-const makeWrapper = () => {
+const makeWrapperWithClient = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return ({ children }: { children: React.ReactNode }) =>
+  const wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(
       QueryClientProvider,
       { client: queryClient },
@@ -50,7 +51,10 @@ const makeWrapper = () => {
         children,
       ),
     );
+  return { wrapper, queryClient };
 };
+
+const makeWrapper = () => makeWrapperWithClient().wrapper;
 
 describe('useSaveProgramSession', () => {
   beforeEach(() => showToast.mockClear());
@@ -74,6 +78,29 @@ describe('useSaveProgramSession', () => {
     expect(saved.id).toBe('session-1');
     expect(compactBody).toEqual({ p_program_id: 'program-1' });
     expect(showToast).not.toHaveBeenCalled();
+  });
+
+  it('refetches the program when the compact call fails after the insert', async () => {
+    server.use(
+      http.post(SESSIONS_URL, () => HttpResponse.json(sessionRow)),
+      http.post(COMPACT_URL, () =>
+        HttpResponse.json({ message: 'boom' }, { status: 400 }),
+      ),
+    );
+    const { wrapper, queryClient } = makeWrapperWithClient();
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useSaveProgramSession(), { wrapper });
+
+    await expect(result.current.mutateAsync(input)).rejects.toBeTruthy();
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: [QUERIES.PROGRAM, 'program-1'],
+    });
+    expect(showToast).toHaveBeenCalledWith(PROGRAM_MUTATION_ERROR_MESSAGE, {
+      variant: 'destructive',
+    });
   });
 
   it('toasts on failure', async () => {

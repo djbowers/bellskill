@@ -74,7 +74,9 @@ export const useDuplicateProgramSession = () => {
       await compactProgramSessions(input.session.programId);
       return mapProgramSessionRow(data);
     },
-    onSuccess: (_data, variables) => {
+    // Settled, not success: the insert is persisted before the compact call,
+    // so a failure in between must still refetch or the next save collides.
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({
         queryKey: [QUERIES.PROGRAM, variables.session.programId],
       });
@@ -114,8 +116,12 @@ export const useDuplicateProgramWeek = () => {
       await compactProgramSessions(input.programId);
       return (data ?? []).map(mapProgramSessionRow);
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAM, variables.programId] });
+    // Settled, not success: the insert is persisted before the compact call,
+    // so a failure in between must still refetch or the next save collides.
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [QUERIES.PROGRAM, variables.programId],
+      });
     },
     onError,
   });
