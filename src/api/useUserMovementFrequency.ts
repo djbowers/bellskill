@@ -10,6 +10,7 @@ export interface UserMovementWithFrequency {
   id: string;
   canonicalName: string;
   functionalMovementId: string | null;
+  catalogName: string | null;
   catalogWeightFields: MovementWeightModeFields | null;
   logCount: number;
 }
@@ -70,19 +71,58 @@ const fetchUserMovementFrequency = async (
     }
   }
 
-  return (userMovements ?? [])
-    .map((movement) => ({
+  const rows = (userMovements ?? []).map((movement) => {
+    const catalogMovement = movement.functional_movement_id
+      ? catalogById.get(movement.functional_movement_id)
+      : undefined;
+
+    return {
       id: movement.id,
       canonicalName: movement.canonical_name,
       functionalMovementId: movement.functional_movement_id,
-      catalogWeightFields: toCatalogWeightFields(
-        movement.functional_movement_id
-          ? catalogById.get(movement.functional_movement_id)
-          : undefined,
-      ),
+      catalogName:
+        (catalogMovement?.['Movement'] as string | undefined) ?? null,
+      catalogWeightFields: toCatalogWeightFields(catalogMovement),
       logCount: Number(
-        (movement.movement_logs as { count: number }[] | undefined)?.[0]?.count ?? 0,
+        (movement.movement_logs as { count: number }[] | undefined)?.[0]
+          ?.count ?? 0,
       ),
-    }))
-    .sort((a, b) => b.logCount - a.logCount);
+    };
+  });
+
+  return mergeUserMovementsByCatalog(rows).sort(
+    (a, b) => b.logCount - a.logCount,
+  );
+};
+
+// Rows linked to the same catalog movement are one movement to the lifter:
+// collapse them, pool their logs, and show the catalog's name.
+export const mergeUserMovementsByCatalog = (
+  rows: UserMovementWithFrequency[],
+): UserMovementWithFrequency[] => {
+  const merged: UserMovementWithFrequency[] = [];
+  const byCatalogId = new Map<string, UserMovementWithFrequency>();
+
+  for (const row of rows) {
+    if (!row.functionalMovementId) {
+      merged.push(row);
+      continue;
+    }
+
+    const displayName = row.catalogName ?? row.canonicalName;
+    const existing = byCatalogId.get(row.functionalMovementId);
+
+    if (!existing) {
+      const entry = { ...row, canonicalName: displayName };
+      byCatalogId.set(row.functionalMovementId, entry);
+      merged.push(entry);
+      continue;
+    }
+
+    const rowIsCatalogNamed = row.canonicalName === row.catalogName;
+    if (rowIsCatalogNamed) existing.id = row.id;
+    existing.logCount += row.logCount;
+  }
+
+  return merged;
 };
