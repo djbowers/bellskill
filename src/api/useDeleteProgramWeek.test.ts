@@ -1,32 +1,18 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { SessionProvider, ToastContext } from '~/contexts';
+import { ToastContext } from '~/contexts';
 import { server } from '~/mocks/server';
 
 import { VITE_SUPABASE_URL } from '../env';
+import { useDeleteProgramWeek } from './useDeleteProgramWeek';
 import { PROGRAM_MUTATION_ERROR_MESSAGE } from './useProgramMutationErrorHandler';
-import { useReorderProgramSessions } from './useReorderProgramSession';
 
-const RPC_URL = `${VITE_SUPABASE_URL}/rest/v1/rpc/reorder_program_sessions`;
+const RPC_URL = `${VITE_SUPABASE_URL}/rest/v1/rpc/delete_program_week`;
 
 const showToast = vi.fn();
-
-const mockSession = {
-  user: {
-    id: 'user-123',
-    app_metadata: {},
-    user_metadata: {},
-    created_at: '',
-    aud: '',
-  },
-  access_token: '',
-  refresh_token: '',
-  expires_in: 10000,
-  token_type: '',
-};
 
 const makeWrapper = () => {
   const queryClient = new QueryClient({
@@ -37,61 +23,52 @@ const makeWrapper = () => {
       QueryClientProvider,
       { client: queryClient },
       React.createElement(
-        SessionProvider,
-        { value: mockSession },
-        React.createElement(
-          ToastContext.Provider,
-          { value: { showToast } },
-          children,
-        ),
+        ToastContext.Provider,
+        { value: { showToast } },
+        children,
       ),
     );
 };
 
-describe('useReorderProgramSessions', () => {
+describe('useDeleteProgramWeek', () => {
   beforeEach(() => showToast.mockClear());
 
-  it('sends the program id and the full ordered id array to the RPC and does not toast on success', async () => {
+  it('sends the program id and week number and resolves to the deleted count', async () => {
     let receivedBody: unknown;
     server.use(
       http.post(RPC_URL, async ({ request }) => {
         receivedBody = await request.json();
-        return new HttpResponse(null, { status: 204 });
+        return HttpResponse.json(3);
       }),
     );
 
-    const { result } = renderHook(() => useReorderProgramSessions(), {
+    const { result } = renderHook(() => useDeleteProgramWeek(), {
       wrapper: makeWrapper(),
     });
 
-    await result.current.mutateAsync({
+    const deleted = await result.current.mutateAsync({
       programId: 'prog-1',
-      orderedIds: ['s-2', 's-0', 's-1'],
+      weekNumber: 2,
     });
 
-    expect(receivedBody).toEqual({
-      p_program_id: 'prog-1',
-      p_ordered_ids: ['s-2', 's-0', 's-1'],
-    });
+    expect(receivedBody).toEqual({ p_program_id: 'prog-1', p_week_number: 2 });
+    expect(deleted).toBe(3);
     expect(showToast).not.toHaveBeenCalled();
   });
 
-  it('surfaces RPC errors and toasts on failure', async () => {
+  it('toasts on failure', async () => {
     server.use(
       http.post(RPC_URL, () =>
         HttpResponse.json({ message: 'boom' }, { status: 400 }),
       ),
     );
 
-    const { result } = renderHook(() => useReorderProgramSessions(), {
+    const { result } = renderHook(() => useDeleteProgramWeek(), {
       wrapper: makeWrapper(),
     });
 
     await expect(
-      result.current.mutateAsync({
-        programId: 'prog-1',
-        orderedIds: ['s-0'],
-      }),
+      result.current.mutateAsync({ programId: 'prog-1', weekNumber: 2 }),
     ).rejects.toBeTruthy();
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(showToast).toHaveBeenCalledWith(PROGRAM_MUTATION_ERROR_MESSAGE, {

@@ -5,6 +5,7 @@ import { ProgramSession } from '~/types';
 
 import { supabase } from '../supabaseClient';
 import {
+  compactProgramSessions,
   mapProgramSessionRow,
   serializeSessionWorkoutOptions,
 } from './program';
@@ -13,8 +14,9 @@ import { useProgramMutationErrorHandler } from './useProgramMutationErrorHandler
 export interface DuplicateProgramSessionInput {
   /** The session to copy. */
   session: ProgramSession;
-  /** Where the copy lands (usually the current session count). */
+  /** Append index for the insert (the current session count). */
   sequenceIndex: number;
+  /** The week/day the copy belongs to; the program is compacted afterwards. */
   weekNumber: number;
   dayNumber: number;
 }
@@ -46,7 +48,7 @@ const sessionInsert = (
   weight_label: session.weightLabel,
 });
 
-/** Copies a single session, appending it to the end of the program. */
+/** Copies a single session into the given week/day slot. */
 export const useDuplicateProgramSession = () => {
   const queryClient = useQueryClient();
   const onError = useProgramMutationErrorHandler();
@@ -69,9 +71,12 @@ export const useDuplicateProgramSession = () => {
         .single();
 
       if (error) throw error;
+      await compactProgramSessions(input.session.programId);
       return mapProgramSessionRow(data);
     },
-    onSuccess: (_data, variables) => {
+    // Settled, not success: the insert is persisted before the compact call,
+    // so a failure in between must still refetch or the next save collides.
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({
         queryKey: [QUERIES.PROGRAM, variables.session.programId],
       });
@@ -108,10 +113,15 @@ export const useDuplicateProgramWeek = () => {
         .select('*');
 
       if (error) throw error;
+      await compactProgramSessions(input.programId);
       return (data ?? []).map(mapProgramSessionRow);
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAM, variables.programId] });
+    // Settled, not success: the insert is persisted before the compact call,
+    // so a failure in between must still refetch or the next save collides.
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [QUERIES.PROGRAM, variables.programId],
+      });
     },
     onError,
   });

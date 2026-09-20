@@ -1,23 +1,18 @@
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import {
   useDeleteProgramSession,
+  useDeleteProgramWeek,
   useDuplicateProgramSession,
   useDuplicateProgramWeek,
   useProgram,
-  useReorderProgramSessions,
   useSaveProgramSession,
+  useSetProgramSessionLayout,
   useUpdateProgramSession,
   useUpdateProgramSessionsForward,
 } from '~/api';
-import {
-  ConfirmDialog,
-  OverflowMenu,
-  OverflowMenuAction,
-  Page,
-} from '~/components';
+import { ConfirmDialog, OverflowMenuAction, Page } from '~/components';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import {
@@ -32,28 +27,24 @@ import { useSession, useToast } from '~/contexts';
 import { ProgramSession, WorkoutOptions } from '~/types';
 
 import { StartWorkoutPage } from '../StartWorkoutPage';
-
-interface WeekGroup {
-  weekNumber: number;
-  sessions: ProgramSession[];
-}
-
-/** Group ordered sessions by week for the saved-session list. */
-const groupByWeek = (sessions: ProgramSession[]): WeekGroup[] => {
-  const groups: WeekGroup[] = [];
-  for (const session of sessions) {
-    const group = groups.find((g) => g.weekNumber === session.weekNumber);
-    if (group) group.sessions.push(session);
-    else groups.push({ weekNumber: session.weekNumber, sessions: [session] });
-  }
-  return groups;
-};
+import { SessionWeekList } from './components';
+import {
+  WeekGroup,
+  flattenLayout,
+  groupByWeek,
+  isSameLayout,
+  layoutOf,
+  moveWeek,
+  nextSlotInWeek,
+  trailingEmptyWeekCount,
+  withEmptyWeeks,
+} from './utils';
 
 /**
  * Renders the builder in "save session" mode for a program. The builder itself
  * (goal, movements, rep schemes, weights) is reused verbatim from
- * {@link StartWorkoutPage}; this wrapper owns program data, the save mutation,
- * and the duplicate-session / duplicate-week helpers shown above the builder.
+ * {@link StartWorkoutPage}; this wrapper owns program data, every session and
+ * week mutation, and the week-grouped list the builder opens from.
  */
 export const ProgramSessionBuilderPage = () => {
   const { id, sessionId } = useParams<{ id: string; sessionId?: string }>();
@@ -71,17 +62,24 @@ export const ProgramSessionBuilderPage = () => {
     options: Omit<WorkoutOptions, 'startedAt'>;
     title: string;
   } | null>(null);
-  // The builder opens on demand from the session list; an empty program forces
-  // it open below, since there is no list to show instead.
-  const [builderOpen, setBuilderOpen] = useState(false);
-  // Session queued for deletion while its confirm dialog is open.
+  // The builder opens on demand from the session list, targeting one week; an
+  // empty program forces it open below, since there is no list to show instead.
+  const [builderWeek, setBuilderWeek] = useState<number | null>(null);
+  // Weeks added but not yet given a session exist only here, after the last
+  // stored week, until the page unmounts.
+  const [emptyWeekCount, setEmptyWeekCount] = useState(0);
+  // Session / week queued for deletion while its confirm dialog is open.
   const [pendingDelete, setPendingDelete] = useState<ProgramSession | null>(
+    null,
+  );
+  const [pendingDeleteWeek, setPendingDeleteWeek] = useState<WeekGroup | null>(
     null,
   );
   const duplicateSession = useDuplicateProgramSession();
   const duplicateWeek = useDuplicateProgramWeek();
-  const reorderSessions = useReorderProgramSessions();
+  const setLayout = useSetProgramSessionLayout();
   const deleteSession = useDeleteProgramSession();
+  const deleteWeek = useDeleteProgramWeek();
 
   // Edit mode when the route carries a session id; the builder is then seeded
   // from that session and saving rewrites it in place.
@@ -108,22 +106,19 @@ export const ProgramSessionBuilderPage = () => {
   }
 
   const { program, sessions } = data;
-  const daysPerWeek = program.daysPerWeek || 1;
   const nextSequenceIndex = sessions.length;
-  const nextWeek = Math.floor(nextSequenceIndex / daysPerWeek) + 1;
-  const nextDay = (nextSequenceIndex % daysPerWeek) + 1;
   const maxWeek = sessions.reduce((max, s) => Math.max(max, s.weekNumber), 0);
-  const weekGroups = groupByWeek(sessions);
+  const weekGroups = withEmptyWeeks(groupByWeek(sessions), emptyWeekCount);
 
-  // Reorder/delete write to program_sessions, which RLS restricts to the
-  // program owner — so only show those controls on an owned program (the shared
-  // read-only DFW is never editable here). `sessions` is already ordered by
-  // `sequenceIndex`, so its array position is the flat move index.
+  // Layout/delete write to program_sessions, which RLS restricts to the program
+  // owner — so only show those controls on an owned program (the shared
+  // read-only DFW is never editable here).
   const canEdit = !!session?.user?.id && program.ownerId === session.user.id;
-  const reordering = reorderSessions.isPending;
-  const deleting = deleteSession.isPending;
+  const busy =
+    setLayout.isPending || deleteSession.isPending || deleteWeek.isPending;
 
-  const showBuilder = builderOpen || sessions.length === 0;
+  const builderTarget = builderWeek ?? (sessions.length === 0 ? 1 : null);
+  const showBuilder = builderTarget !== null;
 
   // A saved session returns to the list, where the new row is the confirmation.
   // The builder is remounted by key on reopen, so the next session starts from
@@ -132,16 +127,24 @@ export const ProgramSessionBuilderPage = () => {
     options: Omit<WorkoutOptions, 'startedAt'>,
     title: string,
   ) => {
+    const slot = nextSlotInWeek(weekGroups, builderTarget ?? 1);
     saveSession.mutate(
       {
         programId: program.id,
         sequenceIndex: nextSequenceIndex,
-        weekNumber: nextWeek,
-        dayNumber: nextDay,
+        ...slot,
         title: title || `Session ${nextSequenceIndex + 1}`,
         workoutOptions: options,
       },
-      { onSuccess: () => setBuilderOpen(false) },
+      {
+        onSuccess: () => {
+          setBuilderWeek(null);
+          // Saving into a draft week consumes it; an empty program's forced
+          // week 1 was never a draft.
+          if (builderWeek !== null && slot.weekNumber > maxWeek)
+            setEmptyWeekCount((c) => c - 1);
+        },
+      },
     );
   };
 
@@ -149,8 +152,7 @@ export const ProgramSessionBuilderPage = () => {
     duplicateSession.mutate({
       session,
       sequenceIndex: nextSequenceIndex,
-      weekNumber: nextWeek,
-      dayNumber: nextDay,
+      ...nextSlotInWeek(weekGroups, session.weekNumber),
     });
   };
 
@@ -163,18 +165,18 @@ export const ProgramSessionBuilderPage = () => {
     });
   };
 
-  // Move the session at flat `index` by `direction` (-1 up / +1 down), persisting
-  // the full new order. Reindexing goes through the RPC because the UNIQUE
-  // (program_id, sequence_index) constraint is not deferrable.
-  const handleMove = (index: number, direction: -1 | 1) => {
-    const target = index + direction;
-    if (target < 0 || target >= sessions.length) return;
-    const orderedIds = sessions.map((s) => s.id);
-    [orderedIds[index], orderedIds[target]] = [
-      orderedIds[target],
-      orderedIds[index],
-    ];
-    reorderSessions.mutate({ programId: program.id, orderedIds });
+  // Persist a regrouping (drop or week move). Reindexing goes through the RPC
+  // because the UNIQUE (program_id, sequence_index) constraint is not deferrable.
+  const handleLayoutChange = (next: WeekGroup[]) => {
+    setEmptyWeekCount(trailingEmptyWeekCount(next));
+    const layout = flattenLayout(next);
+    if (isSameLayout(layout, layoutOf(sessions))) return;
+    setLayout.mutate({ programId: program.id, layout });
+  };
+
+  const handleDeleteWeek = (group: WeekGroup) => {
+    if (group.sessions.length === 0) setEmptyWeekCount((c) => c - 1);
+    else setPendingDeleteWeek(group);
   };
 
   const confirmDelete = () => {
@@ -184,6 +186,103 @@ export const ProgramSessionBuilderPage = () => {
       { onSettled: () => setPendingDelete(null) },
     );
   };
+
+  const confirmDeleteWeek = () => {
+    if (!pendingDeleteWeek) return;
+    const { weekNumber } = pendingDeleteWeek;
+    deleteWeek.mutate(
+      { programId: program.id, weekNumber },
+      {
+        onSuccess: (count) =>
+          showToast(
+            `Deleted week ${weekNumber} (${count} ${count === 1 ? 'session' : 'sessions'})`,
+          ),
+        onSettled: () => setPendingDeleteWeek(null),
+      },
+    );
+  };
+
+  const weekActions = (
+    group: WeekGroup,
+    index: number,
+  ): OverflowMenuAction[] => {
+    const isEmpty = group.sessions.length === 0;
+    if (!canEdit) {
+      return [
+        {
+          label: 'Duplicate week',
+          onSelect: () => handleDuplicateWeek(group),
+          disabled: duplicateWeek.isPending || isEmpty,
+        },
+      ];
+    }
+    return [
+      {
+        label: 'Add session',
+        onSelect: () => setBuilderWeek(group.weekNumber),
+        disabled: busy,
+      },
+      {
+        label: 'Duplicate week',
+        onSelect: () => handleDuplicateWeek(group),
+        disabled: duplicateWeek.isPending || isEmpty,
+      },
+      {
+        label: 'Move week up',
+        onSelect: () =>
+          handleLayoutChange(moveWeek(weekGroups, group.weekNumber, -1)),
+        disabled: busy || isEmpty || index === 0,
+      },
+      {
+        label: 'Move week down',
+        onSelect: () =>
+          handleLayoutChange(moveWeek(weekGroups, group.weekNumber, 1)),
+        disabled:
+          busy ||
+          isEmpty ||
+          index >= weekGroups.length - 1 ||
+          weekGroups[index + 1].sessions.length === 0,
+      },
+      {
+        label: 'Delete week',
+        onSelect: () => handleDeleteWeek(group),
+        disabled: busy,
+        destructive: true,
+      },
+    ];
+  };
+
+  const sessionActions = (
+    groupSession: ProgramSession,
+  ): OverflowMenuAction[] => [
+    ...(canEdit
+      ? [
+          {
+            label: 'Edit session',
+            onSelect: () =>
+              navigate(
+                `/programs/${program.id}/sessions/${groupSession.id}/edit`,
+              ),
+            disabled: busy,
+          },
+        ]
+      : []),
+    {
+      label: 'Duplicate session',
+      onSelect: () => handleDuplicateSession(groupSession),
+      disabled: duplicateSession.isPending,
+    },
+    ...(canEdit
+      ? [
+          {
+            label: 'Delete session',
+            onSelect: () => setPendingDelete(groupSession),
+            disabled: busy,
+            destructive: true,
+          },
+        ]
+      : []),
+  ];
 
   const backToBuilder = () => navigate(`/programs/${program.id}/sessions/new`);
 
@@ -367,7 +466,7 @@ export const ProgramSessionBuilderPage = () => {
   if (showBuilder) {
     return (
       <StartWorkoutPage
-        key={`session-${sessions.length}`}
+        key={`session-${builderTarget}-${sessions.length}`}
         programSaveMode={{
           onSave: handleSave,
           saving: saveSession.isPending,
@@ -376,7 +475,7 @@ export const ProgramSessionBuilderPage = () => {
               {sessions.length > 0 ? (
                 <button
                   type="button"
-                  onClick={() => setBuilderOpen(false)}
+                  onClick={() => setBuilderWeek(null)}
                   className="self-start text-xs font-medium text-muted-foreground"
                 >
                   ← Sessions
@@ -385,7 +484,9 @@ export const ProgramSessionBuilderPage = () => {
                 backLink
               )}
               <div className="text-xl font-semibold">
-                {sessions.length > 0 ? 'New session' : program.title}
+                {sessions.length > 0
+                  ? `New session · Week ${builderTarget}`
+                  : program.title}
               </div>
             </>
           ),
@@ -406,117 +507,15 @@ export const ProgramSessionBuilderPage = () => {
             <p className="text-sm font-semibold">
               Saved sessions ({sessions.length})
             </p>
-            {weekGroups.map((group) => (
-              <div key={group.weekNumber} className="flex flex-col gap-0.5">
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Week {group.weekNumber}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-muted-foreground"
-                    onClick={() => handleDuplicateWeek(group)}
-                    disabled={duplicateWeek.isPending}
-                  >
-                    Duplicate week
-                  </Button>
-                </div>
-                <ul className="flex flex-col">
-                  {group.sessions.map((groupSession) => {
-                    const flatIndex = sessions.findIndex(
-                      (s) => s.id === groupSession.id,
-                    );
-                    const actions: OverflowMenuAction[] = [
-                      ...(canEdit
-                        ? [
-                            {
-                              label: 'Edit session',
-                              onSelect: () =>
-                                navigate(
-                                  `/programs/${program.id}/sessions/${groupSession.id}/edit`,
-                                ),
-                              disabled: deleting || reordering,
-                            },
-                          ]
-                        : []),
-                      {
-                        label: 'Duplicate session',
-                        onSelect: () => handleDuplicateSession(groupSession),
-                        disabled: duplicateSession.isPending,
-                      },
-                      ...(canEdit
-                        ? [
-                            {
-                              label: 'Delete session',
-                              onSelect: () => setPendingDelete(groupSession),
-                              disabled: deleting || reordering,
-                              destructive: true,
-                            },
-                          ]
-                        : []),
-                    ];
-
-                    return (
-                      <li
-                        key={groupSession.id}
-                        className="flex items-center gap-1 border-b border-border/60 py-0.5 last:border-b-0"
-                      >
-                        <span
-                          aria-hidden
-                          className="flex h-3 w-3 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold tabular-nums text-muted-foreground"
-                        >
-                          {groupSession.dayNumber}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-sm">
-                          <span className="sr-only">
-                            Day {groupSession.dayNumber}:{' '}
-                          </span>
-                          {groupSession.title}
-                        </span>
-                        {canEdit && sessions.length > 1 && (
-                          <>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="shrink-0 text-muted-foreground"
-                              aria-label={`Move ${groupSession.title} up`}
-                              onClick={() => handleMove(flatIndex, -1)}
-                              disabled={
-                                reordering || deleting || flatIndex === 0
-                              }
-                            >
-                              <ChevronUpIcon className="h-2 w-2" aria-hidden />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="shrink-0 text-muted-foreground"
-                              aria-label={`Move ${groupSession.title} down`}
-                              onClick={() => handleMove(flatIndex, 1)}
-                              disabled={
-                                reordering ||
-                                deleting ||
-                                flatIndex === sessions.length - 1
-                              }
-                            >
-                              <ChevronDownIcon
-                                className="h-2 w-2"
-                                aria-hidden
-                              />
-                            </Button>
-                          </>
-                        )}
-                        <OverflowMenu
-                          actions={actions}
-                          menuLabel={groupSession.title}
-                        />
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
+            <SessionWeekList
+              groups={weekGroups}
+              canEdit={canEdit}
+              busy={busy}
+              onLayoutChange={handleLayoutChange}
+              weekActions={weekActions}
+              sessionActions={sessionActions}
+              onAddSession={setBuilderWeek}
+            />
           </CardContent>
         </Card>
       )}
@@ -524,7 +523,7 @@ export const ProgramSessionBuilderPage = () => {
       <ConfirmDialog
         open={pendingDelete !== null}
         onOpenChange={(open) => {
-          if (!open && !deleting) setPendingDelete(null);
+          if (!open && !deleteSession.isPending) setPendingDelete(null);
         }}
         title="Delete this session?"
         description={
@@ -537,16 +536,37 @@ export const ProgramSessionBuilderPage = () => {
         dismissLabel="Keep session"
         onConfirm={confirmDelete}
         onDismiss={() => setPendingDelete(null)}
-        isPending={deleting}
+        isPending={deleteSession.isPending}
       />
 
-      <Button
-        className="w-full"
-        onClick={() => setBuilderOpen(true)}
-        disabled={reordering || deleting}
-      >
-        Add session
-      </Button>
+      <ConfirmDialog
+        open={pendingDeleteWeek !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteWeek.isPending) setPendingDeleteWeek(null);
+        }}
+        title={`Delete week ${pendingDeleteWeek?.weekNumber}?`}
+        description={
+          pendingDeleteWeek
+            ? `Its ${pendingDeleteWeek.sessions.length === 1 ? 'session is' : `${pendingDeleteWeek.sessions.length} sessions are`} removed from the program and the weeks after it move up. This can't be undone.`
+            : ''
+        }
+        confirmLabel="Delete week"
+        confirmVariant="destructive"
+        dismissLabel="Keep week"
+        onConfirm={confirmDeleteWeek}
+        onDismiss={() => setPendingDeleteWeek(null)}
+        isPending={deleteWeek.isPending}
+      />
+
+      {canEdit && (
+        <Button
+          className="w-full"
+          onClick={() => setEmptyWeekCount((c) => c + 1)}
+          disabled={busy}
+        >
+          Add week
+        </Button>
+      )}
     </Page>
   );
 };

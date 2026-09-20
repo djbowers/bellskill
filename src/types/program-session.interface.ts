@@ -28,3 +28,10 @@ export interface ProgramSession {
    */
   weightLabel: string | null;
 }
+
+/** A session's place in the program, as sent to `set_program_session_layout`. */
+export interface SessionLayoutEntry {
+  id: string;
+  weekNumber: number;
+  dayNumber: number;
+}

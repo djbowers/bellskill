@@ -14,11 +14,11 @@ export interface DeleteProgramSessionInput {
 /**
  * Deletes a session from an owned program via the `delete_program_session` RPC.
  *
- * The RPC deletes the row then compacts the survivors to a contiguous 0..N-1
- * (relabeling week/day), so no gap is left. That matters because the builder's
- * ADD path computes the next `sequence_index` as `sessions.length`; a gap would
- * make the next save collide with a surviving higher index and violate
- * `UNIQUE (program_id, sequence_index)`. RLS keeps the delete owner-only.
+ * The RPC deletes the row then compacts the survivors: `sequence_index` closes
+ * to a contiguous 0..N-1, days renumber within the affected week, and an
+ * emptied week drops out so later weeks move up. No gap is left, which the
+ * builder's ADD path relies on (it appends at `sessions.length`). RLS keeps the
+ * delete owner-only.
  */
 export const useDeleteProgramSession = () => {
   const queryClient = useQueryClient();

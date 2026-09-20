@@ -1272,6 +1272,10 @@ export type Database = {
           source_table: string
         }[]
       }
+      compact_program_sessions: {
+        Args: { p_program_id: string }
+        Returns: undefined
+      }
       complete_program_session: {
         Args: {
           p_program_session_id: string
@@ -1284,6 +1288,10 @@ export type Database = {
       delete_program_session: {
         Args: { p_session_id: string }
         Returns: undefined
+      }
+      delete_program_week: {
+        Args: { p_program_id: string; p_week_number: number }
+        Returns: number
       }
       enroll_in_program: {
         Args: {
@@ -1399,10 +1407,6 @@ export type Database = {
           skill_node_id: string
         }[]
       }
-      reorder_program_sessions: {
-        Args: { p_ordered_ids: string[]; p_program_id: string }
-        Returns: undefined
-      }
       resume_program: {
         Args: { p_replace_user_program_id?: string; p_user_program_id: string }
         Returns: string
@@ -1413,6 +1417,10 @@ export type Database = {
       }
       set_program_released: {
         Args: { p_program_id: string; p_released: boolean }
+        Returns: undefined
+      }
+      set_program_session_layout: {
+        Args: { p_layout: Json; p_program_id: string }
         Returns: undefined
       }
       set_program_stage: {

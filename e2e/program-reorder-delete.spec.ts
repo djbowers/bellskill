@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
-// PROD-219: reorder + delete for program sessions (owner-editable programs).
+// Session layout + delete for program sessions (owner-editable programs).
 //
-// These exercise the two SECURITY INVOKER RPCs against real Postgres — the
+// These exercise the SECURITY INVOKER RPCs against real Postgres — the
 // UNIQUE (program_id, sequence_index) constraint is NOT deferrable, so the
 // constraint-safety of the temp-offset reindex can only be proven here (MSW/unit
 // tests mock the RPC and never touch the DB). Mirrors the REST-level style of
@@ -102,6 +102,22 @@ interface SessionRow {
   day_number: number;
   title: string;
 }
+
+type LayoutEntry = { id: string; week_number: number; day_number: number };
+
+/** `[[week, day], ...]` per session → the RPC's layout array. */
+const layout = (
+  sessions: SessionRow[],
+  slots: Array<[number, number]>,
+): LayoutEntry[] =>
+  sessions.map((s, i) => ({
+    id: s.id,
+    week_number: slots[i][0],
+    day_number: slots[i][1],
+  }));
+
+const weekDay = (rows: SessionRow[]) =>
+  rows.map((s) => [s.week_number, s.day_number]);
 
 /** Create a private, owner-owned program with `count` contiguous sessions (0..count-1). */
 async function createOwnedProgram(
@@ -212,27 +228,33 @@ async function insertWorkoutLog(user: TestUser): Promise<number> {
   return row.id;
 }
 
-test.describe('program sessions — reorder', () => {
-  test('a full reorder is constraint-safe and relabels week/day (a naive swap would 409)', async () => {
+test.describe('program sessions — set layout', () => {
+  test('a full reorder is constraint-safe and writes week/day explicitly (a naive swap would 409)', async () => {
     const user = await signUpThrowawayUser();
-    // days_per_week=2, 4 sessions: indices 0..3 → weeks 1,1,2,2.
     const { programId, sessions } = await createOwnedProgram(user, 2, 4);
     const [a, b, c, d] = sessions;
 
     // Reverse the order. Swapping any two adjacent indices with plain UPDATEs
     // would violate UNIQUE (program_id, sequence_index) mid-statement; the RPC's
     // temp-offset reindex must not.
-    const res = await rpcRaw('reorder_program_sessions', user.token, {
+    const res = await rpcRaw('set_program_session_layout', user.token, {
       p_program_id: programId,
-      p_ordered_ids: [d.id, c.id, b.id, a.id],
+      p_layout: layout(
+        [d, c, b, a],
+        [
+          [1, 1],
+          [1, 2],
+          [2, 1],
+          [2, 2],
+        ],
+      ),
     });
-    expect(res.status).toBeLessThan(300); // no 409 unique violation
+    expect(res.status).toBeLessThan(300);
 
     const after = await getSessions(user, programId);
-    // New contiguous order + relabeled week/day from days_per_week=2.
     expect(after.map((s) => s.id)).toEqual([d.id, c.id, b.id, a.id]);
     expect(after.map((s) => s.sequence_index)).toEqual([0, 1, 2, 3]);
-    expect(after.map((s) => [s.week_number, s.day_number])).toEqual([
+    expect(weekDay(after)).toEqual([
       [1, 1],
       [1, 2],
       [2, 1],
@@ -240,52 +262,166 @@ test.describe('program sessions — reorder', () => {
     ]);
   });
 
-  test('an adjacent swap (the exact naive-swap scenario) succeeds via the RPC', async () => {
+  test('sequence follows (week, day) regardless of array order, and uneven weeks survive', async () => {
     const user = await signUpThrowawayUser();
     const { programId, sessions } = await createOwnedProgram(user, 3, 3);
     const [a, b, c] = sessions;
 
-    const res = await rpcRaw('reorder_program_sessions', user.token, {
+    // Move C up into week 1 ahead of A, leave B alone in week 2 — sent shuffled.
+    const res = await rpcRaw('set_program_session_layout', user.token, {
       p_program_id: programId,
-      p_ordered_ids: [b.id, a.id, c.id],
+      p_layout: layout(
+        [b, a, c],
+        [
+          [2, 1],
+          [1, 2],
+          [1, 1],
+        ],
+      ),
     });
     expect(res.status).toBeLessThan(300);
 
     const after = await getSessions(user, programId);
-    expect(after.map((s) => s.id)).toEqual([b.id, a.id, c.id]);
+    expect(after.map((s) => s.id)).toEqual([c.id, a.id, b.id]);
     expect(after.map((s) => s.sequence_index)).toEqual([0, 1, 2]);
+    expect(weekDay(after)).toEqual([
+      [1, 1],
+      [1, 2],
+      [2, 1],
+    ]);
   });
 
-  test('reorder rejects an id list that is not a permutation of the program sessions', async () => {
+  test('clears the stored cadence so it derives from the sessions', async () => {
     const user = await signUpThrowawayUser();
-    const { programId, sessions } = await createOwnedProgram(user, 2, 3);
+    const { programId, sessions } = await createOwnedProgram(user, 2, 2);
     const [a, b] = sessions;
 
-    // Missing one id (wrong length).
-    const short = await rpcRaw('reorder_program_sessions', user.token, {
+    await rpcRaw('set_program_session_layout', user.token, {
       p_program_id: programId,
-      p_ordered_ids: [a.id, b.id],
+      p_layout: layout(
+        [a, b],
+        [
+          [1, 1],
+          [2, 1],
+        ],
+      ),
     });
-    expect(short.status).toBeGreaterThanOrEqual(400);
 
-    // Duplicate id (right length, but not a permutation).
-    const dup = await rpcRaw('reorder_program_sessions', user.token, {
-      p_program_id: programId,
-      p_ordered_ids: [a.id, a.id, b.id],
-    });
-    expect(dup.status).toBeGreaterThanOrEqual(400);
+    const [program] = await restJson<
+      Array<{ num_weeks: number | null; days_per_week: number | null }>
+    >(
+      'GET',
+      `programs?id=eq.${programId}&select=num_weeks,days_per_week`,
+      user.token,
+    );
+    expect(program).toEqual({ num_weeks: null, days_per_week: null });
+  });
+
+  test('rejects layouts that are not a full, contiguous permutation', async () => {
+    const user = await signUpThrowawayUser();
+    const { programId, sessions } = await createOwnedProgram(user, 2, 3);
+    const [a, b, c] = sessions;
+
+    const attempt = (p_layout: unknown) =>
+      rpcRaw('set_program_session_layout', user.token, {
+        p_program_id: programId,
+        p_layout,
+      });
+
+    // Wrong length.
+    expect(
+      (
+        await attempt(
+          layout(
+            [a, b],
+            [
+              [1, 1],
+              [1, 2],
+            ],
+          ),
+        )
+      ).status,
+    ).toBeGreaterThanOrEqual(400);
+    // Duplicate id.
+    expect(
+      (
+        await attempt(
+          layout(
+            [a, a, b],
+            [
+              [1, 1],
+              [1, 2],
+              [1, 3],
+            ],
+          ),
+        )
+      ).status,
+    ).toBeGreaterThanOrEqual(400);
+    // Weeks skip 2.
+    expect(
+      (
+        await attempt(
+          layout(
+            [a, b, c],
+            [
+              [1, 1],
+              [1, 2],
+              [3, 1],
+            ],
+          ),
+        )
+      ).status,
+    ).toBeGreaterThanOrEqual(400);
+    // Days collide.
+    expect(
+      (
+        await attempt(
+          layout(
+            [a, b, c],
+            [
+              [1, 1],
+              [1, 1],
+              [2, 1],
+            ],
+          ),
+        )
+      ).status,
+    ).toBeGreaterThanOrEqual(400);
+    // Days skip 2.
+    expect(
+      (
+        await attempt(
+          layout(
+            [a, b, c],
+            [
+              [1, 1],
+              [1, 3],
+              [2, 1],
+            ],
+          ),
+        )
+      ).status,
+    ).toBeGreaterThanOrEqual(400);
+    // Not an array.
+    expect((await attempt({ id: a.id })).status).toBeGreaterThanOrEqual(400);
+
+    // Nothing changed.
+    expect(weekDay(await getSessions(user, programId))).toEqual([
+      [1, 1],
+      [1, 2],
+      [2, 1],
+    ]);
   });
 });
 
 test.describe('program sessions — delete', () => {
   test('delete removes the session and compacts survivors so add-after-delete is safe', async () => {
     const user = await signUpThrowawayUser();
-    // days_per_week=3, 3 sessions 0..2.
     const { programId, sessions } = await createOwnedProgram(user, 3, 3);
     const [a, b, c] = sessions;
 
     // Delete the middle session. {0,1,2} → {0,2} would leave a gap; the RPC must
-    // compact to contiguous {0,1}.
+    // compact to contiguous {0,1} and close the day gap in week 1.
     const res = await rpcRaw('delete_program_session', user.token, {
       p_session_id: b.id,
     });
@@ -293,16 +429,18 @@ test.describe('program sessions — delete', () => {
 
     const after = await getSessions(user, programId);
     expect(after.map((s) => s.id)).toEqual([a.id, c.id]);
-    expect(after.map((s) => s.sequence_index)).toEqual([0, 1]); // no gap
-    // c relabeled to the second slot.
-    expect(after[1]).toMatchObject({ week_number: 1, day_number: 2 });
+    expect(after.map((s) => s.sequence_index)).toEqual([0, 1]);
+    expect(weekDay(after)).toEqual([
+      [1, 1],
+      [1, 2],
+    ]);
 
     // The builder ADD path inserts at sequence_index = sessions.length (= 2).
     // With the gap closed this must NOT violate UNIQUE.
     const addRes = await rest('POST', 'program_sessions', user.token, {
       body: {
         program_id: programId,
-        sequence_index: after.length, // 2
+        sequence_index: after.length,
         week_number: 1,
         day_number: 3,
         title: 'Added after delete',
@@ -310,10 +448,107 @@ test.describe('program sessions — delete', () => {
       },
       prefer: 'return=representation',
     });
-    expect(addRes.status).toBeLessThan(300); // no 409
+    expect(addRes.status).toBeLessThan(300);
 
     const final = await getSessions(user, programId);
     expect(final.map((s) => s.sequence_index)).toEqual([0, 1, 2]);
+  });
+
+  test('deleting the only session of a middle week closes the week gap', async () => {
+    const user = await signUpThrowawayUser();
+    // days_per_week=1, 3 sessions → weeks 1, 2, 3.
+    const { programId, sessions } = await createOwnedProgram(user, 1, 3);
+    const [a, b, c] = sessions;
+
+    const res = await rpcRaw('delete_program_session', user.token, {
+      p_session_id: b.id,
+    });
+    expect(res.status).toBeLessThan(300);
+
+    const after = await getSessions(user, programId);
+    expect(after.map((s) => s.id)).toEqual([a.id, c.id]);
+    expect(weekDay(after)).toEqual([
+      [1, 1],
+      [2, 1],
+    ]);
+  });
+
+  test('delete_program_week removes the week, renumbers later weeks, and cascades completions', async () => {
+    const user = await signUpThrowawayUser();
+    // days_per_week=2, 6 sessions → weeks 1,1,2,2,3,3.
+    const { programId, sessions } = await createOwnedProgram(user, 2, 6);
+    const [a, b, c, , e, f] = sessions;
+    const userProgramId = await enroll(user, programId);
+    await completeSession(user, userProgramId, c.id, 'skipped');
+
+    const res = await rpcRaw('delete_program_week', user.token, {
+      p_program_id: programId,
+      p_week_number: 2,
+    });
+    expect(res.status).toBeLessThan(300);
+    expect(await res.json()).toBe(2);
+
+    const after = await getSessions(user, programId);
+    expect(after.map((s) => s.id)).toEqual([a.id, b.id, e.id, f.id]);
+    expect(after.map((s) => s.sequence_index)).toEqual([0, 1, 2, 3]);
+    expect(weekDay(after)).toEqual([
+      [1, 1],
+      [1, 2],
+      [2, 1],
+      [2, 2],
+    ]);
+
+    const completions = await restJson<Array<{ program_session_id: string }>>(
+      'GET',
+      `program_session_completions?user_program_id=eq.${userProgramId}&select=program_session_id`,
+      user.token,
+    );
+    expect(completions).toEqual([]);
+
+    // A week with no sessions is an error, not a silent no-op.
+    const missing = await rpcRaw('delete_program_week', user.token, {
+      p_program_id: programId,
+      p_week_number: 9,
+    });
+    expect(missing.status).toBeGreaterThanOrEqual(400);
+  });
+
+  test('compact_program_sessions ranks an appended row by its week/day', async () => {
+    const user = await signUpThrowawayUser();
+    // weeks 1, 2 with one session each.
+    const { programId, sessions } = await createOwnedProgram(user, 1, 2);
+    const [a, b] = sessions;
+
+    // The builder appends a week-1 session at the end index, then compacts.
+    const [added] = await restJson<SessionRow[]>(
+      'POST',
+      'program_sessions',
+      user.token,
+      {
+        body: {
+          program_id: programId,
+          sequence_index: 2,
+          week_number: 1,
+          day_number: 2,
+          title: 'Added to week 1',
+          workout_options: { movements: ['New'] },
+        },
+        prefer: 'return=representation',
+      },
+    );
+    const res = await rpcRaw('compact_program_sessions', user.token, {
+      p_program_id: programId,
+    });
+    expect(res.status).toBeLessThan(300);
+
+    const after = await getSessions(user, programId);
+    expect(after.map((s) => s.id)).toEqual([a.id, added.id, b.id]);
+    expect(after.map((s) => s.sequence_index)).toEqual([0, 1, 2]);
+    expect(weekDay(after)).toEqual([
+      [1, 1],
+      [1, 2],
+      [2, 1],
+    ]);
   });
 });
 
@@ -338,11 +573,18 @@ test.describe('program sessions — derivations stay correct', () => {
     let satisfied = new Set([a.id]);
     expect(deriveNext(after, satisfied)?.id).toBe(b.id);
 
-    // Reorder to [C, A, B]: C=0, A=1, B=2. A is still done. Lowest unsatisfied is
-    // now C (index 0), so the next surfaced session must become C.
-    const reorderRes = await rpcRaw('reorder_program_sessions', user.token, {
+    // Move C to week 1 day 1 ahead of A: C=0, A=1, B=2. A is still done. Lowest
+    // unsatisfied is now C (index 0), so the next surfaced session must become C.
+    const reorderRes = await rpcRaw('set_program_session_layout', user.token, {
       p_program_id: programId,
-      p_ordered_ids: [c.id, a.id, b.id],
+      p_layout: layout(
+        [c, a, b],
+        [
+          [1, 1],
+          [1, 2],
+          [2, 1],
+        ],
+      ),
     });
     expect(reorderRes.status).toBeLessThan(300);
 
@@ -411,17 +653,32 @@ test.describe('program sessions — owner-only (shared program is read-only)', (
     return row.id;
   }
 
-  test('a non-owner cannot reorder or delete sessions of the shared DFW program', async () => {
+  test('a non-owner cannot relayout or delete sessions of the shared DFW program', async () => {
     const user = await signUpThrowawayUser();
     const dfwId = await getDfwProgramId(user.token);
     const dfwSessions = await getSessions(user, dfwId);
 
-    // Reorder of the shared program is rejected (not owner).
-    const reorderRes = await rpcRaw('reorder_program_sessions', user.token, {
+    // Writing the current layout back is rejected (not owner).
+    const layoutRes = await rpcRaw('set_program_session_layout', user.token, {
       p_program_id: dfwId,
-      p_ordered_ids: dfwSessions.map((s) => s.id),
+      p_layout: dfwSessions.map((s) => ({
+        id: s.id,
+        week_number: s.week_number,
+        day_number: s.day_number,
+      })),
     });
-    expect(reorderRes.status).toBeGreaterThanOrEqual(400);
+    expect(layoutRes.status).toBeGreaterThanOrEqual(400);
+
+    const weekRes = await rpcRaw('delete_program_week', user.token, {
+      p_program_id: dfwId,
+      p_week_number: 1,
+    });
+    expect(weekRes.status).toBeGreaterThanOrEqual(400);
+
+    const compactRes = await rpcRaw('compact_program_sessions', user.token, {
+      p_program_id: dfwId,
+    });
+    expect(compactRes.status).toBeGreaterThanOrEqual(400);
 
     // Delete of a shared session is rejected (RLS delete policy denies non-owners).
     const deleteRes = await rpcRaw('delete_program_session', user.token, {

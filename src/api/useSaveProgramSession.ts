@@ -5,6 +5,7 @@ import { ProgramSession, WorkoutOptions } from '~/types';
 
 import { supabase } from '../supabaseClient';
 import {
+  compactProgramSessions,
   mapProgramSessionRow,
   serializeSessionWorkoutOptions,
 } from './program';
@@ -23,8 +24,9 @@ export interface SaveProgramSessionInput {
 /**
  * Persists the builder's current options as a new `program_sessions` row — the
  * "Save session" counterpart to starting a workout (`loadIntoBuilder` in
- * reverse). `sequenceIndex` is supplied by the caller as the current session
- * count so sessions append in add-order.
+ * reverse). The row is appended at `sequenceIndex` (the current session count)
+ * with its target week/day, then the program is compacted so the session ranks
+ * where its week/day says it belongs.
  */
 export const useSaveProgramSession = () => {
   const queryClient = useQueryClient();
@@ -49,10 +51,15 @@ export const useSaveProgramSession = () => {
         .single();
 
       if (error) throw error;
+      await compactProgramSessions(input.programId);
       return mapProgramSessionRow(data);
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAM, variables.programId] });
+    // Settled, not success: the insert is persisted before the compact call,
+    // so a failure in between must still refetch or the next save collides.
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [QUERIES.PROGRAM, variables.programId],
+      });
       queryClient.invalidateQueries({ queryKey: [QUERIES.PROGRAMS] });
     },
     onError,

@@ -2,19 +2,19 @@ import {
   Program,
   ProgramFocusTag,
   ProgramSession,
-  ProgramStage,
-  ProgramSystemicDemand,
   ProgramSessionCompletion,
   ProgramSessionCompletionStatus,
+  ProgramStage,
+  ProgramSystemicDemand,
   UserProgram,
   UserProgramStatus,
   WorkoutMode,
   WorkoutOptions,
 } from '~/types';
-
 import { fromWorkoutMode, toWorkoutMode, usesSharedBell } from '~/utils';
 
 import type { Database, Json } from '../../types/supabase';
+import { supabase } from '../supabaseClient';
 
 type ProgramRow = Database['public']['Tables']['programs']['Row'];
 type ProgramSessionRow =
@@ -67,13 +67,8 @@ type StoredWorkoutOptions = Omit<
 export const parseSessionWorkoutOptions = (
   stored: unknown,
 ): SessionWorkoutOptions => {
-  const {
-    workoutMode,
-    sharedBell,
-    complexSet,
-    straightSets,
-    ...rest
-  } = stored as StoredWorkoutOptions;
+  const { workoutMode, sharedBell, complexSet, straightSets, ...rest } =
+    stored as StoredWorkoutOptions;
   const mode = workoutMode ?? toWorkoutMode(complexSet, straightSets);
   return {
     ...rest,
@@ -142,3 +137,16 @@ export const mapUserProgramRow = (row: UserProgramRow): UserProgram => ({
   queuePosition: row.queue_position,
   currentStageIndex: row.current_stage_index,
 });
+
+/**
+ * Normalizes a program's week/day/sequence after an insert. The client appends
+ * new rows at `sequence_index = count` with their target week/day; the RPC
+ * ranks `sequence_index` by (week, day) so a session added to a middle week
+ * lands in the right place.
+ */
+export const compactProgramSessions = async (programId: string) => {
+  const { error } = await supabase.rpc('compact_program_sessions', {
+    p_program_id: programId,
+  });
+  if (error) throw error;
+};
