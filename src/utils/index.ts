@@ -30,3 +30,4 @@ export * from './validateWorkout';
 export * from './weightUnits';
 export * from './workoutLogToWorkoutOptions';
 export * from './workoutMode';
+export * from './groupSessionsByWeek';

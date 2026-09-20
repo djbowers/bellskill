@@ -50,11 +50,11 @@ test coverage.
 ## 5. Authoring
 
 - **Purpose:** create/edit a program's sessions.
-- **Entry point:** create from `ProgramsPage`; edit from `ProgramSessionBuilderPage`'s per-session controls.
+- **Entry point:** create from `ProgramsPage`; edit from `ProgramSessionBuilderPage`'s per-session and per-week controls (drag sessions within/across weeks; Add / Move / Delete week from the week menu; Add week at the foot).
 - **Screens/routes:** `ProgramSessionBuilderPage` (`programs/:id/sessions/new`, `programs/:id/sessions/:sessionId/edit`) — wraps `StartWorkoutPage` via `programSaveMode` (the `ProgramSaveMode` interface is defined in `StartWorkoutPage.tsx`, not the builder).
-- **Key files:** `src/pages/ProgramSessionBuilderPage/ProgramSessionBuilderPage.tsx`; hooks `useReorderProgramSession.ts` (exports `useReorderProgramSessions`), `useUpdateProgramSession.ts`, `useDuplicateProgramSession.ts` (also exports `useDuplicateProgramWeek`), `useDeleteProgramSession.ts`, `useUpdateProgramSessionsForward.ts`. Apply-forward dialog: "This session only" vs "This and all future sessions".
+- **Key files:** `src/pages/ProgramSessionBuilderPage/ProgramSessionBuilderPage.tsx` (+ `components/SessionWeekList.tsx`, `utils/sessionLayout.ts`); hooks `useSetProgramSessionLayout.ts`, `useDeleteProgramWeek.ts`, `useUpdateProgramSession.ts`, `useDuplicateProgramSession.ts` (also exports `useDuplicateProgramWeek`), `useDeleteProgramSession.ts`, `useUpdateProgramSessionsForward.ts`. Apply-forward dialog: "This session only" vs "This and all future sessions".
 - **Traceability:**
-  - Unit: `ProgramSessionBuilderPage.test.tsx`, `useUpdateProgramSession.test.ts`, `useReorderProgramSession.test.ts`, `useDeleteProgramSession.test.ts`.
+  - Unit: `ProgramSessionBuilderPage.test.tsx`, `utils/sessionLayout.test.ts`, `useSetProgramSessionLayout.test.ts`, `useDeleteProgramWeek.test.ts`, `useUpdateProgramSession.test.ts`, `useDeleteProgramSession.test.ts`.
   - `useUpdateProgramSessionsForward.ts` has no dedicated unit test (NONE FOUND).
   - e2e: `e2e/program-reorder-delete.spec.ts`, `e2e/program-update-forward.spec.ts`.
 

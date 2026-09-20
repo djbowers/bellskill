@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { vi } from 'vitest';
 
@@ -11,12 +12,14 @@ const {
   mockUseDeleteProgramSession,
   mockUseDuplicateProgramSession,
   mockUseDuplicateProgramWeek,
-  mockUseReorderProgramSessions,
+  mockUseSetProgramSessionLayout,
+  mockUseDeleteProgramWeek,
   mockUseUpdateProgramSessionsForward,
   updateMutate,
   updateForwardMutate,
   deleteMutate,
-  reorderMutate,
+  deleteWeekMutate,
+  setLayoutMutate,
   duplicateSessionMutate,
   saveMutate,
 } = vi.hoisted(() => ({
@@ -26,12 +29,14 @@ const {
   mockUseDeleteProgramSession: vi.fn(),
   mockUseDuplicateProgramSession: vi.fn(),
   mockUseDuplicateProgramWeek: vi.fn(),
-  mockUseReorderProgramSessions: vi.fn(),
+  mockUseSetProgramSessionLayout: vi.fn(),
+  mockUseDeleteProgramWeek: vi.fn(),
   mockUseUpdateProgramSessionsForward: vi.fn(),
   updateMutate: vi.fn(),
   updateForwardMutate: vi.fn(),
   deleteMutate: vi.fn(),
-  reorderMutate: vi.fn(),
+  deleteWeekMutate: vi.fn(),
+  setLayoutMutate: vi.fn(),
   duplicateSessionMutate: vi.fn(),
   saveMutate: vi.fn(),
 }));
@@ -45,7 +50,8 @@ vi.mock('~/api', () => ({
   useDeleteProgramSession: mockUseDeleteProgramSession,
   useDuplicateProgramSession: mockUseDuplicateProgramSession,
   useDuplicateProgramWeek: mockUseDuplicateProgramWeek,
-  useReorderProgramSessions: mockUseReorderProgramSessions,
+  useSetProgramSessionLayout: mockUseSetProgramSessionLayout,
+  useDeleteProgramWeek: mockUseDeleteProgramWeek,
   useUpdateProgramSessionsForward: mockUseUpdateProgramSessionsForward,
 }));
 
@@ -127,12 +133,46 @@ const ownedProgram = {
 
 const idleMutation = () => ({ mutate: vi.fn(), isPending: false });
 
-/** Per-session actions live behind the row's ⋯ menu: open it, then pick. */
-const openSessionMenu = (title: string) => {
+/** Row and week actions live behind a ⋯ menu: open it, then pick. */
+const openMenu = (label: string) => {
   fireEvent.keyDown(
-    screen.getByRole('button', { name: `More actions for ${title}` }),
+    screen.getByRole('button', { name: `More actions for ${label}` }),
     { key: 'Enter' },
   );
+};
+const openSessionMenu = openMenu;
+
+// jsdom reports zero-size rects, which leaves the keyboard sensor with no
+// droppable to move toward — give each week list and row a vertical slot.
+const rect = (top: number, height: number) => () =>
+  ({
+    x: 0,
+    y: top,
+    top,
+    bottom: top + height,
+    left: 0,
+    right: 300,
+    width: 300,
+    height,
+    toJSON: () => {},
+  }) as DOMRect;
+const mockListRects = () => {
+  let top = 0;
+  screen.getAllByRole('list').forEach((list) => {
+    const rows = Array.from(list.querySelectorAll('li'));
+    const height = Math.max(rows.length, 1) * 100;
+    list.getBoundingClientRect = rect(top, height);
+    rows.forEach((row, i) => {
+      row.getBoundingClientRect = rect(top + i * 100, 90);
+    });
+    top += height + 50;
+  });
+};
+const keyboardDrag = async (title: string, keys: string) => {
+  mockListRects();
+  const handle = screen.getByRole('button', { name: `Reorder ${title}` });
+  handle.focus();
+  await userEvent.keyboard(keys);
 };
 
 /** Menu selections are deferred a tick so a dialog can mount after the close. */
@@ -164,7 +204,8 @@ describe('ProgramSessionBuilderPage', () => {
     mockUserId = 'owner-1';
     updateMutate.mockReset();
     deleteMutate.mockReset();
-    reorderMutate.mockReset();
+    deleteWeekMutate.mockReset();
+    setLayoutMutate.mockReset();
     duplicateSessionMutate.mockReset();
     saveMutate.mockReset();
     mockUseProgram.mockReturnValue({
@@ -189,8 +230,12 @@ describe('ProgramSessionBuilderPage', () => {
       isPending: false,
     });
     mockUseDuplicateProgramWeek.mockReturnValue(idleMutation());
-    mockUseReorderProgramSessions.mockReturnValue({
-      mutate: reorderMutate,
+    mockUseSetProgramSessionLayout.mockReturnValue({
+      mutate: setLayoutMutate,
+      isPending: false,
+    });
+    mockUseDeleteProgramWeek.mockReturnValue({
+      mutate: deleteWeekMutate,
       isPending: false,
     });
     updateForwardMutate.mockReset();
@@ -207,27 +252,34 @@ describe('ProgramSessionBuilderPage', () => {
       screen.queryByRole('button', { name: 'stub-save' }),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add session' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Add session to week 1' }),
+    );
 
     expect(
       screen.getByRole('button', { name: 'stub-save' }),
     ).toBeInTheDocument();
+    expect(screen.getByText('New session · Week 1')).toBeInTheDocument();
     expect(screen.queryByText('Saved sessions (1)')).not.toBeInTheDocument();
   });
 
   it('returns to the list from the open builder', () => {
     renderAt('/programs/p-1/sessions/new');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add session' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Add session to week 1' }),
+    );
     fireEvent.click(screen.getByRole('button', { name: '← Sessions' }));
 
     expect(screen.getByText('Saved sessions (1)')).toBeInTheDocument();
   });
 
-  it('saves a new session from the revealed builder', () => {
+  it('saves a new session into the chosen week', () => {
     renderAt('/programs/p-1/sessions/new');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add session' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Add session to week 1' }),
+    );
     fireEvent.click(screen.getByRole('button', { name: 'stub-save' }));
 
     expect(saveMutate).toHaveBeenCalledWith(
@@ -256,8 +308,44 @@ describe('ProgramSessionBuilderPage', () => {
       screen.getByRole('button', { name: 'stub-save' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Add session' }),
+      screen.queryByRole('button', { name: /^Add session/ }),
     ).not.toBeInTheDocument();
+  });
+
+  it('adds an empty week and saves the next session into it', () => {
+    renderAt('/programs/p-1/sessions/new');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add week' }));
+
+    expect(screen.getByText('Week 2')).toBeInTheDocument();
+    expect(
+      screen.getByText('No sessions yet — drag one here or add a session.'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Add session to week 2' }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'stub-save' }));
+
+    expect(saveMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sequenceIndex: 1,
+        weekNumber: 2,
+        dayNumber: 1,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('drops an empty week without asking', async () => {
+    renderAt('/programs/p-1/sessions/new');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add week' }));
+    openMenu('Week 2');
+    await clickMenuItem('Delete week');
+
+    expect(screen.queryByText('Week 2')).not.toBeInTheDocument();
+    expect(deleteWeekMutate).not.toHaveBeenCalled();
   });
 
   it('offers an Edit control per session in add mode', async () => {
@@ -310,17 +398,44 @@ describe('ProgramSessionBuilderPage', () => {
     expect(deleteMutate).not.toHaveBeenCalled();
   });
 
-  it('duplicates a whole week', () => {
+  it('duplicates a whole week from the week menu', async () => {
+    const duplicateWeekMutate = vi.fn();
+    mockUseDuplicateProgramWeek.mockReturnValue({
+      mutate: duplicateWeekMutate,
+      isPending: false,
+    });
     renderAt('/programs/p-1/sessions/new');
 
-    expect(
-      screen.getByRole('button', { name: 'Duplicate week' }),
-    ).toBeInTheDocument();
+    openMenu('Week 1');
+    await clickMenuItem('Duplicate week');
+
+    expect(duplicateWeekMutate).toHaveBeenCalledWith({
+      programId: 'p-1',
+      sessions: [session],
+      newWeekNumber: 2,
+      startSequenceIndex: 1,
+    });
   });
 
   it('leaves a non-owner with Duplicate only', async () => {
     mockUserId = 'someone-else';
     renderAt('/programs/p-1/sessions/new');
+
+    expect(
+      screen.queryByRole('button', { name: /^Reorder / }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Add week' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^Add session/ }),
+    ).not.toBeInTheDocument();
+
+    openMenu('Week 1');
+    expect(screen.getAllByRole('menuitem').map((m) => m.textContent)).toEqual([
+      'Duplicate week',
+    ]);
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
 
     openSessionMenu('Ladders 1-2-3');
 
@@ -332,9 +447,6 @@ describe('ProgramSessionBuilderPage', () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('menuitem', { name: 'Delete session' }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /^Move / }),
     ).not.toBeInTheDocument();
   });
 
@@ -376,25 +488,26 @@ describe('ProgramSessionBuilderPage', () => {
       });
     });
 
-    it('reorders both directions from the row arrows', () => {
+    it('reorders within a week by keyboard drag', async () => {
       renderAt('/programs/p-1/sessions/new');
 
-      fireEvent.click(
-        screen.getByRole('button', { name: 'Move Ladders 1-2-3 down' }),
-      );
-      expect(reorderMutate).toHaveBeenCalledWith({
-        programId: 'p-1',
-        orderedIds: ['s-2', 's-1'],
-      });
+      await keyboardDrag('Ladders 1-2-3', '{Enter}{ArrowDown}{Enter}');
 
-      reorderMutate.mockReset();
-      fireEvent.click(
-        screen.getByRole('button', { name: 'Move Ladders 1-2-3-4 up' }),
-      );
-      expect(reorderMutate).toHaveBeenCalledWith({
+      expect(setLayoutMutate).toHaveBeenCalledWith({
         programId: 'p-1',
-        orderedIds: ['s-2', 's-1'],
+        layout: [
+          { id: 's-2', weekNumber: 1, dayNumber: 1 },
+          { id: 's-1', weekNumber: 1, dayNumber: 2 },
+        ],
       });
+    });
+
+    it('leaves the layout alone when a drag lands where it started', async () => {
+      renderAt('/programs/p-1/sessions/new');
+
+      await keyboardDrag('Ladders 1-2-3', '{Enter}{ArrowDown}{ArrowUp}{Enter}');
+
+      expect(setLayoutMutate).not.toHaveBeenCalled();
     });
 
     it('asks whether to apply the edit forward instead of saving directly', () => {
@@ -454,6 +567,95 @@ describe('ProgramSessionBuilderPage', () => {
       expect(screen.queryByText('Apply changes to…')).not.toBeInTheDocument();
       expect(updateMutate).toHaveBeenCalled();
       expect(updateForwardMutate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('with two weeks', () => {
+    const weekTwoSession = {
+      ...session,
+      id: 's-2',
+      sequenceIndex: 1,
+      weekNumber: 2,
+      dayNumber: 1,
+      title: 'Week two day',
+    };
+
+    beforeEach(() => {
+      mockUseProgram.mockReturnValue({
+        data: { program: ownedProgram, sessions: [session, weekTwoSession] },
+        isLoading: false,
+        isError: false,
+      });
+    });
+
+    it('moves a session into another week by keyboard drag', async () => {
+      renderAt('/programs/p-1/sessions/new');
+
+      await keyboardDrag('Week two day', '{Enter}{ArrowUp}{Enter}');
+
+      expect(setLayoutMutate).toHaveBeenCalledWith({
+        programId: 'p-1',
+        layout: [
+          { id: 's-2', weekNumber: 1, dayNumber: 1 },
+          { id: 's-1', weekNumber: 1, dayNumber: 2 },
+        ],
+      });
+    });
+
+    it('moves a week down from the week menu', async () => {
+      renderAt('/programs/p-1/sessions/new');
+
+      openMenu('Week 1');
+      await clickMenuItem('Move week down');
+
+      expect(setLayoutMutate).toHaveBeenCalledWith({
+        programId: 'p-1',
+        layout: [
+          { id: 's-2', weekNumber: 1, dayNumber: 1 },
+          { id: 's-1', weekNumber: 2, dayNumber: 1 },
+        ],
+      });
+    });
+
+    it('confirms in a dialog before deleting a week with sessions', async () => {
+      renderAt('/programs/p-1/sessions/new');
+
+      openMenu('Week 2');
+      await clickMenuItem('Delete week');
+
+      expect(deleteWeekMutate).not.toHaveBeenCalled();
+      expect(screen.getByText('Delete week 2?')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Delete week' }));
+
+      expect(deleteWeekMutate).toHaveBeenCalledWith(
+        { programId: 'p-1', weekNumber: 2 },
+        expect.anything(),
+      );
+    });
+
+    it('keeps the week when the confirm dialog is dismissed', async () => {
+      renderAt('/programs/p-1/sessions/new');
+
+      openMenu('Week 2');
+      await clickMenuItem('Delete week');
+      fireEvent.click(screen.getByRole('button', { name: 'Keep week' }));
+
+      expect(deleteWeekMutate).not.toHaveBeenCalled();
+    });
+
+    it('duplicates a session into its own week', async () => {
+      renderAt('/programs/p-1/sessions/new');
+
+      openSessionMenu('Ladders 1-2-3');
+      await clickMenuItem('Duplicate session');
+
+      expect(duplicateSessionMutate).toHaveBeenCalledWith({
+        session,
+        sequenceIndex: 2,
+        weekNumber: 1,
+        dayNumber: 2,
+      });
     });
   });
 

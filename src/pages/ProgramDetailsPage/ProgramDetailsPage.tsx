@@ -33,6 +33,7 @@ import {
   WEIGHT_MODE_LABELS,
   getWeightRange,
   getWeightUnitLabel,
+  groupSessionsByWeek,
   programCadenceLabel,
 } from '~/utils';
 
@@ -74,19 +75,6 @@ const programMovements = (sessions: ProgramSession[]): string => {
 
 /** Long blurbs collapse; the toggle only appears when there's something hidden. */
 const DESCRIPTION_CLAMP_LENGTH = 240;
-
-/** Sessions grouped by their 1-based week, preserving sequenceIndex order. */
-const groupByWeek = (
-  sessions: ProgramSession[],
-): { weekNumber: number; sessions: ProgramSession[] }[] => {
-  const weeks: { weekNumber: number; sessions: ProgramSession[] }[] = [];
-  for (const session of sessions) {
-    const week = weeks.find((w) => w.weekNumber === session.weekNumber);
-    if (week) week.sessions.push(session);
-    else weeks.push({ weekNumber: session.weekNumber, sessions: [session] });
-  }
-  return weeks;
-};
 
 /**
  * One or two bell inputs for a single weight group. The second slot appears
@@ -427,7 +415,7 @@ export const ProgramDetailsPage = () => {
   // nothing rather than flashing a picker for a program you already configured.
   if (isOwnProgram) return null;
 
-  const weeks = groupByWeek(data.sessions);
+  const weeks = groupSessionsByWeek(data.sessions);
   const movements = programMovements(data.sessions);
   const description = data.program.description ?? '';
   const clampable = description.length > DESCRIPTION_CLAMP_LENGTH;

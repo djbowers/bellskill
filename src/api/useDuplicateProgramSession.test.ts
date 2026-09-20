@@ -15,6 +15,7 @@ import {
 import { PROGRAM_MUTATION_ERROR_MESSAGE } from './useProgramMutationErrorHandler';
 
 const SESSIONS_URL = `${VITE_SUPABASE_URL}/rest/v1/program_sessions`;
+const COMPACT_URL = `${VITE_SUPABASE_URL}/rest/v1/rpc/compact_program_sessions`;
 
 const showToast = vi.fn();
 
@@ -63,8 +64,15 @@ describe('useDuplicateProgramSession', () => {
 
   const input = { session, sequenceIndex: 1, weekNumber: 1, dayNumber: 1 };
 
-  it('duplicates the session and does not toast on success', async () => {
-    server.use(http.post(SESSIONS_URL, () => HttpResponse.json(sessionRow)));
+  it('duplicates the session, compacts the program, and does not toast on success', async () => {
+    let compactBody: unknown;
+    server.use(
+      http.post(SESSIONS_URL, () => HttpResponse.json(sessionRow)),
+      http.post(COMPACT_URL, async ({ request }) => {
+        compactBody = await request.json();
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
 
     const { result } = renderHook(() => useDuplicateProgramSession(), {
       wrapper: makeWrapper(),
@@ -73,6 +81,7 @@ describe('useDuplicateProgramSession', () => {
     const copy = await result.current.mutateAsync(input);
 
     expect(copy.id).toBe('session-2');
+    expect(compactBody).toEqual({ p_program_id: 'program-1' });
     expect(showToast).not.toHaveBeenCalled();
   });
 
@@ -105,8 +114,15 @@ describe('useDuplicateProgramWeek', () => {
     startSequenceIndex: 1,
   };
 
-  it('duplicates the week and does not toast on success', async () => {
-    server.use(http.post(SESSIONS_URL, () => HttpResponse.json([sessionRow])));
+  it('duplicates the week, compacts the program, and does not toast on success', async () => {
+    let compactBody: unknown;
+    server.use(
+      http.post(SESSIONS_URL, () => HttpResponse.json([sessionRow])),
+      http.post(COMPACT_URL, async ({ request }) => {
+        compactBody = await request.json();
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
 
     const { result } = renderHook(() => useDuplicateProgramWeek(), {
       wrapper: makeWrapper(),
@@ -115,6 +131,7 @@ describe('useDuplicateProgramWeek', () => {
     const copies = await result.current.mutateAsync(input);
 
     expect(copies).toHaveLength(1);
+    expect(compactBody).toEqual({ p_program_id: 'program-1' });
     expect(showToast).not.toHaveBeenCalled();
   });
 

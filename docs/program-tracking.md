@@ -5,12 +5,13 @@ test traceability: `docs/program-user-flows.md`. This doc is the data/RPC record
 
 A sequencing/progress layer over the existing `workout_logs` pipeline. Four
 tables (`programs`, `program_sessions`, `user_programs`,
-`program_session_completions`) plus four SQL functions: `enroll_in_program`
+`program_session_completions`) plus the SQL functions: `enroll_in_program`
 (copy-on-enroll clone + activate), `complete_program_session` (record a
 completion/skip, advance, and flip the enrollment to `completed` on the final
-session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
-`delete_program_session`. All are `SECURITY INVOKER` RPCs; progress is fully
-**derived from the completions set**, never a stored cursor.
+session — atomic), and the layout set `set_program_session_layout` /
+`compact_program_sessions` / `delete_program_session` / `delete_program_week`.
+All are `SECURITY INVOKER` RPCs; progress is fully **derived from the
+completions set**, never a stored cursor.
 
 - **Shared programs (seeded, system-owned):** the public shared programs
   (`owner_id NULL`, `is_public`) ship as migrations (not `seed.sql`, so they
@@ -80,8 +81,10 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   columns when a program authored them (the seeded shared programs) and
   otherwise **derives** cadence from the program's own embedded sessions —
   `numWeeks` (highest week) / `daysPerWeek` (widest week), null when it has no
-  sessions yet. The builder and reorder/delete RPCs treat an unset
-  `days_per_week` as 1 (`|| 1` / `COALESCE(...,1)` → one session per week).
+  sessions yet. Any layout write (`compact_program_sessions`,
+  `set_program_session_layout`) also nulls the stored columns on that program,
+  so a user copy of a seeded program (which inherits the authored cadence via
+  `enroll_in_program`) derives its cadence once its weeks change.
 - **Home surfacing:** an active program forces browse mode
   (`StartWorkoutPage`), rendering `NextProgramWorkoutCard` above the recommended
   sections. With several running, the card shows **one** program — index 0
@@ -105,20 +108,39 @@ session — atomic), and the PROD-219 editing pair `reorder_program_sessions` /
   completion row carries the log id), reusing `CompletedWorkoutPage` verbatim.
   Entry points: each `ProgramsPage` "My programs" card and the home
   `NextProgramWorkoutCard` (`onViewProgress`).
-- **Reorder / delete (PROD-219, owner-editable programs only):** the builder
-  save-mode surface (`ProgramSessionBuilderPage`) shows up/down + Delete controls
-  per session, gated on `program.ownerId === session.user.id` so read-only
-  shared programs (DFW, the StrongFirst Snatch Test plan — both system-owned,
-  seeded via idempotent migrations) are never editable. Both persist through RPCs
-  (`useReorderProgramSessions` / `useDeleteProgramSession`) because
-  `UNIQUE (program_id, sequence_index)` is **NOT deferrable** — a naive
-  client-side permutation transiently duplicates an index and 409s. Each RPC
-  reindexes atomically with a temp offset (bump every affected row past the
-  current MAX index, then assign 0..N-1) and **relabels week/day** from
-  `days_per_week`, keeping the hand-built order coherent. Delete compacts the
-  survivors to 0..N-1 (no gap) so the ADD path's `sequenceIndex = sessions.length`
-  never collides. Session ids are stable across a reorder (completions keep
-  pointing correctly); a deleted session's completion cascades.
+- **Session layout (owner-editable programs only):** `week_number` /
+  `day_number` are the source of truth for where a session sits; `sequence_index`
+  is derived as the 0-based rank by (week, day). Every write leaves weeks
+  contiguous 1..W and days 1..D within each week, and none of them consult
+  `programs.days_per_week`. The builder (`ProgramSessionBuilderPage`) renders
+  the sessions as one dnd-kit `DndContext` with a `SortableContext` per week
+  (`SessionWeekList` / `WeekSection` / `SessionRow`), so a session drags within
+  or across weeks (keyboard: focus the day badge, Enter, arrows, Enter); the
+  week ⋯ menu offers Add session, Duplicate week, Move week up/down, Delete
+  week; and **Add week** appends an empty week that lives only in page state
+  (`emptyWeekCount`) until a session is saved into it. All controls are gated on
+  `program.ownerId === session.user.id`, so the shared read-only programs are
+  never editable. Persistence goes through RPCs (`*_program_session_layout.sql`)
+  because `UNIQUE (program_id, sequence_index)` is **NOT deferrable** — each
+  reindexes atomically with a temp offset (bump every row past the current MAX,
+  then assign final values):
+  - `set_program_session_layout(p_program_id, p_layout jsonb)` — an array of
+    `{id, week_number, day_number}` covering exactly the program's sessions;
+    array order is ignored. Rejects a non-permutation, non-contiguous weeks, or
+    non-contiguous / duplicate days. Used by drops and week moves
+    (`useSetProgramSessionLayout`, optimistic on the cached program).
+  - `compact_program_sessions(p_program_id)` — idempotent normalizer: closes
+    week gaps (`dense_rank`), renumbers days, ranks `sequence_index` by
+    (week, day). The insert paths (`useSaveProgramSession`,
+    `useDuplicateProgramSession` / `useDuplicateProgramWeek`) append at
+    `sequence_index = count` with the target week/day, then call it, so a
+    session added to a middle week lands where its week says. A failure between
+    the two calls leaves an appended row with a mid-program label until the next
+    write compacts it.
+  - `delete_program_session(p_session_id)` and
+    `delete_program_week(p_program_id, p_week_number)` (returns the deleted
+    count) delete then compact; completions cascade via the FK. Session ids are
+    stable across every relayout, so completions keep pointing correctly.
 - **Session edit (PROD-237):** the builder handles both add and edit; the edit
   route `programs/:id/sessions/:sessionId/edit` reuses `ProgramSessionBuilderPage`,
   which branches on the `:sessionId` param. Edit mode seeds the builder from the

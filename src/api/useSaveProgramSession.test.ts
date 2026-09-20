@@ -11,6 +11,7 @@ import { PROGRAM_MUTATION_ERROR_MESSAGE } from './useProgramMutationErrorHandler
 import { useSaveProgramSession } from './useSaveProgramSession';
 
 const SESSIONS_URL = `${VITE_SUPABASE_URL}/rest/v1/program_sessions`;
+const COMPACT_URL = `${VITE_SUPABASE_URL}/rest/v1/rpc/compact_program_sessions`;
 
 const showToast = vi.fn();
 
@@ -54,8 +55,15 @@ const makeWrapper = () => {
 describe('useSaveProgramSession', () => {
   beforeEach(() => showToast.mockClear());
 
-  it('saves the session and does not toast on success', async () => {
-    server.use(http.post(SESSIONS_URL, () => HttpResponse.json(sessionRow)));
+  it('saves the session, compacts the program, and does not toast on success', async () => {
+    let compactBody: unknown;
+    server.use(
+      http.post(SESSIONS_URL, () => HttpResponse.json(sessionRow)),
+      http.post(COMPACT_URL, async ({ request }) => {
+        compactBody = await request.json();
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
 
     const { result } = renderHook(() => useSaveProgramSession(), {
       wrapper: makeWrapper(),
@@ -64,6 +72,7 @@ describe('useSaveProgramSession', () => {
     const saved = await result.current.mutateAsync(input);
 
     expect(saved.id).toBe('session-1');
+    expect(compactBody).toEqual({ p_program_id: 'program-1' });
     expect(showToast).not.toHaveBeenCalled();
   });
 
